@@ -1,7 +1,8 @@
 # multimedia_image_effect
 
-#### 介绍
-图像的效果处理框架
+#### ImageEffect框架
+- ImageEffect框架
+
 
 #### 软件架构
 软件架构说明
