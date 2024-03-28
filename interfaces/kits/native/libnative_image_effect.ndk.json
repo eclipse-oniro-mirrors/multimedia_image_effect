@@ -1,0 +1,95 @@
+[
+  {
+    "name": "OH_EFilter_Create"
+  },
+  {
+    "name": "OH_EFilter_SetValue"
+  },
+  {
+    "name": "OH_EFilter_GetValue"
+  },
+  {
+    "name": "OH_EFilter_Register"
+  },
+  {
+    "name": "OH_EFilter_LookupFilterInfo"
+  },
+  {
+    "name": "OH_EFilter_LookupFilters"
+  },
+  {
+    "name": "OH_EFilter_ReleaseFilterNames"
+  },
+  {
+    "name": "OH_EFilter_Render"
+  },
+  {
+    "name": "OH_EFilter_Release"
+  },
+  {
+    "name": "OH_ImageEffect_Create"
+  },
+  {
+    "name": "OH_ImageEffect_AddFilter"
+  },
+  {
+    "name": "OH_ImageEffect_InsertFilter"
+  },
+  {
+    "name": "OH_ImageEffect_RemoveFilter"
+  },
+  {
+    "name": "OH_ImageEffect_Configure"
+  },
+  {
+    "name": "OH_ImageEffect_SetOutputSurface"
+  },
+  {
+    "name": "OH_ImageEffect_GetInputSurface"
+  },
+  {
+    "name": "OH_ImageEffect_SetInputPixelMap"
+  },
+  {
+    "name": "OH_ImageEffect_SetOutputPixelMap"
+  },
+  {
+    "name": "OH_ImageEffect_SetInputNativeBuffer"
+  },
+  {
+    "name": "OH_ImageEffect_SetOutputNativeBuffer"
+  },
+  {
+    "name": "OH_ImageEffect_SetInputUri"
+  },
+  {
+    "name": "OH_ImageEffect_SetOutputUri"
+  },
+  {
+    "name": "OH_ImageEffect_SetInputPath"
+  },
+  {
+    "name": "OH_ImageEffect_SetOutputPath"
+  },
+  {
+    "name": "OH_ImageEffect_Start"
+  },
+  {
+    "name": "OH_ImageEffect_Stop"
+  },
+  {
+    "name": "OH_ImageEffect_Release"
+  },
+  {
+    "name": "OH_ImageEffect_Save"
+  },
+  {
+    "name": "OH_ImageEffect_Restore"
+  },
+  {
+    "name": "OH_ImageEffect_FiltersSize"
+  },
+  {
+    "name": "OH_ImageEffect_GetFilter"
+  }
+]

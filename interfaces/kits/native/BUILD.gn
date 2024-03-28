@@ -1,0 +1,31 @@
+# Copyright (C) 2022 Huawei Device Co., Ltd.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//build/ohos/ndk/ndk.gni")
+
+ohos_ndk_library("libimage_effect_ndk") {
+    output_extension = "so"
+    ndk_description_file = "./libnative_image_effect.ndk.json"
+    min_compact_version = "11"
+    output_name = "image_effect_ndk"
+}
+
+ohos_ndk_headers("image_effect_header") {
+    dest_dir = "$ndk_headers_out_dir/multimedia/image_effect"
+    sources = [
+        "./include/native_efilter.h",
+        "./include/native_effect_errors.h",
+        "./include/native_image_effect.h",
+    ]
+}
