@@ -162,8 +162,8 @@ ErrorCode GpuContrastFilterOperator::OnApplyRGBA8888(EffectBuffer *src, EffectBu
     if (shaderProgram_ == 0) {
         shaderProgram_ = GLUtils::CreateProgram(VS_CONTENT, FS_CONTENT);
         if (shaderProgram_ == 0) {
-             EFFECT_LOGE("GpuContrastFilterOperator Render CreateProgram Failed");
-             return ErrorCode::ERR_GL_CREATE_PROGRAM_FAILED;
+            EFFECT_LOGE("GpuContrastFilterOperator Render CreateProgram Failed");
+            return ErrorCode::ERR_GL_CREATE_PROGRAM_FAILED;
         }
     }
 

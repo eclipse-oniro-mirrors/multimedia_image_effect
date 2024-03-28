@@ -167,7 +167,7 @@ void NativeCommonUtils::SwitchToFormatType(const uint32_t &ohFormatType, IEffect
     SwitchToFormatType(ohFormatTypeEnum, formatType);
 }
 
- void NativeCommonUtils::SwitchToOHCategory(const Category &category, OH_Category &ohCategory)
+void NativeCommonUtils::SwitchToOHCategory(const Category &category, OH_Category &ohCategory)
 {
     auto it = CATEGORY_TABLE.find(category);
     if (it != CATEGORY_TABLE.end()) {
