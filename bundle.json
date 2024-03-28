@@ -1,0 +1,87 @@
+{
+  "name": "@ohos/image_effect",
+  "description": "Image standard editing abilities",
+  "version": "4.0",
+  "license": "Apache License 2.0",
+  "publishAs": "code-segment",
+  "segment": {
+    "destPath": "foundation/multimedia/image_effect"
+  },
+  "dirs": {},
+  "scripts": {},
+  "component": {
+    "name": "image_effect",
+    "subsystem": "multimedia",
+    "syscap": [],
+    "features": [],
+    "adapted_system_type": [
+      "standard"
+    ],
+    "rom": "",
+    "ram": "",
+    "deps": {
+      "components": [
+        "hitrace",
+        "hilog",
+        "napi",
+        "image_framework",
+        "graphic_2d",
+        "graphic_surface",
+        "c_utils",
+        "ability_base"
+      ],
+      "third_party": [
+        "bounds_checking_function",
+        "egl",
+        "opengles",
+        "json"
+      ]
+    },
+    "build": {
+      "sub_component": [
+        "//foundation/multimedia/image_effect:image_effect"
+      ],
+      "inner_kits": [
+        {
+          "type": "none",
+          "header":{
+            "header_base": [
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/base",
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/common",
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/custom_efilter",
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/effect",
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/efilter",
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/factory"
+            ],
+            "header_files":[
+              "effect_buffer.h",
+              "effect_info.h",
+              "effect_type.h",
+              "render_info.h",
+              "any.h",
+              "error_code.h",
+              "delegate.h",
+              "effect.h",
+              "image_effect.h",
+              "efilter.h",
+              "efilter_factory.h"
+            ]
+          },
+          "name": "//foundation/multimedia/image_effect/frameworks/native:image_effect"
+        },
+        {
+          "type": "so",
+          "header": {
+            "header_base": "//foundation/multimedia/image_effect/interfaces/kits/native/include/",
+            "header_files": [
+              "native_effect_errors.h",
+              "native_efilter.h",
+              "native_image_effect.h"
+            ]
+          },
+          "name": "//foundation/multimedia/image_effect/frameworks/native:image_effect_ndk"
+        }
+      ]
+    }
+  }
+}
