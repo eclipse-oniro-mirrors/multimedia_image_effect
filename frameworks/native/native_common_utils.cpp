@@ -124,11 +124,11 @@ ErrorCode NativeCommonUtils::SwitchToOHAny(const Plugin::Any &any, OH_Any *value
         ErrorCode::SUCCESS, ErrorCode::SUCCESS);
 
 #ifndef HST_ANY_WITH_NO_RTTI
-    EFFECT_LOGE("inner any type not support switch to oh_any! type:%{public}s", any.Type().name());
+    EFFECT_LOGE("inner any type not support switch to oh_any! type: %{public}s", any.Type().name());
 #else
     EFFECT_LOGE("inner any type not support switch to oh_any! type:%{public}s", std::string(any.TypeName()).c_str());
 #endif
-    return ErrorCCode::ERR_NOT_SUPPORT_SWITCH_TO_OHANY;
+    return ErrorCode::ERR_NOT_SUPPORT_SWITCH_TO_OHANY;
 }
 
 void NativeCommonUtils::SwitchToOHFormatType(const IEffectFormat &formatType, OH_IEffectFormat &ohFormatType)
