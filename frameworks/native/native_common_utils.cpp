@@ -128,7 +128,7 @@ ErrorCode NativeCommonUtils::SwitchToOHAny(const Plugin::Any &any, OH_Any *value
 #else
     EFFECT_LOGE("inner any type not support switch to oh_any! type:%{public}s", std::string(any.TypeName()).c_str());
 #endif
-    return ErrorCode::ERR_NOT_SUPPORT_SWITCH_TO_OHANY;
+    return ErrorCCode::ERR_NOT_SUPPORT_SWITCH_TO_OHANY;
 }
 
 void NativeCommonUtils::SwitchToOHFormatType(const IEffectFormat &formatType, OH_IEffectFormat &ohFormatType)
