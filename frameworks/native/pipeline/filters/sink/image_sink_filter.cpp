@@ -184,7 +184,7 @@ ErrorCode PackToFile(const std::string &path, const std::shared_ptr<PixelMap> &p
     CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
         "FinalizePacking fail! result=%{public}d", result);
 
-    EFFECT_LOGI("PackToFile success! path=%{public}s, packedSize=%{public}ld", path.c_str(), packedSize);
+    EFFECT_LOGI("PackToFile success! path=%{public}s, packedSize=%{public}lld", path.c_str(), packedSize);
     return ErrorCode::SUCCESS;
 }
 

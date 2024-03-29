@@ -176,7 +176,7 @@ OH_EffectErrorCode OH_ImageEffect_GetInputSurface(OH_ImageEffect *imageEffect, c
 
     auto iSurfaceId = surface->GetUniqueId();
     std::string surfaceIdStr = std::to_string(iSurfaceId);
-    EFFECT_LOGI("OH_ImageEffect_GetInputSurface iSurfaceId=%{public}lu, surfaceIdStr=%{public}s", iSurfaceId,
+    EFFECT_LOGI("OH_ImageEffect_GetInputSurface iSurfaceId=%{public}llu, surfaceIdStr=%{public}s", iSurfaceId,
         surfaceIdStr.c_str());
     char *surfaceIdTemp = static_cast<char *>(malloc(surfaceIdStr.length() + 1));
     imageEffect->surfaceIdTemp = surfaceIdTemp;

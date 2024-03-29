@@ -100,7 +100,7 @@ ErrorCode NativeCommonUtils::ParseOHAny(const OH_Any *value, Plugin::Any &any)
             any = value->dataValue.boolValue;
             break;
         default:
-            EFFECT_LOGE("input any data type not support! dataType=%{public}d", value->dataType);
+            EFFECT_LOGE("input any data type not support! dataType =%{public}d", value->dataType);
             return ErrorCode::ERR_UNSUPPORTED_INPUT_ANYTYPE;
     }
     return ErrorCode::SUCCESS;
