@@ -27,7 +27,8 @@ config("image_effect_public_config") {
         "$image_effect_root_dir/frameworks/native/pipeline/include/filters/source",
         "$image_effect_root_dir/frameworks/native/common_effect/negotiate",
         "$image_effect_root_dir/frameworks/native/common_effect/strategy",
-        "//foundation/multimedia/media_foundation/engine/include"
+        "//foundation/multimedia/media_foundation/engine/include",
+        "//third_party/json/single_include",
     ]
 }
 

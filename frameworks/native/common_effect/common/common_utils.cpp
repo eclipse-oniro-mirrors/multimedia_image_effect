@@ -117,7 +117,7 @@ ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
 
     effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, surfaceBuffer->GetVirAddr(), extraInfo);
     EFFECT_LOGI("surfaceBuffer width=%{public}d, height=%{public}d, stride=%{public}d, format=%{public}d, "
-        "size=%{public}d, usage = %{public}lu, addr=%{public}p",
+        "size=%{public}d, usage = %{public}llu, addr=%{public}p",
         surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetStride(), surfaceBuffer->GetFormat(),
         surfaceBuffer->GetSize(), surfaceBuffer->GetUsage(), surfaceBuffer->GetVirAddr());
     return ErrorCode::SUCCESS;

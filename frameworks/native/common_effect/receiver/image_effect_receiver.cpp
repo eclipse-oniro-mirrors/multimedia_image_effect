@@ -59,7 +59,7 @@ ErrorCode ImageEffectReceiver::Initialize()
         EFFECT_LOGE("add surface error: %{public}d", ret);
         return ErrorCode::ERR_IMAGE_EFFECT_RECEIVER_INIT_FAILED;
     }
-    EFFECT_LOGI("producer create success, unique id:%{private}lu", fromProducerSurface_->GetUniqueId());
+    EFFECT_LOGI("producer create success, unique id:%{private}llu", fromProducerSurface_->GetUniqueId());
 
     return ErrorCode::SUCCESS;
 }
