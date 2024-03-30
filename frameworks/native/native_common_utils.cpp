@@ -100,7 +100,7 @@ ErrorCode NativeCommonUtils::ParseOHAny(const OH_Any *value, Plugin::Any &any)
             any = value->dataValue.boolValue;
             break;
         default:
-            EFFECT_LOGE("input any data type not support! dataType =%{public}d", value->dataType);
+            EFFECT_LOGE("input any data type not support! dataType=%{public}d", value->dataType);
             return ErrorCode::ERR_UNSUPPORTED_INPUT_ANYTYPE;
     }
     return ErrorCode::SUCCESS;
@@ -124,7 +124,7 @@ ErrorCode NativeCommonUtils::SwitchToOHAny(const Plugin::Any &any, OH_Any *value
         ErrorCode::SUCCESS, ErrorCode::SUCCESS);
 
 #ifndef HST_ANY_WITH_NO_RTTI
-    EFFECT_LOGE("inner any type not support switch to oh_any! type: %{public}s", any.Type().name());
+    EFFECT_LOGE("inner any type not support switch to oh_any! type:%{public}s", any.Type().name());
 #else
     EFFECT_LOGE("inner any type not support switch to oh_any! type:%{public}s", std::string(any.TypeName()).c_str());
 #endif
