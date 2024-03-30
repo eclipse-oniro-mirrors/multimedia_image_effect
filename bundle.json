@@ -81,7 +81,8 @@
           },
           "name": "//foundation/multimedia/image_effect/frameworks/native:image_effect_ndk"
         }
-      ]
+      ],
+      "test": ["//foundation/multimedia/image_effect/test:image_effect_test"]
     }
   }
 }
