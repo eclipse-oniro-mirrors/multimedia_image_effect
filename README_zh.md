@@ -28,6 +28,12 @@
 -   自定义滤镜
 
     此功能用于图片编辑的自定义滤镜调节。
+    
+    
+
+**图** 1 图片编辑组件架构图
+
+![](figures/imageeffect-architecture_zh.jpg)
 
 ## 目录
 
