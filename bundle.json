@@ -51,20 +51,25 @@
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/custom_efilter",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/effect",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/efilter",
-              "//foundation/multimedia/image_effect/interfaces/inner_api/native/factory"
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/factory",
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/memory",
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/utils"
             ],
             "header_files":[
               "effect_buffer.h",
+              "effect_context.h",
               "effect_info.h",
               "effect_type.h",
-              "render_info.h",
               "any.h",
               "error_code.h",
               "delegate.h",
-              "effect.h",
               "image_effect.h",
               "efilter.h",
-              "efilter_factory.h"
+              "efilter_factory.h",
+              "effect_memory.h",
+              "effect_memory_manager.h",
+              "format_helper.h",
+              "memcpy_helper.h"
             ]
           },
           "name": "//foundation/multimedia/image_effect/frameworks/native:image_effect"
@@ -75,7 +80,7 @@
             "header_base": "//foundation/multimedia/image_effect/interfaces/kits/native/include/",
             "header_files": [
               "native_effect_errors.h",
-              "native_efilter.h",
+              "native_effect_filter.h",
               "native_image_effect.h"
             ]
           },

@@ -2,14 +2,14 @@
 
 # ImageEffect框架
 
-- [ImageEffect框架](#ImageEffect框架)
-  - [简介](#简介)
-    - [基本概念](#基本概念)
-  - [目录](#目录)
-  - [使用说明](#使用说明)
-    - [标准滤镜](#标准滤镜)
-    - [简易滤镜](#简易滤镜)
-    - [自定义滤镜](#自定义滤镜)
+- [简介](#简介)
+  - [基本概念](#基本概念)
+- [目录](#目录)
+- [编译](#编译)
+- [使用说明](#使用说明)
+  - [标准滤镜](#标准滤镜)
+  - [简易滤镜](#简易滤镜)
+  - [自定义滤镜](#自定义滤镜)
 
 ## 简介
 
@@ -43,8 +43,9 @@
 /foundation/multimedia/image_effect      # 图片编辑框架业务代码
 ├── frameworks                           # 框架代码
 │   ├── native                           # 内部接口实现
-│   │   ├── common_effect                # 公共效果
-│   │   └── filter_operator              # 元数据实现
+│   │   └── capi                         # 接口实现
+│   │   ├── effect                       # 效果类
+│   │   └── efilter                      # 效果器实现
 │   │   └── pipeline                     # 管线实现
 │   │   └── utils                        # 工具类
 ├── interfaces                           # 接口代码
@@ -55,6 +56,14 @@
 ├── sa_profile                           # 服务配置文件
 └── services                             # 服务实现
 ```
+
+## 编译
+
+```
+./build.sh --product-name {product-name} --build-target foundation/multimedia/image_effect:image_effect
+```
+
+ {product-name}为当前支持的平台，比如rk3568.
 
 ## 使用说明
 

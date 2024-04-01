@@ -24,7 +24,7 @@ ohos_ndk_library("libimage_effect_ndk") {
 ohos_ndk_headers("image_effect_header") {
     dest_dir = "$ndk_headers_out_dir/multimedia/image_effect"
     sources = [
-        "./include/native_efilter.h",
+        "./include/native_effect_filter.h",
         "./include/native_effect_errors.h",
         "./include/native_image_effect.h",
     ]

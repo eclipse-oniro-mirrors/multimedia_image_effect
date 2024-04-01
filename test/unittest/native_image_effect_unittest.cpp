@@ -21,7 +21,7 @@
 #include "mock_surface_buffer.h"
 #include "mock_surface_buffer_yuv_nv21.h"
 #include "mock_surface_buffer_yuv_nv12.h"
-#include "native_efilter.h"
+#include "native_effect_filter.h"
 #include "image_type.h"
 #include "efilter_factory.h"
 #include "brightness_efilter.h"
