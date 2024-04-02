@@ -51,10 +51,12 @@
 ├── interfaces                           # 接口代码
 │   ├── inner_api                        # 内部接口
 │   └── kits                             # 外部接口
-├── LICENSE                              # 证书文件
-├── ohos.build                           # 构建文件
-├── sa_profile                           # 服务配置文件
-└── services                             # 服务实现
+├── test                                 # 测试代码
+│   └── unittest                         # 单元测试
+├── BUILD.gn                             # 构建配置
+├── bundle.json                          # 部件配置
+├── config.gni                           # 构建参数配置
+└── LICENSE                              # 证书文件
 ```
 
 ## 编译
