@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -246,7 +246,7 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     runningIPType = IPType::DEFAULT;
     IPType priorityIPType = IPType::GPU;
     IEffectFormat effectFormat = srcEffectBuffer->bufferInfo_->formatType_;
-    std::vector<std::shared_ptr<Capability>> &caps = context->capNegotiate_->GetCapabilityList();
+    const std::vector<std::shared_ptr<Capability>> &caps = context->capNegotiate_->GetCapabilityList();
     for (const auto &capability : caps) {
         if (capability == nullptr || capability->pixelFormatCap_ == nullptr) {
             continue;
@@ -272,7 +272,7 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, EffectParameters &effectParameters)
+ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters)
 {
     ErrorCode res = pipeline->Prepare();
     FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "pipeline Prepare fail! res=%{public}d", res);
@@ -290,7 +290,7 @@ ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, EffectPara
     return res;
 }
 
-ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, EffectParameters &effectParameters)
+ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters)
 {
     effectParameters.effectContext_->renderStrategy_->Init(effectParameters.srcEffectBuffer_.get(),
         effectParameters.dstEffectBuffer_.get());

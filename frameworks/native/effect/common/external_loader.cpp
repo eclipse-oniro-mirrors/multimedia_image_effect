@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+* Copyright (C) 2024 Huawei Device Co., Ltd.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -28,6 +28,7 @@ ExternLoader *ExternLoader::Instance()
 
 void ExternLoader::LoadExtSo()
 {
+    std::unique_lock<std::mutex> lock(loadExtSo_);
     EFFECT_LOGI("EFilterFactory:LoadExtSo enter!");
     if (isExtLoad_) {
         return;
@@ -81,6 +82,7 @@ InitModuleFunc ExternLoader::GetDeinitModuleFunc() const
 
 void ExternLoader::InitExt()
 {
+    std::unique_lock<std::mutex> lock(initExtSo_);
     if (!IsExtLoad()) {
         LoadExtSo();
     }

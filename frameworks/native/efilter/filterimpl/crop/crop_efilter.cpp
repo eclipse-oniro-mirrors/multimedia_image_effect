@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -189,8 +189,8 @@ std::shared_ptr<MemNegotiatedCap> CropEFilter::Negotiate(const std::shared_ptr<M
     CalculateCropRegion(static_cast<int32_t>(input->width), static_cast<int32_t>(input->height), values_, &region);
 
     std::shared_ptr<MemNegotiatedCap> current = std::make_shared<MemNegotiatedCap>();
-    current->width = region.width;
-    current->height = region.height;
+    current->width = static_cast<uint32_t>(region.width);
+    current->height = static_cast<uint32_t>(region.height);
     current->format = input->format;
     return current;
 }

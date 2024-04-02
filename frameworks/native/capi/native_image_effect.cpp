@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+* Copyright (C) 2024 Huawei Device Co., Ltd.
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
 * You may obtain a copy of the License at
@@ -180,6 +180,8 @@ OH_EffectErrorCode OH_ImageEffect_GetInputSurface(OH_ImageEffect *imageEffect, c
     EFFECT_LOGI("OH_ImageEffect_GetInputSurface iSurfaceId=%{public}llu, surfaceIdStr=%{public}s", iSurfaceId,
         surfaceIdStr.c_str());
     char *surfaceIdTemp = static_cast<char *>(malloc(surfaceIdStr.length() + 1));
+    CHECK_AND_RETURN_RET_LOG(surfaceIdTemp != nullptr, OH_EffectErrorCode::EFFECT_ERR_GET_INPUT_SURFACE_FAIL,
+        "malloc surfaceId buffer fail!");
     imageEffect->surfaceIdTemp = surfaceIdTemp;
     memccpy(surfaceIdTemp, surfaceIdStr.c_str(), surfaceIdStr.length(), surfaceIdStr.length());
     surfaceIdTemp[surfaceIdStr.length()] = '\0';

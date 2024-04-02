@@ -79,9 +79,9 @@ MemoryData *EffectMemoryManager::AllocMemory(void *srcAddr, MemoryInfo &allocMem
             continue;
         }
 
-        MemoryInfo &memInfo = memory->memoryData_->memoryInfo;
-        BufferInfo &bufferInfo = memInfo.bufferInfo;
-        BufferInfo &allocBufInfo = allocMemInfo.bufferInfo;
+        const MemoryInfo &memInfo = memory->memoryData_->memoryInfo;
+        const BufferInfo &bufferInfo = memInfo.bufferInfo;
+        const BufferInfo &allocBufInfo = allocMemInfo.bufferInfo;
         if (bufferInfo.width_ == allocBufInfo.width_ && bufferInfo.height_ == allocBufInfo.height_ &&
             (allocMemInfo.bufferType == BufferType::DEFAULT || allocMemInfo.bufferType == memInfo.bufferType)) {
             EFFECT_LOGD("reuse memory. width=%{public}d, height=%{public}d, addr=%{public}p, format=%{public}d, "
@@ -141,7 +141,7 @@ void EffectMemoryManager::ClearMemory()
 void EffectMemoryManager::Deinit()
 {
     for (auto it = memorys_.begin(); it != memorys_.end();) {
-        MemDataType &memDataType_ = (*it)->memDataType_;
+        const MemDataType &memDataType_ = (*it)->memDataType_;
         if (memDataType_ == MemDataType::INPUT || memDataType_ == MemDataType::OUTPUT) {
             it = memorys_.erase(it);
         } else {
