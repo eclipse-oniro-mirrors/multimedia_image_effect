@@ -15,7 +15,7 @@
 
 #include "image_effect_capi_unittest.h"
 #include "native_image_effect.h"
-#include "native_efilter.h"
+#include "native_effect_filter.h"
 #include "mock_native_pixel_map.h"
 #include "efilter_factory.h"
 #include "brightness_efilter.h"

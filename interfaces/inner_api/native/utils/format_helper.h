@@ -18,6 +18,9 @@
 
 #include "effect_info.h"
 
+#define UNSIGHED_CHAR_MAX 255
+#define CLIP(a, aMin, aMax) (a) > (aMax) ? (aMax) : ((a) < (aMin) ? (aMin) : (a))
+
 namespace OHOS {
 namespace Media {
 namespace Effect {
@@ -26,6 +29,42 @@ public:
     static uint32_t CalculateDataRowCount(uint32_t height, IEffectFormat format);
     static uint32_t CalculateRowStride(uint32_t width, IEffectFormat format);
     static uint32_t CalculateSize(uint32_t width, uint32_t height, IEffectFormat format);
+	
+    static inline uint8_t RGBToY(uint8_t r, uint8_t g, uint8_t b)
+    {
+        int y = (54 * r + 183 * g + 18 * b) >> 8;
+        return CLIP(y, 0, UNSIGHED_CHAR_MAX);
+    }
+
+    static inline uint8_t RGBToU(uint8_t r, uint8_t g, uint8_t b)
+    {
+        int u = ((-29 * r - 99 * g + 128 * b) >> 8) + 128;
+        return CLIP(u, 0, UNSIGHED_CHAR_MAX);
+    }
+
+    static inline uint8_t RGBToV(uint8_t r, uint8_t g, uint8_t b)
+    {
+        int v = ((128 * r - 116 * g - 12 * b) >> 8) + 128;
+        return CLIP(v, 0, UNSIGHED_CHAR_MAX);
+    }
+
+    static inline uint8_t YuvToR(uint8_t y, uint8_t u, uint8_t v)
+    {
+        int r = (y + ((403 * (v - 128)) >> 8));
+        return CLIP(r, 0, UNSIGHED_CHAR_MAX);
+    }
+
+    static inline uint8_t YuvToG(uint8_t y, uint8_t u, uint8_t v)
+    {
+        int g = (y - ((48 * (u - 128) + 120 * (v - 128)) >> 8));
+        return CLIP(g, 0, UNSIGHED_CHAR_MAX);
+    }
+
+    static inline uint8_t YuvToB(uint8_t y, uint8_t u, uint8_t v)
+    {
+        int b = (y + ((475 * (u - 128)) >> 8));
+        return CLIP(b, 0, UNSIGHED_CHAR_MAX);
+    }
 };
 } // namespace Effect
 } // namespace Media

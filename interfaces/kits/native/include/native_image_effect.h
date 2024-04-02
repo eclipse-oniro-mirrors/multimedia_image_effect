@@ -17,7 +17,7 @@
 #define IMAGE_EFFECT_NATIVE_IMAGE_EFFECT_H
 
 #include "native_effect_errors.h"
-#include "native_efilter.h"
+#include "native_effect_filter.h"
 
 #ifdef __cplusplus
 extern "C" {
