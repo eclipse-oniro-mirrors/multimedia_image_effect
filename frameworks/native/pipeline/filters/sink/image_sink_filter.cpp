@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -47,8 +47,9 @@ void CopyDataToPixelMap(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> 
         .bufferInfo = {
             .width_ = static_cast<uint32_t>(pixelMap->GetWidth()),
             .height_ = static_cast<uint32_t>(pixelMap->GetHeight()),
-            .len_ = FormatHelper::CalculateDataRowCount(pixelMap->GetHeight(),
-                CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat())) * pixelMap->GetRowStride(),
+            .len_ = FormatHelper::CalculateDataRowCount(static_cast<uint32_t>(pixelMap->GetHeight()),
+                CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat())) *
+                static_cast<uint32_t>(pixelMap->GetRowStride()),
             .formatType_ = CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat()),
             .rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride()),
         },
@@ -68,8 +69,8 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
         return ErrorCode::SUCCESS;
     }
 
-    if (pixelMap->GetRowStride() == buffer->bufferInfo_->rowStride_ &&
-        pixelMap->GetHeight() == buffer->bufferInfo_->height_ &&
+    if (static_cast<uint32_t>(pixelMap->GetRowStride()) == buffer->bufferInfo_->rowStride_ &&
+        static_cast<uint32_t>(pixelMap->GetHeight()) == buffer->bufferInfo_->height_ &&
         CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat()) == buffer->bufferInfo_->formatType_) {
         EFFECT_LOGD("Copy data to pixel map.");
         CopyDataToPixelMap(pixelMap, buffer);
@@ -106,8 +107,8 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
         return ErrorCode::SUCCESS;
     }
 
-    if (surfaceBuffer->GetStride() == buffer->bufferInfo_->rowStride_ &&
-        surfaceBuffer->GetHeight() == buffer->bufferInfo_->height_ &&
+    if (static_cast<uint32_t>(surfaceBuffer->GetStride()) == buffer->bufferInfo_->rowStride_ &&
+        static_cast<uint32_t>(surfaceBuffer->GetHeight()) == buffer->bufferInfo_->height_ &&
         CommonUtils::SwitchToEffectFormat((::PixelFormat)surfaceBuffer->GetFormat()) ==
         buffer->bufferInfo_->formatType_) {
         EFFECT_LOGD("Copy data to surface buffer.");

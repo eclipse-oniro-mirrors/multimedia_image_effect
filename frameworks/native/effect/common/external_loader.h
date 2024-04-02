@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,8 @@
 #define IM_EXTERN_LOADER_H
 
 #include <string>
+#include <atomic>
+#include <mutex>
 
 #include "effect_log.h"
 
@@ -56,8 +58,11 @@ private:
     InitModuleFunc initModuleFunc_ = nullptr;
     DeinitModuleFunc deinitModuleFunc_ = nullptr;
 
-    bool isExtLoad_ = false;
-    bool hasInitExt_ = false;
+    std::atomic<bool> isExtLoad_ = false;
+    std::atomic<bool> hasInitExt_ = false;
+
+    std::mutex loadExtSo_;
+    std::mutex initExtSo_;
 };
 } // namespace Effect
 } // namespace Media
