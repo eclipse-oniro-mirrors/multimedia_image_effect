@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -254,7 +254,7 @@ ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<Ef
 
     std::shared_ptr<EffectContext> context = std::make_shared<EffectContext>();
     context->memoryManager_ = std::make_shared<EffectMemoryManager>();
-    context->renderStrategy_ = std::make_shared<EffectRenderStrategy>();
+    context->renderStrategy_ = std::make_shared<EFilterRenderStrategy>();
     context->ipType_ = runningType;
 
     context->memoryManager_->Init(src, dst); // local variable and not need invoke ClearMemory

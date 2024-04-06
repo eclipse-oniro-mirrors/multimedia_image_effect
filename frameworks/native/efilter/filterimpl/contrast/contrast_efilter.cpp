@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,26 +27,43 @@ namespace Media {
 namespace Effect {
 REGISTER_EFILTER_FACTORY(ContrastEFilter, "Contrast");
 std::shared_ptr<EffectInfo> ContrastEFilter::info_ = nullptr;
-using ApplyFunc =
-    std::function<ErrorCode(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value)>;
-
 const float ContrastEFilter::Parameter::RANGE[] = { -100.f, 100.f };
-const std::string ContrastEFilter::Parameter::KEY_INTENSITY = "FILTER_INTENSITY";
+const std::string ContrastEFilter::Parameter::KEY_INTENSITY = "FilterIntensity";
 
-static const std::unordered_map<IPType, std::unordered_map<IEffectFormat, ApplyFunc>> CONTRAST_APPLY_FUNCS = {
-    { IPType::CPU,
+ContrastEFilter::ContrastEFilter(const std::string &name) : EFilter(name)
+{
+    gpuContrastAlgo_ = std::make_shared<GpuContrastAlgo>();
+    contrastFilterInfo_ = {
         {
-            { IEffectFormat::RGBA8888, CpuContrastAlgo::OnApplyRGBA8888 },
-            { IEffectFormat::YUVNV12, CpuContrastAlgo::OnApplyYUVNV12 },
-            { IEffectFormat::YUVNV21, CpuContrastAlgo::OnApplyYUVNV21 },
-        }
-    },
-    { IPType::GPU,
+            IPType::CPU,
+            {
+                { IEffectFormat::RGBA8888, CpuContrastAlgo::OnApplyRGBA8888 },
+                { IEffectFormat::YUVNV12, CpuContrastAlgo::OnApplyYUVNV12 },
+                { IEffectFormat::YUVNV21, CpuContrastAlgo::OnApplyYUVNV21 },
+            }
+        },
         {
-            { IEffectFormat::RGBA8888, GpuContrastAlgo::OnApplyRGBA8888 },
+            IPType::GPU,
+            {
+                {
+                    IEffectFormat::RGBA8888,
+                    [this](EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value)
+                        { return gpuContrastAlgo_->OnApplyRGBA8888(src, dst, value); }
+                },
+            }
         }
+    };
+}
+
+ContrastEFilter::~ContrastEFilter()
+{
+    if (filterContext_ != nullptr) {
+        filterContext_->ReleaseCurrent();
+        filterContext_->Release();
     }
-};
+
+    gpuContrastAlgo_->Release();
+}
 
 ErrorCode ContrastEFilter::Render(EffectBuffer *buffer, std::shared_ptr<EffectContext> &context)
 {
@@ -58,8 +75,8 @@ ErrorCode ContrastEFilter::Render(EffectBuffer *buffer, std::shared_ptr<EffectCo
 ErrorCode ContrastEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context)
 {
     IPType ipType = context->ipType_;
-    auto it = CONTRAST_APPLY_FUNCS.find(ipType);
-    CHECK_AND_RETURN_RET_LOG(it != CONTRAST_APPLY_FUNCS.end(), ErrorCode::ERR_UNSUPPORTED_IPTYPE_FOR_EFFECT,
+    auto it = contrastFilterInfo_.find(ipType);
+    CHECK_AND_RETURN_RET_LOG(it != contrastFilterInfo_.end(), ErrorCode::ERR_UNSUPPORTED_IPTYPE_FOR_EFFECT,
         "ipType=%{public}d is not support! filter=%{public}s", ipType, name_.c_str());
 
     IEffectFormat formatType = src->bufferInfo_->formatType_;
@@ -117,26 +134,25 @@ std::shared_ptr<EffectInfo> ContrastEFilter::GetEffectInfo(const std::string &na
         return info_;
     }
     info_ = std::make_unique<EffectInfo>();
-    std::map<IPType, std::vector<IEffectFormat>> formatTypes;
-    for (const auto &applyFunc : CONTRAST_APPLY_FUNCS) {
-        const IPType &ipType = applyFunc.first;
-        const std::unordered_map<IEffectFormat, ApplyFunc> &effectFormats = applyFunc.second;
-        for (const auto &effectFormat : effectFormats) {
-            const IEffectFormat &format = effectFormat.first;
-            auto it = info_->formats_.find(format);
-            if (it == info_->formats_.end()) {
-                std::vector<IPType> ipTypes;
-                ipTypes.emplace_back(ipType);
-                info_->formats_.emplace(format, ipTypes);
-            } else {
-                std::vector<IPType> &ipTypes = it->second;
-                ipTypes.emplace_back(ipType);
-            }
-        }
-    }
-
+    info_->formats_.emplace(IEffectFormat::RGBA8888, std::vector<IPType>{ IPType::CPU, IPType::GPU });
+    info_->formats_.emplace(IEffectFormat::YUVNV21, std::vector<IPType>{ IPType::CPU });
+    info_->formats_.emplace(IEffectFormat::YUVNV12, std::vector<IPType>{ IPType::CPU });
     info_->category_ = Category::COLOR_ADJUST;
     return info_;
+}
+
+ErrorCode ContrastEFilter::PreRender(IEffectFormat &format)
+{
+    IPType ipType = IPType::DEFAULT;
+    ErrorCode res = CalculateEFilterIPType(format, ipType);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
+        "PreRender: CalculateEFilterIPType fail! name=%{public}s", name_.c_str());
+    if (ipType == IPType::GPU) {
+        filterContext_ = new IMRenderContext();
+        filterContext_->Init();
+        filterContext_->MakeCurrent(nullptr);
+    }
+    return ErrorCode::SUCCESS;
 }
 } // namespace Effect
 } // namespace Media

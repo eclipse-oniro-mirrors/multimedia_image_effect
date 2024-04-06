@@ -30,7 +30,6 @@
 #include "pipeline_core.h"
 #include "json_helper.h"
 #include "efilter_factory.h"
-#include "external_loader.h"
 #include "effect_context.h"
 
 namespace OHOS {
@@ -77,7 +76,7 @@ void ImageEffect::Impl::InitEffectContext()
 {
     effectContext_ = std::make_shared<EffectContext>();
     effectContext_->memoryManager_ = std::make_shared<EffectMemoryManager>();
-    effectContext_->renderStrategy_ = std::make_shared<EffectRenderStrategy>();
+    effectContext_->renderStrategy_ = std::make_shared<EFilterRenderStrategy>();
     effectContext_->capNegotiate_ = std::make_shared<CapabilityNegotiate>();
 }
 
@@ -137,15 +136,12 @@ ImageEffect::ImageEffect(const char *name)
         name_ = name;
     }
     InitEGLEnv();
-    ExternLoader::Instance()->InitExt();
-    ExtInitModule();
 }
 
 ImageEffect::~ImageEffect()
 {
     EFFECT_LOGI("ImageEffect destruct!");
     DestroyEGLEnv();
-    ExtDeinitModule();
 
     impl_->surfaceAdapter_ = nullptr;
     toProducerSurface_ = nullptr;
@@ -804,22 +800,6 @@ ErrorCode ImageEffect::SetExtraInfo(nlohmann::json res)
 {
     extraInfo_ = res;
     return ErrorCode::SUCCESS;
-}
-
-void ImageEffect::ExtInitModule()
-{
-    InitModuleFunc initModuleFunc = ExternLoader::Instance()->GetInitModuleFunc();
-    if (initModuleFunc) {
-        initModuleFunc();
-    }
-}
-
-void ImageEffect::ExtDeinitModule()
-{
-    DeinitModuleFunc deinitModuleFunc = ExternLoader::Instance()->GetDeinitModuleFunc();
-    if (deinitModuleFunc) {
-        deinitModuleFunc();
-    }
 }
 } // namespace Effect
 } // namespace Media

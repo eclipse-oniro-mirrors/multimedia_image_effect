@@ -22,7 +22,7 @@ namespace OHOS {
 namespace Media {
 namespace Effect {
 REGISTER_EFILTER_FACTORY(CropEFilter, "Crop");
-const std::string CropEFilter::Parameter::KEY_REGION = "FILTER_REGION";
+const std::string CropEFilter::Parameter::KEY_REGION = "FilterRegion";
 std::shared_ptr<EffectInfo> CropEFilter::info_ = nullptr;
 namespace {
     constexpr int32_t PIXEL_BYTES = 4;

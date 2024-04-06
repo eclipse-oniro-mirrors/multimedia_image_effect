@@ -51,7 +51,6 @@
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/custom_efilter",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/effect",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/efilter",
-              "//foundation/multimedia/image_effect/interfaces/inner_api/native/factory",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/memory",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/utils"
             ],

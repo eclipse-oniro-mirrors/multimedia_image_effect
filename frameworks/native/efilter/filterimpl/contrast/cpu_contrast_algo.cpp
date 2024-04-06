@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -202,7 +202,7 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst,
 float CpuContrastAlgo::ParseContrast(std::map<std::string, Plugin::Any> &value)
 {
     float contrast = 0.f;
-    ErrorCode res = CommonUtils::GetValue("FILTER_INTENSITY", value, contrast);
+    ErrorCode res = CommonUtils::GetValue("FilterIntensity", value, contrast);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGW("get value fail! res=%{public}d. use default value: %{public}f", res, contrast);
     }

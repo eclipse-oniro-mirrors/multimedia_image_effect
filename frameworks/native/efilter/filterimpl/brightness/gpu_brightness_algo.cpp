@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,12 +23,6 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-unsigned int GpuBrightnessAlgo::vbo_ = 0;
-unsigned int GpuBrightnessAlgo::vao_ = 0;
-unsigned int GpuBrightnessAlgo::fbo_ = 0;
-unsigned int GpuBrightnessAlgo::shaderProgram_ = 0;
-unsigned int GpuBrightnessAlgo::texId_ = 0;
-
 constexpr int MAX_BRIGHTNESS = 100;
 
 constexpr GLfloat VERTICES[] = {
@@ -136,7 +130,7 @@ ErrorCode GpuBrightnessAlgo::Release()
 float GpuBrightnessAlgo::ParseBrightness(std::map<std::string, Plugin::Any> &value)
 {
     float brightness = 0.f;
-    ErrorCode res = CommonUtils::GetValue("FILTER_INTENSITY", value, brightness);
+    ErrorCode res = CommonUtils::GetValue("FilterIntensity", value, brightness);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGW("get value fail! res=%{public}d. use default value: %{public}f", res, brightness);
     }

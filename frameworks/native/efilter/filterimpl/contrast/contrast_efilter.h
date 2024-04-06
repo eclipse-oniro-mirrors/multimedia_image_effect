@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,8 @@
 #define IMAGE_EFFECT_CONTRAST_EFILTER_H
 
 #include "efilter.h"
+#include "gpu_contrast_algo.h"
+#include "IMRenderContext.h"
 
 namespace OHOS {
 namespace Media {
@@ -29,9 +31,9 @@ public:
         static const std::string KEY_INTENSITY;
     };
 
-    explicit ContrastEFilter(const std::string &name) : EFilter(name) {}
+    explicit ContrastEFilter(const std::string &name);
 
-    ~ContrastEFilter() override = default;
+    ~ContrastEFilter() override;
 
     ErrorCode Render(EffectBuffer *buffer, std::shared_ptr<EffectContext> &context) override;
 
@@ -42,8 +44,16 @@ public:
     ErrorCode Restore(const nlohmann::json &values) override;
 
     static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name);
+
+    ErrorCode PreRender(IEffectFormat &format) override;
 private:
+    using ApplyFunc =
+        std::function<ErrorCode(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value)>;
+
     static std::shared_ptr<EffectInfo> info_;
+    std::unordered_map<IPType, std::unordered_map<IEffectFormat, ApplyFunc>> contrastFilterInfo_;
+    std::shared_ptr<GpuContrastAlgo> gpuContrastAlgo_;
+    IMRenderContext* filterContext_ = nullptr;
 };
 } // namespace Effect
 } // namespace Media
