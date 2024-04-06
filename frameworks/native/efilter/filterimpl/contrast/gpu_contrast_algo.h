@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -25,20 +25,19 @@ namespace Media {
 namespace Effect {
 class GpuContrastAlgo {
 public:
-    static ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value);
-
+    ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value);
+    ErrorCode Release();
 private:
-    static ErrorCode InitMesh();
-    static ErrorCode PreDraw(uint32_t width, uint32_t height, std::map<std::string, Plugin::Any> &value);
-    static ErrorCode Release();
-    static void Unbind();
-    static float ParseContrast(std::map<std::string, Plugin::Any> &value);
+    ErrorCode InitMesh();
+    ErrorCode PreDraw(uint32_t width, uint32_t height, std::map<std::string, Plugin::Any> &value);
+    void Unbind();
+    float ParseContrast(std::map<std::string, Plugin::Any> &value);
 
-    static unsigned int vbo_;
-    static unsigned int vao_;
-    static unsigned int fbo_;
-    static unsigned int shaderProgram_;
-    static unsigned int texId_;
+    unsigned int vbo_ = 0;
+    unsigned int vao_ = 0;
+    unsigned int fbo_ = 0;
+    unsigned int shaderProgram_ = 0;
+    unsigned int texId_ = 0;
 };
 } // namespace Effect
 } // namespace Media

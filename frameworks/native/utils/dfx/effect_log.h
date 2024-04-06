@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,7 +39,7 @@
 
 #define EFFECT_LOG(func, fmt, args...)                                                                            \
     do {                                                                                                          \
-        (void)func(LOG_LABEL, "[%{public}s()@%{public}s:%{public}d] " fmt, __FILE_NAME__, __FUNCTION__, __LINE__, \
+        (void)func(LOG_CORE, "[%{public}s()@%{public}s:%{public}d] " fmt, __FILE_NAME__, __FUNCTION__, __LINE__,  \
             ##args);                                                                                              \
     } while (0)
 
@@ -47,7 +47,7 @@
 #define EFFECT_LOGE(fmt, ...) HILOG_ERROR(LOG_CORE, fmt, ##__VA_ARGS__)
 #define EFFECT_LOGW(fmt, ...) HILOG_WARN(LOG_CORE, fmt, ##__VA_ARGS__)
 #define EFFECT_LOGI(fmt, ...) HILOG_INFO(LOG_CORE, fmt, ##__VA_ARGS__)
-#define EFFECT_LOGD(fmt, ...) HILOG_DEBUG(LOG_CORE, fmt, ##__VA_ARGS__)
+#define EFFECT_LOGD(fmt, ...) EFFECT_LOG(HILOG_DEBUG, fmt, ##__VA_ARGS__)
 
 #define CHECK_AND_RETURN_RET_LOG(cond, ret, fmt, ...) \
     do {                                              \

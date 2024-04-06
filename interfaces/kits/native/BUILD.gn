@@ -17,7 +17,7 @@ import("//build/ohos/ndk/ndk.gni")
 ohos_ndk_library("libimage_effect_ndk") {
     output_extension = "so"
     ndk_description_file = "./libnative_image_effect.ndk.json"
-    min_compact_version = "11"
+    min_compact_version = "12"
     output_name = "image_effect_ndk"
 }
 
@@ -27,5 +27,6 @@ ohos_ndk_headers("image_effect_header") {
         "./include/native_effect_filter.h",
         "./include/native_effect_errors.h",
         "./include/native_image_effect.h",
+        "./include/native_effect_advance.h",
     ]
 }

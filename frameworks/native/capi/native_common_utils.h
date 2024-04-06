@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,6 +24,7 @@
 #include "native_effect_filter.h"
 #include "image_type.h"
 #include "pixel_map_napi.h"
+#include "native_effect_advance.h"
 
 #define EFFECT_EXPORT __attribute__((visibility("default")))
 
@@ -32,31 +33,23 @@ namespace Media {
 namespace Effect {
 class NativeCommonUtils {
 public:
-    static ErrorCode ParseOHAny(const OH_Any *value, Plugin::Any &any);
+    static ErrorCode ParseOHAny(const OH_EffectAny *value, Plugin::Any &any);
 
-    static ErrorCode SwitchToOHAny(const Plugin::Any &any, OH_Any *value);
+    static ErrorCode SwitchToOHAny(const Plugin::Any &any, OH_EffectAny *value);
 
-    static void SwitchToOHFormatType(const IEffectFormat &formatType, OH_IEffectFormat &ohFormatType);
+    static void SwitchToOHFormatType(const IEffectFormat &formatType, OH_EffectFormat &ohFormatType);
 
-    static void SwitchToFormatType(const OH_IEffectFormat &ohFormatType, IEffectFormat &formatType);
+    static void SwitchToFormatType(const OH_EffectFormat &ohFormatType, IEffectFormat &formatType);
 
-    static void SwitchToOHFormatType(const IEffectFormat &formatType, uint32_t &ohFormatType);
+    static void SwitchToOHEffectInfo(const EffectInfo *effectInfo, OH_EffectFilterInfo *ohFilterInfo);
 
-    static void SwitchToFormatType(const uint32_t &ohFormatType, IEffectFormat &formatType);
-
-    static void SwitchToOHCategory(const Category &category, OH_Category &ohCategory);
-
-    static void SwitchToCategory(const OH_Category &ohCategory, Category &category);
-
-    static void SwitchToCategory(const uint32_t &ohCategory, Category &category);
-
-    static void SwitchToOHEffectInfo(const EffectInfo *effectInfo, OH_EffectInfo *ohEffectInfo);
+    static PixelMap *GetPixelMapFromOHPixelmap(OH_Pixelmap *pixelmap);
 
     static PixelMap *GetPixelMapFromNativePixelMap(NativePixelMap *nativePixelMap);
 
     static void ParseLookupKey(std::string &key, std::vector<const char *> &matchEFilter);
 
-    static void SwitchToEffectInfo(const OH_EffectInfo *info, std::shared_ptr<EffectInfo> &effectInfo);
+    static void SwitchToEffectInfo(const OH_EffectFilterInfo *info, std::shared_ptr<EffectInfo> &effectInfo);
 };
 } // namespace Effect
 } // namespace Media

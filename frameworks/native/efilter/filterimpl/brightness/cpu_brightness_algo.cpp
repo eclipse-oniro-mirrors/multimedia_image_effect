@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -36,7 +36,7 @@ constexpr uint32_t RGBA_ALPHA_INDEX = 3;
 float CpuBrightnessAlgo::ParseBrightness(std::map<std::string, Plugin::Any> &value)
 {
     float brightness = 0.f;
-    ErrorCode res = CommonUtils::GetValue("FILTER_INTENSITY", value, brightness);
+    ErrorCode res = CommonUtils::GetValue("FilterIntensity", value, brightness);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGW("get value fail! res=%{public}d. use default value: %{public}f", res, brightness);
     }

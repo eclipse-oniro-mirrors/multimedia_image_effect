@@ -15,7 +15,8 @@ ohos_unittest("image_effect_unittest") {
     module_out_path = module_output_path
     resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
     include_dirs = [
-        "$image_effect_root_dir/frameworks/native/effect/common",
+        "$image_effect_root_dir/frameworks/native/effect/render_environment/gpu_render",
+        "$image_effect_root_dir/frameworks/native/effect/render_environment/utils",
         "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness",
         "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast",
         "$image_effect_root_dir/test/unittest/mock/include",
@@ -46,10 +47,6 @@ ohos_unittest("image_effect_unittest") {
         "c_utils:utils",
         "graphic_2d:libgl",
         "graphic_surface:surface",
-    ]
-
-    defines = [
-        "HST_ANY_WITH_NO_RTTI",
     ]
 
     use_exceptions = true

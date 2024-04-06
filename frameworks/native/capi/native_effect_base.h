@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,13 +18,13 @@
 
 #include <memory>
 #include <utility>
-#include <vector>
+#include <unordered_set>
 
 #include "efilter.h"
 #include "image_effect.h"
 #include "native_effect_filter.h"
 
-struct OH_EFilter {
+struct OH_EffectFilter {
     std::shared_ptr<OHOS::Media::Effect::EFilter> filter_ = nullptr;
     void SetParameter(const std::string &key, OHOS::Media::Plugin::Any &param);
     OHOS::Media::Effect::ErrorCode GetParameter(const std::string &key, OHOS::Media::Plugin::Any &param);
@@ -37,23 +37,39 @@ struct OH_ImageEffect {
     OH_ImageEffect() = default;
     std::shared_ptr<OHOS::Media::Effect::ImageEffect> imageEffect_ = nullptr;
     char *saveJson = nullptr;
-    std::vector<std::pair<OH_EFilter *, std::string>> filters_;
-    char *surfaceIdTemp = nullptr;
+    std::vector<std::pair<OH_EffectFilter *, std::string>> filters_;
     ~OH_ImageEffect()
     {
         if (saveJson != nullptr) {
             free(saveJson);
             saveJson = nullptr;
         }
-        if (surfaceIdTemp != nullptr) {
-            free(surfaceIdTemp);
-            surfaceIdTemp = nullptr;
-        }
         for (const auto &filter : filters_) {
-            OH_EFilter_Release(filter.first);
+            OH_EffectFilter_Release(filter.first);
         }
         filters_.clear();
     }
+};
+
+struct OH_EffectFilterInfo {
+    OH_EffectFilterInfo() = default;
+    ~OH_EffectFilterInfo();
+    std::string filterName = "";
+    std::unordered_set<OH_EffectBufferType> supportedBufferTypes;
+    std::unordered_set<OH_EffectFormat> supportedFormats;
+
+    OH_EffectBufferType *effectBufferType = nullptr;
+    uint32_t bufferTypeArraySize = 0;
+    OH_EffectFormat *effectFormat = nullptr;
+    uint32_t formatArraySize = 0;
+};
+
+struct OH_EffectBufferInfo {
+    void *addr = nullptr;
+    int32_t width = 0;
+    int32_t height = 0;
+    int32_t rowSize = 0;
+    OH_EffectFormat format = OH_EffectFormat::EFFECT_PIXEL_FORMAT_UNKNOWN;
 };
 
 #endif // IMAGE_EFFECT_NATIVE_BASE_H
