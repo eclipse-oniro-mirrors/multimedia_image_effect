@@ -27,7 +27,7 @@ class BrightnessEFilter : public EFilter {
 public:
     class Parameter : public EFilter::Parameter {
     public:
-        static const float RANGE[];
+        static const float INTENSITY_RANGE[];
         static const std::string KEY_INTENSITY;
     };
 

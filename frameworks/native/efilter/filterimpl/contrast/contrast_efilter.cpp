@@ -27,7 +27,7 @@ namespace Media {
 namespace Effect {
 REGISTER_EFILTER_FACTORY(ContrastEFilter, "Contrast");
 std::shared_ptr<EffectInfo> ContrastEFilter::info_ = nullptr;
-const float ContrastEFilter::Parameter::RANGE[] = { -100.f, 100.f };
+const float ContrastEFilter::Parameter::INTENSITY_RANGE[] = { -100.f, 100.f };
 const std::string ContrastEFilter::Parameter::KEY_INTENSITY = "FilterIntensity";
 
 ContrastEFilter::ContrastEFilter(const std::string &name) : EFilter(name)
@@ -102,10 +102,10 @@ ErrorCode ContrastEFilter::SetValue(const std::string &key, Plugin::Any &value)
     }
 
     float contrast = *contrastPtr;
-    if (contrast < Parameter::RANGE[0] || contrast > Parameter::RANGE[1]) {
+    if (contrast < Parameter::INTENSITY_RANGE[0] || contrast > Parameter::INTENSITY_RANGE[1]) {
         EFFECT_LOGW("the value is out of range! key=%{public}s, value=%{public}f, range=[%{public}f, %{public}f]",
-            key.c_str(), contrast, Parameter::RANGE[0], Parameter::RANGE[1]);
-        *contrastPtr = CLIP(contrast, Parameter::RANGE[0], Parameter::RANGE[1]);
+            key.c_str(), contrast, Parameter::INTENSITY_RANGE[0], Parameter::INTENSITY_RANGE[1]);
+        *contrastPtr = CommonUtils::Clip(contrast, Parameter::INTENSITY_RANGE[0], Parameter::INTENSITY_RANGE[1]);
     }
 
     return EFilter::SetValue(key, value);
@@ -121,7 +121,7 @@ ErrorCode ContrastEFilter::Restore(const nlohmann::json &values)
         EFFECT_LOGW("not set value! key=%{public}s", Parameter::KEY_INTENSITY.c_str());
         return ErrorCode::SUCCESS;
     }
-    if (contrast < Parameter::RANGE[0] || contrast > Parameter::RANGE[1]) {
+    if (contrast < Parameter::INTENSITY_RANGE[0] || contrast > Parameter::INTENSITY_RANGE[1]) {
         return ErrorCode::ERR_VALUE_OUT_OF_RANGE;
     }
     Plugin::Any any = contrast;

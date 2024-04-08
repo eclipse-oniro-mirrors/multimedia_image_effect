@@ -23,7 +23,6 @@
 #include "efilter.h"
 
 #define REGISTER_EFILTER_FACTORY(T, U) static AutoRegisterEFilter<T> gAutoRegster_##T(U)
-#define REGISTER_DELEGAT_FACTORY(T, U) AutoRegisterEFilter<T> autoRegster_##T(U)
 
 namespace OHOS {
 namespace Media {
@@ -62,7 +61,7 @@ public:
 
     std::shared_ptr<EFilter> Restore(const std::string &name, const nlohmann::json &root, void *handler);
 
-    template <class T> void ResisterEFilter(const std::string &name)
+    template <class T> void RegisterEFilter(const std::string &name)
     {
         EFilterFunction function = {
             .generator_ = [](const std::string &name) { return std::make_shared<T>(name); },
@@ -87,7 +86,7 @@ template <typename T> class AutoRegisterEFilter {
 public:
     explicit AutoRegisterEFilter(const std::string &name)
     {
-        EFilterFactory::Instance()->ResisterEFilter<T>(name);
+        EFilterFactory::Instance()->RegisterEFilter<T>(name);
     }
 
     ~AutoRegisterEFilter() = default;

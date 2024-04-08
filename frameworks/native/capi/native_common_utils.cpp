@@ -49,7 +49,7 @@ static const std::map<IPType, OH_EffectBufferType> IPTYPE_TABLE = {
 };
 
 template <class ValueType>
-ErrorCode AnyCastOHAny(const Plugin::Any &any, OH_EffectDataType &ohDataType, OH_EffectDataType ohDataTypeValue, 
+ErrorCode AnyCastOHAny(const Plugin::Any &any, OH_EffectDataType &ohDataType, OH_EffectDataType ohDataTypeValue,
     ValueType &value)
 {
     auto result = Plugin::AnyCast<ValueType>(&any);

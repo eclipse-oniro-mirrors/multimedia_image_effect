@@ -62,7 +62,7 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
         float current = (float)idx / UNSIGHED_CHAR_MAX;
         current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_INDEX * PI * current);
-        current = CLIP(current, 0, 1);
+        current = CommonUtils::Clip(current, 0, 1);
         lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
     }
 
@@ -110,7 +110,7 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst,
     for (uint32_t i = 0; i < UNSIGHED_CHAR_DATA_RECORDS; i++) {
         float current = (float)(i) / UNSIGHED_CHAR_MAX;
         current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_INDEX * PI * current);
-        current = CLIP(current, 0, 1);
+        current = CommonUtils::Clip(current, 0, 1);
         lut[i] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
     }
 
@@ -168,7 +168,7 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst,
     for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
         float current = (float)(idx) / UNSIGHED_CHAR_MAX;
         current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_INDEX * PI * current);
-        current = CLIP(current, 0, 1);
+        current = CommonUtils::Clip(current, 0, 1);
         lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
     }
 
