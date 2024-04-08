@@ -46,7 +46,6 @@
 │   │   └── capi                         # 接口实现
 │   │   ├── effect                       # 效果类
 │   │   └── efilter                      # 效果器实现
-│   │   └── pipeline                     # 管线实现
 │   │   └── utils                        # 工具类
 ├── interfaces                           # 接口代码
 │   ├── inner_api                        # 内部接口
