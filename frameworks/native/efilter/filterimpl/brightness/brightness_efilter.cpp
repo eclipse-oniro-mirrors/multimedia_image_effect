@@ -28,7 +28,7 @@ namespace Media {
 namespace Effect {
 REGISTER_EFILTER_FACTORY(BrightnessEFilter, "Brightness");
 std::shared_ptr<EffectInfo> BrightnessEFilter::info_ = nullptr;
-const float BrightnessEFilter::Parameter::RANGE[] = { -100.f, 100.f };
+const float BrightnessEFilter::Parameter::INTENSITY_RANGE[] = { -100.f, 100.f };
 const std::string BrightnessEFilter::Parameter::KEY_INTENSITY = "FilterIntensity";
 
 BrightnessEFilter::BrightnessEFilter(const std::string &name) : EFilter(name)
@@ -103,10 +103,10 @@ ErrorCode BrightnessEFilter::SetValue(const std::string &key, Plugin::Any &value
     }
 
     float brightness = *brightnessPtr;
-    if (brightness < Parameter::RANGE[0] || brightness > Parameter::RANGE[1]) {
+    if (brightness < Parameter::INTENSITY_RANGE[0] || brightness > Parameter::INTENSITY_RANGE[1]) {
         EFFECT_LOGW("the value is out of range! key=%{public}s, value=%{public}f, range=[%{public}f, %{public}f]",
-            key.c_str(), brightness, Parameter::RANGE[0], Parameter::RANGE[1]);
-        *brightnessPtr = CLIP(brightness, Parameter::RANGE[0], Parameter::RANGE[1]);
+            key.c_str(), brightness, Parameter::INTENSITY_RANGE[0], Parameter::INTENSITY_RANGE[1]);
+        *brightnessPtr = CommonUtils::Clip(brightness, Parameter::INTENSITY_RANGE[0], Parameter::INTENSITY_RANGE[1]);
     }
 
     return EFilter::SetValue(key, value);
@@ -122,7 +122,7 @@ ErrorCode BrightnessEFilter::Restore(const nlohmann::json &values)
         EFFECT_LOGW("not set value! key=%{public}s", Parameter::KEY_INTENSITY.c_str());
         return ErrorCode::SUCCESS;
     }
-    if (brightness < Parameter::RANGE[0] || brightness > Parameter::RANGE[1]) {
+    if (brightness < Parameter::INTENSITY_RANGE[0] || brightness > Parameter::INTENSITY_RANGE[1]) {
         return ErrorCode::ERR_VALUE_OUT_OF_RANGE;
     }
     Plugin::Any any = brightness;

@@ -47,7 +47,7 @@ void EFilterFactory::RegisterDelegate(const std::string &name, const std::shared
     std::shared_ptr<EffectInfo> &effectInfo)
 {
     EFFECT_LOGI("register delegate. name=%{public}s", name.c_str());
-    REGISTER_DELEGAT_FACTORY(CustomEFilter, name);
+    RegisterEFilter<CustomEFilter>(name);
 
     CustomEFilter::SetEffectInfo(name, effectInfo);
 

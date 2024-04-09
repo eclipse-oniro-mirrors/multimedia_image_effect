@@ -29,8 +29,6 @@
 #include "surface.h"
 #include "effect_memory_manager.h"
 
-#define CLIP(a, aMin, aMax) (a) > (aMax) ? (aMax) : ((a) < (aMin) ? (aMin) : (a))
-
 namespace OHOS {
 namespace Media {
 namespace Effect {
@@ -79,6 +77,11 @@ public:
 
         value = *result;
         return ErrorCode::SUCCESS;
+    }
+
+    static inline float Clip(float a, float aMin, float aMax)
+    {
+        return a > aMax ? aMax : (a < aMin ? aMin : a);
     }
 
     static IEffectFormat SwitchToEffectFormat(::PixelFormat pixelFormat);

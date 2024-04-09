@@ -70,9 +70,9 @@ ErrorCode CpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
 
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
     for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
-        float current = CLIP(1.f - (float)(idx) / UNSIGHED_CHAR_MAX, 0, 1) + eps;
+        float current = CommonUtils::Clip(1.f - (float)(idx) / UNSIGHED_CHAR_MAX, 0, 1) + eps;
         current = 1.f - pow(current, scale);
-        current = CLIP(current, 0, 1);
+        current = CommonUtils::Clip(current, 0, 1);
         lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
     }
 
@@ -119,9 +119,9 @@ ErrorCode CpuBrightnessAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst
 
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
     for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
-        float current = CLIP(1.f - (float)(idx) / UNSIGHED_CHAR_MAX, 0, 1) + eps;
+        float current = CommonUtils::Clip(1.f - (float)(idx) / UNSIGHED_CHAR_MAX, 0, 1) + eps;
         current = 1.f - pow(current, scale);
-        current = CLIP(current, 0, 1);
+        current = CommonUtils::Clip(current, 0, 1);
         lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
     }
 
@@ -179,9 +179,9 @@ ErrorCode CpuBrightnessAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst
 
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
     for (uint32_t i = 0; i < UNSIGHED_CHAR_DATA_RECORDS; i++) {
-        float current = CLIP(1.f - (float)(i) / UNSIGHED_CHAR_MAX, 0, 1) + eps;
+        float current = CommonUtils::Clip(1.f - (float)(i) / UNSIGHED_CHAR_MAX, 0, 1) + eps;
         current = 1.f - pow(current, brightnessScale);
-        current = CLIP(current, 0, 1);
+        current = CommonUtils::Clip(current, 0, 1);
         lut[i] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
     }
 

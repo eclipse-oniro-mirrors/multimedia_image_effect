@@ -163,10 +163,10 @@ typedef enum OH_EffectBufferType {
 typedef struct OH_EffectFilterInfo OH_EffectFilterInfo;
 
 /**
- * @brief Create an OH_EffectFilterInfo instance. It should be noted that the life cycle of the OH_EffectFilterInfo 
+ * @brief Create an OH_EffectFilterInfo instance. It should be noted that the life cycle of the OH_EffectFilterInfo
  * instance pointed to by the return value * needs to be manually released by {@link OH_EffectFilter_ReleaseInfo}
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
- * @return Returns a pointer to an OH_EffectFilterInfo instance if the execution is successful, otherwise returns 
+ * @return Returns a pointer to an OH_EffectFilterInfo instance if the execution is successful, otherwise returns
  * nullptr
  * @since 12
  */
@@ -276,10 +276,10 @@ typedef struct OH_EffectFilterNames {
 typedef struct OH_EffectBufferInfo OH_EffectBufferInfo;
 
 /**
- * @brief Create an OH_EffectBufferInfo instance. It should be noted that the life cycle of the OH_EffectBufferInfo 
+ * @brief Create an OH_EffectBufferInfo instance. It should be noted that the life cycle of the OH_EffectBufferInfo
  * instance pointed to by the return value * needs to be manually released by {@link OH_EffectFilter_ReleaseBufferInfo}
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
- * @return Returns a pointer to an OH_EffectBufferInfo instance if the execution is successful, otherwise returns 
+ * @return Returns a pointer to an OH_EffectBufferInfo instance if the execution is successful, otherwise returns
  * nullptr
  * @since 12
  */
@@ -406,7 +406,7 @@ OH_EffectErrorCode OH_EffectFilter_BufferInfoGetEffectFormat(OH_EffectBufferInfo
 OH_EffectErrorCode OH_EffectFilter_ReleaseBufferInfo(OH_EffectBufferInfo *info);
 
 /**
- * @brief When executing the method of {@link OH_EffectFilter_SetValue} for the delegate filter, the function pointer 
+ * @brief When executing the method of {@link OH_EffectFilter_SetValue} for the delegate filter, the function pointer
  * will be called for checking the parameters is valid for the delegate filter
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
  * @param filter Encapsulate OH_EffectFilter structure instance pointer
@@ -468,8 +468,8 @@ typedef bool (*OH_EffectFilterDelegate_Save)(OH_EffectFilter *filter, char **inf
 typedef OH_EffectFilter *(*OH_EffectFilterDelegate_Restore)(const char *info);
 
 /**
- * @brief A collection of all callback function pointers in OH_EffectFilter. Register an instance of this structure to 
- * the OH_EffectFilter instance by invoking {@link OH_EffectFilter_Register}, and perform related rendering operations 
+ * @brief A collection of all callback function pointers in OH_EffectFilter. Register an instance of this structure to
+ * the OH_EffectFilter instance by invoking {@link OH_EffectFilter_Register}, and perform related rendering operations
  * through the callback
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
  * @param setValue Monitor checking parameters, refer to {@link OH_EffectFilterDelegate_SetValue}
