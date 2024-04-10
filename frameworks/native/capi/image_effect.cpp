@@ -13,11 +13,11 @@
 * limitations under the License.
 */
 
-#include "native_image_effect.h"
+#include "image_effect.h"
 
 #include "effect_log.h"
 #include "efilter_factory.h"
-#include "image_effect.h"
+#include "image_effect_inner.h"
 #include "json_helper.h"
 #include "native_effect_base.h"
 #include "native_common_utils.h"
@@ -104,34 +104,35 @@ int32_t OH_ImageEffect_RemoveFilter(OH_ImageEffect *imageEffect, const char *fil
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_Configure(OH_ImageEffect *imageEffect, const char *key, const OH_EffectAny *value)
+ImageEffect_ErrorCode OH_ImageEffect_Configure(OH_ImageEffect *imageEffect, const char *key,
+    const ImageEffect_Any *value)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Configure: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(key != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(key != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Configure: input parameter key is null!");
-    CHECK_AND_RETURN_RET_LOG(value != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(value != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Configure: input parameter value is null!");
 
     Plugin::Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(value, any);
-    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, OH_EffectErrorCode::EFFECT_PARAM_ERROR,
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "Configure: parse oh any fail! result=%{public}d, key=%{public}s, dataType=%{public}d",
         result, key, value->dataType);
 
     result = imageEffect->imageEffect_->Configure(key, any);
-    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, OH_EffectErrorCode::EFFECT_PARAM_ERROR,
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "Configure: config fail! result=%{public}d, key=%{public}s, dataType=%{public}d", result, key, value->dataType);
 
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_SetOutputSurface(OH_ImageEffect *imageEffect, NativeWindow *nativeWindow)
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputSurface(OH_ImageEffect *imageEffect, NativeWindow *nativeWindow)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputSurface: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(nativeWindow != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(nativeWindow != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputSurface: input parameter nativeWindow is null!");
 
     OHOS::sptr<OHOS::Surface> surface = nativeWindow->surface;
@@ -139,111 +140,109 @@ OH_EffectErrorCode OH_ImageEffect_SetOutputSurface(OH_ImageEffect *imageEffect, 
     ErrorCode errorCode = imageEffect->imageEffect_->SetOutputSurface(surface);
     if (errorCode != ErrorCode::SUCCESS) {
         EFFECT_LOGE("SetOutputSurface: set output surface fail! errorCode=%{public}d", errorCode);
-        return OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID;
+        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
     }
 
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_GetInputSurface(OH_ImageEffect *imageEffect, NativeWindow **nativeWindow)
+ImageEffect_ErrorCode OH_ImageEffect_GetInputSurface(OH_ImageEffect *imageEffect, NativeWindow **nativeWindow)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "GetInputSurface: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(nativeWindow != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(nativeWindow != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "GetInputSurface: input parameter surfaceId is null!");
 
     OHOS::sptr<OHOS::Surface> surface = imageEffect->imageEffect_->GetInputSurface();
-    CHECK_AND_RETURN_RET_LOG(surface != nullptr, OH_EffectErrorCode::EFFECT_UNKNOWN,
+    CHECK_AND_RETURN_RET_LOG(surface != nullptr, ImageEffect_ErrorCode::EFFECT_UNKNOWN,
         "GetInputSurface: get input surface fail! surface is null!");
 
     *nativeWindow = OH_NativeWindow_CreateNativeWindow(&surface);
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_SetInputPixelmap(OH_ImageEffect *imageEffect, OH_Pixelmap *pixelmap)
+ImageEffect_ErrorCode OH_ImageEffect_SetInputPixelmap(OH_ImageEffect *imageEffect, OH_Pixelmap *pixelmap)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputPixelmap: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(pixelmap != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(pixelmap != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputPixelmap: input parameter pixelmap is null!");
 
     ErrorCode errorCode =
         imageEffect->imageEffect_->SetInputPixelMap(NativeCommonUtils::GetPixelMapFromOHPixelmap(pixelmap));
-    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, OH_EffectErrorCode::EFFECT_PARAM_ERROR,
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "SetInputPixelMap: set input pixelmap fail! errorCode=%{public}d", errorCode);
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_SetOutputPixelmap(OH_ImageEffect *imageEffect, OH_Pixelmap *pixelmap)
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputPixelmap(OH_ImageEffect *imageEffect, OH_Pixelmap *pixelmap)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputPixelmap: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(pixelmap != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
-        "SetOutputPixelmap: input parameter pixelmap is null!");
 
     ErrorCode errorCode =
         imageEffect->imageEffect_->SetOutputPixelMap(NativeCommonUtils::GetPixelMapFromOHPixelmap(pixelmap));
-    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, OH_EffectErrorCode::EFFECT_PARAM_ERROR,
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "SetOutputPixelmap: set output pixelmap fail! errorCode=%{public}d", errorCode);
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_SetInputNativeBuffer(OH_ImageEffect *imageEffect, OH_NativeBuffer *nativeBuffer)
+ImageEffect_ErrorCode OH_ImageEffect_SetInputNativeBuffer(OH_ImageEffect *imageEffect, OH_NativeBuffer *nativeBuffer)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputNativeBuffer: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(nativeBuffer != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(nativeBuffer != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputNativeBuffer: input parameter input nativeBuffer is null!");
 
     OHOS::SurfaceBuffer *surfaceBuffer = OHOS::SurfaceBuffer::NativeBufferToSurfaceBuffer(nativeBuffer);
 
     ErrorCode errorCode = imageEffect->imageEffect_->SetInputSurfaceBuffer(surfaceBuffer);
     CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS,
-        OH_EffectErrorCode::EFFECT_PARAM_ERROR,
+        ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "SetInputNativeBuffer: set input native buffer fail! errorCode=%{public}d", errorCode);
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_SetOutputNativeBuffer(OH_ImageEffect *imageEffect, OH_NativeBuffer *nativeBuffer)
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputNativeBuffer(OH_ImageEffect *imageEffect, OH_NativeBuffer *nativeBuffer)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputNativeBuffer: input parameter imageEffect is null!");
 
     OHOS::SurfaceBuffer *surfaceBuffer = OHOS::SurfaceBuffer::NativeBufferToSurfaceBuffer(nativeBuffer);
 
     ErrorCode errorCode = imageEffect->imageEffect_->SetOutputSurfaceBuffer(surfaceBuffer);
-    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, OH_EffectErrorCode::EFFECT_PARAM_ERROR,
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "SetOutputNativeBuffer: set output native buffer fail! errorCode=%{public}d", errorCode);
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_SetInputUri(OH_ImageEffect *imageEffect, const char *uri)
+ImageEffect_ErrorCode OH_ImageEffect_SetInputUri(OH_ImageEffect *imageEffect, const char *uri)
 {
     EFFECT_LOGD("Set input uri");
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputUri: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(uri != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(uri != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputUri: input parameter input uri is null!");
 
     ErrorCode errorCode = imageEffect->imageEffect_->SetInputUri(uri);
     if (errorCode != ErrorCode::SUCCESS) {
         EFFECT_LOGE("SetInputUri: set input uri fail! errorCode=%{public}d", errorCode);
-        return OH_EffectErrorCode::EFFECT_PARAM_ERROR;
+        return ImageEffect_ErrorCode::EFFECT_PARAM_ERROR;
     }
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_SetOutputUri(OH_ImageEffect *imageEffect, const char *uri)
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputUri(OH_ImageEffect *imageEffect, const char *uri)
 {
     EFFECT_LOGD("Set output uri.");
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputUri: input parameter imageEffect is null!");
 
     std::string strUri;
@@ -253,51 +252,51 @@ OH_EffectErrorCode OH_ImageEffect_SetOutputUri(OH_ImageEffect *imageEffect, cons
     ErrorCode errorCode = imageEffect->imageEffect_->SetOutputUri(strUri);
     if (errorCode != ErrorCode::SUCCESS) {
         EFFECT_LOGE("SetOutputUri: set output uri fail! errorCode=%{public}d", errorCode);
-        return OH_EffectErrorCode::EFFECT_PARAM_ERROR;
+        return ImageEffect_ErrorCode::EFFECT_PARAM_ERROR;
     }
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_Start(OH_ImageEffect *imageEffect)
+ImageEffect_ErrorCode OH_ImageEffect_Start(OH_ImageEffect *imageEffect)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Start: input parameter imageEffect is null!");
 
     ErrorCode errorCode = imageEffect->imageEffect_->Start();
     if (errorCode != ErrorCode::SUCCESS) {
         EFFECT_LOGE("Start: start fail! errorCode=%{public}d", errorCode);
-        return OH_EffectErrorCode::EFFECT_UNKNOWN;
+        return ImageEffect_ErrorCode::EFFECT_UNKNOWN;
     }
 
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_Stop(OH_ImageEffect *imageEffect)
+ImageEffect_ErrorCode OH_ImageEffect_Stop(OH_ImageEffect *imageEffect)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Stop: input parameter imageEffect is null!");
     imageEffect->imageEffect_->Stop();
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_Release(OH_ImageEffect *imageEffect)
+ImageEffect_ErrorCode OH_ImageEffect_Release(OH_ImageEffect *imageEffect)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Release: input parameter imageEffect is null!");
     delete imageEffect;
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
-OH_EffectErrorCode OH_ImageEffect_Save(OH_ImageEffect *imageEffect, char **info)
+ImageEffect_ErrorCode OH_ImageEffect_Save(OH_ImageEffect *imageEffect, char **info)
 {
     EFFECT_LOGD("Save effect.");
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Save: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(info != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Save: input parameter info is null!");
 
     nlohmann::json effectInfo;
@@ -307,7 +306,7 @@ OH_EffectErrorCode OH_ImageEffect_Save(OH_ImageEffect *imageEffect, char **info)
         infoStr = effectInfo.dump();
     } catch (nlohmann::json::type_error &err) {
         EFFECT_LOGE("Save: fail to dump json object! error:%{public}s", err.what());
-        return OH_EffectErrorCode::EFFECT_UNKNOWN;
+        return ImageEffect_ErrorCode::EFFECT_UNKNOWN;
     }
 
     char *infoChar = new char[infoStr.length() + 1];
@@ -315,10 +314,10 @@ OH_EffectErrorCode OH_ImageEffect_Save(OH_ImageEffect *imageEffect, char **info)
     auto ret = strcpy_s(infoChar, infoStr.length() + 1, infoStr.c_str());
     if (ret != 0) {
         EFFECT_LOGE("Save: strcpy for infoChar failed, ret is %{public}d", ret);
-        return OH_EffectErrorCode::EFFECT_UNKNOWN;
+        return ImageEffect_ErrorCode::EFFECT_UNKNOWN;
     }
     *info = infoChar;
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
@@ -385,32 +384,30 @@ OH_EffectFilter *OH_ImageEffect_GetFilter(OH_ImageEffect *imageEffect, uint32_t 
     return imageEffect->filters_.at(index).first;
 }
 
-OH_EffectErrorCode OH_ImageEffect_SetInputNativePixelMap(OH_ImageEffect *imageEffect, NativePixelMap *pixelmap)
+ImageEffect_ErrorCode OH_ImageEffect_SetInputNativePixelMap(OH_ImageEffect *imageEffect, NativePixelMap *pixelmap)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputNativePixelMap: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(pixelmap != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(pixelmap != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputNativePixelMap: input parameter pixelmap is null!");
 
     ErrorCode errorCode =
         imageEffect->imageEffect_->SetInputPixelMap(NativeCommonUtils::GetPixelMapFromNativePixelMap(pixelmap));
-    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, OH_EffectErrorCode::EFFECT_PARAM_ERROR,
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "SetInputNativePixelMap: set fail! errorCode=%{public}d", errorCode);
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
-OH_EffectErrorCode OH_ImageEffect_SetOutputNativePixelMap(OH_ImageEffect *imageEffect, NativePixelMap *pixelmap)
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputNativePixelMap(OH_ImageEffect *imageEffect, NativePixelMap *pixelmap)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputNativePixelMap: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(pixelmap != nullptr, OH_EffectErrorCode::EFFECT_ERROR_PARAM_INVALID,
-        "SetOutputNativePixelMap: input parameter pixelmap is null!");
 
     ErrorCode errorCode =
         imageEffect->imageEffect_->SetOutputPixelMap(NativeCommonUtils::GetPixelMapFromNativePixelMap(pixelmap));
-    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, OH_EffectErrorCode::EFFECT_PARAM_ERROR,
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "SetOutputNativePixelMap: set fail! errorCode=%{public}d", errorCode);
-    return OH_EffectErrorCode::EFFECT_SUCCESS;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 #ifdef __cplusplus

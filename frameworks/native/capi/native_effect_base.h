@@ -21,8 +21,8 @@
 #include <unordered_set>
 
 #include "efilter.h"
-#include "image_effect.h"
-#include "native_effect_filter.h"
+#include "image_effect_inner.h"
+#include "image_effect_filter.h"
 
 struct OH_EffectFilter {
     std::shared_ptr<OHOS::Media::Effect::EFilter> filter_ = nullptr;
@@ -55,12 +55,12 @@ struct OH_EffectFilterInfo {
     OH_EffectFilterInfo() = default;
     ~OH_EffectFilterInfo();
     std::string filterName = "";
-    std::unordered_set<OH_EffectBufferType> supportedBufferTypes;
-    std::unordered_set<OH_EffectFormat> supportedFormats;
+    std::unordered_set<ImageEffect_BufferType> supportedBufferTypes;
+    std::unordered_set<ImageEffect_Format> supportedFormats;
 
-    OH_EffectBufferType *effectBufferType = nullptr;
+    ImageEffect_BufferType *effectBufferType = nullptr;
     uint32_t bufferTypeArraySize = 0;
-    OH_EffectFormat *effectFormat = nullptr;
+    ImageEffect_Format *effectFormat = nullptr;
     uint32_t formatArraySize = 0;
 };
 
@@ -69,7 +69,7 @@ struct OH_EffectBufferInfo {
     int32_t width = 0;
     int32_t height = 0;
     int32_t rowSize = 0;
-    OH_EffectFormat format = OH_EffectFormat::EFFECT_PIXEL_FORMAT_UNKNOWN;
+    ImageEffect_Format format = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
 };
 
 #endif // IMAGE_EFFECT_NATIVE_BASE_H

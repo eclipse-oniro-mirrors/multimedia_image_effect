@@ -26,10 +26,10 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-static const std::map<IEffectFormat, OH_EffectFormat> FORMAT_TABLE = {
-    { IEffectFormat::RGBA8888, OH_EffectFormat::EFFECT_PIXEL_FORMAT_RGBA8888 },
-    { IEffectFormat::YUVNV12, OH_EffectFormat::EFFECT_PIXEL_FORMAT_NV12 },
-    { IEffectFormat::YUVNV21, OH_EffectFormat::EFFECT_PIXEL_FORMAT_NV21 }
+static const std::map<IEffectFormat, ImageEffect_Format> FORMAT_TABLE = {
+    { IEffectFormat::RGBA8888, ImageEffect_Format::EFFECT_PIXEL_FORMAT_RGBA8888 },
+    { IEffectFormat::YUVNV12, ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV12 },
+    { IEffectFormat::YUVNV21, ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV21 }
 };
 
 static const std::unordered_map<std::string, std::unordered_map<std::string, uint32_t>> LOOK_UP_CAPABILITY = {
@@ -43,13 +43,13 @@ static const std::unordered_map<std::string, std::unordered_map<std::string, uin
     },
 };
 
-static const std::map<IPType, OH_EffectBufferType> IPTYPE_TABLE = {
-    { IPType::CPU, OH_EffectBufferType::EFFECT_BUFFER_TYPE_PIXEL },
-    { IPType::GPU, OH_EffectBufferType::EFFECT_BUFFER_TYPE_TEXTURE },
+static const std::map<IPType, ImageEffect_BufferType> IPTYPE_TABLE = {
+    { IPType::CPU, ImageEffect_BufferType::EFFECT_BUFFER_TYPE_PIXEL },
+    { IPType::GPU, ImageEffect_BufferType::EFFECT_BUFFER_TYPE_TEXTURE },
 };
 
 template <class ValueType>
-ErrorCode AnyCastOHAny(const Plugin::Any &any, OH_EffectDataType &ohDataType, OH_EffectDataType ohDataTypeValue,
+ErrorCode AnyCastOHAny(const Plugin::Any &any, ImageEffect_DataType &ohDataType, ImageEffect_DataType ohDataTypeValue,
     ValueType &value)
 {
     auto result = Plugin::AnyCast<ValueType>(&any);
@@ -61,28 +61,28 @@ ErrorCode AnyCastOHAny(const Plugin::Any &any, OH_EffectDataType &ohDataType, OH
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode NativeCommonUtils::ParseOHAny(const OH_EffectAny *value, Plugin::Any &any)
+ErrorCode NativeCommonUtils::ParseOHAny(const ImageEffect_Any *value, Plugin::Any &any)
 {
     switch (value->dataType) {
-        case OH_EffectDataType::EFFECT_DATA_TYPE_INT32:
+        case ImageEffect_DataType::EFFECT_DATA_TYPE_INT32:
             any = value->dataValue.int32Value;
             break;
-        case OH_EffectDataType::EFFECT_DATA_TYPE_FLOAT:
+        case ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT:
             any = value->dataValue.floatValue;
             break;
-        case OH_EffectDataType::EFFECT_DATA_TYPE_DOUBLE:
+        case ImageEffect_DataType::EFFECT_DATA_TYPE_DOUBLE:
             any = value->dataValue.doubleValue;
             break;
-        case OH_EffectDataType::EFFECT_DATA_TYPE_CHAR:
+        case ImageEffect_DataType::EFFECT_DATA_TYPE_CHAR:
             any = value->dataValue.charValue;
             break;
-        case OH_EffectDataType::EFFECT_DATA_TYPE_LONG:
+        case ImageEffect_DataType::EFFECT_DATA_TYPE_LONG:
             any = value->dataValue.longValue;
             break;
-        case OH_EffectDataType::EFFECT_DATA_TYPE_BOOL:
+        case ImageEffect_DataType::EFFECT_DATA_TYPE_BOOL:
             any = value->dataValue.boolValue;
             break;
-        case OH_EffectDataType::EFFECT_DATA_TYPE_PTR:
+        case ImageEffect_DataType::EFFECT_DATA_TYPE_PTR:
             any = value->dataValue.ptrValue;
             break;
         default:
@@ -92,21 +92,21 @@ ErrorCode NativeCommonUtils::ParseOHAny(const OH_EffectAny *value, Plugin::Any &
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode NativeCommonUtils::SwitchToOHAny(const Plugin::Any &any, OH_EffectAny *value)
+ErrorCode NativeCommonUtils::SwitchToOHAny(const Plugin::Any &any, ImageEffect_Any *value)
 {
-    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, OH_EffectDataType::EFFECT_DATA_TYPE_INT32,
+    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, ImageEffect_DataType::EFFECT_DATA_TYPE_INT32,
         value->dataValue.int32Value) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
-    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, OH_EffectDataType::EFFECT_DATA_TYPE_FLOAT,
+    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT,
         value->dataValue.floatValue) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
-    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, OH_EffectDataType::EFFECT_DATA_TYPE_DOUBLE,
+    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, ImageEffect_DataType::EFFECT_DATA_TYPE_DOUBLE,
         value->dataValue.doubleValue) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
-    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, OH_EffectDataType::EFFECT_DATA_TYPE_CHAR,
+    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, ImageEffect_DataType::EFFECT_DATA_TYPE_CHAR,
         value->dataValue.charValue) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
-    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, OH_EffectDataType::EFFECT_DATA_TYPE_LONG,
+    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, ImageEffect_DataType::EFFECT_DATA_TYPE_LONG,
         value->dataValue.longValue) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
-    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, OH_EffectDataType::EFFECT_DATA_TYPE_PTR,
+    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, ImageEffect_DataType::EFFECT_DATA_TYPE_PTR,
         value->dataValue.ptrValue) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
-    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, OH_EffectDataType::EFFECT_DATA_TYPE_BOOL,
+    CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, ImageEffect_DataType::EFFECT_DATA_TYPE_BOOL,
         value->dataValue.boolValue) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
 
 #ifndef HST_ANY_WITH_NO_RTTI
@@ -117,20 +117,20 @@ ErrorCode NativeCommonUtils::SwitchToOHAny(const Plugin::Any &any, OH_EffectAny 
     return ErrorCode::ERR_NOT_SUPPORT_SWITCH_TO_OHANY;
 }
 
-void NativeCommonUtils::SwitchToOHFormatType(const IEffectFormat &formatType, OH_EffectFormat &ohFormatType)
+void NativeCommonUtils::SwitchToOHFormatType(const IEffectFormat &formatType, ImageEffect_Format &ohFormatType)
 {
     auto it = FORMAT_TABLE.find(formatType);
     if (it != FORMAT_TABLE.end()) {
         ohFormatType = it->second;
     } else {
-        ohFormatType = OH_EffectFormat::EFFECT_PIXEL_FORMAT_UNKNOWN;
+        ohFormatType = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
     }
 }
 
-void NativeCommonUtils::SwitchToFormatType(const OH_EffectFormat &ohFormatType, IEffectFormat &formatType)
+void NativeCommonUtils::SwitchToFormatType(const ImageEffect_Format &ohFormatType, IEffectFormat &formatType)
 {
     auto formatIter = std::find_if(FORMAT_TABLE.begin(), FORMAT_TABLE.end(),
-        [&ohFormatType](const std::pair<IEffectFormat, OH_EffectFormat> &format) {
+        [&ohFormatType](const std::pair<IEffectFormat, ImageEffect_Format> &format) {
             return format.second == ohFormatType;
     });
     if (formatIter != FORMAT_TABLE.end()) {
@@ -140,13 +140,13 @@ void NativeCommonUtils::SwitchToFormatType(const OH_EffectFormat &ohFormatType, 
     }
 }
 
-void SwitchToOHBufferType(const IPType &ipType, OH_EffectBufferType &ohBufferType)
+void SwitchToOHBufferType(const IPType &ipType, ImageEffect_BufferType &ohBufferType)
 {
     auto it = IPTYPE_TABLE.find(ipType);
     if (it != IPTYPE_TABLE.end()) {
         ohBufferType = it->second;
     } else {
-        ohBufferType = OH_EffectBufferType::EFFECT_BUFFER_TYPE_UNKNOWN;
+        ohBufferType = ImageEffect_BufferType::EFFECT_BUFFER_TYPE_UNKNOWN;
     }
 }
 
@@ -159,15 +159,15 @@ void NativeCommonUtils::SwitchToOHEffectInfo(const EffectInfo *effectInfo, OH_Ef
     ohFilterInfo->supportedFormats.clear();
     for (const auto &format : effectInfo->formats_) {
         for (auto ipType : format.second) {
-            OH_EffectBufferType bufferType = OH_EffectBufferType::EFFECT_BUFFER_TYPE_UNKNOWN;
+            ImageEffect_BufferType bufferType = ImageEffect_BufferType::EFFECT_BUFFER_TYPE_UNKNOWN;
             SwitchToOHBufferType(ipType, bufferType);
-            if (bufferType == OH_EffectBufferType::EFFECT_BUFFER_TYPE_UNKNOWN) {
+            if (bufferType == ImageEffect_BufferType::EFFECT_BUFFER_TYPE_UNKNOWN) {
                 continue;
             }
             ohFilterInfo->supportedBufferTypes.emplace(bufferType);
         }
 
-        OH_EffectFormat ohFormatType = OH_EffectFormat::EFFECT_PIXEL_FORMAT_UNKNOWN;
+        ImageEffect_Format ohFormatType = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
         SwitchToOHFormatType(format.first, ohFormatType);
         ohFilterInfo->supportedFormats.emplace(ohFormatType);
     }
@@ -215,9 +215,9 @@ bool IsMatchLookupCondition(std::shared_ptr<IFilterDelegate> &filterDelegate, st
         if (formatType == IEffectFormat::DEFAULT) {
             return true;
         }
-        OH_EffectFormat ohFormatType = OH_EffectFormat::EFFECT_PIXEL_FORMAT_UNKNOWN;
+        ImageEffect_Format ohFormatType = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
         NativeCommonUtils::SwitchToOHFormatType(formatType, ohFormatType);
-        return ohFormatType != OH_EffectFormat::EFFECT_PIXEL_FORMAT_UNKNOWN && effectInfo != nullptr &&
+        return ohFormatType != ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN && effectInfo != nullptr &&
             effectInfo->supportedFormats.find(ohFormatType) != effectInfo->supportedFormats.end();
     } else {
         return false;
@@ -270,8 +270,8 @@ void NativeCommonUtils::SwitchToEffectInfo(const OH_EffectFilterInfo *info, std:
     CHECK_AND_RETURN_LOG(info != nullptr, "SwitchToEffectInfo: info is null!");
     effectInfo->category_ = Category::DEFAULT;
     for (const auto &format: FORMAT_TABLE) {
-        OH_EffectFormat ohFormat = format.second;
-        if (ohFormat != OH_EffectFormat::EFFECT_PIXEL_FORMAT_UNKNOWN &&
+        ImageEffect_Format ohFormat = format.second;
+        if (ohFormat != ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN &&
             info->supportedFormats.find(ohFormat) != info->supportedFormats.end()) {
             effectInfo->formats_.emplace(format.first, std::vector<IPType>{ IPType::CPU });
         }

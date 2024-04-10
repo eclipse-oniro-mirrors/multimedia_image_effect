@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,7 +19,7 @@
 #include "brightness_efilter.h"
 #include "contrast_efilter.h"
 #include "test_common.h"
-#include "external_loader.h"
+#include "crop_efilter.h"
 
 using namespace testing::ext;
 using ::testing::_;
@@ -28,6 +28,10 @@ using ::testing::InSequence;
 using ::testing::Mock;
 using ::testing::Return;
 using namespace OHOS::Media::Effect::Test;
+
+namespace {
+    constexpr uint32_t CROP_FACTOR = 2;
+}
 
 namespace OHOS {
 namespace Media {
@@ -65,9 +69,11 @@ void ImageEffectInnerUnittest::TearDownTestCase() {}
 
 void ImageEffectInnerUnittest::SetUp()
 {
-    ExternLoader::Instance()->InitExt();
-    EFilterFactory::Instance()->ResisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
-    EFilterFactory::Instance()->ResisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);
+    EFilterFactory::Instance()->functions_.clear();
+    EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
+    EFilterFactory::Instance()->RegisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);
+    EFilterFactory::Instance()->RegisterEFilter<CropEFilter>(CROP_EFILTER);
+    EFilterFactory::Instance()->delegates_.clear();
     mockPixelMap_ = new MockPixelMap();
     imageEffect_ = new FakeImageEffect();
     efilter_ = new FakeEFilter(BRIGHTNESS_EFILTER);
@@ -107,6 +113,64 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_001, TestSize.Level0)
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
+HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_002, TestSize.Level0)
+{
+    InSequence s;
+    std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
+    Plugin::Any value = 200.f;
+    efilter->SetValue(KEY_FILTER_INTENSITY, value);
+    std::shared_ptr<EffectBuffer> src = std::make_shared<EffectBuffer>(
+        effectBuffer_->bufferInfo_, effectBuffer_->buffer_, effectBuffer_->extraInfo_);
+
+    ErrorCode result = efilter->Render(src, src);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_003, TestSize.Level1)
+{
+    std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
+    imageEffect_->AddEFilter(efilter);
+    Plugin::Any value = 100.f;
+    efilter->SetValue(KEY_FILTER_INTENSITY, value);
+    ErrorCode result = imageEffect_->SetInputPixelMap(mockPixelMap_);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    result = imageEffect_->SetOutputPixelMap(mockPixelMap_);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    result = imageEffect_->Start();
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_004, TestSize.Level1)
+{
+    std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(CROP_EFILTER);
+    imageEffect_->AddEFilter(efilter);
+    uint32_t x1 = static_cast<uint32_t>(mockPixelMap_->GetWidth() / CROP_FACTOR);
+    uint32_t y1 = static_cast<uint32_t>(mockPixelMap_->GetHeight() / CROP_FACTOR);
+    uint32_t areaInfo[] = { 0, 0, x1, y1};
+    Plugin::Any value = static_cast<void *>(areaInfo);
+    efilter->SetValue(KEY_FILTER_REGION, value);
+    ErrorCode result = imageEffect_->SetInputPixelMap(mockPixelMap_);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    result = imageEffect_->SetOutputPixelMap(mockPixelMap_);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    result = imageEffect_->Start();
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_005, TestSize.Level1)
+{
+    std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(CROP_EFILTER);
+    imageEffect_->AddEFilter(efilter);
+    uint32_t x1 = static_cast<uint32_t>(mockPixelMap_->GetWidth() / CROP_FACTOR);
+    uint32_t y1 = static_cast<uint32_t>(mockPixelMap_->GetHeight() / CROP_FACTOR);
+    uint32_t areaInfo[] = { 0, 0, x1, y1};
+    Plugin::Any value = static_cast<void *>(areaInfo);
+    efilter->SetValue(KEY_FILTER_REGION, value);
+    ErrorCode result = imageEffect_->SetInputPixelMap(mockPixelMap_);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    result = imageEffect_->Start();
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS

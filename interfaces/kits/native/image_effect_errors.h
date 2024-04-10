@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,25 +13,39 @@
  * limitations under the License.
  */
 
-#ifndef NATIVE_EFFECT_ERRORS_H
-#define NATIVE_EFFECT_ERRORS_H
+/**
+ * @addtogroup ImageEffect
+ * @{
+ *
+ * @brief Provides the error code for ImageEffect.
+ *
+ * @since 12
+ */
+
+/**
+ * @file image_effect_errors.h
+ *
+ * @brief Defines the error code used in ImageEffect.
+ *
+ * @library libimage_effect_ndk.so
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @since 12
+ */
+
+#ifndef NATIVE_IMAGE_EFFECT_ERRORS_H
+#define NATIVE_IMAGE_EFFECT_ERRORS_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
-* @brief Effect error code
-* @syscap SystemCapability.Multimedia.ImageEffect.Core
-* @since 12
-*/
-
-/**
- * Basic error mask for image effect.
+ * @brief Effect error code
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @since 12
  */
-#define EFFECT_ERROR_BASE 50100000
-
-typedef enum OH_EffectErrorCode {
+typedef enum ImageEffect_ErrorCode {
     /**
      * The operation completed successfully.
      */
@@ -47,43 +61,44 @@ typedef enum OH_EffectErrorCode {
     /**
      * Warning code if input and output buffer size is not match, it will be rendered through output buffer size.
      */
-    EFFECT_BUFFER_SIZE_NOT_MATCH = EFFECT_ERROR_BASE + 1,
+    EFFECT_BUFFER_SIZE_NOT_MATCH = 29000001,
     /**
      * Warning code if input and output color space is not match, it will be rendered by modifying the color space of
      * output image.
      */
-    EFFECT_COLOR_SPACE_NOT_MATCH = EFFECT_ERROR_BASE + 2,
+    EFFECT_COLOR_SPACE_NOT_MATCH = 29000002,
     /**
      * The input and output image type is not match. For example, set input OH_Pixelmap and set output NativeBuffer.
      */
-    EFFECT_INPUT_OUTPUT_NOT_MATCH = EFFECT_ERROR_BASE + 101,
+    EFFECT_INPUT_OUTPUT_NOT_MATCH = 29000101,
     /**
      * Over the max number of the filters that can be added.
      */
-    EFFECT_EFFECT_NUMBER_LIMITED = EFFECT_ERROR_BASE + 102,
+    EFFECT_EFFECT_NUMBER_LIMITED = 29000102,
     /**
      * The input or output image type is not supported. For example, the pixel format beyond the current definition.
      */
-    EFFECT_INPUT_OUTPUT_NOT_SUPPORT = EFFECT_ERROR_BASE + 103,
+    EFFECT_INPUT_OUTPUT_NOT_SUPPORT = 29000103,
     /**
      * Allocate memory fail. For example, over sized image resource.
      */
-    EFFECT_ALLOCATE_MEMORY_FAILED = EFFECT_ERROR_BASE + 104,
+    EFFECT_ALLOCATE_MEMORY_FAILED = 29000104,
     /**
      * Parameter error. For example, the invalid value set for filter.
      */
-    EFFECT_PARAM_ERROR = EFFECT_ERROR_BASE + 121,
+    EFFECT_PARAM_ERROR = 29000121,
     /**
      * Key error. For example, the invalid key set for filter.
      */
-    EFFECT_KEY_ERROR = EFFECT_ERROR_BASE + 122,
+    EFFECT_KEY_ERROR = 29000122,
     /**
      * Unknown error.
      */
-    EFFECT_UNKNOWN = EFFECT_ERROR_BASE + 199,
-} OH_EffectErrorCode;
+    EFFECT_UNKNOWN = 29000199,
+} ImageEffect_ErrorCode;
 
 #ifdef __cplusplus
 }
 #endif
-#endif // NATIVE_EFFECT_ERRORS_H
+#endif // NATIVE_IMAGE_EFFECT_ERRORS_H
+/** @} */
