@@ -48,7 +48,7 @@
             "header_base": [
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/base",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/common",
-              "//foundation/multimedia/image_effect/interfaces/inner_api/native/custom_efilter",
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/custom",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/effect",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/efilter",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/memory",
@@ -62,7 +62,7 @@
               "any.h",
               "error_code.h",
               "delegate.h",
-              "image_effect.h",
+              "image_effect_inner.h",
               "efilter.h",
               "efilter_factory.h",
               "effect_memory.h",
@@ -76,11 +76,11 @@
         {
           "type": "so",
           "header": {
-            "header_base": "//foundation/multimedia/image_effect/interfaces/kits/native/include/",
+            "header_base": "//foundation/multimedia/image_effect/interfaces/kits/native/",
             "header_files": [
-              "native_effect_errors.h",
-              "native_effect_filter.h",
-              "native_image_effect.h"
+              "image_effect.h",
+              "image_effect_errors.h",
+              "image_effect_filter.h"
             ]
           },
           "name": "//foundation/multimedia/image_effect/frameworks/native:image_effect_ndk"

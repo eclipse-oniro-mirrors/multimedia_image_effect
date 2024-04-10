@@ -60,7 +60,7 @@ ohos_shared_library("image_effect") {
 
     sources = [
         "$image_effect_root_dir/frameworks/native/effect/base/effect.cpp",
-        "$image_effect_root_dir/frameworks/native/effect/base/image_effect.cpp",
+        "$image_effect_root_dir/frameworks/native/effect/base/image_effect_inner.cpp",
         "$image_effect_root_dir/frameworks/native/effect/base/effect_surface_adapter.cpp",
         "$image_effect_root_dir/frameworks/native/effect/pipeline/core/capability_negotiate.cpp",
         "$image_effect_root_dir/frameworks/native/effect/pipeline/core/filter_base.cpp",
@@ -124,7 +124,7 @@ ohos_shared_library("image_effect") {
 
 config("image_effect_ndk_public_config") {
     include_dirs = [
-        "$image_effect_root_dir/interfaces/kits/native/include",
+        "$image_effect_root_dir/interfaces/kits/native",
     ]
 }
 
@@ -141,8 +141,8 @@ ohos_shared_library("image_effect_ndk") {
     ]
 
     sources = [
-        "$image_effect_root_dir/frameworks/native/capi/native_effect_filter.cpp",
-        "$image_effect_root_dir/frameworks/native/capi/native_image_effect.cpp",
+        "$image_effect_root_dir/frameworks/native/capi/image_effect_filter.cpp",
+        "$image_effect_root_dir/frameworks/native/capi/image_effect.cpp",
         "$image_effect_root_dir/frameworks/native/capi/native_common_utils.cpp",
     ]
 

@@ -15,18 +15,25 @@ import("//build/ohos.gni")
 import("//build/ohos/ndk/ndk.gni")
 
 ohos_ndk_library("libimage_effect_ndk") {
-    output_extension = "so"
-    ndk_description_file = "./libnative_image_effect.ndk.json"
+    ndk_description_file = "./libimage_effect.ndk.json"
     min_compact_version = "12"
     output_name = "image_effect_ndk"
+    output_extension = "so"
+    system_capability = "SystemCapability.Multimedia.ImageEffect.Core"
+    system_capability_headers = [
+        "image_effect_errors.h",
+        "image_effect_filter.h",
+        "image_effect.h",
+        "image_effect_advance.h"
+    ]
 }
 
 ohos_ndk_headers("image_effect_header") {
     dest_dir = "$ndk_headers_out_dir/multimedia/image_effect"
     sources = [
-        "./include/native_effect_filter.h",
-        "./include/native_effect_errors.h",
-        "./include/native_image_effect.h",
-        "./include/native_effect_advance.h",
+        "image_effect_errors.h",
+        "image_effect_filter.h",
+        "image_effect.h",
+        "image_effect_advance.h",
     ]
 }

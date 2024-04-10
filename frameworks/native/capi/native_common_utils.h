@@ -21,10 +21,10 @@
 #include "any.h"
 #include "effect_info.h"
 #include "error_code.h"
-#include "native_effect_filter.h"
+#include "image_effect_filter.h"
 #include "image_type.h"
 #include "pixel_map_napi.h"
-#include "native_effect_advance.h"
+#include "image_effect_advance.h"
 
 #define EFFECT_EXPORT __attribute__((visibility("default")))
 
@@ -33,13 +33,13 @@ namespace Media {
 namespace Effect {
 class NativeCommonUtils {
 public:
-    static ErrorCode ParseOHAny(const OH_EffectAny *value, Plugin::Any &any);
+    static ErrorCode ParseOHAny(const ImageEffect_Any *value, Plugin::Any &any);
 
-    static ErrorCode SwitchToOHAny(const Plugin::Any &any, OH_EffectAny *value);
+    static ErrorCode SwitchToOHAny(const Plugin::Any &any, ImageEffect_Any *value);
 
-    static void SwitchToOHFormatType(const IEffectFormat &formatType, OH_EffectFormat &ohFormatType);
+    static void SwitchToOHFormatType(const IEffectFormat &formatType, ImageEffect_Format &ohFormatType);
 
-    static void SwitchToFormatType(const OH_EffectFormat &ohFormatType, IEffectFormat &formatType);
+    static void SwitchToFormatType(const ImageEffect_Format &ohFormatType, IEffectFormat &formatType);
 
     static void SwitchToOHEffectInfo(const EffectInfo *effectInfo, OH_EffectFilterInfo *ohFilterInfo);
 

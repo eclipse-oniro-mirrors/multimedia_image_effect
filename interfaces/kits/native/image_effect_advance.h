@@ -13,12 +13,12 @@
  * limitations under the License.
  */
 
-#ifndef NATIVE_EFFECT_ADVANCE_H
-#define NATIVE_EFFECT_ADVANCE_H
+#ifndef NATIVE_IMAGE_EFFECT_ADVANCE_H
+#define NATIVE_IMAGE_EFFECT_ADVANCE_H
 
-#include "native_effect_errors.h"
-#include "native_effect_filter.h"
-#include "native_image_effect.h"
+#include "image_effect_filter.h"
+#include "image_effect.h"
+#include "image_effect_errors.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,14 +26,14 @@ extern "C" {
 
 typedef struct NativePixelMap_ NativePixelMap;
 
-OH_EffectErrorCode OH_EFilter_Render(OH_EffectFilter *filter, NativePixelMap *inputPixelmap,
+ImageEffect_ErrorCode OH_EFilter_Render(OH_EffectFilter *filter, NativePixelMap *inputPixelmap,
     NativePixelMap *outputPixelmap);
 
-OH_EffectErrorCode OH_ImageEffect_SetInputNativePixelMap(OH_ImageEffect *imageEffect, NativePixelMap *pixelmap);
+ImageEffect_ErrorCode OH_ImageEffect_SetInputNativePixelMap(OH_ImageEffect *imageEffect, NativePixelMap *pixelmap);
 
-OH_EffectErrorCode OH_ImageEffect_SetOutputNativePixelMap(OH_ImageEffect *imageEffect, NativePixelMap *pixelmap);
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputNativePixelMap(OH_ImageEffect *imageEffect, NativePixelMap *pixelmap);
 
 #ifdef __cplusplus
 }
 #endif
-#endif //NATIVE_EFFECT_ADVANCE_H
+#endif // NATIVE_IMAGE_EFFECT_ADVANCE_H

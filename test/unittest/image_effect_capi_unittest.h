@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "mock_pixel_map.h"
 #include "mock_pixel_map_napi.h"
+#include "image_effect_filter.h"
 
 namespace OHOS {
 namespace Media {
@@ -27,6 +28,7 @@ class ImageEffectCApiUnittest : public testing::Test {
 public:
     MockPixelMap *mockPixelMap_;
     MockPixelMapNapi *mockPixelMapNapi_;
+    OH_EffectFilterInfo *filterInfo_ = nullptr;
 
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase();

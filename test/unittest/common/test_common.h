@@ -23,9 +23,9 @@ namespace {
 constexpr char const *BRIGHTNESS_EFILTER = "Brightness";
 constexpr char const *CONTRAST_EFILTER = "Contrast";
 constexpr char const *CROP_EFILTER = "Crop";
-constexpr char const *KEY_FILTER_INTENSITY = "FILTER_INTENSITY";
+constexpr char const *KEY_FILTER_INTENSITY = "FilterIntensity";
 constexpr char const *IMAGE_EFFECT_NAME = "imageEdit";
-constexpr char const *KEY_FILTER_REGION = "FILTER_REGION";
+constexpr char const *KEY_FILTER_REGION = "FilterRegion";
 constexpr char const *CUSTOM_BRIGHTNESS_EFILTER = "CustomBrightnessEFilter";
 constexpr char const *CUSTOM_TEST_EFILTER = "CustomTestEFilter";
 } // namespace

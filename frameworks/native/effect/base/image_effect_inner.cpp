@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "image_effect.h"
+#include "image_effect_inner.h"
 
 #include <cassert>
 #include <securec.h>

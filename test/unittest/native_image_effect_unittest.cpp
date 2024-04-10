@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,12 +16,12 @@
 #include <vector>
 #include "gtest/gtest.h"
 
-#include "native_effect_errors.h"
-#include "native_image_effect.h"
+#include "image_effect_errors.h"
+#include "image_effect.h"
 #include "mock_surface_buffer.h"
 #include "mock_surface_buffer_yuv_nv21.h"
 #include "mock_surface_buffer_yuv_nv12.h"
-#include "native_effect_filter.h"
+#include "image_effect_filter.h"
 #include "image_type.h"
 #include "efilter_factory.h"
 #include "brightness_efilter.h"
@@ -30,7 +30,9 @@
 #include "mock_native_pixel_map.h"
 #include "surface_utils.h"
 #include "test_common.h"
-#include "external_loader.h"
+#include "image_effect_advance.h"
+#include "native_effect_base.h"
+#include "native_window.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -41,7 +43,7 @@ static std::string g_jpgPath;
 static std::string g_notJpgPath;
 static std::string g_jpgUri;
 static std::string g_notJpgUri;
-static uint64_t g_uniqueId = 0;
+static OHNativeWindow *g_nativeWindow = nullptr;
 
 namespace OHOS {
 namespace Media {
@@ -107,12 +109,15 @@ public:
         g_jpgUri = std::string("file:///data/test/resource/image_effect_1k_test1.jpg");
         g_notJpgUri = std::string("file:///data/test/resource/image_effect_1k_test1.png");
         sptr<Surface> consumer = Surface::CreateSurfaceAsConsumer("UnitTest");
-        SurfaceUtils::GetInstance()->Add(g_uniqueId, consumer);
+        g_nativeWindow = CreateNativeWindowFromSurface(&consumer);
     }
 
     static void TearDownTestCase()
     {
-        SurfaceUtils::GetInstance()->Remove(g_uniqueId);
+        if (g_nativeWindow != nullptr) {
+            DestoryNativeWindow(g_nativeWindow);
+            g_nativeWindow = nullptr;
+        }
     }
 
     void SetUp() override
@@ -120,12 +125,20 @@ public:
         mockSurfaceBuffer_ = new MockSurfaceBuffer();
         mockSurfaceBufferYuvNv21_ = new MockSurfaceBufferYuvNv21();
         mockSurfaceBufferYuvNv12_ = new MockSurfaceBufferYuvNv12();
-        ExternLoader::Instance()->InitExt();
         EFilterFactory::Instance()->functions_.clear();
-        EFilterFactory::Instance()->ResisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
-        EFilterFactory::Instance()->ResisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);
-        EFilterFactory::Instance()->ResisterEFilter<CustomTestEFilter>(CUSTOM_TEST_EFILTER);
+        EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
+        EFilterFactory::Instance()->RegisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);
+        EFilterFactory::Instance()->RegisterEFilter<CustomTestEFilter>(CUSTOM_TEST_EFILTER);
+        EFilterFactory::Instance()->delegates_.clear();
         mockPixelMapNapi_ = new MockPixelMapNapi();
+        filterInfo_ = OH_EffectFilter_CreateInfo();
+        OH_EffectFilter_InfoSetFilterName(filterInfo_, BRIGHTNESS_EFILTER);
+        ImageEffect_BufferType bufferTypes[] = { ImageEffect_BufferType::EFFECT_BUFFER_TYPE_PIXEL };
+        OH_EffectFilter_InfoSetSupportedBufferTypes(filterInfo_, sizeof(bufferTypes) / sizeof(ImageEffect_BufferType),
+            bufferTypes);
+        ImageEffect_Format formats[] = { ImageEffect_Format::EFFECT_PIXEL_FORMAT_RGBA8888,
+            ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV12, ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV21};
+        OH_EffectFilter_InfoSetSupportedFormats(filterInfo_, sizeof(formats) / sizeof(ImageEffect_Format), formats);
     }
 
     void TearDown() override
@@ -138,6 +151,10 @@ public:
         mockSurfaceBuffer_ = nullptr;
         mockSurfaceBufferYuvNv21_ = nullptr;
         mockSurfaceBufferYuvNv12_ = nullptr;
+        if (filterInfo_ != nullptr) {
+            OH_EffectFilter_ReleaseInfo(filterInfo_);
+            filterInfo_ = nullptr;
+        }
     }
 
     MockSurfaceBuffer *mockSurfaceBuffer_;
@@ -145,13 +162,13 @@ public:
     MockSurfaceBuffer *mockSurfaceBufferYuvNv12_;
     MockPixelMapNapi *mockPixelMapNapi_;
 
-    OH_EFilterDelegate delegate_ = {
-        .setValue = [](OH_EFilter *filter, const char *key, const OH_Any *value) { return true; },
-        .render = [](OH_EFilter *filter, OH_EffectBuffer *src, OH_EFilterDelegate_PushData pushData) {
+    ImageEffect_FilterDelegate delegate_ = {
+        .setValue = [](OH_EffectFilter *filter, const char *key, const ImageEffect_Any *value) { return true; },
+        .render = [](OH_EffectFilter *filter, OH_EffectBufferInfo *src, OH_EffectFilterDelegate_PushData pushData) {
             pushData(filter, src);
             return true;
         },
-        .save = [](OH_EFilter *filter, char **info) {
+        .save = [](OH_EffectFilter *filter, char **info) {
             nlohmann::json root;
             root["name"] = std::string(CUSTOM_BRIGHTNESS_EFILTER);
             std::string infoStr = root.dump();
@@ -165,49 +182,1100 @@ public:
             return true;
         },
         .restore = [](const char *info) {
-            OH_EFilter *filter = OH_EFilter_Create(CUSTOM_BRIGHTNESS_EFILTER);
-            OH_Any value;
-            value.dataType = OH_DataType::TYPE_FLOAT;
+            OH_EffectFilter *filter = OH_EffectFilter_Create(CUSTOM_BRIGHTNESS_EFILTER);
+            ImageEffect_Any value;
+            value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
             value.dataValue.floatValue = 50.f;
-            OH_EFilter_SetValue(filter, BRIGHTNESS_EFILTER, &value);
+            OH_EffectFilter_SetValue(filter, BRIGHTNESS_EFILTER, &value);
             return filter;
         }
     };
+
+    OH_EffectFilterInfo *filterInfo_ = nullptr;
 };
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_SetInputPath with normal parameter
+ * Function: Test OH_ImageEffect_SetInputUri with normal parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_SetInputPath with normal parameter
+ * CaseDescription: Test OH_ImageEffect_SetInputUri with normal parameter
  */
-HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputPath001, TestSize.Level1)
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputUri001, TestSize.Level1)
 {
-    OH_ImageEffect * imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
 
-    OH_EFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
     ASSERT_NE(filter, nullptr);
 
-    OH_Any value;
-    value.dataType = OH_DataType::TYPE_FLOAT;
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
     value.dataValue.floatValue = 100.f;
-    OH_EffectErrorCode errorCode = OH_EFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
-    ASSERT_EQ(errorCode, OH_EffectErrorCode::EFFECT_ERR_SUCCESS);
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    errorCode = OH_ImageEffect_SetInputPath(imageEffect, g_jpgPath.c_str());
-    ASSERT_EQ(errorCode, OH_EffectErrorCode::EFFECT_ERR_SUCCESS);
+    errorCode = OH_ImageEffect_SetInputUri(imageEffect, g_jpgUri.c_str());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);
-    ASSERT_EQ(errorCode, OH_EffectErrorCode::EFFECT_ERR_SUCCESS);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Release(imageEffect);
-    ASSERT_EQ(errorCode, OH_EffectErrorCode::EFFECT_ERR_SUCCESS);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 }
 
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputUri with all empty parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputUri with all empty parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputUri002, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputUri(nullptr, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 }
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputUri with empty OH_ImageEffect
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputUri with empty OH_ImageEffect
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputUri003, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputUri(nullptr, g_jpgUri.c_str());
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputUri with empty path
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputUri with empty path
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputUri004, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetInputUri(imageEffect, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputUri with unsupport path
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputUri with unsupport path
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputUri005, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetInputUri(imageEffect, g_notJpgUri.c_str());
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputUri with normal parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputUri with normal parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri001, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetInputUri(imageEffect, g_jpgUri.c_str());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetOutputUri(imageEffect, g_jpgUri.c_str());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputUri with all empty parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputUri with all empty parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri002, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputUri(imageEffect, g_jpgUri.c_str());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetOutputUri(nullptr, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputUri with empty OH_ImageEffect
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputUri with empty OH_ImageEffect
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri003, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputUri(imageEffect, g_jpgUri.c_str());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetOutputUri(nullptr, g_jpgUri.c_str());
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputUri with empty path
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputUri with empty path
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri004, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetInputUri(imageEffect, g_jpgUri.c_str());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetOutputUri(imageEffect, nullptr);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputUri with unsupport path
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputUri with unsupport path
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri005, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetInputUri(imageEffect, g_jpgUri.c_str());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetOutputUri(imageEffect, g_notJpgUri.c_str());
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputUri with no OH_ImageEffect_SetInputUri
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputUri with no OH_ImageEffect_SetInputUri
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri006, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetOutputUri(imageEffect, g_jpgUri.c_str());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS); // not set input data
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputNativeBuffer with normal parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputNativeBuffer with normal parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputNativeBufferUnittest001, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_NativeBuffer *nativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBuffer_);
+    errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputNativeBuffer with all empty parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputNativeBuffer with all empty parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputNativeBufferUnittest002, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativeBuffer(nullptr, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputNativeBuffer with empty OH_ImageEffect
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputNativeBuffer with empty OH_ImageEffect
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputNativeBufferUnittest003, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_NativeBuffer *nativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBuffer_);
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativeBuffer(nullptr, nativeBuffer);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputNativeBuffer with empty OH_NativeBuffer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputNativeBuffer with empty OH_NativeBuffer
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputNativeBufferUnittest004, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputNativeBuffer with normal parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputNativeBuffer with normal parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputNativeBuffer001, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_NativeBuffer *inNativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBuffer_);
+    errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, inNativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_NativeBuffer *outNativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBuffer_);
+    errorCode = OH_ImageEffect_SetOutputNativeBuffer(imageEffect, outNativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputNativeBuffer with all empty parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputNativeBuffer with all empty parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputNativeBuffer002, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_NativeBuffer *inNativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBuffer_);
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, inNativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetOutputNativeBuffer(nullptr, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputNativeBuffer with empty OH_ImageEffect
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputNativeBuffer with empty OH_ImageEffect
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputNativeBuffer003, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_NativeBuffer *inNativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBuffer_);
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, inNativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_NativeBuffer *outNativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBuffer_);
+    errorCode = OH_ImageEffect_SetOutputNativeBuffer(nullptr, outNativeBuffer);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputNativeBuffer with empty OH_NativeBuffer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputNativeBuffer with empty OH_NativeBuffer
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputNativeBuffer004, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_NativeBuffer *inNativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBuffer_);
+    errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, inNativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetOutputNativeBuffer(imageEffect, nullptr);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputNativeBuffer with no OH_ImageEffect_SetInputNativeBuffer
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputNativeBuffer with no OH_ImageEffect_SetInputNativeBuffer
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputNativeBuffer005, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_NativeBuffer *outNativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBuffer_);
+    errorCode = OH_ImageEffect_SetOutputNativeBuffer(imageEffect, outNativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS); // not set input data
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EffectFilter_LookupFilters with normal parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EffectFilter_LookupFilters with normal parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo001, TestSize.Level1)
+{
+    ImageEffect_Format formats[] = { ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV12,
+        ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV21};
+    OH_EffectFilter_InfoSetSupportedFormats(filterInfo_, sizeof(formats) / sizeof(ImageEffect_Format), formats);
+    ImageEffect_FilterDelegate delegate = {
+        .setValue = [](OH_EffectFilter *filter, const char *key, const ImageEffect_Any *value) { return true; },
+        .render = [](OH_EffectFilter *filter, OH_EffectBufferInfo *src, OH_EffectFilterDelegate_PushData pushData) {
+            pushData(filter, src);
+            return true;
+        },
+        .save = [](OH_EffectFilter *filter, char **info) { return true; },
+        .restore = [](const char *info) { return OH_EffectFilter_Create(BRIGHTNESS_EFILTER); }
+    };
+
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_Register(filterInfo_, &delegate);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    const char *name = BRIGHTNESS_EFILTER;
+    OH_EffectFilterInfo *info = OH_EffectFilter_CreateInfo();
+    errorCode = OH_EffectFilter_LookupFilterInfo(name, info);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    char *filterName = nullptr;
+    OH_EffectFilter_InfoGetFilterName(info, &filterName);
+    ASSERT_STREQ(filterName, BRIGHTNESS_EFILTER);
+    uint32_t bufferTypeSize = 0;
+    ImageEffect_BufferType *bufferTypeArray = nullptr;
+    OH_EffectFilter_InfoGetSupportedBufferTypes(info, &bufferTypeSize, &bufferTypeArray);
+    ASSERT_EQ(bufferTypeSize, 1);
+    uint32_t formatSize = 0;
+    ImageEffect_Format *formatArray = nullptr;
+    OH_EffectFilter_InfoGetSupportedFormats(info, &formatSize, &formatArray);
+    ASSERT_EQ(formatSize, 2);
+    OH_EffectFilter_ReleaseInfo(info);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EffectFilter_LookupFilters with not support name
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EffectFilter_LookupFilters with not support name
+ */
+HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo002, TestSize.Level1)
+{
+    ImageEffect_FilterDelegate delegate = {
+        .setValue = [](OH_EffectFilter *filter, const char *key, const ImageEffect_Any *value) { return true; },
+        .render = [](OH_EffectFilter *filter, OH_EffectBufferInfo *src, OH_EffectFilterDelegate_PushData pushData) {
+            pushData(filter, src);
+            return true;
+        },
+        .save = [](OH_EffectFilter *filter, char **info) { return true; },
+        .restore = [](const char *info) { return OH_EffectFilter_Create(BRIGHTNESS_EFILTER); }
+    };
+
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_Register(filterInfo_, &delegate);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    const char *name = "TestEFilter";
+    OH_EffectFilterInfo *info = OH_EffectFilter_CreateInfo();
+    errorCode = OH_EffectFilter_LookupFilterInfo(name, info);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    OH_EffectFilter_ReleaseInfo(info);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EffectFilter_LookupFilters with not OH_EFilter_Register
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EffectFilter_LookupFilters with not OH_EFilter_Register
+ */
+HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo003, TestSize.Level1)
+{
+    const char *name = "TestEFilter";
+    OH_EffectFilterInfo *info = OH_EffectFilter_CreateInfo();
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_LookupFilterInfo(name, info);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    OH_EffectFilter_ReleaseInfo(info);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EffectFilter_LookupFilters with all empty parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EffectFilter_LookupFilters with all empty parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo004, TestSize.Level1)
+{
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_LookupFilterInfo(nullptr, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EffectFilter_LookupFilters with empty name
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EffectFilter_LookupFilters with empty name
+ */
+HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo005, TestSize.Level1)
+{
+    OH_EffectFilterInfo *info = OH_EffectFilter_CreateInfo();
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_LookupFilterInfo(nullptr, info);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    OH_EffectFilter_ReleaseInfo(info);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EffectFilter_LookupFilters with normal parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EffectFilter_LookupFilters with normal parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilters001, TestSize.Level1)
+{
+    ImageEffect_FilterNames *filterNames = OH_EffectFilter_LookupFilters("Format:default");
+    const char **nameList = filterNames->nameList;
+    uint32_t size = filterNames->size;
+
+    ASSERT_NE(filterNames, nullptr);
+    ASSERT_EQ(size, static_cast<uint32_t>(3));
+
+    std::vector<string> filterNamesVector;
+    for (uint32_t i = 0; i < size; i++) {
+        filterNamesVector.emplace_back(nameList[i]);
+    }
+
+    auto brightnessIndex = std::find(filterNamesVector.begin(), filterNamesVector.end(), BRIGHTNESS_EFILTER);
+    ASSERT_NE(brightnessIndex, filterNamesVector.end());
+
+    auto contrastIndex = std::find(filterNamesVector.begin(), filterNamesVector.end(), CONTRAST_EFILTER);
+    ASSERT_NE(contrastIndex, filterNamesVector.end());
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EffectFilter_LookupFilters with empty parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EffectFilter_LookupFilters with empty parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilters002, TestSize.Level1)
+{
+    ImageEffect_FilterNames *filterNames= OH_EffectFilter_LookupFilters(nullptr);
+    ASSERT_EQ(filterNames, nullptr);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EffectFilter_LookupFilters with not support parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EffectFilter_LookupFilters with not support parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilters003, TestSize.Level1)
+{
+    bool result = OH_EffectFilter_LookupFilters("test");
+    ASSERT_EQ(result, true);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EffectFilter_LookupFilters with not support key parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EffectFilter_LookupFilters with not support key parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilters004, TestSize.Level1)
+{
+    bool result = OH_EffectFilter_LookupFilters("test:default");
+    ASSERT_EQ(result, true);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EffectFilter_LookupFilters with not support value parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EffectFilter_LookupFilters with not support value parameter
+ */
+HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilters005, TestSize.Level1)
+{
+    bool result = OH_EffectFilter_LookupFilters("Category:test");
+    ASSERT_EQ(result, true);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test CustomFilterAdjustmentSaveAndRestore with normal process
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CustomFilterAdjustmentSaveAndRestore with normal process
+ */
+HWTEST_F(NativeImageEffectUnittest, CustomFilterAdjustmentSaveAndRestore001, TestSize.Level1)
+{
+    InSequence s;
+    NativePixelMap inputPixel = {.napi = mockPixelMapNapi_};
+
+    OH_EffectFilter_InfoSetFilterName(filterInfo_, CUSTOM_BRIGHTNESS_EFILTER);
+
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_Register(filterInfo_, &delegate_);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, CUSTOM_BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 50.f;
+    errorCode = OH_EffectFilter_SetValue(filter, BRIGHTNESS_EFILTER, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    char *imageEffectInfo = nullptr;
+    errorCode = OH_ImageEffect_Save(imageEffect, &imageEffectInfo);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_NE(imageEffectInfo, nullptr);
+    std::string saveInfo = imageEffectInfo;
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    imageEffect = OH_ImageEffect_Restore(saveInfo.c_str());
+    ASSERT_NE(imageEffect, nullptr);
+
+    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test CustomTestFilterSave001 with non-utf-8 abnormal json object
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test CustomTestFilterSave001 with non-utf-8 abnormal json object
+ */
+HWTEST_F(NativeImageEffectUnittest, CustomTestFilterSave001, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, CUSTOM_TEST_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    char value[] = { static_cast<char>(0xb2), static_cast<char>(0xe2), static_cast<char>(0xca),
+        static_cast<char>(0xd4), '\0' }; // ANSI encode data
+
+    ImageEffect_Any any = {
+        .dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_PTR,
+        .dataValue.ptrValue = static_cast<void *>(value),
+    };
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &any);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    char *info = nullptr;
+    errorCode = OH_ImageEffect_Save(imageEffect, &info);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectDataTypeSurface001, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetOutputSurface(imageEffect, g_nativeWindow);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    NativeWindow *nativeWindow = nullptr;
+    errorCode = OH_ImageEffect_GetInputSurface(imageEffect, &nativeWindow);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_NE(nativeWindow, nullptr);
+    
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_ImageEffect_Release(imageEffect);
+    OH_NativeWindow_DestroyNativeWindow(nativeWindow);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputNativeBuffer with brightness yuv nv21
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputNativeBuffer with brightness yuv nv21
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest001, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 50.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_NativeBuffer *nativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBufferYuvNv21_);
+    errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    int32_t ipType = 2;
+    ImageEffect_Any runningType;
+    runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
+    runningType.dataValue.int32Value = ipType;
+    errorCode = OH_ImageEffect_Configure(imageEffect, "runningType", &runningType);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputNativeBuffer with yuv brightness yuv nv12
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputNativeBuffer with yuv brightness yuv nv12
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest002, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 50.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_NativeBuffer *nativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBufferYuvNv12_);
+    errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    int32_t ipType = 2;
+    ImageEffect_Any runningType;
+    runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
+    runningType.dataValue.int32Value = ipType;
+    errorCode = OH_ImageEffect_Configure(imageEffect, "runningType", &runningType);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputNativeBuffer with brightness gpu yuv nv21
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputNativeBuffer with brightness gpu yuv nv21
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest003, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 50.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_NativeBuffer *nativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBufferYuvNv21_);
+    errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    int32_t ipType = 1;
+    ImageEffect_Any runningType;
+    runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
+    runningType.dataValue.int32Value = ipType;
+    errorCode = OH_ImageEffect_Configure(imageEffect, "runningType", &runningType);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputNativeBuffer with contrast gpu yuv nv21
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputNativeBuffer with contrast gpu yuv nv21
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest004, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, CONTRAST_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 50.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_NativeBuffer *nativeBuffer = reinterpret_cast<OH_NativeBuffer *>(mockSurfaceBufferYuvNv21_);
+    errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    int32_t ipType = 1;
+    ImageEffect_Any runningType;
+    runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
+    runningType.dataValue.int32Value = ipType;
+    errorCode = OH_ImageEffect_Configure(imageEffect, "runningType", &runningType);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+} // namespace Test
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
