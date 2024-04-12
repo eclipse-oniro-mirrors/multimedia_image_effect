@@ -17,6 +17,7 @@
 
 #include "effect_log.h"
 #include "efilter_factory.h"
+#include "external_loader.h"
 #include "image_effect_inner.h"
 #include "json_helper.h"
 #include "native_effect_base.h"
@@ -36,6 +37,19 @@ extern "C" {
 EFFECT_EXPORT
 OH_ImageEffect *OH_ImageEffect_Create(const char *name)
 {
+    if (!ExternLoader::Instance()->IsExtLoad()) {
+        ExternLoader::Instance()->LoadExtSo();
+    }
+    auto func = ExternLoader::Instance()->GetCreateImageEffectExtFunc();
+    if (func) {
+        void* image = func(name);
+        if (image != nullptr) {
+            return static_cast<OH_ImageEffect *>(image);
+        }
+    } else {
+        EFFECT_LOGE("OH_ImageEffect_Create: shared lib so not find function!");
+    }
+
     EFFECT_LOGI("Creat image effect. name=%{public}s", name);
     std::shared_ptr<ImageEffect> imageEffect = std::make_unique<ImageEffect>(name);
     std::unique_ptr<OH_ImageEffect> nativeImageEffect = std::make_unique<OH_ImageEffect>();
@@ -163,7 +177,7 @@ ImageEffect_ErrorCode OH_ImageEffect_GetInputSurface(OH_ImageEffect *imageEffect
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_ImageEffect_SetInputPixelmap(OH_ImageEffect *imageEffect, OH_Pixelmap *pixelmap)
+ImageEffect_ErrorCode OH_ImageEffect_SetInputPixelmap(OH_ImageEffect *imageEffect, OH_PixelmapNative *pixelmap)
 {
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputPixelmap: input parameter imageEffect is null!");
@@ -178,7 +192,7 @@ ImageEffect_ErrorCode OH_ImageEffect_SetInputPixelmap(OH_ImageEffect *imageEffec
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_ImageEffect_SetOutputPixelmap(OH_ImageEffect *imageEffect, OH_Pixelmap *pixelmap)
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputPixelmap(OH_ImageEffect *imageEffect, OH_PixelmapNative *pixelmap)
 {
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputPixelmap: input parameter imageEffect is null!");

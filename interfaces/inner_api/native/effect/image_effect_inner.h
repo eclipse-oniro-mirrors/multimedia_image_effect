@@ -103,6 +103,9 @@ private:
     void ConsumerBufferAvailable(sptr<SurfaceBuffer> &buffer, const OHOS::Rect &damages, int64_t timestamp);
     void UpdateProducerSurfaceInfo();
 
+    void ExtInitModule();
+    void ExtDeinitModule();
+
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
 

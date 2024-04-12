@@ -19,6 +19,7 @@
 #include "brightness_efilter.h"
 #include "contrast_efilter.h"
 #include "test_common.h"
+#include "external_loader.h"
 #include "crop_efilter.h"
 
 using namespace testing::ext;
@@ -69,6 +70,7 @@ void ImageEffectInnerUnittest::TearDownTestCase() {}
 
 void ImageEffectInnerUnittest::SetUp()
 {
+    ExternLoader::Instance()->InitExt();
     EFilterFactory::Instance()->functions_.clear();
     EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
     EFilterFactory::Instance()->RegisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);

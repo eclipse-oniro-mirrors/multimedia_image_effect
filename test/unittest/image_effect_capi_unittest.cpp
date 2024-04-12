@@ -23,6 +23,7 @@
 #include "test_common.h"
 #include "image_effect_advance.h"
 #include "native_window.h"
+#include "external_loader.h"
 
 #define MAX_TEST_ADD_EFILTE_NUMS 120
 
@@ -43,18 +44,19 @@ void ImageEffectCApiUnittest::SetUp()
 {
     mockPixelMap_ = new MockPixelMap();
     mockPixelMapNapi_ = new MockPixelMapNapi();
+    ExternLoader::Instance()->InitExt();
     EFilterFactory::Instance()->functions_.clear();
     EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
     EFilterFactory::Instance()->RegisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);
     EFilterFactory::Instance()->delegates_.clear();
-    filterInfo_ = OH_EffectFilter_CreateInfo();
-    OH_EffectFilter_InfoSetFilterName(filterInfo_, BRIGHTNESS_EFILTER);
+    filterInfo_ = OH_EffectFilterInfo_Create();
+    OH_EffectFilterInfo_SetFilterName(filterInfo_, BRIGHTNESS_EFILTER);
     ImageEffect_BufferType bufferTypes[] = { ImageEffect_BufferType::EFFECT_BUFFER_TYPE_PIXEL };
-    OH_EffectFilter_InfoSetSupportedBufferTypes(filterInfo_, sizeof(bufferTypes) / sizeof(ImageEffect_BufferType),
+    OH_EffectFilterInfo_SetSupportedBufferTypes(filterInfo_, sizeof(bufferTypes) / sizeof(ImageEffect_BufferType),
         bufferTypes);
     ImageEffect_Format formats[] = { ImageEffect_Format::EFFECT_PIXEL_FORMAT_RGBA8888,
         ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV12, ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV21};
-    OH_EffectFilter_InfoSetSupportedFormats(filterInfo_, sizeof(formats) / sizeof(ImageEffect_Format), formats);
+    OH_EffectFilterInfo_SetSupportedFormats(filterInfo_, sizeof(formats) / sizeof(ImageEffect_Format), formats);
 }
 
 void ImageEffectCApiUnittest::TearDown()
@@ -62,7 +64,7 @@ void ImageEffectCApiUnittest::TearDown()
     Mock::AllowLeak(mockPixelMap_);
     Mock::AllowLeak(mockPixelMapNapi_);
     if (filterInfo_ != nullptr) {
-        OH_EffectFilter_ReleaseInfo(filterInfo_);
+        OH_EffectFilterInfo_Release(filterInfo_);
         filterInfo_ = nullptr;
     }
 }
@@ -1778,10 +1780,10 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterLookupFilterInfo001, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterLookupFilterInfo001 start";
 
-    OH_EffectFilterInfo *filterInfo = OH_EffectFilter_CreateInfo();
+    OH_EffectFilterInfo *filterInfo = OH_EffectFilterInfo_Create();
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_LookupFilterInfo(BRIGHTNESS_EFILTER, filterInfo);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EffectFilter_LookupFilterInfo failed";
-    OH_EffectFilter_ReleaseInfo(filterInfo);
+    OH_EffectFilterInfo_Release(filterInfo);
     GTEST_LOG_(INFO) << "OHEFilterLookupFilterInfo001 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterLookupFilterInfo001 END";
 }
@@ -1798,10 +1800,10 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterLookupFilterInfo002, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterLookupFilterInfo002 start";
 
-    OH_EffectFilterInfo *filterInfo = OH_EffectFilter_CreateInfo();
+    OH_EffectFilterInfo *filterInfo = OH_EffectFilterInfo_Create();
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_LookupFilterInfo(nullptr, filterInfo);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OHEFilterLookupFilterInfo failed";
-    OH_EffectFilter_ReleaseInfo(filterInfo);
+    OH_EffectFilterInfo_Release(filterInfo);
     GTEST_LOG_(INFO) << "OHEFilterLookupFilterInfo002 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterLookupFilterInfo002 END";
 }
@@ -1818,10 +1820,10 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterLookupFilterInfo003, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterLookupFilterInfo003 start";
 
-    OH_EffectFilterInfo *filterInfo = OH_EffectFilter_CreateInfo();
+    OH_EffectFilterInfo *filterInfo = OH_EffectFilterInfo_Create();
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_LookupFilterInfo("TestEFilter", filterInfo);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OHEFilterLookupFilterInfo003 failed";
-    OH_EffectFilter_ReleaseInfo(filterInfo);
+    OH_EffectFilterInfo_Release(filterInfo);
     GTEST_LOG_(INFO) << "OHEFilterLookupFilterInfo003 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterLookupFilterInfo003 END";
 }

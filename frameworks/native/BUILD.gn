@@ -14,8 +14,9 @@
 import("//build/ohos.gni")
 import("//foundation/multimedia/image_effect/config.gni")
 
-config("image_effect_public_config") {
+config("image_effect_impl_public_config") {
     include_dirs = [
+        "$image_effect_root_dir/interfaces/inner_api/native",
         "$image_effect_root_dir/interfaces/inner_api/native/base",
         "$image_effect_root_dir/interfaces/inner_api/native/common",
         "$image_effect_root_dir/interfaces/inner_api/native/custom",
@@ -39,9 +40,9 @@ config("image_effect_public_config") {
     ]
 }
 
-ohos_shared_library("image_effect") {
+ohos_shared_library("image_effect_impl") {
     public_configs = [
-        ":image_effect_public_config",
+        ":image_effect_impl_public_config",
     ]
 
     include_dirs = [
@@ -60,8 +61,9 @@ ohos_shared_library("image_effect") {
 
     sources = [
         "$image_effect_root_dir/frameworks/native/effect/base/effect.cpp",
-        "$image_effect_root_dir/frameworks/native/effect/base/image_effect_inner.cpp",
         "$image_effect_root_dir/frameworks/native/effect/base/effect_surface_adapter.cpp",
+        "$image_effect_root_dir/frameworks/native/effect/base/external_loader.cpp",
+        "$image_effect_root_dir/frameworks/native/effect/base/image_effect_inner.cpp",
         "$image_effect_root_dir/frameworks/native/effect/pipeline/core/capability_negotiate.cpp",
         "$image_effect_root_dir/frameworks/native/effect/pipeline/core/filter_base.cpp",
         "$image_effect_root_dir/frameworks/native/effect/pipeline/core/pipeline_core.cpp",
@@ -78,7 +80,7 @@ ohos_shared_library("image_effect") {
         "$image_effect_root_dir/frameworks/native/efilter/base/efilter.cpp",
         "$image_effect_root_dir/frameworks/native/efilter/base/efilter_base.cpp",
         "$image_effect_root_dir/frameworks/native/efilter/base/efilter_factory.cpp",
-        "$image_effect_root_dir/frameworks/native/efilter/base/efilter_render_strategy.cpp",
+        "$image_effect_root_dir/frameworks/native/efilter/base/render_strategy.cpp",
         "$image_effect_root_dir/frameworks/native/efilter/custom/custom_efilter.cpp",
         "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness/brightness_efilter.cpp",
         "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness/cpu_brightness_algo.cpp",
@@ -128,7 +130,7 @@ config("image_effect_ndk_public_config") {
     ]
 }
 
-ohos_shared_library("image_effect_ndk") {
+ohos_shared_library("image_effect") {
     public_configs = [
         ":image_effect_ndk_public_config",
     ]
@@ -149,7 +151,7 @@ ohos_shared_library("image_effect_ndk") {
     use_exceptions = true
 
     deps = [
-        ":image_effect",
+        ":image_effect_impl",
     ]
 
     external_deps = [

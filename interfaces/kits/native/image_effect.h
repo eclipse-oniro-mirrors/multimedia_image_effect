@@ -27,7 +27,7 @@
  *
  * @brief Declares the functions for rendering image.
  *
- * @library libimage_effect_ndk.so
+ * @library libimage_effect.so
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
  * @since 12
  */
@@ -100,6 +100,27 @@ OH_EffectFilter *OH_ImageEffect_InsertFilter(OH_ImageEffect *imageEffect, uint32
 int32_t OH_ImageEffect_RemoveFilter(OH_ImageEffect *imageEffect, const char *filterName);
 
 /**
+ * @brief Get the number of the filters in OH_ImageEffect
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
+ * @return Returns the number of the filters in OH_ImageEffect
+ * @since 12
+ */
+int32_t OH_ImageEffect_GetFilterCount(OH_ImageEffect *imageEffect);
+
+/**
+ * @brief Get an OH_EffectFilter instance that add to OH_ImageEffect by the index
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
+ * @param index Indicates the position of the OH_EffectFilter that add to OH_ImageEffect
+ * @return Returns a pointer to an OH_EffectFilter instance if the index is valid, otherwise returns nullptr
+ * @since 12
+ */
+OH_EffectFilter *OH_ImageEffect_GetFilter(OH_ImageEffect *imageEffect, uint32_t index);
+
+/**
  * @brief Set configuration information to the OH_ImageEffect
  *
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
@@ -145,24 +166,24 @@ ImageEffect_ErrorCode OH_ImageEffect_GetInputSurface(OH_ImageEffect *imageEffect
  *
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
  * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
- * @param pixelmap Indicates the OH_Pixelmap that contains the image information
+ * @param pixelmap Indicates the OH_PixelmapNative that contains the image information
  * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_ImageEffect_SetInputPixelmap(OH_ImageEffect *imageEffect, OH_Pixelmap *pixelmap);
+ImageEffect_ErrorCode OH_ImageEffect_SetInputPixelmap(OH_ImageEffect *imageEffect, OH_PixelmapNative *pixelmap);
 
 /**
  * @brief Set output pixelmap that contains the image information
  *
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
  * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
- * @param pixelmap Indicates the OH_Pixelmap that contains the image information
+ * @param pixelmap Indicates the OH_PixelmapNative that contains the image information
  * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_ImageEffect_SetOutputPixelmap(OH_ImageEffect *imageEffect, OH_Pixelmap *pixelmap);
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputPixelmap(OH_ImageEffect *imageEffect, OH_PixelmapNative *pixelmap);
 
 /**
  * @brief Set input NativeBuffer that contains the image information. It should be noted that the input NativeBuffer
@@ -270,27 +291,6 @@ ImageEffect_ErrorCode OH_ImageEffect_Save(OH_ImageEffect *imageEffect, char **in
  * @since 12
  */
 OH_ImageEffect *OH_ImageEffect_Restore(const char *info);
-
-/**
- * @brief Get the number of the filters in OH_ImageEffect
- *
- * @syscap SystemCapability.Multimedia.ImageEffect.Core
- * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
- * @return Returns the number of the filters in OH_ImageEffect
- * @since 12
- */
-int32_t OH_ImageEffect_GetFilterCount(OH_ImageEffect *imageEffect);
-
-/**
- * @brief Get an OH_EffectFilter instance that add to OH_ImageEffect by the index
- *
- * @syscap SystemCapability.Multimedia.ImageEffect.Core
- * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
- * @param index Indicates the position of the OH_EffectFilter that add to OH_ImageEffect
- * @return Returns a pointer to an OH_EffectFilter instance if the index is valid, otherwise returns nullptr
- * @since 12
- */
-OH_EffectFilter *OH_ImageEffect_GetFilter(OH_ImageEffect *imageEffect, uint32_t index);
 
 #ifdef __cplusplus
 }

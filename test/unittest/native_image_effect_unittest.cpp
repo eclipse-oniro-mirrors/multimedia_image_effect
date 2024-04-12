@@ -30,9 +30,10 @@
 #include "mock_native_pixel_map.h"
 #include "surface_utils.h"
 #include "test_common.h"
-#include "image_effect_advance.h"
+#include "external_loader.h"
 #include "native_effect_base.h"
 #include "native_window.h"
+#include "image_effect_advance.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -125,20 +126,21 @@ public:
         mockSurfaceBuffer_ = new MockSurfaceBuffer();
         mockSurfaceBufferYuvNv21_ = new MockSurfaceBufferYuvNv21();
         mockSurfaceBufferYuvNv12_ = new MockSurfaceBufferYuvNv12();
+        ExternLoader::Instance()->InitExt();
         EFilterFactory::Instance()->functions_.clear();
         EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
         EFilterFactory::Instance()->RegisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);
         EFilterFactory::Instance()->RegisterEFilter<CustomTestEFilter>(CUSTOM_TEST_EFILTER);
         EFilterFactory::Instance()->delegates_.clear();
         mockPixelMapNapi_ = new MockPixelMapNapi();
-        filterInfo_ = OH_EffectFilter_CreateInfo();
-        OH_EffectFilter_InfoSetFilterName(filterInfo_, BRIGHTNESS_EFILTER);
+        filterInfo_ = OH_EffectFilterInfo_Create();
+        OH_EffectFilterInfo_SetFilterName(filterInfo_, BRIGHTNESS_EFILTER);
         ImageEffect_BufferType bufferTypes[] = { ImageEffect_BufferType::EFFECT_BUFFER_TYPE_PIXEL };
-        OH_EffectFilter_InfoSetSupportedBufferTypes(filterInfo_, sizeof(bufferTypes) / sizeof(ImageEffect_BufferType),
+        OH_EffectFilterInfo_SetSupportedBufferTypes(filterInfo_, sizeof(bufferTypes) / sizeof(ImageEffect_BufferType),
             bufferTypes);
         ImageEffect_Format formats[] = { ImageEffect_Format::EFFECT_PIXEL_FORMAT_RGBA8888,
             ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV12, ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV21};
-        OH_EffectFilter_InfoSetSupportedFormats(filterInfo_, sizeof(formats) / sizeof(ImageEffect_Format), formats);
+        OH_EffectFilterInfo_SetSupportedFormats(filterInfo_, sizeof(formats) / sizeof(ImageEffect_Format), formats);
     }
 
     void TearDown() override
@@ -152,7 +154,7 @@ public:
         mockSurfaceBufferYuvNv21_ = nullptr;
         mockSurfaceBufferYuvNv12_ = nullptr;
         if (filterInfo_ != nullptr) {
-            OH_EffectFilter_ReleaseInfo(filterInfo_);
+            OH_EffectFilterInfo_Release(filterInfo_);
             filterInfo_ = nullptr;
         }
     }
@@ -810,7 +812,7 @@ HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo001, TestSize.Level
 {
     ImageEffect_Format formats[] = { ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV12,
         ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV21};
-    OH_EffectFilter_InfoSetSupportedFormats(filterInfo_, sizeof(formats) / sizeof(ImageEffect_Format), formats);
+    OH_EffectFilterInfo_SetSupportedFormats(filterInfo_, sizeof(formats) / sizeof(ImageEffect_Format), formats);
     ImageEffect_FilterDelegate delegate = {
         .setValue = [](OH_EffectFilter *filter, const char *key, const ImageEffect_Any *value) { return true; },
         .render = [](OH_EffectFilter *filter, OH_EffectBufferInfo *src, OH_EffectFilterDelegate_PushData pushData) {
@@ -825,21 +827,21 @@ HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo001, TestSize.Level
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     const char *name = BRIGHTNESS_EFILTER;
-    OH_EffectFilterInfo *info = OH_EffectFilter_CreateInfo();
+    OH_EffectFilterInfo *info = OH_EffectFilterInfo_Create();
     errorCode = OH_EffectFilter_LookupFilterInfo(name, info);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
     char *filterName = nullptr;
-    OH_EffectFilter_InfoGetFilterName(info, &filterName);
+    OH_EffectFilterInfo_GetFilterName(info, &filterName);
     ASSERT_STREQ(filterName, BRIGHTNESS_EFILTER);
     uint32_t bufferTypeSize = 0;
     ImageEffect_BufferType *bufferTypeArray = nullptr;
-    OH_EffectFilter_InfoGetSupportedBufferTypes(info, &bufferTypeSize, &bufferTypeArray);
+    OH_EffectFilterInfo_GetSupportedBufferTypes(info, &bufferTypeSize, &bufferTypeArray);
     ASSERT_EQ(bufferTypeSize, 1);
     uint32_t formatSize = 0;
     ImageEffect_Format *formatArray = nullptr;
-    OH_EffectFilter_InfoGetSupportedFormats(info, &formatSize, &formatArray);
+    OH_EffectFilterInfo_GetSupportedFormats(info, &formatSize, &formatArray);
     ASSERT_EQ(formatSize, 2);
-    OH_EffectFilter_ReleaseInfo(info);
+    OH_EffectFilterInfo_Release(info);
 }
 
 /**
@@ -866,10 +868,10 @@ HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo002, TestSize.Level
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     const char *name = "TestEFilter";
-    OH_EffectFilterInfo *info = OH_EffectFilter_CreateInfo();
+    OH_EffectFilterInfo *info = OH_EffectFilterInfo_Create();
     errorCode = OH_EffectFilter_LookupFilterInfo(name, info);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-    OH_EffectFilter_ReleaseInfo(info);
+    OH_EffectFilterInfo_Release(info);
 }
 
 /**
@@ -883,10 +885,10 @@ HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo002, TestSize.Level
 HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo003, TestSize.Level1)
 {
     const char *name = "TestEFilter";
-    OH_EffectFilterInfo *info = OH_EffectFilter_CreateInfo();
+    OH_EffectFilterInfo *info = OH_EffectFilterInfo_Create();
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_LookupFilterInfo(name, info);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-    OH_EffectFilter_ReleaseInfo(info);
+    OH_EffectFilterInfo_Release(info);
 }
 
 /**
@@ -913,10 +915,10 @@ HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo004, TestSize.Level
  */
 HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilterInfo005, TestSize.Level1)
 {
-    OH_EffectFilterInfo *info = OH_EffectFilter_CreateInfo();
+    OH_EffectFilterInfo *info = OH_EffectFilterInfo_Create();
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_LookupFilterInfo(nullptr, info);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-    OH_EffectFilter_ReleaseInfo(info);
+    OH_EffectFilterInfo_Release(info);
 }
 
 /**
@@ -1017,7 +1019,7 @@ HWTEST_F(NativeImageEffectUnittest, CustomFilterAdjustmentSaveAndRestore001, Tes
     InSequence s;
     NativePixelMap inputPixel = {.napi = mockPixelMapNapi_};
 
-    OH_EffectFilter_InfoSetFilterName(filterInfo_, CUSTOM_BRIGHTNESS_EFILTER);
+    OH_EffectFilterInfo_SetFilterName(filterInfo_, CUSTOM_BRIGHTNESS_EFILTER);
 
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_Register(filterInfo_, &delegate_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);

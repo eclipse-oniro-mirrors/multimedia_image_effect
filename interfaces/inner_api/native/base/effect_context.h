@@ -18,7 +18,7 @@
 
 #include "effect_info.h"
 #include "effect_memory_manager.h"
-#include "efilter_render_strategy.h"
+#include "render_strategy.h"
 #include "capability_negotiate.h"
 
 namespace OHOS {
@@ -27,7 +27,7 @@ namespace Effect {
 struct EffectContext {
 public:
     std::shared_ptr<EffectMemoryManager> memoryManager_;
-    std::shared_ptr<EFilterRenderStrategy> renderStrategy_;
+    std::shared_ptr<RenderStrategy> renderStrategy_;
     std::shared_ptr<CapabilityNegotiate> capNegotiate_;
     IPType ipType_ = IPType::DEFAULT;
 };

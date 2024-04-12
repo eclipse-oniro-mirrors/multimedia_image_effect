@@ -27,7 +27,7 @@
  *
  * @brief Defines the error code used in ImageEffect.
  *
- * @library libimage_effect_ndk.so
+ * @library libimage_effect.so
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
  * @since 12
  */
@@ -78,7 +78,7 @@ typedef enum ImageEffect_ErrorCode {
     /**
      * The input or output image type is not supported. For example, the pixel format beyond the current definition.
      */
-    EFFECT_INPUT_OUTPUT_NOT_SUPPORT = 29000103,
+    EFFECT_INPUT_OUTPUT_NOT_SUPPORTED = 29000103,
     /**
      * Allocate memory fail. For example, over sized image resource.
      */

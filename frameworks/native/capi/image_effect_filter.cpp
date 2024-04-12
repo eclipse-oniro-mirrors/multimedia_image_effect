@@ -217,14 +217,14 @@ extern "C" {
 #endif
 
 EFFECT_EXPORT
-OH_EffectFilterInfo *OH_EffectFilter_CreateInfo()
+OH_EffectFilterInfo *OH_EffectFilterInfo_Create()
 {
     std::unique_ptr<OH_EffectFilterInfo> info = std::make_unique<OH_EffectFilterInfo>();
     return info.release();
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_InfoSetFilterName(OH_EffectFilterInfo *info, const char *name)
+ImageEffect_ErrorCode OH_EffectFilterInfo_SetFilterName(OH_EffectFilterInfo *info, const char *name)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "InfoSetFilterName: input parameter info is null!");
@@ -236,7 +236,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoSetFilterName(OH_EffectFilterInfo *inf
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_InfoGetFilterName(OH_EffectFilterInfo *info, char **name)
+ImageEffect_ErrorCode OH_EffectFilterInfo_GetFilterName(OH_EffectFilterInfo *info, char **name)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "InfoGetFilterName: input parameter info is null!");
@@ -248,7 +248,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoGetFilterName(OH_EffectFilterInfo *inf
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_InfoSetSupportedBufferTypes(OH_EffectFilterInfo *info, uint32_t size,
+ImageEffect_ErrorCode OH_EffectFilterInfo_SetSupportedBufferTypes(OH_EffectFilterInfo *info, uint32_t size,
     ImageEffect_BufferType *bufferTypeArray)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -266,7 +266,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoSetSupportedBufferTypes(OH_EffectFilte
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_InfoGetSupportedBufferTypes(OH_EffectFilterInfo *info, uint32_t *size,
+ImageEffect_ErrorCode OH_EffectFilterInfo_GetSupportedBufferTypes(OH_EffectFilterInfo *info, uint32_t *size,
     ImageEffect_BufferType **bufferTypeArray)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -313,7 +313,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoGetSupportedBufferTypes(OH_EffectFilte
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_InfoSetSupportedFormats(OH_EffectFilterInfo *info, uint32_t size,
+ImageEffect_ErrorCode OH_EffectFilterInfo_SetSupportedFormats(OH_EffectFilterInfo *info, uint32_t size,
     ImageEffect_Format *formatArray)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -331,7 +331,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoSetSupportedFormats(OH_EffectFilterInf
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_InfoGetSupportedFormats(OH_EffectFilterInfo *info, uint32_t *size,
+ImageEffect_ErrorCode OH_EffectFilterInfo_GetSupportedFormats(OH_EffectFilterInfo *info, uint32_t *size,
     ImageEffect_Format **formatArray)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -377,7 +377,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoGetSupportedFormats(OH_EffectFilterInf
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_ReleaseInfo(OH_EffectFilterInfo *info)
+ImageEffect_ErrorCode OH_EffectFilterInfo_Release(OH_EffectFilterInfo *info)
 {
     EFFECT_LOGD("Filter release info.");
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -387,14 +387,14 @@ ImageEffect_ErrorCode OH_EffectFilter_ReleaseInfo(OH_EffectFilterInfo *info)
 }
 
 EFFECT_EXPORT
-OH_EffectBufferInfo *OH_EffectFilter_CreateBufferInfo()
+OH_EffectBufferInfo *OH_EffectBufferInfo_Create()
 {
     std::unique_ptr<OH_EffectBufferInfo> info = std::make_unique<OH_EffectBufferInfo>();
     return info.release();
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetAddr(OH_EffectBufferInfo *info, void *addr)
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetAddr(OH_EffectBufferInfo *info, void *addr)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "BufferInfoSetAddr: input parameter info is null!");
@@ -406,7 +406,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetAddr(OH_EffectBufferInfo *inf
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetAddr(OH_EffectBufferInfo *info, void **addr)
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetAddr(OH_EffectBufferInfo *info, void **addr)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "BufferInfoGetAddr: input parameter info is null!");
@@ -418,7 +418,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetAddr(OH_EffectBufferInfo *inf
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetWidth(OH_EffectBufferInfo *info, int32_t width)
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetWidth(OH_EffectBufferInfo *info, int32_t width)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "BufferInfoSetWidth: input parameter info is null!");
@@ -428,7 +428,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetWidth(OH_EffectBufferInfo *in
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetWidth(OH_EffectBufferInfo *info, int32_t *width)
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetWidth(OH_EffectBufferInfo *info, int32_t *width)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "BufferInfoGetWidth: input parameter info is null!");
@@ -440,7 +440,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetWidth(OH_EffectBufferInfo *in
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetHeight(OH_EffectBufferInfo *info, int32_t height)
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetHeight(OH_EffectBufferInfo *info, int32_t height)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "BufferInfoSetHeight: input parameter info is null!");
@@ -450,7 +450,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetHeight(OH_EffectBufferInfo *i
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetHeight(OH_EffectBufferInfo *info, int32_t *height)
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetHeight(OH_EffectBufferInfo *info, int32_t *height)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "BufferInfoGetHeight: input parameter info is null!");
@@ -462,7 +462,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetHeight(OH_EffectBufferInfo *i
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetRowSize(OH_EffectBufferInfo *info, int32_t rowSize)
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetRowSize(OH_EffectBufferInfo *info, int32_t rowSize)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "BufferInfoSetRowSize: input parameter info is null!");
@@ -472,7 +472,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetRowSize(OH_EffectBufferInfo *
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetRowSize(OH_EffectBufferInfo *info, int32_t *rowSize)
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetRowSize(OH_EffectBufferInfo *info, int32_t *rowSize)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "BufferInfoGetRowSize: input parameter info is null!");
@@ -484,7 +484,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetRowSize(OH_EffectBufferInfo *
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetEffectFormat(OH_EffectBufferInfo *info, ImageEffect_Format format)
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetEffectFormat(OH_EffectBufferInfo *info, ImageEffect_Format format)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "BufferInfoSetEffectFormat: input parameter info is null!");
@@ -494,7 +494,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetEffectFormat(OH_EffectBufferI
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetEffectFormat(OH_EffectBufferInfo *info, ImageEffect_Format *format)
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetEffectFormat(OH_EffectBufferInfo *info, ImageEffect_Format *format)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "BufferInfoGetEffectFormat: input parameter info is null!");
@@ -506,7 +506,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetEffectFormat(OH_EffectBufferI
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_ReleaseBufferInfo(OH_EffectBufferInfo *info)
+ImageEffect_ErrorCode OH_EffectBufferInfo_Release(OH_EffectBufferInfo *info)
 {
     EFFECT_LOGD("Filter release buffer info.");
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -675,8 +675,8 @@ ImageEffect_ErrorCode OH_EffectFilter_LookupFilterInfo(const char *name, OH_Effe
 }
 
 EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EffectFilter_Render(OH_EffectFilter *filter, OH_Pixelmap *inputPixelmap,
-    OH_Pixelmap *outputPixelmap)
+ImageEffect_ErrorCode OH_EffectFilter_Render(OH_EffectFilter *filter, OH_PixelmapNative *inputPixelmap,
+    OH_PixelmapNative *outputPixelmap)
 {
     EFFECT_LOGI("Filter render.");
     CHECK_AND_RETURN_RET_LOG(filter != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,

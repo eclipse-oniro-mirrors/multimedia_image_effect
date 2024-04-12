@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef IEFFECT_EFILTER_RENDER_STRATEGY_H
-#define IEFFECT_EFILTER_RENDER_STRATEGY_H
+#ifndef IMAGE_EFFECT_RENDER_STRATEGY_H
+#define IMAGE_EFFECT_RENDER_STRATEGY_H
 
 #include "effect_buffer.h"
 #include "capability.h"
@@ -22,10 +22,10 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-class EFilterRenderStrategy {
+class RenderStrategy {
 public:
-    EFilterRenderStrategy() = default;
-    ~EFilterRenderStrategy() = default;
+    RenderStrategy() = default;
+    ~RenderStrategy() = default;
 
     void Init(EffectBuffer *src, EffectBuffer *dst);
 
@@ -43,4 +43,4 @@ private:
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
-#endif // IEFFECT_EFILTER_RENDER_STRATEGY_H
+#endif // IMAGE_EFFECT_RENDER_STRATEGY_H

@@ -33,7 +33,7 @@ constexpr uint32_t UNSIGHED_CHAR_DATA_RECORDS = 256;
 constexpr uint32_t BYTES_PER_INT = 4;
 constexpr uint32_t RGBA_ALPHA_INDEX = 3;
 constexpr double PI = 3.14159265;
-constexpr uint32_t ALGORITHM_PARAMTER_INDEX = 2;
+constexpr uint32_t ALGORITHM_PARAMTER_FACTOR = 2;
 
 ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     std::map<std::string, Plugin::Any> &value)
@@ -61,7 +61,7 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
     for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
         float current = (float)idx / UNSIGHED_CHAR_MAX;
-        current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_INDEX * PI * current);
+        current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_FACTOR * PI * current);
         current = CommonUtils::Clip(current, 0, 1);
         lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
     }
@@ -109,7 +109,7 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst,
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
     for (uint32_t i = 0; i < UNSIGHED_CHAR_DATA_RECORDS; i++) {
         float current = (float)(i) / UNSIGHED_CHAR_MAX;
-        current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_INDEX * PI * current);
+        current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_FACTOR * PI * current);
         current = CommonUtils::Clip(current, 0, 1);
         lut[i] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
     }
@@ -167,7 +167,7 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst,
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
     for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
         float current = (float)(idx) / UNSIGHED_CHAR_MAX;
-        current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_INDEX * PI * current);
+        current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_FACTOR * PI * current);
         current = CommonUtils::Clip(current, 0, 1);
         lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
     }

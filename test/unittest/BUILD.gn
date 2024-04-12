@@ -42,8 +42,8 @@ ohos_unittest("image_effect_unittest") {
     ]
 
     deps = [
+        "$image_effect_root_dir/frameworks/native:image_effect_impl",
         "$image_effect_root_dir/frameworks/native:image_effect",
-        "$image_effect_root_dir/frameworks/native:image_effect_ndk",
         "//third_party/googletest:gmock_main",
         "//third_party/googletest:gtest_main",
     ]

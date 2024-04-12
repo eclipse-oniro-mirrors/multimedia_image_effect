@@ -27,7 +27,7 @@
  *
  * @brief Declares the functions for setting filter parameters, registering custom filter and filter lookup information.
  *
- * @library libimage_effect_ndk.so
+ * @library libimage_effect.so
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
  * @since 12
  */
@@ -35,14 +35,14 @@
 #ifndef NATIVE_IMAGE_EFFECT_FILTER_H
 #define NATIVE_IMAGE_EFFECT_FILTER_H
 
-#include "stdint.h"
+#include <stdint.h>
 #include "image_effect_errors.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct OH_Pixelmap OH_Pixelmap;
+typedef struct OH_PixelmapNative OH_PixelmapNative;
 
 /**
  * @brief Define the new type name OH_EffectFilter for struct OH_EffectFilter
@@ -133,17 +133,17 @@ typedef enum ImageEffect_DataType {
 typedef union ImageEffect_DataValue {
     /** Parameter of 32-bit integer value matches with {@link EFFECT_DATA_TYPE_INT32} */
     int32_t int32Value;
-    /** Parameter of float value matches with {@link EFFECT_DATA_TYPE_FLOAT */
+    /** Parameter of float value matches with {@link EFFECT_DATA_TYPE_FLOAT} */
     float floatValue;
-    /** Parameter of double value matches with {@link EFFECT_DATA_TYPE_DOUBLE */
+    /** Parameter of double value matches with {@link EFFECT_DATA_TYPE_DOUBLE} */
     double doubleValue;
-    /** Parameter of character value matches with {@link EFFECT_DATA_TYPE_CHAR */
+    /** Parameter of character value matches with {@link EFFECT_DATA_TYPE_CHAR} */
     char charValue;
-    /** Parameter of long integer value matches with {@link EFFECT_DATA_TYPE_LONG */
+    /** Parameter of long integer value matches with {@link EFFECT_DATA_TYPE_LONG} */
     long longValue;
-    /** Parameter of bool value matches with {@link EFFECT_DATA_TYPE_BOOL */
+    /** Parameter of bool value matches with {@link EFFECT_DATA_TYPE_BOOL} */
     bool boolValue;
-    /** Parameter of point value matches with {@link EFFECT_DATA_TYPE_PTR */
+    /** Parameter of point value matches with {@link EFFECT_DATA_TYPE_PTR} */
     void *ptrValue;
 } ImageEffect_DataValue;
 
@@ -208,14 +208,14 @@ typedef struct OH_EffectFilterInfo OH_EffectFilterInfo;
 
 /**
  * @brief Create an OH_EffectFilterInfo instance. It should be noted that the life cycle of the OH_EffectFilterInfo
- * instance pointed to by the return value * needs to be manually released by {@link OH_EffectFilter_ReleaseInfo}
+ * instance pointed to by the return value * needs to be manually released by {@link OH_EffectFilterInfo_Release}
  *
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
  * @return Returns a pointer to an OH_EffectFilterInfo instance if the execution is successful, otherwise returns
  * nullptr
  * @since 12
  */
-OH_EffectFilterInfo *OH_EffectFilter_CreateInfo();
+OH_EffectFilterInfo *OH_EffectFilterInfo_Create();
 
 /**
  * @brief Set the filter name for OH_EffectFilterInfo structure
@@ -227,7 +227,7 @@ OH_EffectFilterInfo *OH_EffectFilter_CreateInfo();
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_InfoSetFilterName(OH_EffectFilterInfo *info, const char *name);
+ImageEffect_ErrorCode OH_EffectFilterInfo_SetFilterName(OH_EffectFilterInfo *info, const char *name);
 
 /**
  * @brief Get the filter name from OH_EffectFilterInfo structure
@@ -239,7 +239,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoSetFilterName(OH_EffectFilterInfo *inf
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_InfoGetFilterName(OH_EffectFilterInfo *info, char **name);
+ImageEffect_ErrorCode OH_EffectFilterInfo_GetFilterName(OH_EffectFilterInfo *info, char **name);
 
 /**
  * @brief Set the supported buffer types for OH_EffectFilterInfo structure
@@ -252,7 +252,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoGetFilterName(OH_EffectFilterInfo *inf
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_InfoSetSupportedBufferTypes(OH_EffectFilterInfo *info, uint32_t size,
+ImageEffect_ErrorCode OH_EffectFilterInfo_SetSupportedBufferTypes(OH_EffectFilterInfo *info, uint32_t size,
     ImageEffect_BufferType *bufferTypeArray);
 
 /**
@@ -266,7 +266,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoSetSupportedBufferTypes(OH_EffectFilte
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_InfoGetSupportedBufferTypes(OH_EffectFilterInfo *info, uint32_t *size,
+ImageEffect_ErrorCode OH_EffectFilterInfo_GetSupportedBufferTypes(OH_EffectFilterInfo *info, uint32_t *size,
     ImageEffect_BufferType **bufferTypeArray);
 
 /**
@@ -280,7 +280,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoGetSupportedBufferTypes(OH_EffectFilte
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_InfoSetSupportedFormats(OH_EffectFilterInfo *info, uint32_t size,
+ImageEffect_ErrorCode OH_EffectFilterInfo_SetSupportedFormats(OH_EffectFilterInfo *info, uint32_t size,
     ImageEffect_Format *formatArray);
 
 /**
@@ -294,7 +294,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoSetSupportedFormats(OH_EffectFilterInf
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_InfoGetSupportedFormats(OH_EffectFilterInfo *info, uint32_t *size,
+ImageEffect_ErrorCode OH_EffectFilterInfo_GetSupportedFormats(OH_EffectFilterInfo *info, uint32_t *size,
     ImageEffect_Format **formatArray);
 
 /**
@@ -306,7 +306,7 @@ ImageEffect_ErrorCode OH_EffectFilter_InfoGetSupportedFormats(OH_EffectFilterInf
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_ReleaseInfo(OH_EffectFilterInfo *info);
+ImageEffect_ErrorCode OH_EffectFilterInfo_Release(OH_EffectFilterInfo *info);
 
 /**
  * @brief EffectFilter names information
@@ -331,14 +331,14 @@ typedef struct OH_EffectBufferInfo OH_EffectBufferInfo;
 
 /**
  * @brief Create an OH_EffectBufferInfo instance. It should be noted that the life cycle of the OH_EffectBufferInfo
- * instance pointed to by the return value * needs to be manually released by {@link OH_EffectFilter_ReleaseBufferInfo}
+ * instance pointed to by the return value * needs to be manually released by {@link OH_EffectBufferInfo_Release}
  *
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
  * @return Returns a pointer to an OH_EffectBufferInfo instance if the execution is successful, otherwise returns
  * nullptr
  * @since 12
  */
-OH_EffectBufferInfo *OH_EffectFilter_CreateBufferInfo();
+OH_EffectBufferInfo *OH_EffectBufferInfo_Create();
 
 /**
  * @brief Set access to the address of the image in memory
@@ -350,7 +350,7 @@ OH_EffectBufferInfo *OH_EffectFilter_CreateBufferInfo();
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetAddr(OH_EffectBufferInfo *info, void *addr);
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetAddr(OH_EffectBufferInfo *info, void *addr);
 
 /**
  * @brief Provide direct access to the address of the image in memory for rendering the filter effects
@@ -362,7 +362,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetAddr(OH_EffectBufferInfo *inf
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetAddr(OH_EffectBufferInfo *info, void **addr);
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetAddr(OH_EffectBufferInfo *info, void **addr);
 
 /**
  * @brief Set the width of the image in pixels
@@ -374,7 +374,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetAddr(OH_EffectBufferInfo *inf
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetWidth(OH_EffectBufferInfo *info, int32_t width);
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetWidth(OH_EffectBufferInfo *info, int32_t width);
 
 /**
  * @brief Get the width of the image in pixels
@@ -386,7 +386,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetWidth(OH_EffectBufferInfo *in
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetWidth(OH_EffectBufferInfo *info, int32_t *width);
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetWidth(OH_EffectBufferInfo *info, int32_t *width);
 
 /**
  * @brief Set the height of the image in pixels
@@ -398,7 +398,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetWidth(OH_EffectBufferInfo *in
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetHeight(OH_EffectBufferInfo *info, int32_t height);
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetHeight(OH_EffectBufferInfo *info, int32_t height);
 
 /**
  * @brief Get the height of the image in pixels
@@ -410,7 +410,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetHeight(OH_EffectBufferInfo *i
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetHeight(OH_EffectBufferInfo *info, int32_t *height);
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetHeight(OH_EffectBufferInfo *info, int32_t *height);
 
 /**
  * @brief Set number of bytes per row for the image
@@ -422,7 +422,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetHeight(OH_EffectBufferInfo *i
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetRowSize(OH_EffectBufferInfo *info, int32_t rowSize);
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetRowSize(OH_EffectBufferInfo *info, int32_t rowSize);
 
 /**
  * @brief Get number of bytes per row for the image
@@ -434,7 +434,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetRowSize(OH_EffectBufferInfo *
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetRowSize(OH_EffectBufferInfo *info, int32_t *rowSize);
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetRowSize(OH_EffectBufferInfo *info, int32_t *rowSize);
 
 /**
  * @brief Set the format of the image for OH_EffectBufferInfo
@@ -446,7 +446,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetRowSize(OH_EffectBufferInfo *
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetEffectFormat(OH_EffectBufferInfo *info, ImageEffect_Format format);
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetEffectFormat(OH_EffectBufferInfo *info, ImageEffect_Format format);
 
 /**
  * @brief Get the format of the image from OH_EffectBufferInfo
@@ -458,7 +458,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoSetEffectFormat(OH_EffectBufferI
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetEffectFormat(OH_EffectBufferInfo *info, ImageEffect_Format *format);
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetEffectFormat(OH_EffectBufferInfo *info, ImageEffect_Format *format);
 
 /**
  * @brief Clear the internal resources of the OH_EffectBufferInfo and destroy the OH_EffectBufferInfo instance
@@ -469,7 +469,7 @@ ImageEffect_ErrorCode OH_EffectFilter_BufferInfoGetEffectFormat(OH_EffectBufferI
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_ReleaseBufferInfo(OH_EffectBufferInfo *info);
+ImageEffect_ErrorCode OH_EffectBufferInfo_Release(OH_EffectBufferInfo *info);
 
 /**
  * @brief When executing the method of {@link OH_EffectFilter_SetValue} for the delegate filter, the function pointer
@@ -679,8 +679,8 @@ ImageEffect_ErrorCode OH_EffectFilter_LookupFilterInfo(const char *name, OH_Effe
  * {@link ImageEffect_ErrorCode}
  * @since 12
  */
-ImageEffect_ErrorCode OH_EffectFilter_Render(OH_EffectFilter *filter, OH_Pixelmap *inputPixelmap,
-    OH_Pixelmap *outputPixelmap);
+ImageEffect_ErrorCode OH_EffectFilter_Render(OH_EffectFilter *filter, OH_PixelmapNative *inputPixelmap,
+    OH_PixelmapNative *outputPixelmap);
 
 /**
  * @brief Clear the internal resources of the OH_EffectFilter and destroy the OH_EffectFilter instance

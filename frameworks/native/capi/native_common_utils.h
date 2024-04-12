@@ -24,9 +24,10 @@
 #include "image_effect_filter.h"
 #include "image_type.h"
 #include "pixel_map_napi.h"
-#include "image_effect_advance.h"
 
 #define EFFECT_EXPORT __attribute__((visibility("default")))
+
+typedef struct NativePixelMap_ NativePixelMap;
 
 namespace OHOS {
 namespace Media {
@@ -43,7 +44,7 @@ public:
 
     static void SwitchToOHEffectInfo(const EffectInfo *effectInfo, OH_EffectFilterInfo *ohFilterInfo);
 
-    static PixelMap *GetPixelMapFromOHPixelmap(OH_Pixelmap *pixelmap);
+    static PixelMap *GetPixelMapFromOHPixelmap(OH_PixelmapNative *pixelmap);
 
     static PixelMap *GetPixelMapFromNativePixelMap(NativePixelMap *nativePixelMap);
 

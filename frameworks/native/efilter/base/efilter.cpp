@@ -254,7 +254,7 @@ ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<Ef
 
     std::shared_ptr<EffectContext> context = std::make_shared<EffectContext>();
     context->memoryManager_ = std::make_shared<EffectMemoryManager>();
-    context->renderStrategy_ = std::make_shared<EFilterRenderStrategy>();
+    context->renderStrategy_ = std::make_shared<RenderStrategy>();
     context->ipType_ = runningType;
 
     context->memoryManager_->Init(src, dst); // local variable and not need invoke ClearMemory
