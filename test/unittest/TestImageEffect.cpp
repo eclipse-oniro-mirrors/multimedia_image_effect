@@ -22,6 +22,7 @@
 #include "contrast_efilter.h"
 #include "mock_surface_buffer.h"
 #include "test_common.h"
+#include "external_loader.h"
 #include "crop_efilter.h"
 
 using namespace testing::ext;
@@ -78,8 +79,8 @@ public:
         return &info_;
     }
 private:
-   static std::shared_ptr<EffectInfo> info_;
-   std::shared_ptr<EFilter> filter_;
+    static std::shared_ptr<EffectInfo> info_;
+    std::shared_ptr<EFilter> filter_;
 };
 std::shared_ptr<EffectInfo> CustomTestEFilter::info_ = nullptr;
 
@@ -103,6 +104,7 @@ public:
     {
         mockPixelMap_ = new MockPixelMap();
         imageEffect_ = new ImageEffect();
+        ExternLoader::Instance()->InitExt();
         EFilterFactory::Instance()->functions_.clear();
         EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
         EFilterFactory::Instance()->RegisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);

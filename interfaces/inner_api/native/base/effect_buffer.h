@@ -52,7 +52,6 @@ struct ExtraInfo {
     OHOS::SurfaceBuffer *surfaceBuffer = nullptr;
     std::string uri;
     std::string path;
-    std::shared_ptr<uint8_t[]> data = nullptr;
 };
 
 class EffectBuffer {

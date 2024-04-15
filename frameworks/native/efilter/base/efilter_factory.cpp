@@ -17,6 +17,7 @@
 
 #include "custom_efilter.h"
 #include "effect_log.h"
+#include "external_loader.h"
 #include "json_helper.h"
 
 namespace OHOS {
@@ -47,6 +48,7 @@ void EFilterFactory::RegisterDelegate(const std::string &name, const std::shared
     std::shared_ptr<EffectInfo> &effectInfo)
 {
     EFFECT_LOGI("register delegate. name=%{public}s", name.c_str());
+    ExternLoader::Instance()->InitExt();
     RegisterEFilter<CustomEFilter>(name);
 
     CustomEFilter::SetEffectInfo(name, effectInfo);
@@ -83,6 +85,7 @@ std::shared_ptr<EFilter> EFilterFactory::Restore(const std::string &name, const 
 
 std::shared_ptr<EFilter> EFilterFactory::Create(const std::string &name, void *handler)
 {
+    ExternLoader::Instance()->InitExt();
     auto it = functions_.find(name);
     if (it != functions_.end()) {
         std::shared_ptr<EFilter> efilter = it->second.generator_(name);
@@ -97,6 +100,7 @@ std::shared_ptr<EFilter> EFilterFactory::Create(const std::string &name, void *h
 
 std::shared_ptr<EffectInfo> EFilterFactory::GetEffectInfo(const std::string &name)
 {
+    ExternLoader::Instance()->InitExt();
     auto it = functions_.find(name);
     if (it != functions_.end()) {
         return it->second.infoGetter_(name);

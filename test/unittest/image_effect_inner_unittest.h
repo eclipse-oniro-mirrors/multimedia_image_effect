@@ -34,7 +34,7 @@ public:
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */
     static void SetUpTestCase();
 
-    /* TearDownTestCase:Thetest suite cleanup action is executed after the last TestCase */
+    /* TearDownTestCase:The test suite cleanup action is executed after the last TestCase */
     static void TearDownTestCase();
 
     /* SetUp:Execute before each test case */

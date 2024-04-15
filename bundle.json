@@ -71,7 +71,7 @@
               "memcpy_helper.h"
             ]
           },
-          "name": "//foundation/multimedia/image_effect/frameworks/native:image_effect"
+          "name": "//foundation/multimedia/image_effect/frameworks/native:image_effect_impl"
         },
         {
           "type": "so",
@@ -83,7 +83,7 @@
               "image_effect_filter.h"
             ]
           },
-          "name": "//foundation/multimedia/image_effect/frameworks/native:image_effect_ndk"
+          "name": "//foundation/multimedia/image_effect/frameworks/native:image_effect"
         }
       ],
       "test": ["//foundation/multimedia/image_effect/test:image_effect_test"]

@@ -15,7 +15,7 @@ import("//build/ohos.gni")
 
 group("image_effect") {
     deps = [
-        "frameworks/native:image_effect",
-        "frameworks/native:image_effect_ndk"
+        "frameworks/native:image_effect_impl",
+        "frameworks/native:image_effect"
     ]
 }

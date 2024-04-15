@@ -173,7 +173,7 @@ void NativeCommonUtils::SwitchToOHEffectInfo(const EffectInfo *effectInfo, OH_Ef
     }
 }
 
-PixelMap *NativeCommonUtils::GetPixelMapFromOHPixelmap(OH_Pixelmap *pixelmap)
+PixelMap *NativeCommonUtils::GetPixelMapFromOHPixelmap(OH_PixelmapNative *pixelmap)
 {
     return nullptr;
 }

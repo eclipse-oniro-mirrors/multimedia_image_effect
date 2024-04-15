@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 
-#include "efilter_render_strategy.h"
+#include "render_strategy.h"
 
 #include "effect_log.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
-void EFilterRenderStrategy::Init(EffectBuffer *src, EffectBuffer *dst)
+void RenderStrategy::Init(EffectBuffer *src, EffectBuffer *dst)
 {
     src_ = src;
     dst_ = dst;
@@ -60,7 +60,7 @@ EffectBuffer *ChooseBufOnSetInOutput(EffectBuffer *buffer, EffectBuffer *src, Ef
     return buffer;
 }
 
-EffectBuffer *EFilterRenderStrategy::ChooseBestOutput(EffectBuffer *buffer,
+EffectBuffer *RenderStrategy::ChooseBestOutput(EffectBuffer *buffer,
     std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap)
 {
     CHECK_AND_RETURN_RET_LOG(src_ != nullptr && buffer != nullptr, buffer,
@@ -72,17 +72,17 @@ EffectBuffer *EFilterRenderStrategy::ChooseBestOutput(EffectBuffer *buffer,
     return ChooseBufOnSetInOutput(buffer, src_, dst_, memNegotiatedCap);
 }
 
-EffectBuffer *EFilterRenderStrategy::GetInput()
+EffectBuffer *RenderStrategy::GetInput()
 {
     return src_;
 }
 
-EffectBuffer *EFilterRenderStrategy::GetOutput()
+EffectBuffer *RenderStrategy::GetOutput()
 {
     return dst_;
 }
 
-void EFilterRenderStrategy::Deinit()
+void RenderStrategy::Deinit()
 {
     src_ = nullptr;
     dst_ = nullptr;

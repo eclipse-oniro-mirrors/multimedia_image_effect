@@ -167,13 +167,13 @@ ErrorCode GpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
         }
     }
 
-    code  = InitMesh();
+    code = InitMesh();
     if (code != ErrorCode::SUCCESS) {
         EFFECT_LOGE("GpuContrastAlgo Render InitMesh Failed");
         return code;
     }
 
-    code  = PreDraw(width, height, value);
+    code = PreDraw(width, height, value);
     if (code != ErrorCode::SUCCESS) {
         EFFECT_LOGE("GpuContrastAlgo Render PreDraw Failed");
         return code;
