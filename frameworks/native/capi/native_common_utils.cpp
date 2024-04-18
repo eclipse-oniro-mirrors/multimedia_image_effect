@@ -20,8 +20,8 @@
 
 #include "effect_log.h"
 #include "efilter_factory.h"
-#include "native_pixel_map.h"
 #include "native_effect_base.h"
+#include "pixelmap_native_impl.h"
 
 namespace OHOS {
 namespace Media {
@@ -173,16 +173,11 @@ void NativeCommonUtils::SwitchToOHEffectInfo(const EffectInfo *effectInfo, OH_Ef
     }
 }
 
-PixelMap *NativeCommonUtils::GetPixelMapFromOHPixelmap(OH_PixelmapNative *pixelmap)
+PixelMap *NativeCommonUtils::GetPixelMapFromOHPixelmap(OH_PixelmapNative *pixelmapNative)
 {
-    return nullptr;
-}
+    CHECK_AND_RETURN_RET_LOG(pixelmapNative != nullptr, nullptr, "input pixelmapNative is null!");
 
-PixelMap *NativeCommonUtils::GetPixelMapFromNativePixelMap(NativePixelMap *nativePixelMap)
-{
-    CHECK_AND_RETURN_RET_LOG(nativePixelMap != nullptr, nullptr, "input nativePixelMap is null!");
-
-    std::shared_ptr<PixelMap> pixelMap = PixelMapNative_GetPixelMap(nativePixelMap);
+    std::shared_ptr<PixelMap> pixelMap = pixelmapNative->GetInnerPixelmap();
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, nullptr, "pixelMap is null!");
 
     return pixelMap.get();

@@ -18,7 +18,6 @@
 
 #include "gtest/gtest.h"
 #include "mock_pixel_map.h"
-#include "mock_pixel_map_napi.h"
 #include "image_effect_filter.h"
 
 namespace OHOS {
@@ -26,8 +25,8 @@ namespace Media {
 namespace Effect {
 class ImageEffectCApiUnittest : public testing::Test {
 public:
-    MockPixelMap *mockPixelMap_;
-    MockPixelMapNapi *mockPixelMapNapi_;
+    std::shared_ptr<PixelMap> mockPixelMap_;
+    OH_PixelmapNative *pixelmapNative_ = nullptr;
     OH_EffectFilterInfo *filterInfo_ = nullptr;
 
     /* SetUpTestCase:The preset action of the test suite is executed before the first TestCase */

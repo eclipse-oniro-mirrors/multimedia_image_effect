@@ -194,17 +194,5 @@
   {
     "first_introduced": "12",
     "name": "OH_ImageEffect_Restore"
-  },
-  {
-    "first_introduced": "12",
-    "name": "OH_EFilter_Render"
-  },
-  {
-    "first_introduced": "12",
-    "name": "OH_ImageEffect_SetInputNativePixelMap"
-  },
-  {
-    "first_introduced": "12",
-    "name": "OH_ImageEffect_SetOutputNativePixelMap"
   }
 ]

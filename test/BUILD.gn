@@ -12,8 +12,6 @@
 # limitations under the License.
 
 group("image_effect_test") {
-    testonly = true
-    deps = [
-        "unittest:image_effect_unittest",
-    ]
+  testonly = true
+  deps = [ "unittest:image_effect_unittest" ]
 }

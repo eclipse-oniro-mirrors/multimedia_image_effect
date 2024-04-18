@@ -17,54 +17,53 @@ import("//foundation/multimedia/image_effect/config.gni")
 module_output_path = "image_effect/image_effect_unittest"
 
 ohos_unittest("image_effect_unittest") {
-    module_out_path = module_output_path
-    resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
-    include_dirs = [
-        "$image_effect_root_dir/frameworks/native/effect/render_environment/gpu_render",
-        "$image_effect_root_dir/frameworks/native/effect/render_environment/utils",
-        "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness",
-        "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast",
-        "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop",
-        "$image_effect_root_dir/frameworks/native/capi",
-        "$image_effect_root_dir/test/unittest/mock/include",
-        "$image_effect_root_dir/test/unittest/common",
-        "//foundation/multimedia/image_framework/interfaces/innerkits/include/mdkKits",
-    ]
+  module_out_path = module_output_path
+  resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
+  include_dirs = [
+    "$image_effect_root_dir/frameworks/native/effect/render_environment/gpu_render",
+    "$image_effect_root_dir/frameworks/native/effect/render_environment/utils",
+    "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness",
+    "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast",
+    "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop",
+    "$image_effect_root_dir/frameworks/native/capi",
+    "$image_effect_root_dir/test/unittest/mock/include",
+    "$image_effect_root_dir/test/unittest/common",
+    "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk/include",
+  ]
 
-    sources = [
-        "$image_effect_root_dir/test/unittest/image_effect_inner_unittest.cpp",
-        "$image_effect_root_dir/test/unittest/image_effect_capi_unittest.cpp",
-        "$image_effect_root_dir/test/unittest/mock/src/mock_pixel_map.cpp",
-        "$image_effect_root_dir/test/unittest/mock/src/mock_pixel_map_napi.cpp",
-        "$image_effect_root_dir/test/unittest/TestImageEffect.cpp",
-        "$image_effect_root_dir/test/unittest/native_image_effect_unittest.cpp",
-        "$image_effect_root_dir/test/unittest/TestUtils.cpp",
-    ]
+  sources = [
+    "$image_effect_root_dir/test/unittest/TestImageEffect.cpp",
+    "$image_effect_root_dir/test/unittest/TestUtils.cpp",
+    "$image_effect_root_dir/test/unittest/image_effect_capi_unittest.cpp",
+    "$image_effect_root_dir/test/unittest/image_effect_inner_unittest.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_pixel_map.cpp",
+    "$image_effect_root_dir/test/unittest/native_image_effect_unittest.cpp",
+  ]
 
-    deps = [
-        "$image_effect_root_dir/frameworks/native:image_effect_impl",
-        "$image_effect_root_dir/frameworks/native:image_effect",
-        "//third_party/googletest:gmock_main",
-        "//third_party/googletest:gtest_main",
-    ]
+  deps = [
+    "$image_effect_root_dir/frameworks/native:image_effect",
+    "$image_effect_root_dir/frameworks/native:image_effect_impl",
+    "//third_party/googletest:gmock_main",
+    "//third_party/googletest:gtest_main",
+    "//third_party/json:nlohmann_json_static",
+  ]
 
-    external_deps = [
-        "image_framework:image_native",
-        "image_framework:image",
-        "image_framework:pixelmap_ndk",
-        "napi:ace_napi",
-        "c_utils:utils",
-        "graphic_2d:libgl",
-        "graphic_surface:surface",
-    ]
+  external_deps = [
+    "c_utils:utils",
+    "graphic_2d:libgl",
+    "graphic_surface:surface",
+    "image_framework:image_native",
+    "image_framework:pixelmap",
+    "napi:ace_napi",
+  ]
 
-    use_exceptions = true
+  use_exceptions = true
 
-    cflags = [
-        "-fPIC",
-        "-Werror=unused",
-        "-fno-access-control", # Ignore Private Member Access Control
-    ]
+  cflags = [
+    "-fPIC",
+    "-Werror=unused",
+    "-fno-access-control",  # Ignore Private Member Access Control
+  ]
 
-    cflags_cc = cflags
+  cflags_cc = cflags
 }
