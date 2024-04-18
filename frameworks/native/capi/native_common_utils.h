@@ -27,8 +27,6 @@
 
 #define EFFECT_EXPORT __attribute__((visibility("default")))
 
-typedef struct NativePixelMap_ NativePixelMap;
-
 namespace OHOS {
 namespace Media {
 namespace Effect {
@@ -44,9 +42,7 @@ public:
 
     static void SwitchToOHEffectInfo(const EffectInfo *effectInfo, OH_EffectFilterInfo *ohFilterInfo);
 
-    static PixelMap *GetPixelMapFromOHPixelmap(OH_PixelmapNative *pixelmap);
-
-    static PixelMap *GetPixelMapFromNativePixelMap(NativePixelMap *nativePixelMap);
+    static PixelMap *GetPixelMapFromOHPixelmap(OH_PixelmapNative *pixelmapNative);
 
     static void ParseLookupKey(std::string &key, std::vector<const char *> &matchEFilter);
 

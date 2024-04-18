@@ -398,32 +398,6 @@ OH_EffectFilter *OH_ImageEffect_GetFilter(OH_ImageEffect *imageEffect, uint32_t 
     return imageEffect->filters_.at(index).first;
 }
 
-ImageEffect_ErrorCode OH_ImageEffect_SetInputNativePixelMap(OH_ImageEffect *imageEffect, NativePixelMap *pixelmap)
-{
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
-        "SetInputNativePixelMap: input parameter imageEffect is null!");
-    CHECK_AND_RETURN_RET_LOG(pixelmap != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
-        "SetInputNativePixelMap: input parameter pixelmap is null!");
-
-    ErrorCode errorCode =
-        imageEffect->imageEffect_->SetInputPixelMap(NativeCommonUtils::GetPixelMapFromNativePixelMap(pixelmap));
-    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
-        "SetInputNativePixelMap: set fail! errorCode=%{public}d", errorCode);
-    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
-}
-
-ImageEffect_ErrorCode OH_ImageEffect_SetOutputNativePixelMap(OH_ImageEffect *imageEffect, NativePixelMap *pixelmap)
-{
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
-        "SetOutputNativePixelMap: input parameter imageEffect is null!");
-
-    ErrorCode errorCode =
-        imageEffect->imageEffect_->SetOutputPixelMap(NativeCommonUtils::GetPixelMapFromNativePixelMap(pixelmap));
-    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
-        "SetOutputNativePixelMap: set fail! errorCode=%{public}d", errorCode);
-    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
-}
-
 #ifdef __cplusplus
 }
 #endif

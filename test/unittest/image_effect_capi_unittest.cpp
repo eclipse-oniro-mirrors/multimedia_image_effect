@@ -16,12 +16,11 @@
 #include "image_effect_capi_unittest.h"
 #include "image_effect.h"
 #include "image_effect_filter.h"
-#include "mock_native_pixel_map.h"
+#include "pixelmap_native_impl.h"
 #include "efilter_factory.h"
 #include "brightness_efilter.h"
 #include "contrast_efilter.h"
 #include "test_common.h"
-#include "image_effect_advance.h"
 #include "native_window.h"
 #include "external_loader.h"
 
@@ -42,8 +41,8 @@ void ImageEffectCApiUnittest::TearDownTestCase() {}
 
 void ImageEffectCApiUnittest::SetUp()
 {
-    mockPixelMap_ = new MockPixelMap();
-    mockPixelMapNapi_ = new MockPixelMapNapi();
+    mockPixelMap_ = std::make_shared<MockPixelMap>();
+    pixelmapNative_ = new OH_PixelmapNative(mockPixelMap_);
     ExternLoader::Instance()->InitExt();
     EFilterFactory::Instance()->functions_.clear();
     EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
@@ -61,8 +60,9 @@ void ImageEffectCApiUnittest::SetUp()
 
 void ImageEffectCApiUnittest::TearDown()
 {
-    Mock::AllowLeak(mockPixelMap_);
-    Mock::AllowLeak(mockPixelMapNapi_);
+    delete pixelmapNative_;
+    pixelmapNative_ = nullptr;
+    mockPixelMap_ = nullptr;
     if (filterInfo_ != nullptr) {
         OH_EffectFilterInfo_Release(filterInfo_);
         filterInfo_ = nullptr;
@@ -93,10 +93,7 @@ HWTEST_F(ImageEffectCApiUnittest, Image_effect_capi_unittest_001, TestSize.Level
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);
@@ -788,25 +785,19 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterGetValue006, TestSize.Level1)
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_EFilter_Render with normal parameter
+ * Function: Test OH_EffectFilter_Render with normal parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_EFilter_Render with normal parameter
+ * CaseDescription: Test OH_EffectFilter_Render with normal parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender001, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterRender001 start";
 
     OH_EffectFilter *filter = OH_EffectFilter_Create(BRIGHTNESS_EFILTER);
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    ImageEffect_ErrorCode errorCode = OH_EFilter_Render(filter, &inputPixel, &outPixel);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EFilter_Render failed";
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_Render(filter, pixelmapNative_, pixelmapNative_);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EffectFilter_Render failed";
 
     GTEST_LOG_(INFO) << "OHEFilterRender001 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterRender001 END";
@@ -814,18 +805,18 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender001, TestSize.Level1)
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_EFilter_Render with all empty parameter
+ * Function: Test OH_EffectFilter_Render with all empty parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_EFilter_Render with all empty parameter
+ * CaseDescription: Test OH_EffectFilter_Render with all empty parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender002, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterRender002 start";
 
-    ImageEffect_ErrorCode errorCode = OH_EFilter_Render(nullptr, nullptr, nullptr);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EFilter_Render failed";
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_Render(nullptr, nullptr, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EffectFilter_Render failed";
 
     GTEST_LOG_(INFO) << "OHEFilterRender002 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterRender002 END";
@@ -833,25 +824,19 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender002, TestSize.Level1)
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_EFilter_Render with empty OH_EffectFilter parameter
+ * Function: Test OH_EffectFilter_Render with empty OH_EffectFilter parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_EFilter_Render with empty OH_EffectFilter parameter
+ * CaseDescription: Test OH_EffectFilter_Render with empty OH_EffectFilter parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender003, TestSize.Level1)
 {
     InSequence s;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterRender003 start";
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    ImageEffect_ErrorCode errorCode = OH_EFilter_Render(nullptr, &inputPixel, &outPixel);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EFilter_Render failed";
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_Render(nullptr, pixelmapNative_, pixelmapNative_);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EffectFilter_Render failed";
 
     GTEST_LOG_(INFO) << "OHEFilterRender003 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterRender003 END";
@@ -859,19 +844,19 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender003, TestSize.Level1)
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_EFilter_Render with empty inputPixel, outPixel parameter
+ * Function: Test OH_EffectFilter_Render with empty inputPixelmap, outputPixelmap parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_EFilter_Render with empty inputPixel, outPixel parameter
+ * CaseDescription: Test OH_EffectFilter_Render with empty inputPixelmap, outputPixelmap parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender004, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterRender004 start";
 
     OH_EffectFilter *filter = OH_EffectFilter_Create(BRIGHTNESS_EFILTER);
-    ImageEffect_ErrorCode errorCode = OH_EFilter_Render(filter, nullptr, nullptr);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EFilter_Render failed";
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_Render(filter, nullptr, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EffectFilter_Render failed";
 
     GTEST_LOG_(INFO) << "OHEFilterRender004 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterRender004 END";
@@ -879,11 +864,11 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender004, TestSize.Level1)
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_EFilter_Render with empty outPixel parameter
+ * Function: Test OH_EffectFilter_Render with empty outputPixelmap parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_EFilter_Render with empty outPixel parameter
+ * CaseDescription: Test OH_EffectFilter_Render with empty outputPixelmap parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender005, TestSize.Level1)
 {
@@ -891,11 +876,9 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender005, TestSize.Level1)
     InSequence s;
 
     OH_EffectFilter *filter = OH_EffectFilter_Create(BRIGHTNESS_EFILTER);
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    ImageEffect_ErrorCode errorCode = OH_EFilter_Render(filter, &inputPixel, nullptr);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EFilter_Render failed";
+
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_Render(filter, pixelmapNative_, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EffectFilter_Render failed";
 
     GTEST_LOG_(INFO) << "OHEFilterRender005 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterRender005 END";
@@ -903,11 +886,11 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender005, TestSize.Level1)
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_EFilter_Render with empty inputPixel parameter
+ * Function: Test OH_EffectFilter_Render with empty inputPixelmap parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_EFilter_Render with empty inputPixel parameter
+ * CaseDescription: Test OH_EffectFilter_Render with empty inputPixelmap parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender006, TestSize.Level1)
 {
@@ -915,11 +898,8 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterRender006, TestSize.Level1)
     InSequence s;
 
     OH_EffectFilter *filter = OH_EffectFilter_Create(BRIGHTNESS_EFILTER);
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    ImageEffect_ErrorCode errorCode = OH_EFilter_Render(filter, nullptr, &outPixel);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EFilter_Render failed";
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_Render(filter, nullptr, pixelmapNative_);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EffectFilter_Render failed";
 
     GTEST_LOG_(INFO) << "OHEFilterRender006 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHEFilterRender006 END";
@@ -1006,16 +986,9 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest001, TestSize.L
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSingleFilterUnittest001 OH_EffectFilter_SetValue failed";
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
-    errorCode = OH_EFilter_Render(filter, &inputPixel, &outPixel);
+    errorCode = OH_EffectFilter_Render(filter, pixelmapNative_, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectSingleFilterUnittest001 OH_EFilter_Render failed";
+        "ImageEffectSingleFilterUnittest001 OH_EffectFilter_Render failed";
 
     errorCode = OH_EffectFilter_Release(filter);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -1048,16 +1021,9 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest002, TestSize.L
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSingleFilterUnittest002 OH_EffectFilter_SetValue failed";
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
-    errorCode = OH_EFilter_Render(filter, &inputPixel, &outPixel);
+    errorCode = OH_EffectFilter_Render(filter, pixelmapNative_, pixelmapNative_);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectSingleFilterUnittest002 OH_EFilter_Render failed";
+        "ImageEffectSingleFilterUnittest002 OH_EffectFilter_Render failed";
 
     errorCode = OH_EffectFilter_Release(filter);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -1089,16 +1055,9 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest003, TestSize.L
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSingleFilterUnittest003 OH_EffectFilter_SetValue failed";
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
-    errorCode = OH_EFilter_Render(filter, &inputPixel, &outPixel);
+    errorCode = OH_EffectFilter_Render(filter, pixelmapNative_, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectSingleFilterUnittest003 OH_EFilter_Render failed";
+        "ImageEffectSingleFilterUnittest003 OH_EffectFilter_Render failed";
 
     errorCode = OH_EffectFilter_Release(filter);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -1110,11 +1069,11 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest003, TestSize.L
 
 /**
  * Feature: ImageEffect
- * Function: Test ImageEffectSingleFilter submethod OH_EFilter_Render unobstructed
+ * Function: Test ImageEffectSingleFilter submethod OH_EffectFilter_Render unobstructed
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test ImageEffectSingleFilter submethod OH_EFilter_Render unobstructed
+ * CaseDescription: Test ImageEffectSingleFilter submethod OH_EffectFilter_Render unobstructed
  */
 HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest004, TestSize.Level0)
 {
@@ -1139,98 +1098,92 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest004, TestSize.L
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_SetInputNativePixelMap with normal parameter
+ * Function: Test OH_ImageEffect_SetInputPixelmap with normal parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_SetInputNativePixelMap with normal parameter
+ * CaseDescription: Test OH_ImageEffect_SetInputPixelmap with normal parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetInputPixelMap001, TestSize.Level1)
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetInputPixelmap001, TestSize.Level1)
 {
-    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelMap001 start";
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelmap001 start";
     InSequence s;
 
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetInputNativePixelMap failed";
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetInputPixelmap failed";
 
-    GTEST_LOG_(INFO) << "OHImageEffectSetInputPixelMap001 success! result: " << errorCode;
-    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelMap001 END";
+    GTEST_LOG_(INFO) << "OHImageEffectSetInputPixelmap001 success! result: " << errorCode;
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelmap001 END";
 }
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_SetInputNativePixelMap with all empty parameter
+ * Function: Test OH_ImageEffect_SetInputPixelmap with all empty parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_SetInputNativePixelMap with all empty parameter
+ * CaseDescription: Test OH_ImageEffect_SetInputPixelmap with all empty parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetInputPixelMap002, TestSize.Level1)
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetInputPixelmap002, TestSize.Level1)
 {
-    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelMap002 start";
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelmap002 start";
 
-    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativePixelMap(nullptr, nullptr);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetInputNativePixelMap failed";
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputPixelmap(nullptr, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetInputPixelmap failed";
 
-    GTEST_LOG_(INFO) << "OHImageEffectSetInputPixelMap002 success! result: " << errorCode;
-    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelMap002 END";
+    GTEST_LOG_(INFO) << "OHImageEffectSetInputPixelmap002 success! result: " << errorCode;
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelmap002 END";
 }
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_SetInputNativePixelMap with empty NativePixelMap parameter
+ * Function: Test OH_ImageEffect_SetInputPixelmap with empty OH_PixelmapNative parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_SetInputNativePixelMap with empty NativePixelMap parameter
+ * CaseDescription: Test OH_ImageEffect_SetInputPixelmap with empty OH_PixelmapNative parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetInputPixelMap003, TestSize.Level1)
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetInputPixelmap003, TestSize.Level1)
 {
-    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelMap003 start";
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelmap003 start";
     InSequence s;
 
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
-    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, nullptr);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetInputNativePixelMap failed";
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetInputPixelmap failed";
 
-    GTEST_LOG_(INFO) << "OHImageEffectSetInputPixelMap003 success! result: " << errorCode;
-    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelMap003 END";
+    GTEST_LOG_(INFO) << "OHImageEffectSetInputPixelmap003 success! result: " << errorCode;
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelmap003 END";
 }
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_SetInputNativePixelMap with empty OH_ImageEffect parameter
+ * Function: Test OH_ImageEffect_SetInputPixelmap with empty OH_ImageEffect parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_SetInputNativePixelMap with empty OH_ImageEffect parameter
+ * CaseDescription: Test OH_ImageEffect_SetInputPixelmap with empty OH_ImageEffect parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetInputPixelMap004, TestSize.Level1)
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetInputPixelmap004, TestSize.Level1)
 {
-    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelMap004 start";
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelmap004 start";
     InSequence s;
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativePixelMap(nullptr, &inputPixel);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetInputNativePixelMap failed";
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputPixelmap(nullptr, pixelmapNative_);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetInputPixelmap failed";
 
-    GTEST_LOG_(INFO) << "OHImageEffectSetInputPixelMap004 success! result: " << errorCode;
-    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelMap004 END";
+    GTEST_LOG_(INFO) << "OHImageEffectSetInputPixelmap004 success! result: " << errorCode;
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputPixelmap004 END";
 }
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_SetOutputNativePixelMap with normal parameter
+ * Function: Test OH_ImageEffect_SetOutputPixelmap with normal parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_SetOutputNativePixelMap with normal parameter
+ * CaseDescription: Test OH_ImageEffect_SetOutputPixelmap with normal parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap001, TestSize.Level1)
 {
@@ -1238,11 +1191,8 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap001, TestSize.Le
     InSequence s;
 
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputNativePixelMap(imageEffect, &outPixel);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputNativePixelMap failed";
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, pixelmapNative_);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputPixelmap failed";
 
     GTEST_LOG_(INFO) << "OHImageEffectSetOutputPixelMap001 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputPixelMap001 END";
@@ -1250,18 +1200,18 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap001, TestSize.Le
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_SetOutputNativePixelMap with all empty parameter
+ * Function: Test OH_ImageEffect_SetOutputPixelmap with all empty parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_SetOutputNativePixelMap with all empty parameter
+ * CaseDescription: Test OH_ImageEffect_SetOutputPixelmap with all empty parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap002, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputPixelMap002 start";
 
-    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputNativePixelMap(nullptr, nullptr);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputNativePixelMap failed";
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputPixelmap(nullptr, nullptr);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputPixelmap failed";
 
     GTEST_LOG_(INFO) << "OHImageEffectSetOutputPixelMap002 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputPixelMap002 END";
@@ -1269,19 +1219,19 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap002, TestSize.Le
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_SetOutputNativePixelMap with empty NativePixelMap parameter
+ * Function: Test OH_ImageEffect_SetOutputPixelmap with empty OH_PixelmapNative parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_SetOutputNativePixelMap with empty NativePixelMap parameter
+ * CaseDescription: Test OH_ImageEffect_SetOutputPixelmap with empty OH_PixelmapNative parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap003, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputPixelMap003 start";
 
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
-    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputNativePixelMap(imageEffect, nullptr);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputNativePixelMap failed";
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, nullptr);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputPixelmap failed";
 
     GTEST_LOG_(INFO) << "OHImageEffectSetOutputPixelMap003 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputPixelMap003 END";
@@ -1289,22 +1239,19 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap003, TestSize.Le
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_SetOutputNativePixelMap with empty OH_ImageEffect parameter
+ * Function: Test OH_ImageEffect_SetOutputPixelmap with empty OH_ImageEffect parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_SetOutputNativePixelMap with empty OH_ImageEffect parameter
+ * CaseDescription: Test OH_ImageEffect_SetOutputPixelmap with empty OH_ImageEffect parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap004, TestSize.Level0)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputPixelMap004 start";
     InSequence s;
 
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputNativePixelMap(nullptr, &outPixel);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputNativePixelMap failed";
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputPixelmap(nullptr, pixelmapNative_);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputPixelmap failed";
 
     GTEST_LOG_(INFO) << "OHImageEffectSetOutputPixelMap004 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputPixelMap004 END";
@@ -1414,19 +1361,12 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest001, TestSize
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectStandardFilterUnittest001 OH_EffectFilter_SetValue failed";
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectStandardFilterUnittest001 OH_ImageEffect_SetInputNativePixelMap failed";
-    errorCode = OH_ImageEffect_SetOutputNativePixelMap(imageEffect, &outPixel);
+        "ImageEffectStandardFilterUnittest001 OH_ImageEffect_SetInputPixelmap failed";
+    errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectStandardFilterUnittest001 OH_ImageEffect_SetOutputNativePixelMap failed";
+        "ImageEffectStandardFilterUnittest001 OH_ImageEffect_SetOutputPixelmap failed";
 
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -1467,19 +1407,12 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest002, TestSize
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectStandardFilterUnittest002 OH_EffectFilter_SetValue failed";
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectStandardFilterUnittest002 OH_ImageEffect_SetInputNativePixelMap failed";
-    errorCode = OH_ImageEffect_SetOutputNativePixelMap(imageEffect, &outPixel);
+        "ImageEffectStandardFilterUnittest002 OH_ImageEffect_SetInputPixelmap failed";
+    errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectStandardFilterUnittest002 OH_ImageEffect_SetOutputNativePixelMap failed";
+        "ImageEffectStandardFilterUnittest002 OH_ImageEffect_SetOutputPixelmap failed";
 
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -1519,19 +1452,12 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest003, TestSize
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectStandardFilterUnittest003 OH_EffectFilter_SetValue failed";
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectStandardFilterUnittest003 OH_ImageEffect_SetInputNativePixelMap failed";
-    errorCode = OH_ImageEffect_SetOutputNativePixelMap(imageEffect, &outPixel);
+        "ImageEffectStandardFilterUnittest003 OH_ImageEffect_SetInputPixelmap failed";
+    errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectStandardFilterUnittest003 OH_ImageEffect_SetOutputNativePixelMap failed";
+        "ImageEffectStandardFilterUnittest003 OH_ImageEffect_SetOutputPixelmap failed";
 
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -1571,19 +1497,12 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest004, TestSize
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectStandardFilterUnittest004 OH_EffectFilter_SetValue failed";
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectStandardFilterUnittest004 OH_ImageEffect_SetInputNativePixelMap failed";
-    errorCode = OH_ImageEffect_SetOutputNativePixelMap(imageEffect, &outPixel);
+        "ImageEffectStandardFilterUnittest004 OH_ImageEffect_SetInputPixelmap failed";
+    errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectStandardFilterUnittest004 OH_ImageEffect_SetOutputNativePixelMap failed";
+        "ImageEffectStandardFilterUnittest004 OH_ImageEffect_SetOutputPixelmap failed";
 
     errorCode = OH_ImageEffect_Start(nullptr);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -1623,19 +1542,12 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest005, TestSize
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectStandardFilterUnittest005 OH_EffectFilter_SetValue failed";
 
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-    NativePixelMap outPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectStandardFilterUnittest005 OH_ImageEffect_SetInputNativePixelMap failed";
-    errorCode = OH_ImageEffect_SetOutputNativePixelMap(imageEffect, &outPixel);
+        "ImageEffectStandardFilterUnittest005 OH_ImageEffect_SetInputPixelmap failed";
+    errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectStandardFilterUnittest005 OH_ImageEffect_SetOutputNativePixelMap failed";
+        "ImageEffectStandardFilterUnittest005 OH_ImageEffect_SetOutputPixelmap failed";
 
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -2162,11 +2074,6 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest001, TestSize
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSaveAndRestoreUnittest001 start";
 
-    InSequence s;
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr) << "ImageEffectSaveAndRestoreUnittest001 OH_ImageEffect_Create failed";
 
@@ -2203,9 +2110,9 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest001, TestSize
     ASSERT_FLOAT_EQ(restoreValue.dataValue.floatValue, 100.f) <<
         "ImageEffectSaveAndRestoreUnittest001 OH_EffectFilter_GetValue failed";
 
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
         ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectSaveAndRestoreUnittest001 OH_ImageEffect_SetInputNativePixelMap failed";
+        "ImageEffectSaveAndRestoreUnittest001 OH_ImageEffect_SetInputPixelmap failed";
     
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -2231,11 +2138,6 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest002, TestSize
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSaveAndRestoreUnittest002 start";
 
-    InSequence s;
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
     OH_EffectFilter *filter = OH_ImageEffect_AddFilter(nullptr, BRIGHTNESS_EFILTER);
     ASSERT_EQ(filter, nullptr) << "ImageEffectSaveAndRestoreUnittest002 OH_ImageEffect_AddFilter failed";
 
@@ -2255,9 +2157,9 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest002, TestSize
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSaveAndRestoreUnittest00 OH_ImageEffect_Release failed";
 
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(nullptr, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(nullptr, pixelmapNative_);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectSaveAndRestoreUnittest002 OH_ImageEffect_SetInputNativePixelMap failed";
+        "ImageEffectSaveAndRestoreUnittest002 OH_ImageEffect_SetInputPixelmap failed";
     
     errorCode = OH_ImageEffect_Start(nullptr);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -2283,11 +2185,6 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest003, TestSize
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest ImageEffectSaveAndRestoreUnittest003 start";
 
-    InSequence s;
-    NativePixelMap inputPixel = {
-        .napi = mockPixelMapNapi_
-    };
-
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr) << "ImageEffectSaveAndRestoreUnittest003 OH_ImageEffect_Create failed";
 
@@ -2310,9 +2207,9 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest003, TestSize
     imageEffect = OH_ImageEffect_Restore(imageEffectInfo);
     ASSERT_NE(imageEffect, nullptr) << "ImageEffectSaveAndRestoreUnittest00 OH_ImageEffect_Restore failed";
 
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
         ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectSaveAndRestoreUnittest003 OH_ImageEffect_SetInputNativePixelMap failed";
+        "ImageEffectSaveAndRestoreUnittest003 OH_ImageEffect_SetInputPixelmap failed";
     
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -2328,11 +2225,11 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest003, TestSize
 
 /**
  * Feature: ImageEffect
- * Function: Test ImageEffectSaveAndRestore with empty inputPixel parameter
+ * Function: Test ImageEffectSaveAndRestore with empty inputPixelmap parameter
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test ImageEffectSaveAndRestore with empty inputPixel parameter
+ * CaseDescription: Test ImageEffectSaveAndRestore with empty inputPixelmap parameter
  */
 HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest004, TestSize.Level1)
 {
@@ -2363,9 +2260,9 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest004, TestSize
     imageEffect = OH_ImageEffect_Restore(imageEffectInfo);
     ASSERT_NE(imageEffect, nullptr) << "ImageEffectSaveAndRestoreUnittest004 OH_ImageEffect_Restore failed";
 
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, nullptr);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, nullptr);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectSaveAndRestoreUnittest004 OH_ImageEffect_SetInputNativePixelMap failed";
+        "ImageEffectSaveAndRestoreUnittest004 OH_ImageEffect_SetInputPixelmap failed";
     
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
@@ -2389,9 +2286,6 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest004, TestSize
  */
 HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest005, TestSize.Level1)
 {
-    InSequence s;
-    NativePixelMap inputPixel = {.napi = mockPixelMapNapi_};
-
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
 
@@ -2417,7 +2311,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest005, TestSize
     imageEffect = OH_ImageEffect_Restore(info.c_str());
     ASSERT_NE(imageEffect, nullptr);
 
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);

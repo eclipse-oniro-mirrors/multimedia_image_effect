@@ -26,14 +26,12 @@
 #include "efilter_factory.h"
 #include "brightness_efilter.h"
 #include "contrast_efilter.h"
-#include "mock_pixel_map_napi.h"
-#include "mock_native_pixel_map.h"
-#include "surface_utils.h"
 #include "test_common.h"
 #include "external_loader.h"
 #include "native_effect_base.h"
 #include "native_window.h"
-#include "image_effect_advance.h"
+#include "mock_pixel_map.h"
+#include "pixelmap_native_impl.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -126,13 +124,14 @@ public:
         mockSurfaceBuffer_ = new MockSurfaceBuffer();
         mockSurfaceBufferYuvNv21_ = new MockSurfaceBufferYuvNv21();
         mockSurfaceBufferYuvNv12_ = new MockSurfaceBufferYuvNv12();
+        mockPixelMap_ = std::make_shared<MockPixelMap>();
+        pixelmapNative_ = new OH_PixelmapNative(mockPixelMap_);
         ExternLoader::Instance()->InitExt();
         EFilterFactory::Instance()->functions_.clear();
         EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
         EFilterFactory::Instance()->RegisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);
         EFilterFactory::Instance()->RegisterEFilter<CustomTestEFilter>(CUSTOM_TEST_EFILTER);
         EFilterFactory::Instance()->delegates_.clear();
-        mockPixelMapNapi_ = new MockPixelMapNapi();
         filterInfo_ = OH_EffectFilterInfo_Create();
         OH_EffectFilterInfo_SetFilterName(filterInfo_, BRIGHTNESS_EFILTER);
         ImageEffect_BufferType bufferTypes[] = { ImageEffect_BufferType::EFFECT_BUFFER_TYPE_PIXEL };
@@ -148,11 +147,13 @@ public:
         delete mockSurfaceBuffer_;
         delete mockSurfaceBufferYuvNv21_;
         delete mockSurfaceBufferYuvNv12_;
-        Mock::AllowLeak(mockPixelMapNapi_);
+        delete pixelmapNative_;
+        mockPixelMap_ = nullptr;
 
         mockSurfaceBuffer_ = nullptr;
         mockSurfaceBufferYuvNv21_ = nullptr;
         mockSurfaceBufferYuvNv12_ = nullptr;
+        pixelmapNative_ = nullptr;
         if (filterInfo_ != nullptr) {
             OH_EffectFilterInfo_Release(filterInfo_);
             filterInfo_ = nullptr;
@@ -162,7 +163,8 @@ public:
     MockSurfaceBuffer *mockSurfaceBuffer_;
     MockSurfaceBuffer *mockSurfaceBufferYuvNv21_;
     MockSurfaceBuffer *mockSurfaceBufferYuvNv12_;
-    MockPixelMapNapi *mockPixelMapNapi_;
+    std::shared_ptr<PixelMap> mockPixelMap_;
+    OH_PixelmapNative *pixelmapNative_ = nullptr;
 
     ImageEffect_FilterDelegate delegate_ = {
         .setValue = [](OH_EffectFilter *filter, const char *key, const ImageEffect_Any *value) { return true; },
@@ -1016,9 +1018,6 @@ HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilters005, TestSize.Level1)
  */
 HWTEST_F(NativeImageEffectUnittest, CustomFilterAdjustmentSaveAndRestore001, TestSize.Level1)
 {
-    InSequence s;
-    NativePixelMap inputPixel = {.napi = mockPixelMapNapi_};
-
     OH_EffectFilterInfo_SetFilterName(filterInfo_, CUSTOM_BRIGHTNESS_EFILTER);
 
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_Register(filterInfo_, &delegate_);
@@ -1048,7 +1047,7 @@ HWTEST_F(NativeImageEffectUnittest, CustomFilterAdjustmentSaveAndRestore001, Tes
     imageEffect = OH_ImageEffect_Restore(saveInfo.c_str());
     ASSERT_NE(imageEffect, nullptr);
 
-    errorCode = OH_ImageEffect_SetInputNativePixelMap(imageEffect, &inputPixel);
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);

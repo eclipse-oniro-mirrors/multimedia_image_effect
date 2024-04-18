@@ -724,48 +724,6 @@ ImageEffect_ErrorCode OH_EffectFilter_Release(OH_EffectFilter *filter)
     delete (filter);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
-
-EFFECT_EXPORT
-ImageEffect_ErrorCode OH_EFilter_Render(OH_EffectFilter *filter, NativePixelMap *inputPixelmap,
-    NativePixelMap *outputPixelmap)
-{
-    EFFECT_LOGI("Filter render.");
-    CHECK_AND_RETURN_RET_LOG(filter != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
-        "EFilterRender: input parameter filter is null!");
-    CHECK_AND_RETURN_RET_LOG(inputPixelmap != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
-        "EFilterRender: input parameter inputPixelmap is null!");
-    CHECK_AND_RETURN_RET_LOG(outputPixelmap != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
-        "EFilterRender: input parameter outputPixelmap is null!");
-
-    PixelMap *input = NativeCommonUtils::GetPixelMapFromNativePixelMap(inputPixelmap);
-    PixelMap *output = NativeCommonUtils::GetPixelMapFromNativePixelMap(outputPixelmap);
-
-    std::shared_ptr<EffectBuffer> inEffectBuffer = nullptr;
-    ErrorCode result = CommonUtils::LockPixelMap(input, inEffectBuffer);
-    if (result != ErrorCode::SUCCESS || inEffectBuffer == nullptr) {
-        EFFECT_LOGE("EFilterRender: lock input native pixelMap error! errorCode:%{public}d", result);
-        CommonUtils::UnlockPixelMap(input);
-        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
-    }
-
-    std::shared_ptr<EffectBuffer> outEffectBuffer = nullptr;
-    result = CommonUtils::LockPixelMap(output, outEffectBuffer);
-    if (result != ErrorCode::SUCCESS || outEffectBuffer == nullptr) {
-        EFFECT_LOGE("EFilterRender: lock output native pixelMap error! errorCode:%{public}d", result);
-        CommonUtils::UnlockPixelMap(output);
-        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
-    }
-
-    filter->filter_->PreRender(inEffectBuffer->bufferInfo_->formatType_);
-    result = filter->filter_->Render(inEffectBuffer, outEffectBuffer);
-    CommonUtils::UnlockPixelMap(input);
-    CommonUtils::UnlockPixelMap(output);
-    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_UNKNOWN,
-        "EFilterRender: filter render fail! errorCode:%{public}d", result);
-
-    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
-}
-
 #ifdef __cplusplus
 }
 #endif
