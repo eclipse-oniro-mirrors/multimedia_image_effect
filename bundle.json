@@ -12,7 +12,7 @@
   "component": {
     "name": "image_effect",
     "subsystem": "multimedia",
-    "syscap": [],
+    "syscap": [ "SystemCapability.Multimedia.ImageEffect.Core" ],
     "features": [],
     "adapted_system_type": [
       "standard"
@@ -28,13 +28,13 @@
         "graphic_2d",
         "graphic_surface",
         "c_utils",
-        "ability_base"
+        "ability_base",
+        "bounds_checking_function",
+        "json"
       ],
       "third_party": [
-        "bounds_checking_function",
         "egl",
-        "opengles",
-        "json"
+        "opengles"
       ]
     },
     "build": {
