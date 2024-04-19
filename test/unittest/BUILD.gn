@@ -28,7 +28,6 @@ ohos_unittest("image_effect_unittest") {
     "$image_effect_root_dir/frameworks/native/capi",
     "$image_effect_root_dir/test/unittest/mock/include",
     "$image_effect_root_dir/test/unittest/common",
-    "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk/include",
   ]
 
   sources = [
@@ -45,7 +44,6 @@ ohos_unittest("image_effect_unittest") {
     "$image_effect_root_dir/frameworks/native:image_effect_impl",
     "//third_party/googletest:gmock_main",
     "//third_party/googletest:gtest_main",
-    "//third_party/json:nlohmann_json_static",
   ]
 
   external_deps = [
@@ -54,6 +52,7 @@ ohos_unittest("image_effect_unittest") {
     "graphic_surface:surface",
     "image_framework:image_native",
     "image_framework:pixelmap",
+    "json:nlohmann_json_static",
     "napi:ace_napi",
   ]
 

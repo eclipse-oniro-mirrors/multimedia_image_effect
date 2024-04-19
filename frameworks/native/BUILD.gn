@@ -94,6 +94,7 @@ ohos_shared_library("image_effect_impl") {
 
   external_deps = [
     "ability_base:zuri",
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "graphic_2d:libgl",
     "graphic_2d:librender_service_client",
@@ -101,12 +102,8 @@ ohos_shared_library("image_effect_impl") {
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "image_framework:image_native",
+    "json:nlohmann_json_static",
     "napi:ace_napi",
-  ]
-
-  deps = [
-    "//third_party/bounds_checking_function:libsec_shared",
-    "//third_party/json:nlohmann_json_static",
   ]
 
   output_extension = "so"
@@ -128,7 +125,6 @@ ohos_shared_library("image_effect") {
   include_dirs = [
     "$image_effect_root_dir/frameworks/native/capi",
     "$image_effect_root_dir/frameworks/native/utils/common",
-    "//foundation/multimedia/image_framework/frameworks/kits/js/common/ndk/include",
   ]
 
   sources = [
@@ -139,10 +135,7 @@ ohos_shared_library("image_effect") {
 
   use_exceptions = true
 
-  deps = [
-    ":image_effect_impl",
-    "//third_party/json:nlohmann_json_static",
-  ]
+  deps = [ ":image_effect_impl" ]
 
   external_deps = [
     "c_utils:utils",
@@ -151,6 +144,7 @@ ohos_shared_library("image_effect") {
     "hilog:libhilog",
     "image_framework:image_native",
     "image_framework:pixelmap",
+    "json:nlohmann_json_static",
     "napi:ace_napi",
   ]
 
