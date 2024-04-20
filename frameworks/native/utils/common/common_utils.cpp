@@ -339,6 +339,9 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
     CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_SET_IMAGE_INFO_FAIL,
         "exec SetImageInfo fail! result=%{public}d", result);
 
+    // update rowStride
+    pixelMap->SetRowStride(buffer->bufferInfo_->rowStride_);
+
     return ErrorCode::SUCCESS;
 }
 } // namespace Effect
