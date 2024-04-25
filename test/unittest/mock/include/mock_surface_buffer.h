@@ -124,9 +124,9 @@ public:
 
     virtual void SetEglData(const sptr<EglData> &data) {}
 
-    virtual void SetExtraData(const sptr<BufferExtraData> &bedata) {}
+    virtual void SetExtraData(sptr<BufferExtraData> bedata) {}
 
-    virtual const sptr<BufferExtraData> &GetExtraData() const
+    virtual sptr<BufferExtraData> GetExtraData() const
     {
         return mExtraData;
     }
