@@ -38,6 +38,10 @@ config("image_effect_impl_public_config") {
 }
 
 ohos_shared_library("image_effect_impl") {
+  sanitize = image_effect_sanitize
+
+  stack_protector_ret = true
+
   public_configs = [ ":image_effect_impl_public_config" ]
 
   include_dirs = [
@@ -120,6 +124,10 @@ config("image_effect_ndk_public_config") {
 }
 
 ohos_shared_library("image_effect") {
+  sanitize = image_effect_sanitize
+
+  stack_protector_ret = true
+
   public_configs = [ ":image_effect_ndk_public_config" ]
 
   include_dirs = [

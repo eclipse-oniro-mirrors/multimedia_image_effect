@@ -12,3 +12,13 @@
 # limitations under the License.
 
 image_effect_root_dir = "//foundation/multimedia/image_effect"
+
+image_effect_sanitize = {
+  integer_overflow = true
+  ubsan = true
+  boundary_sanitize = true
+  cfi = true
+  cfi_cross_dso = true
+  cfi_vcall_icall_only = true
+  debug = false
+}
