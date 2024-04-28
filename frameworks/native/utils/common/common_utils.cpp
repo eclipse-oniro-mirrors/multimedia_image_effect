@@ -323,16 +323,17 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
     }
 
     void *context = nullptr;
-    ErrorCode res = GetPixelsContext(memoryData, memoryData->memoryInfo.bufferType, &context);
+    const MemoryInfo &memoryInfo = memoryData->memoryInfo;
+    ErrorCode res = GetPixelsContext(memoryData, memoryInfo.bufferType, &context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "get pixels context fail! res=%{public}d", res);
 
     // not need to release the origin buffer in pixelMap, SetPixelsAddr will release it.
-    pixelMap->SetPixelsAddr(memoryData->data, context, memoryData->memoryInfo.bufferInfo.len_, allocatorType, nullptr);
+    pixelMap->SetPixelsAddr(memoryData->data, context, memoryInfo.bufferInfo.len_, allocatorType, nullptr);
 
     ImageInfo imageInfo;
     pixelMap->GetImageInfo(imageInfo);
-    imageInfo.size.width = static_cast<int32_t>(buffer->bufferInfo_->width_);
-    imageInfo.size.height = static_cast<int32_t>(buffer->bufferInfo_->height_);
+    imageInfo.size.width = static_cast<int32_t>(memoryInfo.bufferInfo.width_);
+    imageInfo.size.height = static_cast<int32_t>(memoryInfo.bufferInfo.height_);
     uint32_t result = pixelMap->SetImageInfo(imageInfo, true);
     EFFECT_LOGI("SetImageInfo imageInfo width=%{public}d, height=%{public}d, result: %{public}d",
         imageInfo.size.width, imageInfo.size.height, result);
@@ -340,7 +341,7 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
         "exec SetImageInfo fail! result=%{public}d", result);
 
     // update rowStride
-    pixelMap->SetRowStride(buffer->bufferInfo_->rowStride_);
+    pixelMap->SetRowStride(memoryInfo.bufferInfo.rowStride_);
 
     return ErrorCode::SUCCESS;
 }
