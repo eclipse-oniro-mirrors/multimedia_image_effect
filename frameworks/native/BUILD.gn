@@ -110,6 +110,15 @@ ohos_shared_library("image_effect_impl") {
     "napi:ace_napi",
   ]
 
+  cflags_cc = [
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-fno-rtti",
+    "-Os",
+  ]
+
+  ldflags = [ "-Wl,--gc-sections" ]
+
   output_extension = "so"
   subsystem_name = "multimedia"
   innerapi_tags = [
@@ -155,6 +164,15 @@ ohos_shared_library("image_effect") {
     "json:nlohmann_json_static",
     "napi:ace_napi",
   ]
+
+  cflags_cc = [
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-fno-rtti",
+    "-Os",
+  ]
+
+  ldflags = [ "-Wl,--gc-sections" ]
 
   output_extension = "so"
   subsystem_name = "multimedia"
