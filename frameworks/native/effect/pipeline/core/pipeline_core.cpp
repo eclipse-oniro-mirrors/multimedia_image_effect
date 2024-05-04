@@ -93,15 +93,15 @@ ErrorCode PipelineCore::RemoveFilterChain(Filter *firstFilter)
     if (!firstFilter) {
         return ErrorCode::ERR_PIPELINE_INVALID_FILTER;
     }
-    std::queue<Filter *> levelFilters;
-    levelFilters.push(firstFilter);
-    while (!levelFilters.empty()) {
-        auto filter = levelFilters.front();
-        levelFilters.pop();
+    std::queue<Filter *> filters;
+    filters.push(firstFilter);
+    while (!filters.empty()) {
+        auto filter = filters.front();
+        filters.pop();
         filter->UnlinkPrevFilters();
         filtersToRemove_.push_back(filter);
         for (auto &&nextFilter : filter->GetNextFilters()) {
-            levelFilters.push(nextFilter);
+            filters.push(nextFilter);
         }
     }
     return ErrorCode::SUCCESS;
@@ -128,10 +128,10 @@ ErrorCode PipelineCore::LinkFilters(std::vector<Filter *> filters)
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode PipelineCore::LinkPorts(std::shared_ptr<OutPort> port1, std::shared_ptr<InPort> port2)
+ErrorCode PipelineCore::LinkPorts(std::shared_ptr<OutPort> outPort, std::shared_ptr<InPort> inPort)
 {
-    FAIL_RETURN(port1->Connect(port2));
-    FAIL_RETURN(port2->Connect(port1));
+    FAIL_RETURN(outPort->Connect(inPort));
+    FAIL_RETURN(inPort->Connect(outPort));
     return ErrorCode::SUCCESS;
 }
 
