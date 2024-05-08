@@ -43,7 +43,7 @@ public:
 
     ErrorCode LinkFilters(std::vector<Filter *> filters) override;
 
-    ErrorCode LinkPorts(std::shared_ptr<OutPort> port1, std::shared_ptr<InPort> port2) override;
+    ErrorCode LinkPorts(std::shared_ptr<OutPort> outPort, std::shared_ptr<InPort> inPort) override;
 
 private:
     void InitFilters(const std::vector<Filter *> &filters);

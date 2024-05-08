@@ -22,98 +22,93 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-std::shared_ptr<InPort> EmptyInPort::port = std::make_shared<EmptyInPort>();
-std::shared_ptr<OutPort> EmptyOutPort::port = std::make_shared<EmptyOutPort>();
-
-const std::string &Port::GetName()
-{
-    return name;
-}
-
-const InfoTransfer *Port::GetOwnerFilter() const
-{
-    return filter;
-}
+std::shared_ptr<InPort> EmptyInPort::port_ = std::make_shared<EmptyInPort>();
+std::shared_ptr<OutPort> EmptyOutPort::port_ = std::make_shared<EmptyOutPort>();
 
 std::shared_ptr<Port> Port::GetPeerPort()
 {
     return nullptr;
 }
 
+WorkMode Port::GetWorkMode()
+{
+    return workMode_;
+}
+
 ErrorCode InPort::Connect(const std::shared_ptr<Port> &port)
 {
-    prevPort = port;
+    prevPort_ = port;
     return ErrorCode::SUCCESS;
 }
 
 ErrorCode InPort::Disconnect()
 {
-    prevPort.reset();
+    prevPort_.reset();
     return ErrorCode::SUCCESS;
 }
 
 ErrorCode InPort::Activate(const std::vector<WorkMode> &modes, WorkMode &outMode)
 {
-    if (auto ptr = prevPort.lock()) {
-        FAIL_RETURN(ptr->Activate(modes, workMode));
-        outMode = workMode;
+    if (auto ptr = prevPort_.lock()) {
+        FAIL_RETURN(ptr->Activate(modes, workMode_));
+        outMode = workMode_;
         return ErrorCode::SUCCESS;
     }
-    EFFECT_LOGE("[Filter %{public}s] InPort %{public}s Activate error: prevPort destructed", filter->GetName().c_str(),
-        name.c_str());
+    EFFECT_LOGE("[Filter %{public}s] InPort %{public}s Activate error: prevPort destructed", filter_->GetName().c_str(),
+        name_.c_str());
     return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
 }
 
 std::shared_ptr<Port> InPort::GetPeerPort()
 {
-    return prevPort.lock();
+    return prevPort_.lock();
 }
 
 void InPort::Negotiate(const std::shared_ptr<Capability> &capability, std::shared_ptr<EffectContext> &context)
 {
-    if (filter) {
-        return filter->Negotiate(name, capability, context);
+    if (filter_) {
+        return filter_->Negotiate(name_, capability, context);
     } else {
-        EFFECT_LOGE("InPort::Negotiate filter is invalid! name=%{public}s", name.c_str());
+        EFFECT_LOGE("InPort::Negotiate filter is invalid! name=%{public}s", name_.c_str());
     }
 }
 
 void InPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
 {
-    if (filter) {
-        filter->PushData(name, buffer, context);
+    if (filter_) {
+        filter_->PushData(name_, buffer, context);
     } else {
-        EFFECT_LOGE("InPort::PushData filter is invalid! name=%{public}s", name.c_str());
+        EFFECT_LOGE("InPort::PushData filter is invalid! name=%{public}s", name_.c_str());
     }
 }
 
 ErrorCode InPort::PullData(std::shared_ptr<EffectBuffer> &data)
 {
     EFFECT_LOGI("InPort::PullData");
-    FALSE_RETURN_MSG_E(!prevPort.expired(), ErrorCode::ERR_PIPELINE_INVALID_FILTER_PORT,
-        "prevPort is null! name=%{public}s", name.c_str());
-    if (auto ptr = prevPort.lock()) {
+    FALSE_RETURN_MSG_E(!prevPort_.expired(), ErrorCode::ERR_PIPELINE_INVALID_FILTER_PORT,
+        "prevPort is null! name=%{public}s", name_.c_str());
+    if (auto ptr = prevPort_.lock()) {
         FALSE_RETURN_MSG_E(ptr != nullptr, ErrorCode::ERR_PIPELINE_INVALID_FILTER_PORT,
-            "prevPort.lock is null! name=%{public}s", name.c_str());
+            "prevPort.lock is null! name=%{public}s", name_.c_str());
         return ptr->PullData(data);
     }
-    EFFECT_LOGE("prevPort destructed! name=%{public}s", name.c_str());
+    EFFECT_LOGE("prevPort destructed! name=%{public}s", name_.c_str());
     return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
 }
 
 ErrorCode OutPort::Connect(const std::shared_ptr<Port> &port)
 {
     if (InSamePipeline(port)) {
-        nextPort = port;
+        nextPort_ = port;
         return ErrorCode::SUCCESS;
     }
-    EFFECT_LOGE("Connect filters that are not in the same pipeline. name=%{public}s", name.c_str());
+    EFFECT_LOGE("Connect filters that are not in the same pipeline. name=%{public}s", name_.c_str());
     return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
 }
 
 ErrorCode OutPort::Disconnect()
 {
-    nextPort.reset();
+    nextPort_.reset();
     return ErrorCode::SUCCESS;
 }
 
@@ -132,45 +127,45 @@ bool OutPort::InSamePipeline(const std::shared_ptr<Port> &port) const
 
 ErrorCode OutPort::Activate(const std::vector<WorkMode> &modes, WorkMode &outMode)
 {
-    if (filter) {
-        auto supportedModes = filter->GetWorkModes();
+    if (filter_) {
+        auto supportedModes = filter_->GetWorkModes();
         for (auto mode : modes) {
             auto found = std::find(supportedModes.cbegin(), supportedModes.cend(), mode);
             if (found != supportedModes.cend()) {
                 outMode = mode;
-                workMode = mode;
+                workMode_ = mode;
                 return ErrorCode::SUCCESS; // 最先找到的兼容的mode，作为最后结果
             }
         }
     } else {
-        EFFECT_LOGE("no valid filter! name=%{public}s", name.c_str());
+        EFFECT_LOGE("no valid filter! name=%{public}s", name_.c_str());
     }
-    EFFECT_LOGE("activate failed! name=%{public}s", name.c_str());
+    EFFECT_LOGE("activate failed! name=%{public}s", name_.c_str());
     return ErrorCode::ERR_UNKNOWN;
 }
 
 std::shared_ptr<Port> OutPort::GetPeerPort()
 {
-    return nextPort;
+    return nextPort_;
 }
 
 void OutPort::Negotiate(const std::shared_ptr<Capability> &capability, std::shared_ptr<EffectContext> &context)
 {
-    nextPort->Negotiate(capability, context);
+    nextPort_->Negotiate(capability, context);
 }
 
 void OutPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
 {
-    nextPort->PushData(buffer, context);
+    nextPort_->PushData(buffer, context);
 }
 
 ErrorCode OutPort::PullData(std::shared_ptr<EffectBuffer> &data)
 {
-    if (filter) {
-        EFFECT_LOGI("OutPort::PullData for filter(%{public}s)", filter->GetName().c_str());
-        return filter->PullData(name, data);
+    if (filter_) {
+        EFFECT_LOGI("OutPort::PullData for filter(%{public}s)", filter_->GetName().c_str());
+        return filter_->PullData(name_, data);
     }
-    EFFECT_LOGE("filter destructed! name=%{public}s", name.c_str());
+    EFFECT_LOGE("filter destructed! name=%{public}s", name_.c_str());
     return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
 }
 

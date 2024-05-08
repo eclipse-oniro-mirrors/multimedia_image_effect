@@ -84,7 +84,7 @@ public:
     // Port调用此方法向Filter报告事件
     void OnEvent(const Event &event) override;
 
-    template <typename T> static T FindPort(const std::vector<T> &list, const std::string &name);
+    template <typename T> static T FindPort(const std::vector<T> &ports, const std::string &name);
 
 protected:
     virtual void InitPorts();

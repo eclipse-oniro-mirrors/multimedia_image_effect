@@ -44,20 +44,23 @@ struct PortInfo {
 
 class Port {
 public:
-    Port(InfoTransfer *ownerFilter, std::string portName) : filter(ownerFilter), name(std::move(portName)) {}
+    Port(InfoTransfer *ownerFilter, std::string portName) : filter_(ownerFilter), name_(std::move(portName)) {}
 
     virtual ~Port() = default;
 
-    const std::string &GetName();
+    const std::string &GetName()
+    {
+        return name_;
+    }
 
-    const InfoTransfer *GetOwnerFilter() const;
+    const InfoTransfer *GetOwnerFilter() const
+    {
+        return filter_;
+    }
 
     virtual std::shared_ptr<Port> GetPeerPort();
 
-    WorkMode GetWorkMode()
-    {
-        return workMode;
-    }
+    WorkMode GetWorkMode();
 
     virtual ErrorCode Connect(const std::shared_ptr<Port> &port) = 0;
 
@@ -72,11 +75,11 @@ public:
     virtual ErrorCode PullData(std::shared_ptr<EffectBuffer> &data) = 0;
 
 protected:
-    InfoTransfer *filter;
+    InfoTransfer *filter_;
 
-    WorkMode workMode{ WorkMode::PUSH };
+    WorkMode workMode_{ WorkMode::PUSH };
 
-    const std::string name;
+    const std::string name_;
 };
 
 class InPort : public Port {
@@ -100,7 +103,7 @@ public:
     ErrorCode PullData(std::shared_ptr<EffectBuffer> &data) override;
 
 private:
-    std::weak_ptr<Port> prevPort;
+    std::weak_ptr<Port> prevPort_;
 };
 
 class OutPort : public Port {
@@ -126,14 +129,14 @@ public:
 private:
     bool InSamePipeline(const std::shared_ptr<Port> &port) const;
 
-    std::shared_ptr<Port> nextPort;
+    std::shared_ptr<Port> nextPort_;
 };
 
 class EmptyInPort : public InPort {
 public:
     static std::shared_ptr<InPort> GetInstance()
     {
-        return port;
+        return port_;
     }
 
     EmptyInPort() : InPort(nullptr, "emptyInPort") {}
@@ -151,14 +154,14 @@ public:
     ErrorCode PullData(std::shared_ptr<EffectBuffer> &data) override;
 
 private:
-    static std::shared_ptr<InPort> port;
+    static std::shared_ptr<InPort> port_;
 };
 
 class EmptyOutPort : public OutPort {
 public:
     static std::shared_ptr<OutPort> GetInstance()
     {
-        return port;
+        return port_;
     }
 
     EmptyOutPort() : OutPort(nullptr, "emptyOutPort") {}
@@ -176,7 +179,7 @@ public:
     ErrorCode PullData(std::shared_ptr<EffectBuffer> &data) override;
 
 private:
-    static std::shared_ptr<OutPort> port;
+    static std::shared_ptr<OutPort> port_;
 };
 } // namespace Effect
 } // namespace Media

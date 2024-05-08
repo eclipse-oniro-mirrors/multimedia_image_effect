@@ -74,11 +74,11 @@ ErrorCode FilterBase::Start()
 
 void FilterBase::UnlinkPrevFilters()
 {
-    for (auto &&inPort : inPorts_) {
-        auto peer = inPort->GetPeerPort();
-        inPort->Disconnect();
-        if (peer) {
-            peer->Disconnect();
+    for (auto &&port : inPorts_) {
+        auto peerPort = port->GetPeerPort();
+        port->Disconnect();
+        if (peerPort) {
+            peerPort->Disconnect();
         }
     }
 }
@@ -87,11 +87,11 @@ std::vector<Filter *> FilterBase::GetNextFilters()
 {
     std::vector<Filter *> nextFilters;
     nextFilters.reserve(outPorts_.size());
-    for (auto &&outPort : outPorts_) {
-        auto peerPort = outPort->GetPeerPort();
+    for (auto &&port : outPorts_) {
+        auto peerPort = port->GetPeerPort();
         if (!peerPort) {
             EFFECT_LOGI("Filter %{public}s outport %{public}s has no peer port (%{public}zu).", name_.c_str(),
-                outPort->GetName().c_str(), outPorts_.size());
+                port->GetName().c_str(), outPorts_.size());
             continue;
         }
         auto filter = const_cast<Filter *>(reinterpret_cast<const Filter *>(peerPort->GetOwnerFilter()));
@@ -138,39 +138,38 @@ ErrorCode FilterBase::PullData(const std::string &outPort, std::shared_ptr<Effec
 
 void FilterBase::OnEvent(const Event &event)
 {
-    // Receive event from port, pass it to pipeline
-    if (eventReceiver_) {
+    // Receive event from port and pass it to pipeline
+    if (eventReceiver_ != nullptr) {
         eventReceiver_->OnEvent(event);
     }
 }
 
-void FilterBase::InitPorts()
+template <typename T> T FilterBase::FindPort(const std::vector<T> &ports, const std::string &name)
 {
-    inPorts_.clear();
-    outPorts_.clear();
-
-    auto inPort = std::make_shared<InPort>(this);
-    inPorts_.push_back(inPort);
-
-    auto outPort = std::make_shared<OutPort>(this);
-    outPorts_.push_back(outPort);
-
-    routeMap_.emplace_back(inPort->GetName(), outPort->GetName());
-}
-
-template <typename T> T FilterBase::FindPort(const std::vector<T> &list, const std::string &name)
-{
-    auto find = std::find_if(list.begin(), list.end(), [name](const T &item) {
+    auto find = std::find_if(ports.begin(), ports.end(), [name](const T &item) {
         if (item == nullptr) {
             return false;
         }
         return name == item->GetName();
     });
-    if (find != list.end()) {
+    if (find != ports.end()) {
         return *find;
     }
     EFFECT_LOGE("Find port(%{public}s) failed.", name.c_str());
     return nullptr;
+}
+
+void FilterBase::InitPorts()
+{
+    inPorts_.clear();
+    auto inPort = std::make_shared<InPort>(this);
+    inPorts_.push_back(inPort);
+
+    outPorts_.clear();
+    auto outPort = std::make_shared<OutPort>(this);
+    outPorts_.push_back(outPort);
+
+    routeMap_.emplace_back(inPort->GetName(), outPort->GetName());
 }
 
 std::string FilterBase::NamePort(const std::string &mime)
@@ -179,31 +178,33 @@ std::string FilterBase::NamePort(const std::string &mime)
     if (type.empty()) {
         type = "default";
     }
-    auto cnt = ++(portTypeCntMap_[name_ + type]);
-    auto portName = type + "_" + std::to_string(cnt);
+    auto count = ++(portTypeCntMap_[name_ + type]);
+    auto portName = type + "_" + std::to_string(count);
     return portName;
 }
 
 PInPort FilterBase::GetRouteInPort(const std::string &outPortName)
 {
-    auto ite = std::find_if(routeMap_.begin(), routeMap_.end(),
-        [&outPortName](const PairPort &pp) { return outPortName == pp.second; });
-    if (ite == routeMap_.end()) {
+    auto it = std::find_if(routeMap_.begin(), routeMap_.end(), [&outPortName](const PairPort &pp) {
+        return outPortName == pp.second;
+    });
+    if (it == routeMap_.end()) {
         EFFECT_LOGW("out port %{public}s has no route map port", outPortName.c_str());
         return nullptr;
     }
-    return GetInPort(ite->first);
+    return GetInPort(it->first);
 }
 
 POutPort FilterBase::GetRouteOutPort(const std::string &inPortName)
 {
-    auto ite = std::find_if(routeMap_.begin(), routeMap_.end(),
-        [&inPortName](const PairPort &pp) { return inPortName == pp.first; });
-    if (ite == routeMap_.end()) {
+    auto it = std::find_if(routeMap_.begin(), routeMap_.end(), [&inPortName](const PairPort &pp) {
+        return inPortName == pp.first;
+    });
+    if (it == routeMap_.end()) {
         EFFECT_LOGW("in port %{public}s has no route map port", inPortName.c_str());
         return nullptr;
     }
-    return GetOutPort(ite->second);
+    return GetOutPort(it->second);
 }
 } // namespace Effect
 } // namespace Media
