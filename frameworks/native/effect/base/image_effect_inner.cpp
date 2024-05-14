@@ -26,12 +26,15 @@
 #include "image_sink_filter.h"
 #include "image_source_filter.h"
 #include "effect_surface_adapter.h"
-#include "IMRenderContext.h"
 #include "pipeline_core.h"
 #include "json_helper.h"
 #include "efilter_factory.h"
 #include "external_loader.h"
 #include "effect_context.h"
+#include "render_task.h"
+
+#define RENDER_QUEUE_SIZE 8
+#define COMMON_TASK_TAG 0
 
 namespace OHOS {
 namespace Media {
@@ -56,7 +59,6 @@ private:
     void InitEffectContext();
 
 public:
-    IMRenderContext *context_ = nullptr;
     std::unique_ptr<EffectSurfaceAdapter> surfaceAdapter_;
     std::shared_ptr<PipelineCore> pipeline_;
     std::shared_ptr<ImageSourceFilter> srcFilter_;
@@ -79,6 +81,7 @@ void ImageEffect::Impl::InitEffectContext()
     effectContext_->memoryManager_ = std::make_shared<EffectMemoryManager>();
     effectContext_->renderStrategy_ = std::make_shared<RenderStrategy>();
     effectContext_->capNegotiate_ = std::make_shared<CapabilityNegotiate>();
+    effectContext_->renderEnvironment_ = std::make_shared<RenderEnvironment>();
 }
 
 void ImageEffect::Impl::CreatePipeline(std::vector<std::shared_ptr<EFilter>> &efilters)
@@ -136,20 +139,35 @@ ImageEffect::ImageEffect(const char *name)
     if (name != nullptr) {
         name_ = name;
     }
-    InitEGLEnv();
     ExternLoader::Instance()->InitExt();
     ExtInitModule();
+
+    if (m_renderThread == nullptr) {
+        auto func = [this]() {
+        };
+        m_renderThread = new RenderThread<>(RENDER_QUEUE_SIZE, func);
+        m_renderThread->Start();
+        auto task = std::make_shared<RenderTask<>>([this]() { this->InitEGLEnv(); }, COMMON_TASK_TAG,
+            RequestTaskId());
+        m_renderThread->AddTask(task);
+        task->Wait();
+    }
 }
 
 ImageEffect::~ImageEffect()
 {
     EFFECT_LOGI("ImageEffect destruct!");
-    DestroyEGLEnv();
+    auto task = std::make_shared<RenderTask<>>([this]() { this->DestroyEGLEnv(); }, COMMON_TASK_TAG,
+        RequestTaskId());
+    m_renderThread->AddTask(task);
+    task->Wait();
     ExtDeinitModule();
 
     impl_->surfaceAdapter_ = nullptr;
+    impl_->effectContext_->renderEnvironment_ = nullptr;
     toProducerSurface_ = nullptr;
     fromProducerSurface_ = nullptr;
+    m_renderThread->Stop();
 }
 
 void ImageEffect::AddEFilter(const std::shared_ptr<EFilter> &efilter)
@@ -186,6 +204,11 @@ void ImageEffect::RemoveEFilter(const std::shared_ptr<EFilter> &efilter)
 {
     Effect::RemoveEFilter(efilter);
     impl_->CreatePipeline(efilters_);
+}
+
+unsigned long int ImageEffect::RequestTaskId()
+{
+    return m_currentTaskId.fetch_add(1);
 }
 
 ErrorCode ImageEffect::SetInputPixelMap(PixelMap* pixelMap)
@@ -252,11 +275,15 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
             continue;
         }
         std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
+        if (runningIPType != IPType::CPU) {
+            effectFormat = IEffectFormat::RGBA8888;
+        }
+
         auto it = formats.find(effectFormat);
         if (it == formats.end()) {
             EFFECT_LOGE("effectFormat not support! effectFormat=%{public}d, name=%{public}s",
                 effectFormat, capability->name_.c_str());
-            return ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE;
+            return ErrorCode::SUCCESS;
         }
 
         std::vector<IPType> &ipTypes = it->second;
@@ -272,31 +299,51 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters)
+ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, EffectParameters &effectParameters,
+    unsigned long int taskId, RenderThread<> *thread)
 {
-    ErrorCode res = pipeline->Prepare();
-    FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "pipeline Prepare fail! res=%{public}d", res);
+    auto prom = std::make_shared<std::promise<ErrorCode>>();
+    std::future<ErrorCode> fut = prom->get_future();
+    auto task = std::make_shared<RenderTask<>>([pipeline, &effectParameters, &prom]() {
+        ErrorCode res = pipeline->Prepare();
+        if (res != ErrorCode::SUCCESS) {
+            EFFECT_LOGE("pipeline Prepare fail! res=%{public}d", res);
+            prom->set_value(res);
+            return;
+        }
 
-    IPType runningIPType;
-    res = ChooseIPType(effectParameters.srcEffectBuffer_, effectParameters.effectContext_, effectParameters.config_,
-        runningIPType);
-    FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "choose running ip type fail! res=%{public}d", res);
-    effectParameters.effectContext_->ipType_ = runningIPType;
-    effectParameters.effectContext_->memoryManager_->SetIPType(runningIPType);
+        IPType runningIPType;
+        res = ChooseIPType(effectParameters.srcEffectBuffer_, effectParameters.effectContext_, effectParameters.config_,
+            runningIPType);
+        if (res != ErrorCode::SUCCESS) {
+            EFFECT_LOGE("choose running ip type fail! res=%{public}d", res);
+            prom->set_value(res);
+            return;
+        }
+        effectParameters.effectContext_->ipType_ = runningIPType;
+        effectParameters.effectContext_->memoryManager_->SetIPType(runningIPType);
 
-    res = pipeline->Start();
-    FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "pipeline start fail! res=%{public}d", res);
-
+        res = pipeline->Start();
+        prom->set_value(res);
+        if (res != ErrorCode::SUCCESS) {
+            EFFECT_LOGE("pipeline start fail! res=%{public}d", res);
+            return;
+        }
+    }, 0, taskId);
+    thread->AddTask(task);
+    task->Wait();
+    ErrorCode res = fut.get();
     return res;
 }
 
-ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters)
+ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, EffectParameters &effectParameters,
+    unsigned long int taskId, RenderThread<> *thread)
 {
     effectParameters.effectContext_->renderStrategy_->Init(effectParameters.srcEffectBuffer_.get(),
         effectParameters.dstEffectBuffer_.get());
     effectParameters.effectContext_->memoryManager_->Init(effectParameters.srcEffectBuffer_,
         effectParameters.dstEffectBuffer_);
-    ErrorCode res = StartPipelineInner(pipeline, effectParameters);
+    ErrorCode res = StartPipelineInner(pipeline, effectParameters, taskId, thread);
     effectParameters.effectContext_->memoryManager_->Deinit();
     effectParameters.effectContext_->renderStrategy_->Deinit();
     effectParameters.effectContext_->capNegotiate_->ClearNegotiateResult();
@@ -441,20 +488,6 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
         "extra info is null! srcExtraInfo=%{public}d, dstExtraInfo=%{public}d",
         srcEffectBuffer->extraInfo_ == nullptr, dstEffectBuffer->extraInfo_ == nullptr);
 
-    // input and output type is same or not.
-    CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->extraInfo_->dataType == dstEffectBuffer->extraInfo_->dataType,
-        ErrorCode::ERR_NOT_SUPPORT_DIFF_DATATYPE,
-        "not support different dataType. srcDataType=%{public}d, dstDataType=%{public}d",
-        srcEffectBuffer->extraInfo_->dataType, dstEffectBuffer->extraInfo_->dataType);
-
-    // the format for pixel map is same or not.
-    if (srcEffectBuffer->extraInfo_->dataType == DataType::PIXEL_MAP) {
-        CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->bufferInfo_->formatType_ == dstEffectBuffer->bufferInfo_->formatType_,
-            ErrorCode::ERR_NOT_SUPPORT_DIFF_FORMAT,
-            "not support different format. srcFormat=%{public}d, dstFormat=%{public}d",
-            srcEffectBuffer->bufferInfo_->formatType_, dstEffectBuffer->bufferInfo_->formatType_);
-    }
-
     return ErrorCode::SUCCESS;
 }
 
@@ -492,9 +525,14 @@ ErrorCode ImageEffect::Render()
         UnLockAll();
         return res;
     }
+    if (dstEffectBuffer != nullptr) {
+        impl_->effectContext_->renderEnvironment_->SetOutputType(dstEffectBuffer->extraInfo_->dataType);
+    } else {
+        impl_->effectContext_->renderEnvironment_->SetOutputType(srcEffectBuffer->extraInfo_->dataType);
+    }
 
     EffectParameters effectParameters(srcEffectBuffer, dstEffectBuffer, config_, impl_->effectContext_);
-    res = StartPipeline(impl_->pipeline_, effectParameters);
+    res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("StartPipeline fail! res=%{public}d", res);
         UnLockAll();
@@ -577,6 +615,7 @@ ErrorCode ImageEffect::SetOutputSurface(sptr<Surface>& surface)
         EFFECT_LOGE("surface is null.");
         return ErrorCode::ERR_INPUT_NULL;
     }
+    outDateInfo_.dataType_ = DataType::SURFACE;
     toProducerSurface_ = surface;
     return ErrorCode::SUCCESS;
 }
@@ -602,8 +641,35 @@ void ImageEffect::UpdateProducerSurfaceInfo()
     toProducerSurface_->SetTransform(transform);
 }
 
+void ImageEffect::ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer)
+{
+    inDateInfo_.surfaceBuffer_ = buffer;
+    GraphicTransformType transform = impl_->surfaceAdapter_->GetTransform();
+    buffer->SetSurfaceBufferTransform(transform);
+    if (impl_->effectState_ == EffectState::RUNNING) {
+        impl_->effectContext_->renderEnvironment_->NotifyInputChanged();
+        this->Render();
+    } else {
+        auto task = std::make_shared<RenderTask<>>([buffer, this, transform]() {
+            if (impl_->effectContext_->renderEnvironment_->GetEGLStatus() != EGLStatus::READY) {
+                impl_->effectContext_->renderEnvironment_->Init();
+                impl_->effectContext_->renderEnvironment_->Prepare();
+            }
+            int tex = GLUtils::CreateTextureFromSurfaceBuffer(buffer);
+            impl_->effectContext_->renderEnvironment_->UpdateCanvas();
+            impl_->effectContext_->renderEnvironment_->DrawFrame(tex, transform);
+        }, COMMON_TASK_TAG, RequestTaskId());
+        m_renderThread->AddTask(task);
+        task->Wait();
+    }
+}
+
 void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
+    if (outDateInfo_.dataType_ == DataType::NATIVE_WINDOW) {
+        ConsumerBufferWithGPU(buffer);
+        return;
+    }
     UpdateProducerSurfaceInfo();
 
     OHOS::sptr<SurfaceBuffer> outBuffer;
@@ -657,7 +723,6 @@ void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHO
 sptr<Surface> ImageEffect::GetInputSurface()
 {
     inDateInfo_.dataType_ = DataType::SURFACE;
-    outDateInfo_.dataType_ = DataType::SURFACE;
     if (fromProducerSurface_ != nullptr) {
         return fromProducerSurface_;
     }
@@ -679,6 +744,13 @@ sptr<Surface> ImageEffect::GetInputSurface()
     }
 
     return fromProducerSurface_;
+}
+
+ErrorCode ImageEffect::SetOutNativeWindow(OHNativeWindow *nativeWindow)
+{
+    outDateInfo_.dataType_ = DataType::NATIVE_WINDOW;
+    impl_->effectContext_->renderEnvironment_->InitEngine(nativeWindow);
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode ImageEffect::Configure(const std::string &key, const Plugin::Any &value)
@@ -757,6 +829,8 @@ ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectB
             return CommonUtils::ParseUri(dataInfo.uri_, effectBuffer, isOutputData);
         case DataType::PATH:
             return CommonUtils::ParsePath(dataInfo.path_, effectBuffer, isOutputData);
+        case DataType::NATIVE_WINDOW:
+            return CommonUtils::ParseNativeWindowData(effectBuffer, dataInfo.dataType_);
         case DataType::UNKNOWN:
             EFFECT_LOGW("dataType is unknown! Data is not set!");
             return ErrorCode::ERR_NO_DATA;
@@ -786,18 +860,17 @@ void ImageEffect::UnLockData(DataInfo &dataInfo)
 
 void ImageEffect::InitEGLEnv()
 {
-    impl_->context_ = new IMRenderContext();
-    impl_->context_->Init();
-    impl_->context_->MakeCurrent(nullptr);
+    impl_->effectContext_->renderEnvironment_->Init();
+    impl_->effectContext_->renderEnvironment_->Prepare();
 }
 
 void ImageEffect::DestroyEGLEnv()
 {
-    if (impl_->context_ == nullptr) {
+    if (impl_->effectContext_->renderEnvironment_ == nullptr) {
         return;
     }
-    impl_->context_->ReleaseCurrent();
-    impl_->context_->Release();
+    impl_->effectContext_->renderEnvironment_->ReleaseParam();
+    impl_->effectContext_->renderEnvironment_->Release();
 }
 
 ErrorCode ImageEffect::SetExtraInfo(nlohmann::json res)
@@ -808,18 +881,10 @@ ErrorCode ImageEffect::SetExtraInfo(nlohmann::json res)
 
 void ImageEffect::ExtInitModule()
 {
-    InitModuleFunc initModuleFunc = ExternLoader::Instance()->GetInitModuleFunc();
-    if (initModuleFunc) {
-        initModuleFunc();
-    }
 }
 
 void ImageEffect::ExtDeinitModule()
 {
-    DeinitModuleFunc deinitModuleFunc = ExternLoader::Instance()->GetDeinitModuleFunc();
-    if (deinitModuleFunc) {
-        deinitModuleFunc();
-    }
 }
 } // namespace Effect
 } // namespace Media

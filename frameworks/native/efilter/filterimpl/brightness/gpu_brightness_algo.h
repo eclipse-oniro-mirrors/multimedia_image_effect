@@ -20,24 +20,40 @@
 #include "effect_buffer.h"
 #include "any.h"
 
+#include "core/render_default_data.h"
+#include "core/algorithm_program.h"
+#include "render_environment.h"
+#include "effect_context.h"
+
 namespace OHOS {
 namespace Media {
 namespace Effect {
+class BrightnessFilterData {
+public:
+    RenderTexturePtr inputTexture_ = nullptr;
+    unsigned int outputWidth_;
+    unsigned int outputHeight_;
+    float ratio;
+};
+using BrightnessFilterDataPtr = std::shared_ptr<BrightnessFilterData>;
 class GpuBrightnessAlgo {
 public:
-    ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value);
+    ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+        std::shared_ptr<EffectContext> &context);
     ErrorCode Release();
+    ErrorCode Init();
+    void Render(GLenum target, RenderTexturePtr tex);
 private:
-    ErrorCode InitMesh();
-    ErrorCode PreDraw(uint32_t width, uint32_t height, std::map<std::string, Plugin::Any> &value);
-    void Unbind();
     float ParseBrightness(std::map<std::string, Plugin::Any> &value);
-
-    unsigned int vbo_ = 0;
-    unsigned int vao_ = 0;
-    unsigned int fbo_ = 0;
-    unsigned int shaderProgram_ = 0;
-    unsigned int texId_ = 0;
+    BrightnessFilterDataPtr renderEffectData_;
+    void PreDraw(GLenum target);
+    void PostDraw(GLenum target);
+    RenderContext *context_{ nullptr };
+    std::string vertexShaderCode_;
+    std::string fragmentShaderCode_;
+    GLuint fbo_{ 0 };
+    AlgorithmProgram *shader_{ nullptr };
+    RenderMesh *renderMesh_{ nullptr };
 };
 } // namespace Effect
 } // namespace Media

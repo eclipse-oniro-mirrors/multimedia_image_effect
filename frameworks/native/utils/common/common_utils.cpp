@@ -97,6 +97,23 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode CommonUtils::ParseNativeWindowData(std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType)
+{
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    bufferInfo->width_ = 0;
+    bufferInfo->height_ = 0;
+    bufferInfo->rowStride_ = 0;
+    bufferInfo->len_ = 0;
+    bufferInfo->formatType_ = IEffectFormat::DEFAULT;
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
+    extraInfo->dataType = dataType;
+    extraInfo->bufferType = BufferType::DMA_BUFFER;
+    extraInfo->pixelMap = nullptr;
+    extraInfo->surfaceBuffer = nullptr;
+    effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, nullptr, extraInfo);
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
     std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType)
 {
@@ -343,6 +360,48 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
     // update rowStride
     pixelMap->SetRowStride(memoryInfo.bufferInfo.rowStride_);
 
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
+    std::shared_ptr<EffectContext> &context)
+{
+    EFFECT_LOGI("ModifyPixelMapPropertyForTexture enter!");
+    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixel map is null");
+    AllocatorType allocatorType = pixelMap->GetAllocatorType();
+    BufferType bufferType = SwitchToEffectBuffType(allocatorType);
+    EFFECT_LOGD("ModifyPixelMapProperty: allocatorType=%{public}d, bufferType=%{public}d", allocatorType, bufferType);
+    std::shared_ptr<Memory> allocMemory = context->memoryManager_->GetAllocMemoryByAddr(buffer->buffer_);
+    std::shared_ptr<MemoryData> memoryData;
+    std::unique_ptr<AbsMemory> memory = EffectMemory::CreateMemory(bufferType);
+    CHECK_AND_RETURN_RET_LOG(memory != nullptr, ErrorCode::ERR_CREATE_MEMORY_FAIL,
+        "memory create fail! allocatorType=%{public}d", allocatorType);
+
+    MemoryInfo memoryInfo = {
+        .isAutoRelease = false,
+        .bufferInfo = *buffer->bufferInfo_,
+        .extra = pixelMap->GetFd()
+    };
+    memoryData = memory->Alloc(memoryInfo);
+    CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc fail!");
+    context->renderEnvironment_->ReadPixelsFromTex(buffer->tex, memoryData->data, buffer->bufferInfo_->width_,
+        buffer->bufferInfo_->height_, memoryData->memoryInfo.bufferInfo.rowStride_ / RGBA_BYTES_PER_PIXEL);
+    
+    void *extraData = nullptr;
+    ErrorCode res = GetPixelsContext(memoryData, memoryData->memoryInfo.bufferType, &extraData);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "get pixels context fail! res=%{public}d", res);
+    // not need to release the origin buffer in pixelMap, SetPixelsAddr will release it.
+    pixelMap->SetPixelsAddr(memoryData->data, extraData, memoryInfo.bufferInfo.len_, allocatorType, nullptr);
+
+    ImageInfo imageInfo;
+    pixelMap->GetImageInfo(imageInfo);
+    imageInfo.size.width = static_cast<int32_t>(memoryInfo.bufferInfo.width_);
+    imageInfo.size.height = static_cast<int32_t>(memoryInfo.bufferInfo.height_);
+    uint32_t result = pixelMap->SetImageInfo(imageInfo, true);
+    EFFECT_LOGI("SetImageInfo imageInfo width=%{public}d, height=%{public}d, result: %{public}d",
+        imageInfo.size.width, imageInfo.size.height, result);
+    CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_SET_IMAGE_INFO_FAIL,
+        "exec SetImageInfo fail! result=%{public}d", result);
     return ErrorCode::SUCCESS;
 }
 } // namespace Effect

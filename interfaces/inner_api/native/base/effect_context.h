@@ -20,6 +20,7 @@
 #include "effect_memory_manager.h"
 #include "render_strategy.h"
 #include "capability_negotiate.h"
+#include "render_environment.h"
 
 namespace OHOS {
 namespace Media {
@@ -29,6 +30,7 @@ public:
     std::shared_ptr<EffectMemoryManager> memoryManager_;
     std::shared_ptr<RenderStrategy> renderStrategy_;
     std::shared_ptr<CapabilityNegotiate> capNegotiate_;
+    std::shared_ptr<RenderEnvironment> renderEnvironment_;
     IPType ipType_ = IPType::DEFAULT;
 };
 } // namespace Effect

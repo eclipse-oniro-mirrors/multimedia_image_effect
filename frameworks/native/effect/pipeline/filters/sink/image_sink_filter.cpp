@@ -69,6 +69,17 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
         return ErrorCode::SUCCESS;
     }
 
+    if (buffer->extraInfo_->dataType == DataType::TEX) {
+        if (pixelMap->GetWidth() == buffer->bufferInfo_->width_ &&
+            pixelMap->GetHeight() == buffer->bufferInfo_->height_) {
+            context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
+        } else {
+            ErrorCode result = CommonUtils::ModifyPixelMapPropertyForTexture(pixelMap, buffer, context);
+            return result;
+        }
+        return ErrorCode::SUCCESS;
+    }
+
     if (static_cast<uint32_t>(pixelMap->GetRowStride()) == buffer->bufferInfo_->rowStride_ &&
         static_cast<uint32_t>(pixelMap->GetHeight()) == buffer->bufferInfo_->height_ &&
         CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat()) == buffer->bufferInfo_->formatType_) {
@@ -97,7 +108,8 @@ void CopyDataToSurfaceBuffer(SurfaceBuffer *surfaceBuffer, const std::shared_ptr
     MemcpyHelper::CopyData(buffer.get(), dst);
 }
 
-ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer)
+ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
+    std::shared_ptr<EffectContext> &context)
 {
     SurfaceBuffer *surfaceBuffer = src->extraInfo_->surfaceBuffer;
     CHECK_AND_RETURN_RET_LOG(surfaceBuffer != nullptr, ErrorCode::ERR_INPUT_NULL, "surfaceBuffer is null!");
@@ -105,6 +117,15 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
         surfaceBuffer->GetVirAddr(), buffer->buffer_);
     if (surfaceBuffer->GetVirAddr() == buffer->buffer_) {
         return ErrorCode::SUCCESS;
+    }
+
+    if (buffer->extraInfo_->dataType == DataType::TEX) {
+        if (surfaceBuffer->GetWidth() == buffer->bufferInfo_->width_ &&
+            surfaceBuffer->GetHeight() == buffer->bufferInfo_->height_) {
+            context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
+            return ErrorCode::SUCCESS;
+        }
+        return ErrorCode::ERR_BUFFER_NOT_ALLOW_CHANGE;
     }
 
     if (static_cast<uint32_t>(surfaceBuffer->GetStride()) == buffer->bufferInfo_->rowStride_ &&
@@ -129,18 +150,21 @@ ErrorCode ModifyInnerPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuf
     if (pixels == buffer->buffer_) {
         return ErrorCode::SUCCESS;
     }
+    if (buffer->extraInfo_->dataType == DataType::TEX) {
+        return CommonUtils::ModifyPixelMapPropertyForTexture(pixelMap.get(), buffer, context);
+    }
     return CommonUtils::ModifyPixelMapProperty(pixelMap.get(), buffer, context->memoryManager_);
 }
 
 ErrorCode ModifyDataInfo(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
-    switch (buffer->extraInfo_->dataType) {
+    switch (src->extraInfo_->dataType) {
         case DataType::PIXEL_MAP:
             return ModifyPixelMap(src, buffer, context);
         case DataType::SURFACE_BUFFER:
         case DataType::SURFACE:
-            return ModifySurfaceBuffer(src, buffer);
+            return ModifySurfaceBuffer(src, buffer, context);
         case DataType::PATH:
         case DataType::URI:
             return ModifyInnerPixelMap(src, buffer, context);
@@ -149,7 +173,8 @@ ErrorCode ModifyDataInfo(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
     }
 }
 
-ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::shared_ptr<EffectBuffer> &outputBuffer)
+ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::shared_ptr<EffectBuffer> &outputBuffer,
+    std::shared_ptr<EffectContext> &context)
 {
     if (inputBuffer->buffer_ == outputBuffer->buffer_) {
         EFFECT_LOGI("ImageSinkFilter: not need copy!");
@@ -164,7 +189,11 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
         "inputRowStride=%{public}d", outputBufferSize, inputBufferSize, outputRowStride, inputRowStride);
 
     // update nativePixelMap
-    MemcpyHelper::CopyData(inputBuffer.get(), outputBuffer.get());
+    if (inputBuffer->extraInfo_->dataType == DataType::TEX) {
+        context->renderEnvironment_->ConvertTextureToBuffer(inputBuffer->tex, outputBuffer.get());
+    } else {
+        MemcpyHelper::CopyData(inputBuffer.get(), outputBuffer.get());
+    }
     return ErrorCode::SUCCESS;
 }
 
@@ -199,11 +228,25 @@ ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<EffectBuffer
     return PackToFile(path, pixelMap);
 }
 
+ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<PixelMap> &pixelMap)
+{
+    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "SaveUrlData: pixelMap is null!");
+
+    std::string path = CommonUtils::UrlToPath(url);
+    return PackToFile(path, pixelMap);
+}
+
 ErrorCode SavePathData(const std::string &path, const std::shared_ptr<EffectBuffer> &buffer)
 {
     std::shared_ptr<PixelMap> pixelMap = buffer->extraInfo_->innerPixelMap;
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "SavePathData: pixelMap is null!");
 
+    return PackToFile(path, pixelMap);
+}
+
+ErrorCode SavePathData(const std::string &path, const std::shared_ptr<PixelMap> &pixelMap)
+{
+    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "SavePathData: pixelMap is null!");
     return PackToFile(path, pixelMap);
 }
 
@@ -214,11 +257,11 @@ ErrorCode SaveInputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &
     CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, result, "ModifyDataInfo fail! result=%{public}d", result);
 
     EFFECT_LOGD("SaveInputData: dataType=%{public}d", buffer->extraInfo_->dataType);
-    switch (buffer->extraInfo_->dataType) {
+    switch (src->extraInfo_->dataType) {
         case DataType::URI:
-            return SaveUrlData(buffer->extraInfo_->uri, buffer);
+            return SaveUrlData(src->extraInfo_->uri, src->extraInfo_->innerPixelMap);
         case DataType::PATH:
-            return SavePathData(buffer->extraInfo_->path, buffer);
+            return SavePathData(src->extraInfo_->path, src->extraInfo_->innerPixelMap);
         default:
             return ErrorCode::SUCCESS;
     }
@@ -233,18 +276,18 @@ ErrorCode SavaOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
             ErrorCode ret = ModifyInnerPixelMap(src, inputBuffer, context);
             CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, ret,
                 "SavaOutputData: Uri ModifyInnerPixelMap fail! ret=%{public}d", ret);
-            return SaveUrlData(outputBuffer->extraInfo_->uri, inputBuffer);
+            return SaveUrlData(outputBuffer->extraInfo_->uri, src->extraInfo_->innerPixelMap);
         }
         case DataType::PATH: {
             ErrorCode ret = ModifyInnerPixelMap(src, inputBuffer, context);
             CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, ret,
                 "SavaOutputData: Path ModifyInnerPixelMap fail! ret=%{public}d", ret);
-            return SavePathData(outputBuffer->extraInfo_->path, inputBuffer);
+            return SavePathData(outputBuffer->extraInfo_->path, src->extraInfo_->innerPixelMap);
         }
         case DataType::PIXEL_MAP:
         case DataType::SURFACE:
         case DataType::SURFACE_BUFFER:
-            return FillOutputData(inputBuffer, outputBuffer);
+            return FillOutputData(inputBuffer, outputBuffer, context);
         default:
             return ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
     }
@@ -254,7 +297,7 @@ ErrorCode SaveData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::shared
     std::shared_ptr<EffectContext> &context)
 {
     CHECK_AND_RETURN_RET_LOG(inputBuffer != nullptr && inputBuffer->bufferInfo_ != nullptr &&
-        inputBuffer->buffer_ != nullptr && inputBuffer->extraInfo_ != nullptr,
+        (inputBuffer->buffer_ != nullptr || inputBuffer->tex != nullptr) && inputBuffer->extraInfo_ != nullptr,
         ErrorCode::ERR_INPUT_NULL, "inputBuffer para error!");
     EffectBuffer *src = context->renderStrategy_->GetInput();
     CHECK_AND_RETURN_RET_LOG(src != nullptr, ErrorCode::ERR_SRC_EFFECT_BUFFER_NULL, "src is null!");
@@ -266,7 +309,8 @@ ErrorCode SaveData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::shared
 
     // part para can be null for url or path data
     if (outputBuffer->extraInfo_->dataType != DataType::URI && outputBuffer->extraInfo_->dataType != DataType::PATH) {
-        CHECK_AND_RETURN_RET_LOG(outputBuffer->bufferInfo_ != nullptr && outputBuffer->buffer_ != nullptr,
+        CHECK_AND_RETURN_RET_LOG(outputBuffer->bufferInfo_ != nullptr &&
+            (outputBuffer->buffer_ != nullptr || outputBuffer->tex != nullptr),
             ErrorCode::ERR_INPUT_NULL, "outputBuffer buffer info or buffer addr error!");
     }
 
@@ -294,6 +338,31 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
     std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("image sink effect push data started, state: %{public}d", state_.load());
+    EffectBuffer *output = sinkBuffer_.get();
+    if (sinkBuffer_ == nullptr) {
+        output = context->renderStrategy_->GetInput();
+    }
+
+    if (buffer->extraInfo_->dataType == DataType::TEX) {
+        if (output->extraInfo_->dataType == DataType::NATIVE_WINDOW) {
+            EffectBuffer *input = context->renderStrategy_->GetInput();
+            GraphicTransformType transformType = GRAPHIC_ROTATE_NONE;
+            if (input->extraInfo_->surfaceBuffer != nullptr) {
+                transformType = input->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
+            }
+            context->renderEnvironment_->DrawFrameWithTransform(const_cast<std::shared_ptr<EffectBuffer> &>(buffer),
+                transformType);
+            return ErrorCode::SUCCESS;
+        }
+    }
+
+    if (output->extraInfo_->dataType == DataType::NATIVE_WINDOW && buffer->extraInfo_->surfaceBuffer != nullptr) {
+        int tex = GLUtils::CreateTextureFromSurfaceBuffer(buffer->extraInfo_->surfaceBuffer);
+        context->renderEnvironment_->UpdateCanvas();
+        GraphicTransformType transformType = buffer->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
+        context->renderEnvironment_->DrawFrame(tex, transformType);
+        return ErrorCode::SUCCESS;
+    }
 
     ErrorCode result = SaveData(buffer, sinkBuffer_, context);
     CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, result, "SaveData fail! result=%{public}d", result);

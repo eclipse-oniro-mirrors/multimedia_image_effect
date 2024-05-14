@@ -22,6 +22,7 @@
 #include "effect_type.h"
 #include "pixel_map.h"
 #include "surface_buffer.h"
+#include "graphic/render_texture.h"
 
 namespace OHOS {
 namespace Media {
@@ -42,6 +43,8 @@ enum class DataType {
     SURFACE_BUFFER,
     URI,
     PATH,
+    TEX,
+    NATIVE_WINDOW,
 };
 
 struct ExtraInfo {
@@ -61,6 +64,7 @@ public:
 
     std::shared_ptr<BufferInfo> bufferInfo_ = nullptr;
     void *buffer_ = nullptr;
+    RenderTexturePtr tex;
     std::shared_ptr<ExtraInfo> extraInfo_ = nullptr;
 };
 } // namespace Effect
