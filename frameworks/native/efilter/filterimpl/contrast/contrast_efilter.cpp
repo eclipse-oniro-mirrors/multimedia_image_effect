@@ -47,8 +47,9 @@ ContrastEFilter::ContrastEFilter(const std::string &name) : EFilter(name)
             {
                 {
                     IEffectFormat::RGBA8888,
-                    [this](EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value)
-                        { return gpuContrastAlgo_->OnApplyRGBA8888(src, dst, value); }
+                    [this](EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+                        std::shared_ptr<EffectContext> &context)
+                        { return gpuContrastAlgo_->OnApplyRGBA8888(src, dst, value, context); }
                 },
             }
         }
@@ -57,16 +58,20 @@ ContrastEFilter::ContrastEFilter(const std::string &name) : EFilter(name)
 
 ContrastEFilter::~ContrastEFilter()
 {
-    if (filterContext_ != nullptr) {
-        filterContext_->ReleaseCurrent();
-        filterContext_->Release();
-    }
-
     gpuContrastAlgo_->Release();
 }
 
 ErrorCode ContrastEFilter::Render(EffectBuffer *buffer, std::shared_ptr<EffectContext> &context)
 {
+    if (context->ipType_ == IPType::GPU) {
+        std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+        std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
+        extraInfo->dataType = DataType::TEX;
+        std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
+        ErrorCode res = Render(buffer, effectBuffer.get(), context);
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "filter(%{public}s) render fail", name_.c_str());
+        return PushData(effectBuffer.get(), context);
+    }
     ErrorCode res = Render(buffer, buffer, context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "filter(%{public}s) render fail", name_.c_str());
     return PushData(buffer, context);
@@ -85,7 +90,7 @@ ErrorCode ContrastEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::sha
     CHECK_AND_RETURN_RET_LOG(formatIter != formatFuncs.end(), ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE,
         "format=%{public}d is not support! filter=%{public}s", formatType, name_.c_str());
 
-    return formatIter->second(src, dst, values_);
+    return formatIter->second(src, dst, values_, context);
 }
 
 ErrorCode ContrastEFilter::SetValue(const std::string &key, Plugin::Any &value)
@@ -143,15 +148,6 @@ std::shared_ptr<EffectInfo> ContrastEFilter::GetEffectInfo(const std::string &na
 
 ErrorCode ContrastEFilter::PreRender(IEffectFormat &format)
 {
-    IPType ipType = IPType::DEFAULT;
-    ErrorCode res = CalculateEFilterIPType(format, ipType);
-    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
-        "PreRender: CalculateEFilterIPType fail! name=%{public}s", name_.c_str());
-    if (ipType == IPType::GPU) {
-        filterContext_ = new IMRenderContext();
-        filterContext_->Init();
-        filterContext_->MakeCurrent(nullptr);
-    }
     return ErrorCode::SUCCESS;
 }
 } // namespace Effect

@@ -120,7 +120,7 @@ std::shared_ptr<MemoryData> DmaMemory::Alloc(MemoryInfo &memoryInfo)
     uint32_t size = bufferInfo.len_;
     EFFECT_LOGI("DmaMemory::Alloc size=%{public}d", size);
     CHECK_AND_RETURN_RET_LOG(size <= MAX_RAM_SIZE && size > 0, nullptr, "size out of range! size=%{public}d", size);
-    CHECK_AND_RETURN_RET_LOG(bufferInfo.width_ > 0 && bufferInfo.height_ > 0 && CalculateTotalSize(bufferInfo) <= size,
+    CHECK_AND_RETURN_RET_LOG(bufferInfo.width_ > 0 && bufferInfo.height_ > 0,
         nullptr, "para calculated over alloc size! h=%{public}d, w=%{public}d, format=%{public}d, size=%{public}d",
         bufferInfo.height_, bufferInfo.width_, bufferInfo.formatType_, bufferInfo.len_);
     auto *src = reinterpret_cast<SurfaceBuffer *>(memoryInfo.extra);

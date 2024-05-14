@@ -18,7 +18,6 @@
 
 #include "efilter.h"
 #include "gpu_contrast_algo.h"
-#include "IMRenderContext.h"
 
 namespace OHOS {
 namespace Media {
@@ -48,12 +47,12 @@ public:
     ErrorCode PreRender(IEffectFormat &format) override;
 private:
     using ApplyFunc =
-        std::function<ErrorCode(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value)>;
+        std::function<ErrorCode(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+            std::shared_ptr<EffectContext> &context)>;
 
     static std::shared_ptr<EffectInfo> info_;
     std::unordered_map<IPType, std::unordered_map<IEffectFormat, ApplyFunc>> contrastFilterInfo_;
     std::shared_ptr<GpuContrastAlgo> gpuContrastAlgo_;
-    IMRenderContext* filterContext_ = nullptr;
 };
 } // namespace Effect
 } // namespace Media

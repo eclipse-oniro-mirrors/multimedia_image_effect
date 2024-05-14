@@ -80,6 +80,11 @@ protected:
 private:
     void Negotiate(const std::string &inPort, const std::shared_ptr<Capability> &capability,
         std::shared_ptr<EffectContext> &context) override;
+    
+    EffectBuffer *IpTypeConvert(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context);
+
+    ErrorCode RenderWithGPU(std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &src,
+        std::shared_ptr<EffectBuffer> &dst);
 
     std::shared_ptr<Capability> outputCap_ = nullptr;
 };

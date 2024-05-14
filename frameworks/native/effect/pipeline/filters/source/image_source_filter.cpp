@@ -48,34 +48,52 @@ ErrorCode ImageSourceFilter::Prepare()
 ErrorCode UpdateInputBufferIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
+    if (context->ipType_ != IPType::GPU && context->renderEnvironment_->GetOutputType() == DataType::NATIVE_WINDOW) {
+        MemoryInfo memInfo = {
+            .bufferInfo = {
+                .width_ = srcBuffer->bufferInfo_->width_,
+                .height_ = srcBuffer->bufferInfo_->height_,
+                .len_ = srcBuffer->bufferInfo_->len_,
+                .formatType_ = srcBuffer->bufferInfo_->formatType_,
+            },
+            .bufferType = BufferType::DMA_BUFFER,
+        };
+        MemoryData *memoryData = context->memoryManager_->AllocMemory(srcBuffer->buffer_, memInfo);
+        CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc new memory fail!");
+        MemoryInfo &allocMemInfo = memoryData->memoryInfo;
+        std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+        *bufferInfo = allocMemInfo.bufferInfo;
+        std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
+        *extraInfo = *srcBuffer->extraInfo_;
+        extraInfo->bufferType = allocMemInfo.bufferType;
+        extraInfo->surfaceBuffer = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
+            static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
+        if (extraInfo->surfaceBuffer != nullptr) {
+            GraphicTransformType transformType = srcBuffer->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
+            extraInfo->surfaceBuffer->SetSurfaceBufferTransform(transformType);
+        }
+        buffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
+
+        CopyInfo dst = {
+            .bufferInfo = {
+                .width_ = buffer->bufferInfo_->width_,
+                .height_ = buffer->bufferInfo_->height_,
+                .len_ = buffer->bufferInfo_->len_,
+                .formatType_ = buffer->bufferInfo_->formatType_,
+                .rowStride_ = buffer->bufferInfo_->rowStride_,
+            },
+            .data = static_cast<uint8_t *>(buffer->buffer_),
+        };
+        MemcpyHelper::CopyData(srcBuffer.get(), dst);
+        return ErrorCode::SUCCESS;
+    }
+
     if (context->ipType_ != IPType::GPU) {
         return ErrorCode::SUCCESS;
     }
-    if (srcBuffer->extraInfo_->bufferType == BufferType::DMA_BUFFER) {
-        return ErrorCode::SUCCESS;
-    }
 
-    MemoryInfo memoryInfo = {
-        .bufferInfo = *srcBuffer->bufferInfo_,
-        .extra = static_cast<void *>(srcBuffer->extraInfo_->surfaceBuffer),
-        .bufferType = BufferType::DMA_BUFFER, // alloc dma buffer
-    };
-    MemoryData *allocMemoryData = context->memoryManager_->AllocMemory(srcBuffer->buffer_, memoryInfo);
-    CHECK_AND_RETURN_RET_LOG(allocMemoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc new memory fail!");
-
-    MemcpyHelper::CopyData(srcBuffer.get(), allocMemoryData);
-    EFFECT_LOGD("Update input buffer. srcBufferType=%{public}d, allocBufferType=%{public}d",
-        srcBuffer->extraInfo_->bufferType, allocMemoryData->memoryInfo.bufferType);
-    MemoryInfo &allocMemInfo = allocMemoryData->memoryInfo;
-    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
-    *bufferInfo = allocMemInfo.bufferInfo;
-    std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
-    *extraInfo = *srcBuffer->extraInfo_;
-    extraInfo->bufferType = allocMemInfo.bufferType;
-    extraInfo->surfaceBuffer = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
-        static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
-
-    buffer = std::make_shared<EffectBuffer>(bufferInfo, allocMemoryData->data, extraInfo);
+    context->renderEnvironment_->BeginFrame();
+    context->renderEnvironment_->GenMainTex(srcBuffer, buffer);
     return ErrorCode::SUCCESS;
 }
 
@@ -88,7 +106,7 @@ ErrorCode ImageSourceFilter::Start()
         return ErrorCode::ERR_PIPELINE_INVALID_FILTER_PORT;
     }
 
-    std::shared_ptr<EffectBuffer> &buffer = srcBuffer_;
+    std::shared_ptr<EffectBuffer> buffer = srcBuffer_;
     ErrorCode res = UpdateInputBufferIfNeed(srcBuffer_, buffer, context_);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Update input buffer fail! res=%{public}d", res);
 
@@ -111,6 +129,10 @@ ErrorCode ImageSourceFilter::DoNegotiate()
         return ErrorCode::ERR_PIPELINE_INVALID_FILTER_PORT;
     }
     outPorts_[0]->Negotiate(capability, context_);
+    if (context_->renderEnvironment_->GetEGLStatus() != EGLStatus::READY && context_->ipType_ == IPType::GPU) {
+        context_->renderEnvironment_->Init();
+        context_->renderEnvironment_->Prepare();
+    }
     return ErrorCode::SUCCESS;
 }
 } // namespace Effect

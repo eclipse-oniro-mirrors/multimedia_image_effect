@@ -31,6 +31,10 @@ config("image_effect_impl_public_config") {
     "$image_effect_root_dir/frameworks/native/effect/base",
     "$image_effect_root_dir/frameworks/native/efilter/base",
     "$image_effect_root_dir/frameworks/native/utils/dfx",
+    "$image_effect_root_dir/frameworks/native/render_environment",
+    "$image_effect_root_dir/frameworks/native/render_environment/render_thread/queue",
+    "$image_effect_root_dir/frameworks/native/render_environment/render_thread/task",
+    "$image_effect_root_dir/frameworks/native/render_environment/render_thread/worker",
     "//foundation/multimedia/media_foundation/engine/include",
   ]
 
@@ -45,8 +49,6 @@ ohos_shared_library("image_effect_impl") {
   public_configs = [ ":image_effect_impl_public_config" ]
 
   include_dirs = [
-    "$image_effect_root_dir/frameworks/native/effect/render_environment/gpu_render",
-    "$image_effect_root_dir/frameworks/native/effect/render_environment/utils",
     "$image_effect_root_dir/frameworks/native/efilter/custom",
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness",
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast",
@@ -70,10 +72,6 @@ ohos_shared_library("image_effect_impl") {
     "$image_effect_root_dir/frameworks/native/effect/pipeline/factory/filter_factory.cpp",
     "$image_effect_root_dir/frameworks/native/effect/pipeline/filters/sink/image_sink_filter.cpp",
     "$image_effect_root_dir/frameworks/native/effect/pipeline/filters/source/image_source_filter.cpp",
-    "$image_effect_root_dir/frameworks/native/effect/render_environment/gpu_render/IMRenderAttribute.cpp",
-    "$image_effect_root_dir/frameworks/native/effect/render_environment/gpu_render/IMRenderContext.cpp",
-    "$image_effect_root_dir/frameworks/native/effect/render_environment/gpu_render/IMRenderSurface.cpp",
-    "$image_effect_root_dir/frameworks/native/effect/render_environment/utils/GLUtils.cpp",
     "$image_effect_root_dir/frameworks/native/efilter/base/efilter.cpp",
     "$image_effect_root_dir/frameworks/native/efilter/base/efilter_base.cpp",
     "$image_effect_root_dir/frameworks/native/efilter/base/efilter_factory.cpp",
@@ -86,6 +84,17 @@ ohos_shared_library("image_effect_impl") {
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast/cpu_contrast_algo.cpp",
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast/gpu_contrast_algo.cpp",
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop/crop_efilter.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/core/algorithm_program.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/core/render_mesh.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/core/render_opengl_renderer.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/graphic/gl_utils.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_attribute.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_context.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_frame_buffer.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_general_program.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_program.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_surface.cpp",
+    "$image_effect_root_dir/frameworks/native/render_environment/render_environment.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/common_utils.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/json_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/memcpy_helper.cpp",

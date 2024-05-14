@@ -21,6 +21,8 @@
 #include "efilter_factory.h"
 #include "memcpy_helper.h"
 #include "format_helper.h"
+#include "render_thread.h"
+#include "render_task.h"
 
 namespace OHOS {
 namespace Media {
@@ -99,13 +101,92 @@ void EFilter::Negotiate(const std::string &inPort, const std::shared_ptr<Capabil
     outPorts_[0]->Negotiate(outputCap, context);
 }
 
+std::shared_ptr<MemoryData> AllocMemory(BufferType allocBufferType, EffectBuffer *buffer)
+{
+    std::unique_ptr<AbsMemory> absMemory = EffectMemory::CreateMemory(allocBufferType);
+    CHECK_AND_RETURN_RET_LOG(absMemory != nullptr, nullptr,
+        "memory create fail! allocatorType=%{public}d", allocBufferType);
+
+    MemoryInfo allocMemInfo = {
+        .bufferInfo = *buffer->bufferInfo_,
+        .extra = static_cast<void *>(buffer->extraInfo_->surfaceBuffer),
+    };
+    std::shared_ptr<MemoryData> memoryData = absMemory->Alloc(allocMemInfo);
+    CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, nullptr,
+        "memoryData is null! bufferType=%{public}d", allocBufferType);
+    return memoryData;
+}
+
+ErrorCode CreateEffectBuffer(EffectBuffer *buffer, std::shared_ptr<MemoryData> &allocMemData,
+    std::shared_ptr<EffectBuffer> &effectBuffer)
+{
+    CHECK_AND_RETURN_RET_LOG(allocMemData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "alloc memory fail!");
+    MemoryInfo &allocMemInfo = allocMemData->memoryInfo;
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    *bufferInfo = allocMemInfo.bufferInfo;
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
+    *extraInfo = *buffer->extraInfo_;
+    extraInfo->surfaceBuffer = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
+        static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
+    effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, allocMemData->data, extraInfo);
+    return ErrorCode::SUCCESS;
+}
+
+EffectBuffer *EFilter::IpTypeConvert(const std::shared_ptr<EffectBuffer> &buffer,
+    std::shared_ptr<EffectContext> &context)
+{
+    IPType runningIPType = context->ipType_;
+    IEffectFormat formatType = buffer->bufferInfo_->formatType_;
+    std::shared_ptr<PixelFormatCap> pixelFormatCap = GetPixelFormatCap(name_);
+    std::map<IEffectFormat, std::vector<IPType>> &formats = pixelFormatCap->formats;
+    auto it = formats.find(formatType);
+    CHECK_AND_RETURN_RET_LOG(it != formats.end(), buffer.get(),
+        "format not support! format=%{public}d, name=%{public}s", formatType, name_.c_str());
+    EffectBuffer *source = buffer.get();
+    if (std::find(it->second.begin(), it->second.end(), runningIPType) == it->second.end()) {
+        if (runningIPType == IPType::GPU) {
+            runningIPType = IPType::CPU;
+            context->ipType_ = IPType::CPU;
+            std::shared_ptr<EffectBuffer> input = nullptr;
+            std::shared_ptr<MemoryData> inputMemData = nullptr;
+            inputMemData = AllocMemory(BufferType::DMA_BUFFER, buffer.get());
+            ErrorCode res = CreateEffectBuffer(buffer.get(), inputMemData, input);
+            CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, buffer.get(),
+                "create src effect buffer fail! res=%{public}d", res);
+            context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, input.get());
+            source = input.get();
+        } else {
+            if (runningIPType != IPType::CPU) {
+                EFFECT_LOGE("PushData IPType is Default");
+            }
+            runningIPType = IPType::GPU;
+            context->ipType_ = IPType::GPU;
+            source = context->renderEnvironment_->ConvertBufferToTexture(buffer.get());
+            if (context->renderEnvironment_->GetOutputType() == DataType::NATIVE_WINDOW) {
+                RenderTexturePtr tempTex = context->renderEnvironment_->RequestBuffer(source->tex->Width(),
+                    source->tex->Height());
+                context->renderEnvironment_->DrawFlipTex(source->tex, tempTex);
+                source->tex = tempTex;
+            }
+        }
+    }
+    return source;
+}
+
 ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
-    std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap = outputCap_->memNegotiatedCap_;
-    EffectBuffer *output = context->renderStrategy_->ChooseBestOutput(buffer.get(), memNegotiatedCap);
     IPType runningIPType = context->ipType_;
-    if (runningIPType != IPType::GPU && buffer.get() == output) {
+    EffectBuffer *source = IpTypeConvert(buffer, context);
+
+    if (runningIPType == IPType::GPU) {
+        ErrorCode res = Render(source, context);
+        return res;
+    }
+
+    std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap = outputCap_->memNegotiatedCap_;
+    EffectBuffer *output = context->renderStrategy_->ChooseBestOutput(source, memNegotiatedCap);
+    if (source == output) {
         EFFECT_LOGD("Render with input. filterName=%{public}s", name_.c_str());
         ErrorCode res = Render(buffer.get(), context);
         CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
@@ -115,8 +196,7 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
 
     EFFECT_LOGD("Render with input and output. filterName=%{public}s", name_.c_str());
     std::shared_ptr<EffectBuffer> effectBuffer = nullptr;
-    if (output == nullptr || buffer.get() == output ||
-        (runningIPType == IPType::GPU && output->extraInfo_->bufferType != BufferType::DMA_BUFFER)) {
+    if (output == nullptr || source == output) {
         MemoryInfo memInfo = {
             .bufferInfo = {
                 .width_ = memNegotiatedCap->width,
@@ -126,16 +206,13 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
                 .formatType_ = memNegotiatedCap->format,
             }
         };
-        if (runningIPType == IPType::GPU) {
-            memInfo.bufferType = BufferType::DMA_BUFFER;
-        }
-        MemoryData *memoryData = context->memoryManager_->AllocMemory(buffer->buffer_, memInfo);
+        MemoryData *memoryData = context->memoryManager_->AllocMemory(source->buffer_, memInfo);
         CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc new memory fail!");
         MemoryInfo &allocMemInfo = memoryData->memoryInfo;
         std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
         *bufferInfo = allocMemInfo.bufferInfo;
         std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
-        *extraInfo = *buffer->extraInfo_;
+        *extraInfo = *source->extraInfo_;
         extraInfo->bufferType = allocMemInfo.bufferType;
         extraInfo->surfaceBuffer = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
             static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
@@ -144,7 +221,7 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
     if (effectBuffer != nullptr) {
         output = effectBuffer.get();
     }
-    ErrorCode res = Render(buffer.get(), output, context);
+    ErrorCode res = Render(source, output, context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Render inout fail! filterName=%{public}s", name_.c_str());
     return PushData(output, context);
 }
@@ -179,6 +256,7 @@ ErrorCode EFilter::PushData(EffectBuffer *buffer, std::shared_ptr<EffectContext>
 
     std::shared_ptr<EffectBuffer> effectBuffer =
         std::make_shared<EffectBuffer>(buffer->bufferInfo_, buffer->buffer_, buffer->extraInfo_);
+    effectBuffer->tex = buffer->tex;
     if (outPorts_.empty()) {
         return OnPushDataPortsEmpty(effectBuffer, context, name_);
     }
@@ -239,6 +317,27 @@ ErrorCode CreateDmaEffectBufferIfNeed(IPType runningType, EffectBuffer *current,
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &src,
+    std::shared_ptr<EffectBuffer> &dst)
+{
+    std::shared_ptr<EffectBuffer> buffer = nullptr;
+    context->renderEnvironment_->BeginFrame();
+    if (src->bufferInfo_->formatType_ == IEffectFormat::RGBA8888) {
+        context->renderEnvironment_->GenMainTex(src, buffer);
+    } else {
+        context->renderEnvironment_->ConvertYUV2RGBA(src, buffer);
+    }
+
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    bufferInfo = dst->bufferInfo_;
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
+    extraInfo->dataType = DataType::TEX;
+    std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
+    ErrorCode res = Render(buffer.get(), effectBuffer.get(), context);
+    context->renderEnvironment_->ConvertTextureToBuffer(effectBuffer->tex, dst.get());
+    return res;
+}
+
 ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
 {
     EffectBuffer *srcBuf = src.get();
@@ -261,6 +360,10 @@ ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<Ef
     context->memoryManager_->SetIPType(runningType);
     context->renderStrategy_->Init(srcBuf, dstBuf);
 
+    context->renderEnvironment_ = std::make_shared<RenderEnvironment>();
+    context->renderEnvironment_->Init();
+    context->renderEnvironment_->Prepare();
+
     std::shared_ptr<EffectBuffer> input = nullptr;
     res = CreateDmaEffectBufferIfNeed(runningType, srcBuf, srcBuf, context, input);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
@@ -269,7 +372,12 @@ ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<Ef
         MemcpyHelper::CopyData(srcBuf, input.get());
     }
 
-    if (runningType == IPType::GPU || src->buffer_ != dst->buffer_) {
+    if (runningType == IPType::GPU) {
+        res = RenderWithGPU(context, src, dst);
+        return res;
+    }
+
+    if (src->buffer_ != dst->buffer_) {
         std::shared_ptr<EffectBuffer> output = nullptr;
         res =
             CreateDmaEffectBufferIfNeed(runningType, dstBuf, input == nullptr ? srcBuf : input.get(), context, output);

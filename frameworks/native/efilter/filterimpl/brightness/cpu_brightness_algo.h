@@ -21,17 +21,21 @@
 #include "error_code.h"
 #include "effect_buffer.h"
 #include "any.h"
+#include "effect_context.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 class CpuBrightnessAlgo {
 public:
-    static ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value);
+    static ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+        std::shared_ptr<EffectContext> &context);
 
-    static ErrorCode OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value);
+    static ErrorCode OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+        std::shared_ptr<EffectContext> &context);
 
-    static ErrorCode OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value);
+    static ErrorCode OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+        std::shared_ptr<EffectContext> &context);
 
 private:
     static float ParseBrightness(std::map<std::string, Plugin::Any> &value);

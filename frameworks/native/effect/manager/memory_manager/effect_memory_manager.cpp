@@ -95,6 +95,9 @@ MemoryData *EffectMemoryManager::AllocMemory(void *srcAddr, MemoryInfo &allocMem
     if (runningIPType_ == IPType::CPU) {
         allocBufferType = BufferType::HEAP_MEMORY; // default alloc heap buffer on running with cpu filter
     }
+    if (allocMemInfo.bufferType != BufferType::DEFAULT) {
+        allocBufferType = allocMemInfo.bufferType;
+    }
     std::shared_ptr<Memory> memory = AllocMemoryInner(allocMemInfo, allocBufferType);
     CHECK_AND_RETURN_RET_LOG(memory != nullptr, nullptr,
         "AllocMemory fail! bufferType=%{public}d", allocBufferType);

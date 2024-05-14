@@ -149,9 +149,7 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputSurface(OH_ImageEffect *imageEffec
     CHECK_AND_RETURN_RET_LOG(nativeWindow != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputSurface: input parameter nativeWindow is null!");
 
-    OHOS::sptr<OHOS::Surface> surface = nativeWindow->surface;
-
-    ErrorCode errorCode = imageEffect->imageEffect_->SetOutputSurface(surface);
+    ErrorCode errorCode = imageEffect->imageEffect_->SetOutNativeWindow(nativeWindow);
     if (errorCode != ErrorCode::SUCCESS) {
         EFFECT_LOGE("SetOutputSurface: set output surface fail! errorCode=%{public}d", errorCode);
         return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;

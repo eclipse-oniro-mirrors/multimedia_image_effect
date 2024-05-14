@@ -36,7 +36,7 @@ constexpr double PI = 3.14159265;
 constexpr uint32_t ALGORITHM_PARAMTER_FACTOR = 2;
 
 ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
-    std::map<std::string, Plugin::Any> &value)
+    std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("CpuContrastAlgo::OnApplyRGBA8888 enter!");
     CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL,
@@ -84,7 +84,7 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
 }
 
 ErrorCode CpuContrastAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst,
-    std::map<std::string, Plugin::Any> &value)
+    std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("CpuContrastAlgo::OnApplyYUVNV21 enter!");
     CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL,
@@ -141,7 +141,7 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst,
 }
 
 ErrorCode CpuContrastAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst,
-    std::map<std::string, Plugin::Any> &value)
+    std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_TRACE_NAME("CpuContrastAlgo::OnApplyYUVNV12");
     EFFECT_LOGI("CpuContrastAlgo::OnApplyYUVNV12 enter!");

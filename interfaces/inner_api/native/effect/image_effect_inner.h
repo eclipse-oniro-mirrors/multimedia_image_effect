@@ -24,6 +24,7 @@
 #include "image_type.h"
 #include "surface.h"
 #include "pixel_map.h"
+#include "render_thread.h"
 
 namespace OHOS {
 namespace Media {
@@ -58,6 +59,8 @@ public:
     virtual ErrorCode SetOutputPixelMap(PixelMap *pixelMap);
 
     virtual ErrorCode SetOutputSurface(sptr<Surface> &surface);
+
+    virtual ErrorCode SetOutNativeWindow(OHNativeWindow *nativeWindow);
     sptr<Surface> GetInputSurface();
 
     virtual ErrorCode Configure(const std::string &key, const Plugin::Any &value);
@@ -106,6 +109,10 @@ private:
     void ExtInitModule();
     void ExtDeinitModule();
 
+    unsigned long int RequestTaskId();
+
+    void ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer);
+
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
 
@@ -124,6 +131,8 @@ private:
 
     class Impl;
     std::shared_ptr<Impl> impl_;
+    RenderThread<> *m_renderThread{ nullptr };
+    std::atomic_ullong m_currentTaskId{0};
 };
 } // namespace Effect
 } // namespace Media

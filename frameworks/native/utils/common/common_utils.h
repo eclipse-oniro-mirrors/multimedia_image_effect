@@ -28,12 +28,14 @@
 #include "pixel_map.h"
 #include "surface.h"
 #include "effect_memory_manager.h"
+#include "effect_context.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 class CommonUtils {
 public:
+    static const int32_t RGBA_BYTES_PER_PIXEL = 4;
     static ErrorCode LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
     static ErrorCode ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
         std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType);
@@ -45,6 +47,9 @@ public:
     static bool EndsWithJPG(const std::string &input);
     static ErrorCode ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
         const std::shared_ptr<EffectMemoryManager> &memoryManager);
+    static ErrorCode ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
+        std::shared_ptr<EffectContext> &context);
+    static ErrorCode ParseNativeWindowData(std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType);
 
     template <class ValueType> static ErrorCode ParseAny(Plugin::Any any, ValueType &value)
     {
