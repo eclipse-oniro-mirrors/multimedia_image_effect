@@ -338,7 +338,7 @@ ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::s
     return res;
 }
 
-ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
+ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
 {
     EffectBuffer *srcBuf = src.get();
     EffectBuffer *dstBuf = dst.get();
@@ -391,6 +391,18 @@ ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<Ef
         res = Render(srcBuf, context);
     }
     return res;
+}
+
+ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
+{
+    ErrorCode res = RenderInner(src, dst);
+    if (res != ErrorCode::SUCCESS) {
+        return res;
+    }
+
+    // update exif info
+    CommonUtils::UpdateImageExifDateTime(dst->extraInfo_->pixelMap);
+    return ErrorCode::SUCCESS;
 }
 } // namespace Effect
 } // namespace Media
