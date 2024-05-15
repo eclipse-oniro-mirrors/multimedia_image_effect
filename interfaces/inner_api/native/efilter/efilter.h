@@ -86,6 +86,8 @@ private:
     ErrorCode RenderWithGPU(std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &src,
         std::shared_ptr<EffectBuffer> &dst);
 
+    ErrorCode RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst);
+
     std::shared_ptr<Capability> outputCap_ = nullptr;
 };
 } // namespace Effect

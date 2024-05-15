@@ -66,6 +66,7 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
     uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
     if (pixels == buffer->buffer_) {
+        CommonUtils::UpdateImageExifDateTime(pixelMap);
         return ErrorCode::SUCCESS;
     }
 
@@ -73,6 +74,7 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
         if (pixelMap->GetWidth() == buffer->bufferInfo_->width_ &&
             pixelMap->GetHeight() == buffer->bufferInfo_->height_) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
+            CommonUtils::UpdateImageExifDateTime(pixelMap);
         } else {
             ErrorCode result = CommonUtils::ModifyPixelMapPropertyForTexture(pixelMap, buffer, context);
             return result;
@@ -178,6 +180,9 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
 {
     if (inputBuffer->buffer_ == outputBuffer->buffer_) {
         EFFECT_LOGI("ImageSinkFilter: not need copy!");
+
+        // update output exif info
+        CommonUtils::UpdateImageExifDateTime(outputBuffer->extraInfo_->pixelMap);
         return ErrorCode::SUCCESS;
     }
 
@@ -194,6 +199,10 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
     } else {
         MemcpyHelper::CopyData(inputBuffer.get(), outputBuffer.get());
     }
+
+    // update output exif info
+    CommonUtils::UpdateImageExifDateTime(outputBuffer->extraInfo_->pixelMap);
+
     return ErrorCode::SUCCESS;
 }
 
