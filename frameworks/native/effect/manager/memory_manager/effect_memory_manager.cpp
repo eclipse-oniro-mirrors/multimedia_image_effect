@@ -17,6 +17,10 @@
 
 #include "effect_log.h"
 #include "effect_buffer.h"
+#include "colorspace_helper.h"
+
+using namespace OHOS::ColorManager;
+using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
 
 namespace OHOS {
 namespace Media {
@@ -55,6 +59,19 @@ void EffectMemoryManager::AddFilterMemory(const std::shared_ptr<EffectBuffer> &e
     AddMemory(memory);
 }
 
+void UpdateMetaDataIfNeed(std::shared_ptr<MemoryData> &memoryData)
+{
+    const MemoryInfo &memoryInfo = memoryData->memoryInfo;
+    if (memoryInfo.bufferType != BufferType::DMA_BUFFER || memoryInfo.extra == nullptr ||
+        !ColorSpaceHelper::IsHdrColorSpace(memoryInfo.bufferInfo.colorSpace_)) {
+        return;
+    }
+
+    auto *sb = static_cast<SurfaceBuffer *>(memoryInfo.extra);
+    ColorSpaceHelper::SetSurfaceBufferMetadataType(sb, CM_HDR_Metadata_Type::CM_IMAGE_HDR_VIVID_SINGLE);
+    ColorSpaceHelper::SetSurfaceBufferColorSpaceType(sb, CM_ColorSpaceType::CM_BT2020_HLG_FULL);
+}
+
 std::shared_ptr<Memory> AllocMemoryInner(MemoryInfo &allocMemInfo, BufferType allocBufferType)
 {
     EFFECT_LOGI("Alloc Memory! bufferType=%{public}d", allocBufferType);
@@ -64,6 +81,8 @@ std::shared_ptr<Memory> AllocMemoryInner(MemoryInfo &allocMemInfo, BufferType al
     std::shared_ptr<MemoryData> memoryData = absMemory->Alloc(allocMemInfo);
     CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, nullptr,
         "memoryData is null! bufferType=%{public}d", allocBufferType);
+
+    UpdateMetaDataIfNeed(memoryData);
 
     std::shared_ptr<Memory> memory = std::make_shared<Memory>();
     memory->memoryData_ = memoryData;
@@ -83,7 +102,8 @@ MemoryData *EffectMemoryManager::AllocMemory(void *srcAddr, MemoryInfo &allocMem
         const BufferInfo &bufferInfo = memInfo.bufferInfo;
         const BufferInfo &allocBufInfo = allocMemInfo.bufferInfo;
         if (bufferInfo.width_ == allocBufInfo.width_ && bufferInfo.height_ == allocBufInfo.height_ &&
-            (allocMemInfo.bufferType == BufferType::DEFAULT || allocMemInfo.bufferType == memInfo.bufferType)) {
+            (allocMemInfo.bufferType == BufferType::DEFAULT || allocMemInfo.bufferType == memInfo.bufferType) &&
+            bufferInfo.formatType_ == allocBufInfo.formatType_ && bufferInfo.colorSpace_ == allocBufInfo.colorSpace_) {
             EFFECT_LOGD("reuse memory. width=%{public}d, height=%{public}d, addr=%{public}p, format=%{public}d, "
                 "bufferType=%{public}d, allocBufType=%{public}d", bufferInfo.width_, bufferInfo.height_,
                 memory->memoryData_->data, bufferInfo.formatType_, memInfo.bufferType, allocMemInfo.bufferType);
@@ -133,6 +153,24 @@ std::shared_ptr<Memory> EffectMemoryManager::GetAllocMemoryByAddr(void *addr)
     }
     EFFECT_LOGI("addr is not find! addr=%{public}p", addr);
     return nullptr;
+}
+
+std::shared_ptr<Memory> EffectMemoryManager::GetMemoryByAddr(void *addr)
+{
+    auto it = std::find_if(memorys_.begin(), memorys_.end(), [&addr](const auto &item) {
+        return addr == item->memoryData_->data;
+    });
+
+    return it == memorys_.end() ? nullptr : *it;
+}
+
+void EffectMemoryManager::RemoveMemory(std::shared_ptr<Memory> &memory)
+{
+    auto it = std::find(memorys_.begin(), memorys_.end(), memory);
+    if (it != memorys_.end()) {
+        EFFECT_LOGD("EffectMemoryManager::RemoveMemory success!");
+        memorys_.erase(it);
+    }
 }
 
 void EffectMemoryManager::ClearMemory()

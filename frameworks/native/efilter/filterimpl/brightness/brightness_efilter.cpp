@@ -144,6 +144,12 @@ std::shared_ptr<EffectInfo> BrightnessEFilter::GetEffectInfo(const std::string &
     info_->formats_.emplace(IEffectFormat::YUVNV21, std::vector<IPType>{ IPType::CPU });
     info_->formats_.emplace(IEffectFormat::YUVNV12, std::vector<IPType>{ IPType::CPU });
     info_->category_ = Category::COLOR_ADJUST;
+    info_->colorSpaces_ = {
+        EffectColorSpace::SRGB,
+        EffectColorSpace::SRGB_LIMIT,
+        EffectColorSpace::DISPLAY_P3,
+        EffectColorSpace::DISPLAY_P3_LIMIT
+    };
     return info_;
 }
 

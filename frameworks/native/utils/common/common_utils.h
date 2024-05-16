@@ -91,14 +91,15 @@ public:
         return a > aMax ? aMax : (a < aMin ? aMin : a);
     }
 
-    static IEffectFormat SwitchToEffectFormat(::PixelFormat pixelFormat);
-    static ::PixelFormat SwitchToPixelFormat(IEffectFormat formatType);
+    static IEffectFormat SwitchToEffectFormat(GraphicPixelFormat pixelFormat);
     static IEffectFormat SwitchToEffectFormat(PixelFormat pixelFormat);
+    static GraphicPixelFormat SwitchToGraphicPixelFormat(IEffectFormat formatType);
+    static PixelFormat SwitchToPixelFormat(IEffectFormat formatType);
     static BufferType SwitchToEffectBuffType(AllocatorType allocatorType);
 
 private:
     static const std::unordered_map<PixelFormat, IEffectFormat> pixelFmtToEffectFmt_;
-    static const std::unordered_map<::PixelFormat, IEffectFormat> surfaceBufferFmtToEffectFmt_;
+    static const std::unordered_map<GraphicPixelFormat, IEffectFormat> surfaceBufferFmtToEffectFmt_;
     static const std::unordered_map<AllocatorType, BufferType> allocatorTypeToEffectBuffType_;
 };
 } // namespace Effect

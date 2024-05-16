@@ -36,12 +36,17 @@ struct PixelFormatCap {
     std::map<IEffectFormat, std::vector<IPType>> formats;
 };
 
+struct ColorSpaceCap {
+    std::vector<EffectColorSpace> colorSpaces;
+};
+
 struct Capability {
     Capability(std::string &name):name_(name) {}
 
     std::string &name_;
     std::shared_ptr<PixelFormatCap> pixelFormatCap_ = nullptr;
     std::shared_ptr<MemNegotiatedCap> memNegotiatedCap_ = nullptr;
+    std::shared_ptr<ColorSpaceCap> colorSpaceCap_ = nullptr;
 };
 } // namespace Effect
 } // namespace Media

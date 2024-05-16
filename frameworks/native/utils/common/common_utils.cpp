@@ -21,6 +21,7 @@
 #include "uri.h"
 #include "string_helper.h"
 #include "memcpy_helper.h"
+#include "colorspace_helper.h"
 
 namespace OHOS {
 namespace Media {
@@ -34,16 +35,23 @@ namespace {
     const int32_t TIME_MAX = 64;
 }
 
+using namespace OHOS::ColorManager;
+using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
+
 const std::unordered_map<PixelFormat, IEffectFormat> CommonUtils::pixelFmtToEffectFmt_ = {
     { PixelFormat::RGBA_8888, IEffectFormat::RGBA8888 },
     { PixelFormat::NV21, IEffectFormat::YUVNV21 },
     { PixelFormat::NV12, IEffectFormat::YUVNV12 },
+    { PixelFormat::RGBA_1010102, IEffectFormat::RGBA_1010102 },
 };
 
-const std::unordered_map<::PixelFormat, IEffectFormat> CommonUtils::surfaceBufferFmtToEffectFmt_ = {
-    { ::PixelFormat::PIXEL_FMT_RGBA_8888, IEffectFormat::RGBA8888},
-    { ::PixelFormat::PIXEL_FMT_YCBCR_420_SP, IEffectFormat::YUVNV21 },
-    { ::PixelFormat::PIXEL_FMT_YCRCB_420_SP, IEffectFormat::YUVNV12 },
+const std::unordered_map<GraphicPixelFormat, IEffectFormat> CommonUtils::surfaceBufferFmtToEffectFmt_ = {
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_RGBA_8888, IEffectFormat::RGBA8888},
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCBCR_420_SP, IEffectFormat::YUVNV12 },
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCRCB_420_SP, IEffectFormat::YUVNV21 },
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_RGBA_1010102, IEffectFormat::RGBA_1010102 },
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCBCR_P010, IEffectFormat::YCBCR_P010 },
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCRCB_P010, IEffectFormat::YCRCB_P010 },
 };
 
 const std::unordered_map<AllocatorType, BufferType> CommonUtils::allocatorTypeToEffectBuffType_ = {
@@ -67,6 +75,11 @@ ErrorCode ParseJson(Plugin::Any any, nlohmann::json &value)
 ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer)
 {
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
+    EFFECT_LOGD("pixelMapInfos: width=%{public}d, height=%{public}d, formatType=%{public}d " \
+        "rowStride=%{public}d, byteCount=%{public}d, addr=%{private}p, colorSpaceName=%{public}d",
+        pixelMap->GetWidth(), pixelMap->GetHeight(), pixelMap->GetPixelFormat(), pixelMap->GetRowStride(),
+        pixelMap->GetByteCount(), pixelMap->GetPixels(), (pixelMap->InnerGetGrColorSpacePtr() == nullptr ?
+        ColorSpaceName::NONE : pixelMap->InnerGetGrColorSpacePtr()->GetColorSpaceName()));
 
     IEffectFormat formatType = SwitchToEffectFormat(pixelMap->GetPixelFormat());
     if (formatType == IEffectFormat::DEFAULT) {
@@ -80,15 +93,19 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
     bufferInfo->len_ = bufferInfo->height_ * bufferInfo->rowStride_;
     bufferInfo->formatType_ = formatType;
+    if (pixelMap->InnerGetGrColorSpacePtr() != nullptr) {
+        bufferInfo->colorSpace_ =
+            ColorSpaceHelper::ConvertToEffectColorSpace(pixelMap->InnerGetGrColorSpacePtr()->GetColorSpaceName());
+    }
 
     uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
     void *srcData = static_cast<void *>(pixels);
     CHECK_AND_RETURN_RET_LOG(srcData != nullptr, ErrorCode::ERR_PIXELMAP_ACCESSPIXELS_FAIL, "fail exec GetPixels!");
 
-    EFFECT_LOGI("pixelMapInfos: width=%{public}d, height=%{public}d, formatType=%{public}d, " \
-        "rowStride_=%{public}d, len=%{public}d, addr=%{public}p",
+    EFFECT_LOGI("pixelMap bufferInfos: width=%{public}d, height=%{public}d, formatType=%{public}d, " \
+        "rowStride_=%{public}d, len=%{public}d, colorspace=%{public}d, addr=%{private}p",
         bufferInfo->width_, bufferInfo->height_, bufferInfo->formatType_, bufferInfo->rowStride_,
-        bufferInfo->len_, pixels);
+        bufferInfo->len_, bufferInfo->colorSpace_, pixels);
 
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = DataType::PIXEL_MAP;
@@ -98,9 +115,16 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     if (extraInfo->bufferType == BufferType::DMA_BUFFER && pixelMap->GetFd() != nullptr) {
         extraInfo->surfaceBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
     }
-    EFFECT_LOGI(
-        "pixelMapInfos: dataType=%{public}d, bufferType=%{public}d, pixelMap=%{public}p, surfaceBuffer=%{public}p",
-        extraInfo->dataType, extraInfo->bufferType, extraInfo->pixelMap, extraInfo->surfaceBuffer);
+    EFFECT_LOGI("pixelMap extraInfos: dataType=%{public}d, bufferType=%{public}d, pixelMap=%{private}p,"
+        " surfaceBuffer=%{private}p", extraInfo->dataType, extraInfo->bufferType, extraInfo->pixelMap,
+        extraInfo->surfaceBuffer);
+
+    if (extraInfo->surfaceBuffer != nullptr) {
+        SurfaceBuffer *sb = extraInfo->surfaceBuffer;
+        EFFECT_LOGD("pixelMap surfaceBufferInfo: width=%{public}d, height=%{public}d, format=%{public}d, "
+            "rowStride=%{public}d, size=%{public}d, addr=%{private}p", sb->GetWidth(),
+            sb->GetHeight(), sb->GetFormat(), sb->GetStride(), sb->GetSize(), sb->GetVirAddr());
+    }
 
     effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, srcData, extraInfo);
     return ErrorCode::SUCCESS;
@@ -133,7 +157,10 @@ ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
     bufferInfo->height_ = static_cast<uint32_t>(surfaceBuffer->GetHeight());
     bufferInfo->rowStride_ = static_cast<uint32_t>(surfaceBuffer->GetStride());
     bufferInfo->len_ = surfaceBuffer->GetSize();
-    bufferInfo->formatType_ = SwitchToEffectFormat((::PixelFormat)surfaceBuffer->GetFormat());
+    bufferInfo->formatType_ = SwitchToEffectFormat((GraphicPixelFormat)surfaceBuffer->GetFormat());
+    CM_ColorSpaceType colorSpaceType = CM_ColorSpaceType::CM_COLORSPACE_NONE;
+    ColorSpaceHelper::GetSurfaceBufferColorSpaceType(surfaceBuffer, colorSpaceType);
+    bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceType);
 
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = dataType;
@@ -143,10 +170,10 @@ ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
 
     effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, surfaceBuffer->GetVirAddr(), extraInfo);
     EFFECT_LOGI("surfaceBuffer width=%{public}d, height=%{public}d, stride=%{public}d, format=%{public}d, "
-        "size=%{public}d, usage = %{public}llu, addr=%{public}p",
+        "size=%{public}d, usage = %{public}llu, addr=%{private}p, colorSpace=%{public}d",
         surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetStride(), surfaceBuffer->GetFormat(),
         surfaceBuffer->GetSize(), static_cast<unsigned long long>(surfaceBuffer->GetUsage()),
-        surfaceBuffer->GetVirAddr());
+        surfaceBuffer->GetVirAddr(), colorSpaceType);
     return ErrorCode::SUCCESS;
 }
 
@@ -199,6 +226,7 @@ ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer
         "ImageSource::CreateImageSource fail! path=%{public}s, errorCode=%{public}d", path.c_str(), errorCode);
 
     DecodeOptions options;
+    options.desiredDynamicRange = DecodeDynamicRange::AUTO;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(options, errorCode);
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_CREATE_PIXELMAP_FAIL,
         "CreatePixelMap fail! path=%{public}s, errorCode=%{public}d", path.c_str(), errorCode);
@@ -217,7 +245,7 @@ ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer
     return ErrorCode::SUCCESS;
 }
 
-IEffectFormat CommonUtils::SwitchToEffectFormat(::PixelFormat pixelFormat)
+IEffectFormat CommonUtils::SwitchToEffectFormat(GraphicPixelFormat pixelFormat)
 {
     IEffectFormat formatType = IEffectFormat::DEFAULT;
 
@@ -241,11 +269,25 @@ IEffectFormat CommonUtils::SwitchToEffectFormat(PixelFormat pixelFormat)
     return formatType;
 }
 
-::PixelFormat CommonUtils::SwitchToPixelFormat(IEffectFormat formatType)
+GraphicPixelFormat CommonUtils::SwitchToGraphicPixelFormat(IEffectFormat formatType)
 {
-    ::PixelFormat pixelFormat = ::PixelFormat::PIXEL_FMT_BGRA_8888;
+    GraphicPixelFormat pixelFormat = GraphicPixelFormat::GRAPHIC_PIXEL_FMT_BUTT;
 
     for (const auto &itr : surfaceBufferFmtToEffectFmt_) {
+        if (itr.second == formatType) {
+            pixelFormat = itr.first;
+            break;
+        }
+    }
+
+    return pixelFormat;
+}
+
+PixelFormat CommonUtils::SwitchToPixelFormat(IEffectFormat formatType)
+{
+    PixelFormat pixelFormat = PixelFormat::UNKNOWN;
+
+    for (const auto &itr : pixelFmtToEffectFmt_) {
         if (itr.second == formatType) {
             pixelFormat = itr.first;
             break;
@@ -416,6 +458,7 @@ ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, P
     pixelMap->GetImageInfo(imageInfo);
     imageInfo.size.width = static_cast<int32_t>(memoryInfo.bufferInfo.width_);
     imageInfo.size.height = static_cast<int32_t>(memoryInfo.bufferInfo.height_);
+    imageInfo.pixelFormat = CommonUtils::SwitchToPixelFormat(memoryInfo.bufferInfo.formatType_);
     uint32_t result = pixelMap->SetImageInfo(imageInfo, true);
     EFFECT_LOGI("ModifyPixelMapPropertyInner: SetImageInfo width=%{public}d, height=%{public}d, result: %{public}d",
         imageInfo.size.width, imageInfo.size.height, result);
@@ -427,6 +470,20 @@ ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, P
 
     // update exif
     CommonUtils::UpdateImageExifInfo(pixelMap);
+
+    EffectColorSpace colorSpace = memoryInfo.bufferInfo.colorSpace_;
+    if (colorSpace != EffectColorSpace::DEFAULT) {
+        OHOS::ColorManager::ColorSpace grColorSpace(ColorSpaceHelper::ConvertToColorSpaceName(colorSpace));
+        pixelMap->InnerSetColorSpace(grColorSpace);
+    }
+
+    // update metadata if need
+    if (memoryInfo.bufferType == BufferType::DMA_BUFFER) {
+        res = ColorSpaceHelper::UpdateMetadata(static_cast<SurfaceBuffer *>(memoryInfo.extra),
+            memoryInfo.bufferInfo.colorSpace_);
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
+            "ModifyPixelMapPropertyInner: UpdateMetadata fail! res=%{public}d", res);
+    }
 
     return ErrorCode::SUCCESS;
 }
@@ -472,8 +529,6 @@ ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, cons
     AllocatorType allocatorType = pixelMap->GetAllocatorType();
     BufferType bufferType = SwitchToEffectBuffType(allocatorType);
     EFFECT_LOGD("ModifyPixelMapProperty: allocatorType=%{public}d, bufferType=%{public}d", allocatorType, bufferType);
-    std::shared_ptr<Memory> allocMemory = context->memoryManager_->GetAllocMemoryByAddr(buffer->buffer_);
-    std::shared_ptr<MemoryData> memoryData;
     std::unique_ptr<AbsMemory> memory = EffectMemory::CreateMemory(bufferType);
     CHECK_AND_RETURN_RET_LOG(memory != nullptr, ErrorCode::ERR_CREATE_MEMORY_FAIL,
         "memory create fail! allocatorType=%{public}d", allocatorType);
@@ -483,7 +538,7 @@ ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, cons
         .bufferInfo = *buffer->bufferInfo_,
         .extra = pixelMap->GetFd()
     };
-    memoryData = memory->Alloc(memoryInfo);
+    std::shared_ptr<MemoryData> memoryData = memory->Alloc(memoryInfo);
     CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc fail!");
     context->renderEnvironment_->ReadPixelsFromTex(buffer->tex, memoryData->data, buffer->bufferInfo_->width_,
         buffer->bufferInfo_->height_, memoryData->memoryInfo.bufferInfo.rowStride_ / RGBA_BYTES_PER_PIXEL);

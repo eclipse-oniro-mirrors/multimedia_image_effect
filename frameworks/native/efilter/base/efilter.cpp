@@ -23,6 +23,7 @@
 #include "format_helper.h"
 #include "render_thread.h"
 #include "render_task.h"
+#include "colorspace_helper.h"
 
 namespace OHOS {
 namespace Media {
@@ -82,12 +83,37 @@ std::shared_ptr<PixelFormatCap> GetPixelFormatCap(std::string &name)
     std::shared_ptr<PixelFormatCap> pixelFormatCap = std::make_shared<PixelFormatCap>();
     std::shared_ptr<EffectInfo> effectInfo = EFilterFactory::Instance()->GetEffectInfo(name);
     if (effectInfo == nullptr) {
-        EFFECT_LOGE("GetEffectInfo fail! name=%{public}s", name.c_str());
+        EFFECT_LOGE("GetPixelFormatCap: GetEffectInfo fail! name=%{public}s", name.c_str());
         return pixelFormatCap;
     }
 
     pixelFormatCap->formats = effectInfo->formats_;
     return pixelFormatCap;
+}
+
+std::shared_ptr<ColorSpaceCap> GetColorSpaceCap(std::string &name)
+{
+    std::shared_ptr<ColorSpaceCap> colorSpaceCap = std::make_shared<ColorSpaceCap>();
+    std::shared_ptr<EffectInfo> effectInfo = EFilterFactory::Instance()->GetEffectInfo(name);
+    if (effectInfo == nullptr) {
+        EFFECT_LOGE("GetColorSpaceCap: GetEffectInfo fail! name=%{public}s", name.c_str());
+        return colorSpaceCap;
+    }
+
+    colorSpaceCap->colorSpaces = effectInfo->colorSpaces_;
+    return colorSpaceCap;
+}
+
+void NegotiateColorSpace(std::vector<EffectColorSpace> &colorSpaces,
+    std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace)
+{
+    for (auto it = filtersSupportedColorSpace.begin(); it != filtersSupportedColorSpace.end();) {
+        if (std::find(colorSpaces.begin(), colorSpaces.end(), *it) == colorSpaces.end()) {
+            it = filtersSupportedColorSpace.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void EFilter::Negotiate(const std::string &inPort, const std::shared_ptr<Capability> &capability,
@@ -96,7 +122,9 @@ void EFilter::Negotiate(const std::string &inPort, const std::shared_ptr<Capabil
     std::shared_ptr<Capability> outputCap = std::make_shared<Capability>(name_);
     outputCap->pixelFormatCap_ = GetPixelFormatCap(name_);
     outputCap->memNegotiatedCap_ = Negotiate(capability->memNegotiatedCap_);
+    outputCap->colorSpaceCap_ = GetColorSpaceCap(name_);
     context->capNegotiate_->AddCapability(outputCap);
+    NegotiateColorSpace(outputCap->colorSpaceCap_->colorSpaces, context->filtersSupportedColorSpace_);
     outputCap_ = outputCap;
     outPorts_[0]->Negotiate(outputCap, context);
 }
@@ -202,8 +230,9 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
                 .width_ = memNegotiatedCap->width,
                 .height_ = memNegotiatedCap->height,
                 .len_ = FormatHelper::CalculateSize(
-                    memNegotiatedCap->width, memNegotiatedCap->height, memNegotiatedCap->format),
-                .formatType_ = memNegotiatedCap->format,
+                    memNegotiatedCap->width, memNegotiatedCap->height, buffer->bufferInfo_->formatType_),
+                .formatType_ = buffer->bufferInfo_->formatType_,
+                .colorSpace_ = buffer->bufferInfo_->colorSpace_,
             }
         };
         MemoryData *memoryData = context->memoryManager_->AllocMemory(source->buffer_, memInfo);
@@ -237,12 +266,14 @@ ErrorCode OnPushDataPortsEmpty(std::shared_ptr<EffectBuffer> &buffer, std::share
 
     // efilter modify input buffer directly
     if (input->buffer_ == buffer->buffer_) {
-        return ErrorCode::SUCCESS;
+        return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
 
     // efilter create new buffer and inout with the same buffer.
     EffectBuffer *output = context->renderStrategy_->GetOutput();
     if (output == nullptr || input->buffer_ == output->buffer_) {
+        ErrorCode res = ColorSpaceHelper::UpdateMetadata(buffer.get());
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "OnPushDataPortsEmpty: UpdateMetadata fail!");
         return CommonUtils::ModifyPixelMapProperty(buffer->extraInfo_->pixelMap, buffer, context->memoryManager_);
     }
     EFFECT_LOGW("not support different input and output buffer! filterName=%{public}s", name.c_str());
@@ -338,6 +369,33 @@ ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::s
     return res;
 }
 
+void GetSupportedColorSpace(std::string &name, std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace)
+{
+    std::unordered_set<EffectColorSpace> allSupportedColorSpaces = ColorSpaceManager::GetAllSupportedColorSpaces();
+    std::for_each(allSupportedColorSpaces.begin(), allSupportedColorSpaces.end(), [&](const auto &item) {
+        filtersSupportedColorSpace.emplace(item);
+    });
+
+    std::shared_ptr<ColorSpaceCap> colorSpaceCap = GetColorSpaceCap(name);
+    NegotiateColorSpace(colorSpaceCap->colorSpaces, filtersSupportedColorSpace);
+}
+
+std::shared_ptr<EffectContext> CreateEffectContext(std::shared_ptr<EffectBuffer> &src,
+    std::shared_ptr<EffectBuffer> &dst, std::string &name)
+{
+    std::shared_ptr<EffectContext> context = std::make_shared<EffectContext>();
+    context->memoryManager_ = std::make_shared<EffectMemoryManager>();
+    context->renderStrategy_ = std::make_shared<RenderStrategy>();
+    context->colorSpaceManager_ = std::make_shared<ColorSpaceManager>();
+    GetSupportedColorSpace(name, context->filtersSupportedColorSpace_);
+
+    context->memoryManager_->Init(src, dst); // local variable and not need invoke ClearMemory
+    context->renderStrategy_->Init(src, dst);
+    context->colorSpaceManager_->Init(src, dst);
+
+    return context;
+}
+
 ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
 {
     EffectBuffer *srcBuf = src.get();
@@ -346,19 +404,18 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
         "src or dst is null! src=%{public}p, dst=%{public}p", srcBuf, dstBuf);
 
     outPorts_.clear();
+
+    std::shared_ptr<EffectContext> context = CreateEffectContext(src, dst, name_);
+    ErrorCode res = ColorSpaceHelper::ConvertColorSpace(src, context);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
+        "Render: ConvertColorSpace fail! res=%{public}d, name=%{public}s", res, name_.c_str());
+
     IPType runningType = IPType::DEFAULT;
-    ErrorCode res = CalculateEFilterIPType(src->bufferInfo_->formatType_, runningType);
+    res = CalculateEFilterIPType(src->bufferInfo_->formatType_, runningType);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
         "Render CalculateEFilterIPType fail! name=%{public}s", name_.c_str());
-
-    std::shared_ptr<EffectContext> context = std::make_shared<EffectContext>();
-    context->memoryManager_ = std::make_shared<EffectMemoryManager>();
-    context->renderStrategy_ = std::make_shared<RenderStrategy>();
     context->ipType_ = runningType;
-
-    context->memoryManager_->Init(src, dst); // local variable and not need invoke ClearMemory
     context->memoryManager_->SetIPType(runningType);
-    context->renderStrategy_->Init(srcBuf, dstBuf);
 
     context->renderEnvironment_ = std::make_shared<RenderEnvironment>();
     context->renderEnvironment_->Init();
@@ -384,13 +441,17 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
         CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
             "Render CreateDmaEffectBuffer dst fail! res=%{public}d, name=%{public}s", res, name_.c_str());
         res = Render(input == nullptr ? srcBuf : input.get(), output == nullptr ? dstBuf : output.get(), context);
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Render: render with input and output fail!");
+        res = ColorSpaceHelper::UpdateMetadata(output == nullptr ? dst.get() : output.get());
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "OnPushDataPortsEmpty: UpdateMetadata fail!");
         if (output != nullptr) {
             MemcpyHelper::CopyData(output.get(), dstBuf);
         }
     } else {
         res = Render(srcBuf, context);
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Render: render with input fail!");
     }
-    return res;
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
