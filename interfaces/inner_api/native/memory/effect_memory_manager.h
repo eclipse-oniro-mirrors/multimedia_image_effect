@@ -48,13 +48,16 @@ public:
     MemoryData *AllocMemory(void *srcAddr, MemoryInfo &allocMemInfo);
     std::shared_ptr<Memory> GetAllocMemoryByAddr(void *addr);
 
+    std::shared_ptr<Memory> GetMemoryByAddr(void *addr);
+    void AddMemory(std::shared_ptr<Memory> &memory);
+    void RemoveMemory(std::shared_ptr<Memory> &memory);
+
     void ClearMemory();
 
     void Deinit();
 private:
     void AddFilterMemory(const std::shared_ptr<EffectBuffer> &effectBuffer, MemDataType memDataType,
         bool isAllowModify);
-    void AddMemory(std::shared_ptr<Memory> &memory);
 
     std::vector<std::shared_ptr<Memory>> memorys_;
     IPType runningIPType_ = IPType::DEFAULT;

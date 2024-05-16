@@ -18,6 +18,7 @@ config("image_effect_impl_public_config") {
   include_dirs = [
     "$image_effect_root_dir/interfaces/inner_api/native",
     "$image_effect_root_dir/interfaces/inner_api/native/base",
+    "$image_effect_root_dir/interfaces/inner_api/native/colorspace",
     "$image_effect_root_dir/interfaces/inner_api/native/common",
     "$image_effect_root_dir/interfaces/inner_api/native/custom",
     "$image_effect_root_dir/interfaces/inner_api/native/effect",
@@ -29,6 +30,7 @@ config("image_effect_impl_public_config") {
     "$image_effect_root_dir/frameworks/native/effect/pipeline/include/filters/sink",
     "$image_effect_root_dir/frameworks/native/effect/pipeline/include/filters/source",
     "$image_effect_root_dir/frameworks/native/effect/base",
+    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager",
     "$image_effect_root_dir/frameworks/native/efilter/base",
     "$image_effect_root_dir/frameworks/native/utils/dfx",
     "$image_effect_root_dir/frameworks/native/render_environment",
@@ -38,7 +40,10 @@ config("image_effect_impl_public_config") {
     "//foundation/multimedia/media_foundation/engine/include",
   ]
 
-  defines = [ "HST_ANY_WITH_NO_RTTI" ]
+  defines = [
+    "HST_ANY_WITH_NO_RTTI",
+    "IMAGE_COLORSPACE_FLAG",
+  ]
 }
 
 ohos_shared_library("image_effect_impl") {
@@ -49,13 +54,13 @@ ohos_shared_library("image_effect_impl") {
   public_configs = [ ":image_effect_impl_public_config" ]
 
   include_dirs = [
+    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager",
     "$image_effect_root_dir/frameworks/native/efilter/custom",
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness",
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast",
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop",
     "$image_effect_root_dir/frameworks/native/utils/common",
     "//third_party/skia/third_party/externals/oboe/samples/RhythmGame/third_party",
-    "//drivers/peripheral/display/interfaces/include",
   ]
 
   sources = [
@@ -63,6 +68,11 @@ ohos_shared_library("image_effect_impl") {
     "$image_effect_root_dir/frameworks/native/effect/base/effect_surface_adapter.cpp",
     "$image_effect_root_dir/frameworks/native/effect/base/external_loader.cpp",
     "$image_effect_root_dir/frameworks/native/effect/base/image_effect_inner.cpp",
+    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_converter.cpp",
+    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_helper.cpp",
+    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_manager.cpp",
+    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_strategy.cpp",
+    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/metadata_generator.cpp",
     "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory.cpp",
     "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory_manager.cpp",
     "$image_effect_root_dir/frameworks/native/effect/pipeline/core/capability_negotiate.cpp",
@@ -99,6 +109,7 @@ ohos_shared_library("image_effect_impl") {
     "$image_effect_root_dir/frameworks/native/utils/common/json_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/memcpy_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/string_helper.cpp",
+    "$image_effect_root_dir/frameworks/native/utils/common/vpe_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/dfx/error_code.cpp",
     "$image_effect_root_dir/frameworks/native/utils/format/format_helper.cpp",
   ]
@@ -109,6 +120,8 @@ ohos_shared_library("image_effect_impl") {
     "ability_base:zuri",
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "drivers_interface_display:display_commontype_idl_headers",
+    "graphic_2d:color_manager",
     "graphic_2d:libgl",
     "graphic_2d:librender_service_client",
     "graphic_surface:surface",

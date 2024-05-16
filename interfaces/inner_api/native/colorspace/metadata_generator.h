@@ -13,34 +13,29 @@
  * limitations under the License.
  */
 
-#ifndef IMAGE_EFFECT_RENDER_STRATEGY_H
-#define IMAGE_EFFECT_RENDER_STRATEGY_H
+#ifndef IMAGE_EFFECT_COLORSPACE_METADATA_H
+#define IMAGE_EFFECT_COLORSPACE_METADATA_H
 
-#include "effect_buffer.h"
-#include "capability.h"
+#include "error_code.h"
+#include "surface_buffer.h"
+
+#define VPE_INVALID_INSTANCE_ID (-1)
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
-class RenderStrategy {
+class MetadataGenerator {
 public:
-    RenderStrategy() = default;
-    ~RenderStrategy() = default;
+    MetadataGenerator() = default;
+    ~MetadataGenerator();
 
-    void Init(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst);
-
-    EffectBuffer *ChooseBestOutput(EffectBuffer *buffer, std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap);
-
-    EffectBuffer *GetInput();
-
-    EffectBuffer *GetOutput();
-
-    void Deinit();
+    ErrorCode ProcessImage(SurfaceBuffer *inputImage);
 private:
-    std::shared_ptr<EffectBuffer> src_ = nullptr;
-    std::shared_ptr<EffectBuffer> dst_ = nullptr;
+    int32_t GetVpeMetadataGeneratorInstance();
+
+    int32_t vpeMetadataGeneratorInstance_ = VPE_INVALID_INSTANCE_ID;
 };
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
-#endif // IMAGE_EFFECT_RENDER_STRATEGY_H
+#endif // IMAGE_EFFECT_COLORSPACE_METADATA_H

@@ -17,7 +17,6 @@
 
 #include "effect_log.h"
 #include "filter_factory.h"
-#include "memory_manager.h"
 #include "memcpy_helper.h"
 
 namespace OHOS {
@@ -123,6 +122,10 @@ ErrorCode ImageSourceFilter::DoNegotiate()
     std::shared_ptr<Capability> capability = std::make_shared<Capability>(name_);
     capability->memNegotiatedCap_ = memNegotiatedCap;
     context_->capNegotiate_->AddCapability(capability);
+    std::unordered_set<EffectColorSpace> allSupportedColorSpaces = ColorSpaceManager::GetAllSupportedColorSpaces();
+    std::for_each(allSupportedColorSpaces.begin(), allSupportedColorSpaces.end(), [&](const auto &item) {
+        context_->filtersSupportedColorSpace_.emplace(item);
+    });
 
     if (outPorts_[0] == nullptr) {
         EFFECT_LOGE("Negotiate: outPort is null. filterName=%{public}s", name_.c_str());

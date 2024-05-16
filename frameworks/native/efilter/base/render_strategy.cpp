@@ -20,7 +20,7 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-void RenderStrategy::Init(EffectBuffer *src, EffectBuffer *dst)
+void RenderStrategy::Init(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
 {
     src_ = src;
     dst_ = dst;
@@ -64,23 +64,23 @@ EffectBuffer *RenderStrategy::ChooseBestOutput(EffectBuffer *buffer,
     std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap)
 {
     CHECK_AND_RETURN_RET_LOG(src_ != nullptr && buffer != nullptr, buffer,
-        "src or input buffer is null! src_=%{public}p, buffer=%{public}p", src_, buffer);
+        "src or input buffer is null! src_=%{public}d, buffer=%{public}p", src_ == nullptr, buffer);
 
     if (dst_ == nullptr || dst_->buffer_ == nullptr || src_->buffer_ == dst_->buffer_
         || dst_->extraInfo_->dataType == DataType::NATIVE_WINDOW) {
-        return ChooseBufOnSetInput(buffer, src_, memNegotiatedCap);
+        return ChooseBufOnSetInput(buffer, src_.get(), memNegotiatedCap);
     }
-    return ChooseBufOnSetInOutput(buffer, src_, dst_, memNegotiatedCap);
+    return ChooseBufOnSetInOutput(buffer, src_.get(), dst_.get(), memNegotiatedCap);
 }
 
 EffectBuffer *RenderStrategy::GetInput()
 {
-    return src_;
+    return src_.get();
 }
 
 EffectBuffer *RenderStrategy::GetOutput()
 {
-    return dst_;
+    return dst_.get();
 }
 
 void RenderStrategy::Deinit()

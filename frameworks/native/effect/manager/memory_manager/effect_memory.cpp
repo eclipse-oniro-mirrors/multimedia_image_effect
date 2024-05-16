@@ -129,7 +129,7 @@ std::shared_ptr<MemoryData> DmaMemory::Alloc(MemoryInfo &memoryInfo)
         .width = static_cast<int32_t>(bufferInfo.width_),
         .height = static_cast<int32_t>(bufferInfo.height_),
         .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
-        .format = CommonUtils::SwitchToPixelFormat(bufferInfo.formatType_), // PixelFormat
+        .format = CommonUtils::SwitchToGraphicPixelFormat(bufferInfo.formatType_), // PixelFormat
         .usage = src == nullptr ?
             (BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE) :
             src->GetUsage(),
@@ -151,6 +151,7 @@ std::shared_ptr<MemoryData> DmaMemory::Alloc(MemoryInfo &memoryInfo)
     memoryData->memoryInfo.bufferInfo.formatType_ = bufferInfo.formatType_;
     memoryData->memoryInfo.bufferInfo.len_ = sb->GetSize();
     memoryData->memoryInfo.bufferInfo.rowStride_ = static_cast<uint32_t>(sb->GetStride());
+    memoryData->memoryInfo.bufferInfo.colorSpace_ = memoryInfo.bufferInfo.colorSpace_;
     memoryData->memoryInfo.extra = sb;
     memoryData->memoryInfo.bufferType = BufferType::DMA_BUFFER;
     memoryData->surfaceBuffer = sb;

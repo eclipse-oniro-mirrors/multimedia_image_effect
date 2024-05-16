@@ -17,10 +17,13 @@
 
 #include "common_utils.h"
 #include "efilter_factory.h"
+#include "colorspace_helper.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
+using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
+
 REGISTER_EFILTER_FACTORY(CropEFilter, "Crop");
 const std::string CropEFilter::Parameter::KEY_REGION = "FilterRegion";
 std::shared_ptr<EffectInfo> CropEFilter::info_ = nullptr;
@@ -113,16 +116,34 @@ ErrorCode CropEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::shared_
         "input error! src->bufferInfo_=%{public}d, dst->bufferInfo_=%{public}d",
         src->bufferInfo_ == nullptr, dst->bufferInfo_ == nullptr);
 
-    // only support RGBA8888 for now.
-    CHECK_AND_RETURN_RET_LOG(src->bufferInfo_->formatType_ == IEffectFormat::RGBA8888,
-        ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE,
-        "crop not support format! format=%{public}d", src->bufferInfo_->formatType_);
+    // only support RGBA for now.
+    IEffectFormat format = src->bufferInfo_->formatType_;
+    CHECK_AND_RETURN_RET_LOG(format == IEffectFormat::RGBA8888 || format == IEffectFormat::RGBA_1010102,
+        ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE, "crop not support format! format=%{public}d", format);
 
     Region region = { 0, 0, 0, 0 };
     CalculateCropRegion(static_cast<int32_t>(src->bufferInfo_->width_), static_cast<int32_t>(src->bufferInfo_->height_),
         values_, &region);
     Crop(src, dst, &region);
     return ErrorCode::SUCCESS;
+}
+
+void UpdateDstEffectBufferIfNeed(EffectBuffer *src, EffectBuffer *dst)
+{
+    SurfaceBuffer *srcSurfaceBuffer = src->extraInfo_->surfaceBuffer;
+    SurfaceBuffer *dstSurfaceBuffer = dst->extraInfo_->surfaceBuffer;
+    if (srcSurfaceBuffer == nullptr || dstSurfaceBuffer == nullptr ||
+        !ColorSpaceHelper::IsHdrColorSpace(src->bufferInfo_->colorSpace_)) {
+        return;
+    }
+
+    CM_HDR_Metadata_Type type;
+    ColorSpaceHelper::GetSurfaceBufferMetadataType(srcSurfaceBuffer, type);
+    ColorSpaceHelper::SetSurfaceBufferMetadataType(dstSurfaceBuffer, type);
+
+    CM_ColorSpaceType colorSpaceType;
+    ColorSpaceHelper::GetSurfaceBufferColorSpaceType(srcSurfaceBuffer, colorSpaceType);
+    ColorSpaceHelper::SetSurfaceBufferColorSpaceType(dstSurfaceBuffer, colorSpaceType);
 }
 
 ErrorCode CropEFilter::CropToOutputBuffer(EffectBuffer *src, std::shared_ptr<EffectContext> &context,
@@ -149,8 +170,11 @@ ErrorCode CropEFilter::CropToOutputBuffer(EffectBuffer *src, std::shared_ptr<Eff
             .height_ = static_cast<uint32_t>(cropHeight),
             .len_ = static_cast<uint32_t>(cropWidth * cropHeight * PIXEL_BYTES),
             .formatType_ = src->bufferInfo_->formatType_,
+            .colorSpace_ = src->bufferInfo_->colorSpace_,
         },
         .extra = src->extraInfo_->surfaceBuffer,
+        .bufferType = ColorSpaceHelper::IsHdrColorSpace(src->bufferInfo_->colorSpace_) ?
+            BufferType::DMA_BUFFER : BufferType::DEFAULT,
     };
     MemoryData *memData = context->memoryManager_->AllocMemory(src->buffer_, allocMemInfo);
     CHECK_AND_RETURN_RET_LOG(memData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "alloc memory fail!");
@@ -162,6 +186,7 @@ ErrorCode CropEFilter::CropToOutputBuffer(EffectBuffer *src, std::shared_ptr<Eff
     extraInfo->surfaceBuffer = (memData->memoryInfo.bufferType == BufferType::DMA_BUFFER) ?
         static_cast<OHOS::SurfaceBuffer *>(memData->memoryInfo.extra) : nullptr;
     output = std::make_shared<EffectBuffer>(bufferInfo, memData->data, extraInfo);
+    UpdateDstEffectBufferIfNeed(src, output.get());
     return Render(src, output.get(), context);
 }
 
@@ -171,10 +196,10 @@ ErrorCode CropEFilter::Render(EffectBuffer *buffer, std::shared_ptr<EffectContex
     CHECK_AND_RETURN_RET_LOG(dataType == DataType::PIXEL_MAP || dataType == DataType::URI || dataType == DataType::PATH,
         ErrorCode::ERR_UNSUPPORTED_DATA_TYPE, "crop only support pixelMap uri path! dataType=%{public}d", dataType);
 
-    // only support RGBA8888 for now.
-    CHECK_AND_RETURN_RET_LOG(buffer->bufferInfo_->formatType_ == IEffectFormat::RGBA8888,
-        ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE,
-        "crop not support format! format=%{public}d", buffer->bufferInfo_->formatType_);
+    // only support RGBA for now.
+    IEffectFormat format = buffer->bufferInfo_->formatType_;
+    CHECK_AND_RETURN_RET_LOG(format == IEffectFormat::RGBA8888 || format == IEffectFormat::RGBA_1010102,
+        ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE, "crop not support format! format=%{public}d", format);
 
     std::shared_ptr<EffectBuffer> output;
     ErrorCode res = CropToOutputBuffer(buffer, context, output);
@@ -202,7 +227,18 @@ std::shared_ptr<EffectInfo> CropEFilter::GetEffectInfo(const std::string &name)
     }
     info_ = std::make_unique<EffectInfo>();
     info_->formats_.emplace(IEffectFormat::RGBA8888, std::vector<IPType>{ IPType::CPU });
+    info_->formats_.emplace(IEffectFormat::RGBA_1010102, std::vector<IPType>{ IPType::CPU });
     info_->category_ = Category::SHAPE_ADJUST;
+    info_->colorSpaces_ = {
+        EffectColorSpace::SRGB,
+        EffectColorSpace::SRGB_LIMIT,
+        EffectColorSpace::DISPLAY_P3,
+        EffectColorSpace::DISPLAY_P3_LIMIT,
+        EffectColorSpace::BT2020_HLG,
+        EffectColorSpace::BT2020_HLG_LIMIT,
+        EffectColorSpace::BT2020_PQ,
+        EffectColorSpace::BT2020_PQ_LIMIT
+    };
     return info_;
 }
 
