@@ -16,11 +16,14 @@
 #ifndef IMAGE_EFFECT_EFFECT_CONTEXT_H
 #define IMAGE_EFFECT_EFFECT_CONTEXT_H
 
+#include <unordered_set>
+
 #include "effect_info.h"
 #include "effect_memory_manager.h"
 #include "render_strategy.h"
 #include "capability_negotiate.h"
 #include "render_environment.h"
+#include "colorspace_manager.h"
 
 namespace OHOS {
 namespace Media {
@@ -31,7 +34,9 @@ public:
     std::shared_ptr<RenderStrategy> renderStrategy_;
     std::shared_ptr<CapabilityNegotiate> capNegotiate_;
     std::shared_ptr<RenderEnvironment> renderEnvironment_;
+    std::shared_ptr<ColorSpaceManager> colorSpaceManager_;
     IPType ipType_ = IPType::DEFAULT;
+    std::unordered_set<EffectColorSpace> filtersSupportedColorSpace_;
 };
 } // namespace Effect
 } // namespace Media

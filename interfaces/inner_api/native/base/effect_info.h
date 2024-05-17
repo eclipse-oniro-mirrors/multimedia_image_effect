@@ -34,6 +34,9 @@ enum class IEffectFormat : uint32_t {
     RGBA8888,
     YUVNV21,
     YUVNV12,
+    RGBA_1010102,
+    YCBCR_P010,
+    YCRCB_P010,
 };
 
 enum class Category : uint32_t {
@@ -44,9 +47,23 @@ enum class Category : uint32_t {
     OTHER,
 };
 
+enum class EffectColorSpace : uint32_t {
+    DEFAULT = 0,
+    SRGB,
+    DISPLAY_P3,
+    BT2020_HLG,
+    BT2020_PQ,
+    ADOBE_RGB,
+    SRGB_LIMIT,
+    DISPLAY_P3_LIMIT,
+    BT2020_HLG_LIMIT,
+    BT2020_PQ_LIMIT,
+};
+
 class EffectInfo {
 public:
     std::map<IEffectFormat, std::vector<IPType>> formats_;
+    std::vector<EffectColorSpace> colorSpaces_;
     Category category_;
 };
 } // namespace Effect

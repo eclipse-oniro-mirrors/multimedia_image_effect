@@ -18,10 +18,10 @@
 #include "common_utils.h"
 #include "effect_log.h"
 #include "filter_factory.h"
-#include "memory_manager.h"
 #include "image_packer.h"
 #include "memcpy_helper.h"
 #include "format_helper.h"
+#include "colorspace_helper.h"
 
 namespace OHOS {
 namespace Media {
@@ -66,18 +66,21 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
     uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
     if (pixels == buffer->buffer_) {
-        return ErrorCode::SUCCESS;
+        EFFECT_LOGD("ModifyPixelMap: not need modify pixelmap!");
+        CommonUtils::UpdateImageExifDateTime(pixelMap);
+        return ColorSpaceHelper::UpdateMetadata(src);
     }
 
     if (buffer->extraInfo_->dataType == DataType::TEX) {
         if (pixelMap->GetWidth() == buffer->bufferInfo_->width_ &&
             pixelMap->GetHeight() == buffer->bufferInfo_->height_) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
+            CommonUtils::UpdateImageExifDateTime(pixelMap);
+            return ColorSpaceHelper::UpdateMetadata(src);
         } else {
             ErrorCode result = CommonUtils::ModifyPixelMapPropertyForTexture(pixelMap, buffer, context);
             return result;
         }
-        return ErrorCode::SUCCESS;
     }
 
     if (static_cast<uint32_t>(pixelMap->GetRowStride()) == buffer->bufferInfo_->rowStride_ &&
@@ -85,7 +88,7 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
         CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat()) == buffer->bufferInfo_->formatType_) {
         EFFECT_LOGD("Copy data to pixel map.");
         CopyDataToPixelMap(pixelMap, buffer);
-        return ErrorCode::SUCCESS;
+        return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
 
     ErrorCode result = CommonUtils::ModifyPixelMapProperty(pixelMap, buffer, context->memoryManager_);
@@ -99,7 +102,7 @@ void CopyDataToSurfaceBuffer(SurfaceBuffer *surfaceBuffer, const std::shared_ptr
             .width_ = static_cast<uint32_t>(surfaceBuffer->GetWidth()),
             .height_ = static_cast<uint32_t>(surfaceBuffer->GetHeight()),
             .len_ = surfaceBuffer->GetSize(),
-            .formatType_ = CommonUtils::SwitchToEffectFormat((::PixelFormat)surfaceBuffer->GetFormat()),
+            .formatType_ = CommonUtils::SwitchToEffectFormat((GraphicPixelFormat)surfaceBuffer->GetFormat()),
             .rowStride_ = static_cast<uint32_t>(surfaceBuffer->GetStride()),
         },
         .data = static_cast<uint8_t *>(surfaceBuffer->GetVirAddr()),
@@ -116,25 +119,28 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
     EFFECT_LOGD("ModifySurfaceBuffer: virAddr=%{public}p, inputBufAddr=%{public}p",
         surfaceBuffer->GetVirAddr(), buffer->buffer_);
     if (surfaceBuffer->GetVirAddr() == buffer->buffer_) {
-        return ErrorCode::SUCCESS;
+        // update metadata
+        return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
 
     if (buffer->extraInfo_->dataType == DataType::TEX) {
         if (surfaceBuffer->GetWidth() == buffer->bufferInfo_->width_ &&
             surfaceBuffer->GetHeight() == buffer->bufferInfo_->height_) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
-            return ErrorCode::SUCCESS;
+
+            // update metadata
+            return ColorSpaceHelper::UpdateMetadata(src);
         }
         return ErrorCode::ERR_BUFFER_NOT_ALLOW_CHANGE;
     }
 
     if (static_cast<uint32_t>(surfaceBuffer->GetStride()) == buffer->bufferInfo_->rowStride_ &&
         static_cast<uint32_t>(surfaceBuffer->GetHeight()) == buffer->bufferInfo_->height_ &&
-        CommonUtils::SwitchToEffectFormat((::PixelFormat)surfaceBuffer->GetFormat()) ==
+        CommonUtils::SwitchToEffectFormat((GraphicPixelFormat)surfaceBuffer->GetFormat()) ==
         buffer->bufferInfo_->formatType_) {
         EFFECT_LOGD("Copy data to surface buffer.");
         CopyDataToSurfaceBuffer(surfaceBuffer, buffer);
-        return ErrorCode::SUCCESS;
+        return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
 
     EFFECT_LOGE("surface buffer not allow changed!");
@@ -148,7 +154,11 @@ ErrorCode ModifyInnerPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuf
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "inner pixelMap is null!");
     uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
     if (pixels == buffer->buffer_) {
-        return ErrorCode::SUCCESS;
+        // update output exif info
+        CommonUtils::UpdateImageExifDateTime(pixelMap.get());
+
+        // update metadata
+        return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
     if (buffer->extraInfo_->dataType == DataType::TEX) {
         return CommonUtils::ModifyPixelMapPropertyForTexture(pixelMap.get(), buffer, context);
@@ -178,7 +188,12 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
 {
     if (inputBuffer->buffer_ == outputBuffer->buffer_) {
         EFFECT_LOGI("ImageSinkFilter: not need copy!");
-        return ErrorCode::SUCCESS;
+
+        // update output exif info
+        CommonUtils::UpdateImageExifDateTime(outputBuffer->extraInfo_->pixelMap);
+
+        // update metadata
+        return ColorSpaceHelper::UpdateMetadata(outputBuffer.get());
     }
 
     size_t outputBufferSize = outputBuffer->bufferInfo_->len_;
@@ -194,13 +209,21 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
     } else {
         MemcpyHelper::CopyData(inputBuffer.get(), outputBuffer.get());
     }
-    return ErrorCode::SUCCESS;
+
+    // update output exif info
+    CommonUtils::UpdateImageExifDateTime(outputBuffer->extraInfo_->pixelMap);
+
+    // update metadata
+    return ColorSpaceHelper::UpdateMetadata(outputBuffer.get());
 }
 
 ErrorCode PackToFile(const std::string &path, const std::shared_ptr<PixelMap> &pixelMap)
 {
     std::shared_ptr<ImagePacker> imagePacker = std::make_shared<ImagePacker>();
-    PackOption option = { .format = "image/jpeg" };
+    PackOption option = {
+        .format = "image/jpeg",
+        .desiredDynamicRange = EncodeDynamicRange::AUTO,
+    };
     uint32_t result = imagePacker->StartPacking(path, option);
     CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
         "StartPacking fail! result=%{public}d", result);

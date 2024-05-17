@@ -29,7 +29,10 @@ namespace Effect {
 static const std::map<IEffectFormat, ImageEffect_Format> FORMAT_TABLE = {
     { IEffectFormat::RGBA8888, ImageEffect_Format::EFFECT_PIXEL_FORMAT_RGBA8888 },
     { IEffectFormat::YUVNV12, ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV12 },
-    { IEffectFormat::YUVNV21, ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV21 }
+    { IEffectFormat::YUVNV21, ImageEffect_Format::EFFECT_PIXEL_FORMAT_NV21 },
+    { IEffectFormat::RGBA_1010102, ImageEffect_Format::EFFECT_PIXEL_FORMAT_RGBA1010102 },
+    { IEffectFormat::YCBCR_P010, ImageEffect_Format::EFFECT_PIXEL_FORMAT_YCBCR_P010 },
+    { IEffectFormat::YCRCB_P010, ImageEffect_Format::EFFECT_PIXEL_FORMAT_YCRCB_P010 }
 };
 
 static const std::unordered_map<std::string, std::unordered_map<std::string, uint32_t>> LOOK_UP_CAPABILITY = {
@@ -271,6 +274,12 @@ void NativeCommonUtils::SwitchToEffectInfo(const OH_EffectFilterInfo *info, std:
             effectInfo->formats_.emplace(format.first, std::vector<IPType>{ IPType::CPU });
         }
     }
+
+    // color space for custom filter
+    effectInfo->colorSpaces_.emplace_back(EffectColorSpace::SRGB);
+    effectInfo->colorSpaces_.emplace_back(EffectColorSpace::SRGB_LIMIT);
+    effectInfo->colorSpaces_.emplace_back(EffectColorSpace::DISPLAY_P3);
+    effectInfo->colorSpaces_.emplace_back(EffectColorSpace::DISPLAY_P3_LIMIT);
 }
 } // namespace Effect
 } // namespace Media

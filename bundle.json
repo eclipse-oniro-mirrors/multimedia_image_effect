@@ -30,7 +30,8 @@
         "c_utils",
         "ability_base",
         "bounds_checking_function",
-        "json"
+        "json",
+        "drivers_interface_display"
       ],
       "third_party": [
         "egl",

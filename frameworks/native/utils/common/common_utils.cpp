@@ -21,20 +21,37 @@
 #include "uri.h"
 #include "string_helper.h"
 #include "memcpy_helper.h"
+#include "colorspace_helper.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
+namespace {
+    const std::string IMAGE_LENGTH = "ImageLength";
+    const std::string IMAGE_WIDTH = "ImageWidth";
+    const std::string DATE_TIME = "DateTime";
+    const std::string PIXEL_X_DIMENSION = "PixelXDimension";
+    const std::string PIXEL_Y_DIMENSION = "PixelYDimension";
+    const int32_t TIME_MAX = 64;
+}
+
+using namespace OHOS::ColorManager;
+using namespace OHOS::HDI::Display::Graphic::Common::V1_0;
+
 const std::unordered_map<PixelFormat, IEffectFormat> CommonUtils::pixelFmtToEffectFmt_ = {
     { PixelFormat::RGBA_8888, IEffectFormat::RGBA8888 },
     { PixelFormat::NV21, IEffectFormat::YUVNV21 },
     { PixelFormat::NV12, IEffectFormat::YUVNV12 },
+    { PixelFormat::RGBA_1010102, IEffectFormat::RGBA_1010102 },
 };
 
-const std::unordered_map<::PixelFormat, IEffectFormat> CommonUtils::surfaceBufferFmtToEffectFmt_ = {
-    { ::PixelFormat::PIXEL_FMT_RGBA_8888, IEffectFormat::RGBA8888},
-    { ::PixelFormat::PIXEL_FMT_YCBCR_420_SP, IEffectFormat::YUVNV21 },
-    { ::PixelFormat::PIXEL_FMT_YCRCB_420_SP, IEffectFormat::YUVNV12 },
+const std::unordered_map<GraphicPixelFormat, IEffectFormat> CommonUtils::surfaceBufferFmtToEffectFmt_ = {
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_RGBA_8888, IEffectFormat::RGBA8888},
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCBCR_420_SP, IEffectFormat::YUVNV12 },
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCRCB_420_SP, IEffectFormat::YUVNV21 },
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_RGBA_1010102, IEffectFormat::RGBA_1010102 },
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCBCR_P010, IEffectFormat::YCBCR_P010 },
+    { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCRCB_P010, IEffectFormat::YCRCB_P010 },
 };
 
 const std::unordered_map<AllocatorType, BufferType> CommonUtils::allocatorTypeToEffectBuffType_ = {
@@ -58,6 +75,11 @@ ErrorCode ParseJson(Plugin::Any any, nlohmann::json &value)
 ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer)
 {
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
+    EFFECT_LOGD("pixelMapInfos: width=%{public}d, height=%{public}d, formatType=%{public}d " \
+        "rowStride=%{public}d, byteCount=%{public}d, addr=%{private}p, colorSpaceName=%{public}d",
+        pixelMap->GetWidth(), pixelMap->GetHeight(), pixelMap->GetPixelFormat(), pixelMap->GetRowStride(),
+        pixelMap->GetByteCount(), pixelMap->GetPixels(), (pixelMap->InnerGetGrColorSpacePtr() == nullptr ?
+        ColorSpaceName::NONE : pixelMap->InnerGetGrColorSpacePtr()->GetColorSpaceName()));
 
     IEffectFormat formatType = SwitchToEffectFormat(pixelMap->GetPixelFormat());
     if (formatType == IEffectFormat::DEFAULT) {
@@ -71,15 +93,19 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
     bufferInfo->len_ = bufferInfo->height_ * bufferInfo->rowStride_;
     bufferInfo->formatType_ = formatType;
+    if (pixelMap->InnerGetGrColorSpacePtr() != nullptr) {
+        bufferInfo->colorSpace_ =
+            ColorSpaceHelper::ConvertToEffectColorSpace(pixelMap->InnerGetGrColorSpacePtr()->GetColorSpaceName());
+    }
 
     uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
     void *srcData = static_cast<void *>(pixels);
     CHECK_AND_RETURN_RET_LOG(srcData != nullptr, ErrorCode::ERR_PIXELMAP_ACCESSPIXELS_FAIL, "fail exec GetPixels!");
 
-    EFFECT_LOGI("pixelMapInfos: width=%{public}d, height=%{public}d, formatType=%{public}d, " \
-        "rowStride_=%{public}d, len=%{public}d, addr=%{public}p",
+    EFFECT_LOGI("pixelMap bufferInfos: width=%{public}d, height=%{public}d, formatType=%{public}d, " \
+        "rowStride_=%{public}d, len=%{public}d, colorspace=%{public}d, addr=%{private}p",
         bufferInfo->width_, bufferInfo->height_, bufferInfo->formatType_, bufferInfo->rowStride_,
-        bufferInfo->len_, pixels);
+        bufferInfo->len_, bufferInfo->colorSpace_, pixels);
 
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = DataType::PIXEL_MAP;
@@ -89,9 +115,16 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     if (extraInfo->bufferType == BufferType::DMA_BUFFER && pixelMap->GetFd() != nullptr) {
         extraInfo->surfaceBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
     }
-    EFFECT_LOGI(
-        "pixelMapInfos: dataType=%{public}d, bufferType=%{public}d, pixelMap=%{public}p, surfaceBuffer=%{public}p",
-        extraInfo->dataType, extraInfo->bufferType, extraInfo->pixelMap, extraInfo->surfaceBuffer);
+    EFFECT_LOGI("pixelMap extraInfos: dataType=%{public}d, bufferType=%{public}d, pixelMap=%{private}p,"
+        " surfaceBuffer=%{private}p", extraInfo->dataType, extraInfo->bufferType, extraInfo->pixelMap,
+        extraInfo->surfaceBuffer);
+
+    if (extraInfo->surfaceBuffer != nullptr) {
+        SurfaceBuffer *sb = extraInfo->surfaceBuffer;
+        EFFECT_LOGD("pixelMap surfaceBufferInfo: width=%{public}d, height=%{public}d, format=%{public}d, "
+            "rowStride=%{public}d, size=%{public}d, addr=%{private}p", sb->GetWidth(),
+            sb->GetHeight(), sb->GetFormat(), sb->GetStride(), sb->GetSize(), sb->GetVirAddr());
+    }
 
     effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, srcData, extraInfo);
     return ErrorCode::SUCCESS;
@@ -124,7 +157,10 @@ ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
     bufferInfo->height_ = static_cast<uint32_t>(surfaceBuffer->GetHeight());
     bufferInfo->rowStride_ = static_cast<uint32_t>(surfaceBuffer->GetStride());
     bufferInfo->len_ = surfaceBuffer->GetSize();
-    bufferInfo->formatType_ = SwitchToEffectFormat((::PixelFormat)surfaceBuffer->GetFormat());
+    bufferInfo->formatType_ = SwitchToEffectFormat((GraphicPixelFormat)surfaceBuffer->GetFormat());
+    CM_ColorSpaceType colorSpaceType = CM_ColorSpaceType::CM_COLORSPACE_NONE;
+    ColorSpaceHelper::GetSurfaceBufferColorSpaceType(surfaceBuffer, colorSpaceType);
+    bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceType);
 
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = dataType;
@@ -134,10 +170,10 @@ ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
 
     effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, surfaceBuffer->GetVirAddr(), extraInfo);
     EFFECT_LOGI("surfaceBuffer width=%{public}d, height=%{public}d, stride=%{public}d, format=%{public}d, "
-        "size=%{public}d, usage = %{public}llu, addr=%{public}p",
+        "size=%{public}d, usage = %{public}llu, addr=%{private}p, colorSpace=%{public}d",
         surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetStride(), surfaceBuffer->GetFormat(),
         surfaceBuffer->GetSize(), static_cast<unsigned long long>(surfaceBuffer->GetUsage()),
-        surfaceBuffer->GetVirAddr());
+        surfaceBuffer->GetVirAddr(), colorSpaceType);
     return ErrorCode::SUCCESS;
 }
 
@@ -190,6 +226,7 @@ ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer
         "ImageSource::CreateImageSource fail! path=%{public}s, errorCode=%{public}d", path.c_str(), errorCode);
 
     DecodeOptions options;
+    options.desiredDynamicRange = DecodeDynamicRange::AUTO;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(options, errorCode);
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_CREATE_PIXELMAP_FAIL,
         "CreatePixelMap fail! path=%{public}s, errorCode=%{public}d", path.c_str(), errorCode);
@@ -208,7 +245,7 @@ ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer
     return ErrorCode::SUCCESS;
 }
 
-IEffectFormat CommonUtils::SwitchToEffectFormat(::PixelFormat pixelFormat)
+IEffectFormat CommonUtils::SwitchToEffectFormat(GraphicPixelFormat pixelFormat)
 {
     IEffectFormat formatType = IEffectFormat::DEFAULT;
 
@@ -232,11 +269,25 @@ IEffectFormat CommonUtils::SwitchToEffectFormat(PixelFormat pixelFormat)
     return formatType;
 }
 
-::PixelFormat CommonUtils::SwitchToPixelFormat(IEffectFormat formatType)
+GraphicPixelFormat CommonUtils::SwitchToGraphicPixelFormat(IEffectFormat formatType)
 {
-    ::PixelFormat pixelFormat = ::PixelFormat::PIXEL_FMT_BGRA_8888;
+    GraphicPixelFormat pixelFormat = GraphicPixelFormat::GRAPHIC_PIXEL_FMT_BUTT;
 
     for (const auto &itr : surfaceBufferFmtToEffectFmt_) {
+        if (itr.second == formatType) {
+            pixelFormat = itr.first;
+            break;
+        }
+    }
+
+    return pixelFormat;
+}
+
+PixelFormat CommonUtils::SwitchToPixelFormat(IEffectFormat formatType)
+{
+    PixelFormat pixelFormat = PixelFormat::UNKNOWN;
+
+    for (const auto &itr : pixelFmtToEffectFmt_) {
         if (itr.second == formatType) {
             pixelFormat = itr.first;
             break;
@@ -309,6 +360,134 @@ ErrorCode GetPixelsContext(std::shared_ptr<MemoryData> &memoryData, BufferType b
     return ErrorCode::SUCCESS;
 }
 
+void PrintImageExifInfo(PixelMap *pixelMap, const std::string &tag)
+{
+    if (pixelMap == nullptr) {
+        return;
+    }
+
+    int32_t width = 0;
+    pixelMap->GetImagePropertyInt(IMAGE_WIDTH, width);
+    int32_t length = 0;
+    pixelMap->GetImagePropertyInt(IMAGE_LENGTH, length);
+    std::string dateTime;
+    pixelMap->GetImagePropertyString(DATE_TIME, dateTime);
+    int32_t xDimension = 0;
+    pixelMap->GetImagePropertyInt(PIXEL_X_DIMENSION, xDimension);
+    int32_t yDimension = 0;
+    pixelMap->GetImagePropertyInt(PIXEL_Y_DIMENSION, yDimension);
+
+    EFFECT_LOGD("%{public}s: width=%{public}d, length=%{public}d, dateTime=%{public}s, xDimension=%{public}d, "
+        "yDimension=%{public}d", tag.c_str(), width, length, dateTime.c_str(), xDimension, yDimension);
+}
+
+void CommonUtils::UpdateImageExifDateTime(PixelMap *pixelMap)
+{
+    if (pixelMap == nullptr) {
+        return;
+    }
+
+    std::string dateTime;
+    if (pixelMap->GetImagePropertyString(DATE_TIME, dateTime) != 0 || dateTime.empty()) {
+        return;
+    }
+
+    time_t now = time(nullptr);
+    CHECK_AND_RETURN_LOG(now > 0, "UpdateExifDateTime: time fail!");
+
+    struct tm *locTime = localtime(&now);
+    CHECK_AND_RETURN_LOG(locTime != nullptr, "UpdateExifDateTime: localtime fail!");
+
+    char tempTime[TIME_MAX];
+    auto size = strftime(tempTime, sizeof(tempTime), "%Y:%m:%d %H:%M:%S", locTime);
+    CHECK_AND_RETURN_LOG(size > 0, "UpdateExifDateTime: strftime fail!");
+
+    std::string currentTime = std::string(tempTime, size);
+    pixelMap->ModifyImageProperty(DATE_TIME, currentTime);
+}
+
+void CommonUtils::UpdateImageExifInfo(PixelMap *pixelMap)
+{
+    if (pixelMap == nullptr) {
+        return;
+    }
+    PrintImageExifInfo(pixelMap, "UpdateImageExifInfo::update before");
+
+    // Set Width
+    int32_t width = 0;
+    if (pixelMap->GetImagePropertyInt(IMAGE_WIDTH, width) == 0 && pixelMap->GetWidth() != width) {
+        pixelMap->ModifyImageProperty(IMAGE_WIDTH, std::to_string(pixelMap->GetWidth()));
+    }
+
+    // Set Length
+    int32_t length = 0;
+    if (pixelMap->GetImagePropertyInt(IMAGE_LENGTH, width) == 0 && pixelMap->GetHeight() != length) {
+        pixelMap->ModifyImageProperty(IMAGE_LENGTH, std::to_string(pixelMap->GetHeight()));
+    }
+
+    // Set DateTime
+    CommonUtils::UpdateImageExifDateTime(pixelMap);
+
+    // Set PixelXDimension
+    int32_t xDimension = 0;
+    if (pixelMap->GetImagePropertyInt(PIXEL_X_DIMENSION, xDimension) == 0 && pixelMap->GetWidth() != xDimension) {
+        pixelMap->ModifyImageProperty(PIXEL_X_DIMENSION, std::to_string(pixelMap->GetWidth()));
+    }
+
+    // Set PixelYDimension
+    int32_t yDimension = 0;
+    if (pixelMap->GetImagePropertyInt(PIXEL_Y_DIMENSION, xDimension) == 0 && pixelMap->GetHeight() != yDimension) {
+        pixelMap->ModifyImageProperty(PIXEL_Y_DIMENSION, std::to_string(pixelMap->GetHeight()));
+    }
+
+    PrintImageExifInfo(pixelMap, "UpdateImageExifInfo::update after");
+}
+
+ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, PixelMap *pixelMap,
+    AllocatorType &allocatorType)
+{
+    void *context = nullptr;
+    const MemoryInfo &memoryInfo = memoryData->memoryInfo;
+    ErrorCode res = GetPixelsContext(memoryData, memoryInfo.bufferType, &context);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "get pixels context fail! res=%{public}d", res);
+
+    // not need to release the origin buffer in pixelMap, SetPixelsAddr will release it.
+    pixelMap->SetPixelsAddr(memoryData->data, context, memoryInfo.bufferInfo.len_, allocatorType, nullptr);
+
+    ImageInfo imageInfo;
+    pixelMap->GetImageInfo(imageInfo);
+    imageInfo.size.width = static_cast<int32_t>(memoryInfo.bufferInfo.width_);
+    imageInfo.size.height = static_cast<int32_t>(memoryInfo.bufferInfo.height_);
+    imageInfo.pixelFormat = CommonUtils::SwitchToPixelFormat(memoryInfo.bufferInfo.formatType_);
+    uint32_t result = pixelMap->SetImageInfo(imageInfo, true);
+    EFFECT_LOGI("ModifyPixelMapPropertyInner: SetImageInfo width=%{public}d, height=%{public}d, result: %{public}d",
+        imageInfo.size.width, imageInfo.size.height, result);
+    CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_SET_IMAGE_INFO_FAIL,
+        "ModifyPixelMapPropertyInner: exec SetImageInfo fail! result=%{public}d", result);
+
+    // update rowStride
+    pixelMap->SetRowStride(memoryInfo.bufferInfo.rowStride_);
+
+    // update exif
+    CommonUtils::UpdateImageExifInfo(pixelMap);
+
+    EffectColorSpace colorSpace = memoryInfo.bufferInfo.colorSpace_;
+    if (colorSpace != EffectColorSpace::DEFAULT) {
+        OHOS::ColorManager::ColorSpace grColorSpace(ColorSpaceHelper::ConvertToColorSpaceName(colorSpace));
+        pixelMap->InnerSetColorSpace(grColorSpace);
+    }
+
+    // update metadata if need
+    if (memoryInfo.bufferType == BufferType::DMA_BUFFER) {
+        res = ColorSpaceHelper::UpdateMetadata(static_cast<SurfaceBuffer *>(memoryInfo.extra),
+            memoryInfo.bufferInfo.colorSpace_);
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
+            "ModifyPixelMapPropertyInner: UpdateMetadata fail! res=%{public}d", res);
+    }
+
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
     const std::shared_ptr<EffectMemoryManager> &memoryManager)
 {
@@ -339,28 +518,7 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
         MemcpyHelper::CopyData(buffer.get(), memoryData.get());
     }
 
-    void *context = nullptr;
-    const MemoryInfo &memoryInfo = memoryData->memoryInfo;
-    ErrorCode res = GetPixelsContext(memoryData, memoryInfo.bufferType, &context);
-    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "get pixels context fail! res=%{public}d", res);
-
-    // not need to release the origin buffer in pixelMap, SetPixelsAddr will release it.
-    pixelMap->SetPixelsAddr(memoryData->data, context, memoryInfo.bufferInfo.len_, allocatorType, nullptr);
-
-    ImageInfo imageInfo;
-    pixelMap->GetImageInfo(imageInfo);
-    imageInfo.size.width = static_cast<int32_t>(memoryInfo.bufferInfo.width_);
-    imageInfo.size.height = static_cast<int32_t>(memoryInfo.bufferInfo.height_);
-    uint32_t result = pixelMap->SetImageInfo(imageInfo, true);
-    EFFECT_LOGI("SetImageInfo imageInfo width=%{public}d, height=%{public}d, result: %{public}d",
-        imageInfo.size.width, imageInfo.size.height, result);
-    CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_SET_IMAGE_INFO_FAIL,
-        "exec SetImageInfo fail! result=%{public}d", result);
-
-    // update rowStride
-    pixelMap->SetRowStride(memoryInfo.bufferInfo.rowStride_);
-
-    return ErrorCode::SUCCESS;
+    return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType);
 }
 
 ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
@@ -371,8 +529,6 @@ ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, cons
     AllocatorType allocatorType = pixelMap->GetAllocatorType();
     BufferType bufferType = SwitchToEffectBuffType(allocatorType);
     EFFECT_LOGD("ModifyPixelMapProperty: allocatorType=%{public}d, bufferType=%{public}d", allocatorType, bufferType);
-    std::shared_ptr<Memory> allocMemory = context->memoryManager_->GetAllocMemoryByAddr(buffer->buffer_);
-    std::shared_ptr<MemoryData> memoryData;
     std::unique_ptr<AbsMemory> memory = EffectMemory::CreateMemory(bufferType);
     CHECK_AND_RETURN_RET_LOG(memory != nullptr, ErrorCode::ERR_CREATE_MEMORY_FAIL,
         "memory create fail! allocatorType=%{public}d", allocatorType);
@@ -382,27 +538,12 @@ ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, cons
         .bufferInfo = *buffer->bufferInfo_,
         .extra = pixelMap->GetFd()
     };
-    memoryData = memory->Alloc(memoryInfo);
+    std::shared_ptr<MemoryData> memoryData = memory->Alloc(memoryInfo);
     CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc fail!");
     context->renderEnvironment_->ReadPixelsFromTex(buffer->tex, memoryData->data, buffer->bufferInfo_->width_,
         buffer->bufferInfo_->height_, memoryData->memoryInfo.bufferInfo.rowStride_ / RGBA_BYTES_PER_PIXEL);
-    
-    void *extraData = nullptr;
-    ErrorCode res = GetPixelsContext(memoryData, memoryData->memoryInfo.bufferType, &extraData);
-    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "get pixels context fail! res=%{public}d", res);
-    // not need to release the origin buffer in pixelMap, SetPixelsAddr will release it.
-    pixelMap->SetPixelsAddr(memoryData->data, extraData, memoryInfo.bufferInfo.len_, allocatorType, nullptr);
 
-    ImageInfo imageInfo;
-    pixelMap->GetImageInfo(imageInfo);
-    imageInfo.size.width = static_cast<int32_t>(memoryInfo.bufferInfo.width_);
-    imageInfo.size.height = static_cast<int32_t>(memoryInfo.bufferInfo.height_);
-    uint32_t result = pixelMap->SetImageInfo(imageInfo, true);
-    EFFECT_LOGI("SetImageInfo imageInfo width=%{public}d, height=%{public}d, result: %{public}d",
-        imageInfo.size.width, imageInfo.size.height, result);
-    CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_SET_IMAGE_INFO_FAIL,
-        "exec SetImageInfo fail! result=%{public}d", result);
-    return ErrorCode::SUCCESS;
+    return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType);
 }
 } // namespace Effect
 } // namespace Media

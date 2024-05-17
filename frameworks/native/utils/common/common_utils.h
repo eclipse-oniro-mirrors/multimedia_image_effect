@@ -50,6 +50,8 @@ public:
     static ErrorCode ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context);
     static ErrorCode ParseNativeWindowData(std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType);
+    static void UpdateImageExifDateTime(PixelMap *pixelMap);
+    static void UpdateImageExifInfo(PixelMap *pixelMap);
 
     template <class ValueType> static ErrorCode ParseAny(Plugin::Any any, ValueType &value)
     {
@@ -89,14 +91,15 @@ public:
         return a > aMax ? aMax : (a < aMin ? aMin : a);
     }
 
-    static IEffectFormat SwitchToEffectFormat(::PixelFormat pixelFormat);
-    static ::PixelFormat SwitchToPixelFormat(IEffectFormat formatType);
+    static IEffectFormat SwitchToEffectFormat(GraphicPixelFormat pixelFormat);
     static IEffectFormat SwitchToEffectFormat(PixelFormat pixelFormat);
+    static GraphicPixelFormat SwitchToGraphicPixelFormat(IEffectFormat formatType);
+    static PixelFormat SwitchToPixelFormat(IEffectFormat formatType);
     static BufferType SwitchToEffectBuffType(AllocatorType allocatorType);
 
 private:
     static const std::unordered_map<PixelFormat, IEffectFormat> pixelFmtToEffectFmt_;
-    static const std::unordered_map<::PixelFormat, IEffectFormat> surfaceBufferFmtToEffectFmt_;
+    static const std::unordered_map<GraphicPixelFormat, IEffectFormat> surfaceBufferFmtToEffectFmt_;
     static const std::unordered_map<AllocatorType, BufferType> allocatorTypeToEffectBuffType_;
 };
 } // namespace Effect

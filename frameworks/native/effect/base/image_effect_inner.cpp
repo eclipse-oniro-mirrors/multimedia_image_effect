@@ -32,6 +32,7 @@
 #include "external_loader.h"
 #include "effect_context.h"
 #include "render_task.h"
+#include "colorspace_helper.h"
 
 #define RENDER_QUEUE_SIZE 8
 #define COMMON_TASK_TAG 0
@@ -82,6 +83,7 @@ void ImageEffect::Impl::InitEffectContext()
     effectContext_->renderStrategy_ = std::make_shared<RenderStrategy>();
     effectContext_->capNegotiate_ = std::make_shared<CapabilityNegotiate>();
     effectContext_->renderEnvironment_ = std::make_shared<RenderEnvironment>();
+    effectContext_->colorSpaceManager_ = std::make_shared<ColorSpaceManager>();
 }
 
 void ImageEffect::Impl::CreatePipeline(std::vector<std::shared_ptr<EFilter>> &efilters)
@@ -312,6 +314,13 @@ ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, EffectPara
             return;
         }
 
+        res = ColorSpaceHelper::ConvertColorSpace(effectParameters.srcEffectBuffer_, effectParameters.effectContext_);
+        if (res != ErrorCode::SUCCESS) {
+            EFFECT_LOGE("StartPipelineInner:ConvertColorSpace fail! res=%{public}d", res);
+            prom->set_value(res);
+            return;
+        }
+
         IPType runningIPType;
         res = ChooseIPType(effectParameters.srcEffectBuffer_, effectParameters.effectContext_, effectParameters.config_,
             runningIPType);
@@ -339,12 +348,15 @@ ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, EffectPara
 ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, EffectParameters &effectParameters,
     unsigned long int taskId, RenderThread<> *thread)
 {
-    effectParameters.effectContext_->renderStrategy_->Init(effectParameters.srcEffectBuffer_.get(),
-        effectParameters.dstEffectBuffer_.get());
+    effectParameters.effectContext_->renderStrategy_->Init(effectParameters.srcEffectBuffer_,
+        effectParameters.dstEffectBuffer_);
+    effectParameters.effectContext_->colorSpaceManager_->Init(effectParameters.srcEffectBuffer_,
+        effectParameters.dstEffectBuffer_);
     effectParameters.effectContext_->memoryManager_->Init(effectParameters.srcEffectBuffer_,
         effectParameters.dstEffectBuffer_);
     ErrorCode res = StartPipelineInner(pipeline, effectParameters, taskId, thread);
     effectParameters.effectContext_->memoryManager_->Deinit();
+    effectParameters.effectContext_->colorSpaceManager_->Deinit();
     effectParameters.effectContext_->renderStrategy_->Deinit();
     effectParameters.effectContext_->capNegotiate_->ClearNegotiateResult();
     return res;
@@ -487,6 +499,22 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
         ErrorCode::ERR_EXTRA_INFO_NULL,
         "extra info is null! srcExtraInfo=%{public}d, dstExtraInfo=%{public}d",
         srcEffectBuffer->extraInfo_ == nullptr, dstEffectBuffer->extraInfo_ == nullptr);
+
+    // input and output type is same or not.
+    DataType srcDataType = srcEffectBuffer->extraInfo_->dataType;
+    DataType dtsDataType = dstEffectBuffer->extraInfo_->dataType;
+    CHECK_AND_RETURN_RET_LOG(
+        srcDataType == dtsDataType || (srcDataType == DataType::PIXEL_MAP && dtsDataType == DataType::NATIVE_WINDOW),
+        ErrorCode::ERR_NOT_SUPPORT_DIFF_DATATYPE,
+        "not supported dataType. srcDataType=%{public}d, dstDataType=%{public}d", srcDataType, dtsDataType);
+
+    // color space is same or not.
+    if (srcDataType == dtsDataType) {
+        EffectColorSpace srcColorSpace = srcEffectBuffer->bufferInfo_->colorSpace_;
+        EffectColorSpace dstColorSpace = dstEffectBuffer->bufferInfo_->colorSpace_;
+        CHECK_AND_RETURN_RET_LOG(srcColorSpace == dstColorSpace, ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
+            "not support different colorspace. src=%{public}d, dst=%{public}d", srcColorSpace, dstColorSpace);
+    }
 
     return ErrorCode::SUCCESS;
 }

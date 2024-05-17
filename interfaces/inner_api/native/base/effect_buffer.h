@@ -33,6 +33,7 @@ public:
     uint32_t height_ = 0;
     uint32_t len_ = 0;
     IEffectFormat formatType_ = IEffectFormat::DEFAULT;
+    EffectColorSpace colorSpace_ = EffectColorSpace::DEFAULT;
     uint32_t rowStride_ = 0;
 };
 
