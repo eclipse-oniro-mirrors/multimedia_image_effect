@@ -22,12 +22,12 @@
 #include "effect_memory_manager.h"
 #include "render_strategy.h"
 #include "capability_negotiate.h"
-#include "render_environment.h"
 #include "colorspace_manager.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
+class RenderEnvironment;
 struct EffectContext {
 public:
     std::shared_ptr<EffectMemoryManager> memoryManager_;

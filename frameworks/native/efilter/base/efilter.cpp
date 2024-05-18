@@ -24,6 +24,7 @@
 #include "render_thread.h"
 #include "render_task.h"
 #include "colorspace_helper.h"
+#include "render_environment.h"
 
 namespace OHOS {
 namespace Media {

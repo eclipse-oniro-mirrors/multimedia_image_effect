@@ -18,6 +18,7 @@
 #include "effect_log.h"
 #include "filter_factory.h"
 #include "memcpy_helper.h"
+#include "render_environment.h"
 
 namespace OHOS {
 namespace Media {

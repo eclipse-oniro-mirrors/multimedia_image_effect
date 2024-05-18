@@ -19,6 +19,7 @@
 #include "base/render_base.h"
 #include "graphic/gl_utils.h"
 #include "graphic/render_object.h"
+#include "effect_buffer.h"
 namespace OHOS {
 namespace Media {
 namespace Effect {
@@ -87,7 +88,6 @@ private:
     RenderContext *context_{ nullptr };
 };
 
-using RenderTexturePtr = std::shared_ptr<RenderTexture>;
 class TextureSizeMeasurer {
 public:
     size_t operator () (const RenderTexturePtr &tex)

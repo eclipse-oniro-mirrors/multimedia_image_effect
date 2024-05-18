@@ -33,6 +33,7 @@
 #include "effect_context.h"
 #include "render_task.h"
 #include "colorspace_helper.h"
+#include "render_environment.h"
 
 #define RENDER_QUEUE_SIZE 8
 #define COMMON_TASK_TAG 0

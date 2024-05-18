@@ -22,7 +22,6 @@
 #include "effect_type.h"
 #include "pixel_map.h"
 #include "surface_buffer.h"
-#include "graphic/render_texture.h"
 
 namespace OHOS {
 namespace Media {
@@ -58,6 +57,8 @@ struct ExtraInfo {
     std::string path;
 };
 
+class RenderTexture;
+using RenderTexturePtr = std::shared_ptr<RenderTexture>;
 class EffectBuffer {
 public:
     EffectBuffer(std::shared_ptr<BufferInfo> &info, void *buffer, std::shared_ptr<ExtraInfo> &extraInfo)
