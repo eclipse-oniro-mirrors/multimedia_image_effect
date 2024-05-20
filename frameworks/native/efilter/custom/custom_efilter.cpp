@@ -63,10 +63,10 @@ ErrorCode CustomEFilter::Save(nlohmann::json &res)
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode CustomEFilter::Restore(const nlohmann::json &values)
+ErrorCode CustomEFilter::Restore(const nlohmann::json &value)
 {
     CHECK_AND_RETURN_RET_LOG(delegate_ != nullptr, ErrorCode::ERR_INPUT_NULL, "delegate_ is null");
-    void *result = delegate_->Restore(values);
+    void *result = delegate_->Restore(value);
     auto *filter = static_cast<EFilter *>(result);
     if (filter == nullptr) {
         EFFECT_LOGE("custom efilter restore fail! name=%{public}s", name_.c_str());
@@ -81,7 +81,7 @@ ErrorCode CustomEFilter::Restore(const nlohmann::json &values)
     return ErrorCode::SUCCESS;
 }
 
-void CustomEFilter::SetEffectInfo(const std::string &name, std::shared_ptr<EffectInfo> &effectInfo)
+void CustomEFilter::SetEffectInfo(const std::string &name, const std::shared_ptr<EffectInfo> &effectInfo)
 {
     effectInfos_[name] = effectInfo;
 }

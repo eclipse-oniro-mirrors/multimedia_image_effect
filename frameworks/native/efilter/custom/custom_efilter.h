@@ -46,7 +46,7 @@ public:
 
     ErrorCode Restore(const nlohmann::json &value) override;
 
-    static void SetEffectInfo(const std::string &name, std::shared_ptr<EffectInfo> &effectInfo);
+    static void SetEffectInfo(const std::string &name, const std::shared_ptr<EffectInfo> &effectInfo);
 
     static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name);
 
