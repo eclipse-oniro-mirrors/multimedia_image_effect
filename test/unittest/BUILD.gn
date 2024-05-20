@@ -48,7 +48,8 @@ ohos_unittest("image_effect_unittest") {
 
   external_deps = [
     "c_utils:utils",
-    "graphic_2d:libgl",
+    "graphic_2d:EGL",
+    "graphic_2d:GLESv3",
     "graphic_surface:surface",
     "image_framework:image_native",
     "image_framework:pixelmap",
