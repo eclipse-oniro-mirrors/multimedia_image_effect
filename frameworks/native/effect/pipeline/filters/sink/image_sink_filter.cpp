@@ -22,6 +22,7 @@
 #include "memcpy_helper.h"
 #include "format_helper.h"
 #include "colorspace_helper.h"
+#include "render_environment.h"
 
 namespace OHOS {
 namespace Media {
