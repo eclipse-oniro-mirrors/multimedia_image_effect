@@ -176,6 +176,9 @@ protected:
         CHECK_AND_RETURN_LOG(res == ErrorCode::SUCCESS && src != nullptr,
             "FilterDelegatePushData: parse EffectBuffer ptr fail! res=%{public}d, src=%{public}p", res, src);
 
+        CHECK_AND_RETURN_LOG(src->extraInfo_ != nullptr,
+            "FilterDelegatePushData: extraInfo of src is null! src=%{public}p", src);
+
         std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
         bufferInfo->width_ = dst->width;
         bufferInfo->height_ = dst->height;
@@ -297,7 +300,7 @@ ImageEffect_ErrorCode OH_EffectFilterInfo_GetSupportedBufferTypes(OH_EffectFilte
     }
 
     uint32_t index = 0;
-    for (auto &bufferType : info->supportedBufferTypes) {
+    for (const auto &bufferType : info->supportedBufferTypes) {
         if (index >= info->bufferTypeArraySize) {
             EFFECT_LOGW("supportedBufferTypes size over bufferTypeArraySize! supportedBufferTypesSize=%{public}zu, "
                 "bufferTypeArraySize=%{public}d", info->supportedBufferTypes.size(), info->bufferTypeArraySize);
@@ -361,7 +364,7 @@ ImageEffect_ErrorCode OH_EffectFilterInfo_GetSupportedFormats(OH_EffectFilterInf
     }
 
     uint32_t index = 0;
-    for (auto &format : info->supportedFormats) {
+    for (const auto &format : info->supportedFormats) {
         if (index >= info->formatArraySize) {
             EFFECT_LOGW("supportedFormats size over formatArraySize! supportedFormatsSize=%{public}zu, "
                 "formatArraySize=%{public}d", info->supportedFormats.size(), info->formatArraySize);

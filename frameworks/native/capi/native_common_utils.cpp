@@ -263,7 +263,8 @@ void NativeCommonUtils::ParseLookupKey(std::string &key, std::vector<const char 
     }
 }
 
-void NativeCommonUtils::SwitchToEffectInfo(const OH_EffectFilterInfo *info, std::shared_ptr<EffectInfo> &effectInfo)
+void NativeCommonUtils::SwitchToEffectInfo(const OH_EffectFilterInfo *info,
+    const std::shared_ptr<EffectInfo> &effectInfo)
 {
     CHECK_AND_RETURN_LOG(info != nullptr, "SwitchToEffectInfo: info is null!");
     effectInfo->category_ = Category::DEFAULT;

@@ -46,7 +46,7 @@ public:
 
     static void ParseLookupKey(std::string &key, std::vector<const char *> &matchEFilter);
 
-    static void SwitchToEffectInfo(const OH_EffectFilterInfo *info, std::shared_ptr<EffectInfo> &effectInfo);
+    static void SwitchToEffectInfo(const OH_EffectFilterInfo *info, const std::shared_ptr<EffectInfo> &effectInfo);
 };
 } // namespace Effect
 } // namespace Media
