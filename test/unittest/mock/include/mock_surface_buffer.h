@@ -37,179 +37,180 @@ public:
     {
         virAddr = malloc(SIZE);
     };
+
     ~MockSurfaceBuffer()
     {
         free(virAddr);
         virAddr = nullptr;
     };
 
-    BufferHandle *GetBufferHandle() const
+    BufferHandle *GetBufferHandle() const override
     {
         return 0;
     };
-    int32_t GetWidth() const
+
+    int32_t GetWidth() const override
     {
         return WIDTH;
     };
-    int32_t GetHeight() const
+
+    int32_t GetHeight() const override
     {
         return HEIGHT;
     };
-    int32_t GetStride() const
+
+    int32_t GetStride() const override
     {
         return STRIDE;
     };
-    int32_t GetFormat() const
+
+    int32_t GetFormat() const override
     {
         return ::PixelFormat::PIXEL_FMT_RGBA_8888;
     };
-    uint64_t GetUsage() const
+
+    uint64_t GetUsage() const override
     {
         return USAGE;
     };
-    uint64_t GetPhyAddr() const
+
+    uint64_t GetPhyAddr() const override
     {
         return 0;
     };
-    void *GetVirAddr()
+
+    void *GetVirAddr() override
     {
         return virAddr;
     };
-    int32_t GetFileDescriptor() const
+
+    int32_t GetFileDescriptor() const override
     {
         return 0;
     };
-    uint32_t GetSize() const
+
+    uint32_t GetSize() const override
     {
         return SIZE;
     };
 
-    virtual const GraphicColorGamut &GetSurfaceBufferColorGamut() const
+    const GraphicColorGamut &GetSurfaceBufferColorGamut() const override
     {
         return m_colorGamut;
     }
 
-    virtual const GraphicTransformType &GetSurfaceBufferTransform() const
+    const GraphicTransformType &GetSurfaceBufferTransform() const override
     {
         return m_transform;
     }
 
-    virtual void SetSurfaceBufferColorGamut(const GraphicColorGamut &colorGamut) {}
+    void SetSurfaceBufferColorGamut(const GraphicColorGamut &colorGamut) override {}
 
-    virtual void SetSurfaceBufferTransform(const GraphicTransformType &transform) {}
+    void SetSurfaceBufferTransform(const GraphicTransformType &transform) override {}
 
-    int32_t GetSurfaceBufferWidth() const
-    {
-        return 0;
-    };
-    int32_t GetSurfaceBufferHeight() const
+    int32_t GetSurfaceBufferWidth() const override
     {
         return 0;
     };
 
-    virtual void SetSurfaceBufferWidth(int32_t width) override {}
+    int32_t GetSurfaceBufferHeight() const override
+    {
+        return 0;
+    };
 
-    virtual void SetSurfaceBufferHeight(int32_t height) override {}
+    void SetSurfaceBufferWidth(int32_t width) override {}
 
-    virtual uint32_t GetSeqNum() const
+    void SetSurfaceBufferHeight(int32_t height) override {}
+
+    uint32_t GetSeqNum() const override
     {
         return 0;
     };
 
     // opt EglData
-    virtual sptr<EglData> GetEglData() const
+    sptr<EglData> GetEglData() const override
     {
         return 0;
     };
 
-    virtual void SetEglData(const sptr<EglData> &data) {}
+    void SetEglData(const sptr<EglData> &data) override {}
 
-    virtual void SetExtraData(sptr<BufferExtraData> bedata) {}
+    void SetExtraData(sptr<BufferExtraData> bedata) override {}
 
-    virtual sptr<BufferExtraData> GetExtraData() const
+    sptr<BufferExtraData> GetExtraData() const override
     {
         return mExtraData;
     }
 
-    virtual GSError WriteToMessageParcel(MessageParcel &parcel)
+    GSError WriteToMessageParcel(MessageParcel &parcel) override
     {
         return GSERROR_OK;
     }
 
-    virtual GSError ReadFromMessageParcel(MessageParcel &parcel)
+    GSError ReadFromMessageParcel(MessageParcel &parcel) override
     {
         return GSERROR_OK;
     }
 
-    virtual void SetBufferHandle(BufferHandle *handle) {}
+    void SetBufferHandle(BufferHandle *handle) override {}
 
-    virtual BufferWrapper GetBufferWrapper() override
+    BufferWrapper GetBufferWrapper() override
     {
         return wrapper_;
     }
 
-    virtual void SetBufferWrapper(BufferWrapper wrapper) {}
+    void SetBufferWrapper(BufferWrapper wrapper) override {}
 
     // gralloc
-    virtual GSError Alloc(const BufferRequestConfig &config)
+    GSError Alloc(const BufferRequestConfig &config) override
     {
         return GSERROR_OK;
     }
 
-    virtual GSError Map()
+    GSError Map() override
     {
         return GSERROR_OK;
     }
 
-    virtual GSError Unmap()
+    GSError Unmap() override
     {
         return GSERROR_OK;
     }
 
-    virtual GSError FlushCache()
+    GSError FlushCache() override
     {
         return GSERROR_OK;
     }
 
-    virtual GSError InvalidateCache()
+    GSError InvalidateCache() override
     {
         return GSERROR_OK;
     }
 
     // metadata
-    virtual GSError SetMetadata(uint32_t key, const std::vector<uint8_t> &value)
+    GSError SetMetadata(uint32_t key, const std::vector<uint8_t> &value) override
     {
         return GSERROR_OK;
     }
 
-    virtual GSError GetMetadata(uint32_t key, std::vector<uint8_t> &value)
+    GSError GetMetadata(uint32_t key, std::vector<uint8_t> &value) override
     {
         return GSERROR_OK;
     }
 
-    virtual GSError ListMetadataKeys(std::vector<uint32_t> &keys)
+    GSError ListMetadataKeys(std::vector<uint32_t> &keys) override
     {
         return GSERROR_OK;
     }
 
-    virtual GSError EraseMetadataKey(uint32_t key)
+    GSError EraseMetadataKey(uint32_t key) override
     {
         return GSERROR_OK;
     }
 
-    static SurfaceBuffer *NativeBufferToSurfaceBuffer(OH_NativeBuffer *buffer)
+    OH_NativeBuffer *SurfaceBufferToNativeBuffer() override
     {
-        return nullptr;
-    };
-
-    static const SurfaceBuffer *NativeBufferToSurfaceBuffer(OH_NativeBuffer const *buffer)
-    {
-        return nullptr;
-    };
-
-    virtual OH_NativeBuffer *SurfaceBufferToNativeBuffer()
-    {
-        return nullptr;
+        return reinterpret_cast<OH_NativeBuffer *>(this);
     }
 
 private:

@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 #include "mock_pixel_map.h"
 #include "image_effect_filter.h"
+#include "surface.h"
 
 namespace OHOS {
 namespace Media {
@@ -40,6 +41,10 @@ public:
 
     /* TearDown:Execute after each test case */
     void TearDown() override;
+
+    static inline sptr<OHOS::Surface> consumerSurface_;
+    static inline sptr<OHOS::Surface> ohSurface_;
+    static inline OHNativeWindow *nativeWindow_;
 };
 } // namespace Effect
 } // namespace Media
