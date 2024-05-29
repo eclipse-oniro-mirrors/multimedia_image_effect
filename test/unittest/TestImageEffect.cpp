@@ -20,7 +20,6 @@
 #include "mock_pixel_map.h"
 #include "brightness_efilter.h"
 #include "contrast_efilter.h"
-#include "mock_surface_buffer.h"
 #include "test_common.h"
 #include "external_loader.h"
 #include "crop_efilter.h"
@@ -436,7 +435,7 @@ HWTEST_F(TestImageEffect, Surface001, TestSize.Level1)
     result = imageEffect_->Start();
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 
-    sptr<SurfaceBuffer> surfaceBuffer = new MockSurfaceBuffer;
+    sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
     OHOS::Rect damages;
     int64_t timeStamp = 0;
     imageEffect_->ConsumerBufferAvailable(surfaceBuffer, damages, timeStamp);

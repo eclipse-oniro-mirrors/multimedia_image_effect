@@ -18,9 +18,6 @@
 
 #include "image_effect_errors.h"
 #include "image_effect.h"
-#include "mock_surface_buffer.h"
-#include "mock_surface_buffer_yuv_nv21.h"
-#include "mock_surface_buffer_yuv_nv12.h"
 #include "image_effect_filter.h"
 #include "image_type.h"
 #include "efilter_factory.h"
@@ -32,9 +29,11 @@
 #include "native_window.h"
 #include "mock_pixel_map.h"
 #include "pixelmap_native_impl.h"
+#include "test_native_buffer_utils.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
+using namespace OHOS::Media::Effect::Test;
 using ::testing::InSequence;
 using ::testing::Mock;
 
@@ -111,6 +110,12 @@ public:
         sptr<IBufferProducer> producer = consumerSurface_->GetProducer();
         ohSurface_ = Surface::CreateSurfaceAsProducer(producer);
         g_nativeWindow = CreateNativeWindowFromSurface(&ohSurface_);
+
+        nativeBufferRgba_ = TestNativeBufferUtils::CreateNativeBuffer(GraphicPixelFormat::GRAPHIC_PIXEL_FMT_RGBA_8888);
+        nativeBufferNV12_ =
+            TestNativeBufferUtils::CreateNativeBuffer(GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCBCR_420_SP);
+        nativeBufferNV21_ =
+            TestNativeBufferUtils::CreateNativeBuffer(GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
     }
 
     static void TearDownTestCase()
@@ -121,13 +126,13 @@ public:
         }
         consumerSurface_ = nullptr;
         ohSurface_ = nullptr;
+        nativeBufferRgba_ = nullptr;
+        nativeBufferNV12_ = nullptr;
+        nativeBufferNV21_ = nullptr;
     }
 
     void SetUp() override
     {
-        mockSurfaceBuffer_ = new MockSurfaceBuffer();
-        mockSurfaceBufferYuvNv21_ = new MockSurfaceBufferYuvNv21();
-        mockSurfaceBufferYuvNv12_ = new MockSurfaceBufferYuvNv12();
         mockPixelMap_ = std::make_shared<MockPixelMap>();
         pixelmapNative_ = new OH_PixelmapNative(mockPixelMap_);
         ExternLoader::Instance()->InitExt();
@@ -148,15 +153,9 @@ public:
 
     void TearDown() override
     {
-        delete mockSurfaceBuffer_;
-        delete mockSurfaceBufferYuvNv21_;
-        delete mockSurfaceBufferYuvNv12_;
         delete pixelmapNative_;
         mockPixelMap_ = nullptr;
 
-        mockSurfaceBuffer_ = nullptr;
-        mockSurfaceBufferYuvNv21_ = nullptr;
-        mockSurfaceBufferYuvNv12_ = nullptr;
         pixelmapNative_ = nullptr;
         if (filterInfo_ != nullptr) {
             OH_EffectFilterInfo_Release(filterInfo_);
@@ -164,9 +163,6 @@ public:
         }
     }
 
-    sptr<SurfaceBuffer> mockSurfaceBuffer_;
-    sptr<SurfaceBuffer> mockSurfaceBufferYuvNv21_;
-    sptr<SurfaceBuffer> mockSurfaceBufferYuvNv12_;
     std::shared_ptr<PixelMap> mockPixelMap_;
     OH_PixelmapNative *pixelmapNative_ = nullptr;
 
@@ -202,6 +198,9 @@ public:
     OH_EffectFilterInfo *filterInfo_ = nullptr;
     static inline sptr<Surface> consumerSurface_;
     static inline sptr<Surface> ohSurface_;
+    static inline std::shared_ptr<OH_NativeBuffer> nativeBufferRgba_;
+    static inline std::shared_ptr<OH_NativeBuffer> nativeBufferNV12_;
+    static inline std::shared_ptr<OH_NativeBuffer> nativeBufferNV21_;
 };
 
 /**
@@ -557,8 +556,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputNativeBufferUnittest001
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    OH_NativeBuffer *nativeBuffer = mockSurfaceBuffer_->SurfaceBufferToNativeBuffer();
-    errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
+    errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBufferRgba_.get());
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);
@@ -604,7 +602,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputNativeBufferUnittest003
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
 
-    OH_NativeBuffer *nativeBuffer = mockSurfaceBuffer_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *nativeBuffer = nativeBufferRgba_.get();
     ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativeBuffer(nullptr, nativeBuffer);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
@@ -669,11 +667,11 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputNativeBuffer001, TestS
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    OH_NativeBuffer *inNativeBuffer = mockSurfaceBuffer_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *inNativeBuffer = nativeBufferRgba_.get();
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, inNativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    OH_NativeBuffer *outNativeBuffer = mockSurfaceBuffer_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *outNativeBuffer = nativeBufferRgba_.get();
     errorCode = OH_ImageEffect_SetOutputNativeBuffer(imageEffect, outNativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
@@ -697,7 +695,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputNativeBuffer002, TestS
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
 
-    OH_NativeBuffer *inNativeBuffer = mockSurfaceBuffer_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *inNativeBuffer = nativeBufferRgba_.get();
     ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, inNativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
@@ -724,11 +722,11 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputNativeBuffer003, TestS
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
 
-    OH_NativeBuffer *inNativeBuffer = mockSurfaceBuffer_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *inNativeBuffer = nativeBufferRgba_.get();
     ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, inNativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    OH_NativeBuffer *outNativeBuffer = mockSurfaceBuffer_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *outNativeBuffer = nativeBufferRgba_.get();
     errorCode = OH_ImageEffect_SetOutputNativeBuffer(nullptr, outNativeBuffer);
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
@@ -761,7 +759,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputNativeBuffer004, TestS
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    OH_NativeBuffer *inNativeBuffer = mockSurfaceBuffer_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *inNativeBuffer = nativeBufferRgba_.get();
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, inNativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
@@ -797,7 +795,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputNativeBuffer005, TestS
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    OH_NativeBuffer *outNativeBuffer = mockSurfaceBuffer_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *outNativeBuffer = nativeBufferRgba_.get();
     errorCode = OH_ImageEffect_SetOutputNativeBuffer(imageEffect, outNativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
@@ -1145,7 +1143,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest001, TestSize.Level1
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    OH_NativeBuffer *nativeBuffer = mockSurfaceBufferYuvNv21_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *nativeBuffer = nativeBufferNV21_.get();
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
@@ -1185,7 +1183,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest002, TestSize.Level1
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    OH_NativeBuffer *nativeBuffer = mockSurfaceBufferYuvNv12_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *nativeBuffer = nativeBufferNV12_.get();
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
@@ -1225,7 +1223,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest003, TestSize.Level1
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    OH_NativeBuffer *nativeBuffer = mockSurfaceBufferYuvNv21_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *nativeBuffer = nativeBufferNV21_.get();
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
@@ -1265,7 +1263,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest004, TestSize.Level1
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    OH_NativeBuffer *nativeBuffer = mockSurfaceBufferYuvNv21_->SurfaceBufferToNativeBuffer();
+    OH_NativeBuffer *nativeBuffer = nativeBufferNV21_.get();
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 

@@ -18,6 +18,7 @@
 #include <unordered_map>
 
 #include "effect_log.h"
+#include "colorspace_helper.h"
 
 namespace OHOS {
 namespace Media {
@@ -40,6 +41,13 @@ static const std::unordered_map<EffectColorSpace, EffectColorSpace> COLORSPACE_H
     { EffectColorSpace::BT2020_HLG_LIMIT, EffectColorSpace::DISPLAY_P3_LIMIT },
     { EffectColorSpace::BT2020_PQ, EffectColorSpace::DISPLAY_P3 },
     { EffectColorSpace::BT2020_PQ_LIMIT, EffectColorSpace::DISPLAY_P3_LIMIT },
+};
+
+static const std::vector<EffectColorSpace> DEFAULT_SUPPORTED_COLORSPACE = {
+    EffectColorSpace::SRGB,
+    EffectColorSpace::SRGB_LIMIT,
+    EffectColorSpace::DISPLAY_P3,
+    EffectColorSpace::DISPLAY_P3_LIMIT,
 };
 
 bool ColorSpaceStrategy::IsSupportedColorSpace(EffectColorSpace colorSpace)
@@ -86,31 +94,16 @@ void ColorSpaceStrategy::Init(std::shared_ptr<EffectBuffer> &src, std::shared_pt
     dst_ = dst;
 }
 
-ErrorCode ChooseColorSpaceWithOutput(const EffectColorSpace &srcRealColorSpace, EffectBuffer *dstEffectBuffer,
-    const std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace, EffectColorSpace &outputColorSpace)
-{
-    const std::shared_ptr<BufferInfo> &dstBufferInfo = dstEffectBuffer->bufferInfo_;
-    CHECK_AND_RETURN_RET_LOG(dstBufferInfo != nullptr, ErrorCode::ERR_INPUT_NULL,
-        "ChooseColorSpaceWithOutput: dstBufferInfo is null!");
-
-    // color space is same.
-    EffectColorSpace dstColorSpace = dstBufferInfo->colorSpace_;
-    CHECK_AND_RETURN_RET_LOG(srcRealColorSpace == dstColorSpace, ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
-        "ChooseColorSpaceWithOutput: input and output color space not same! "
-        "srcRealColorSpace=%{public}d, dstColorSpace=%{public}d", srcRealColorSpace, dstColorSpace);
-
-    if (filtersSupportedColorSpace.find(srcRealColorSpace) == filtersSupportedColorSpace.end()) {
-        EFFECT_LOGE("ChooseColorSpaceInner: filter not support colorSpace[%{public}d]", srcRealColorSpace);
-        return ErrorCode::ERR_FILTER_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE;
-    }
-    outputColorSpace = srcRealColorSpace;
-    return ErrorCode::SUCCESS;
-}
-
-ErrorCode ChooseColorSpaceWithoutOutput(const EffectColorSpace &srcRealColorSpace,
+ErrorCode ChooseColorSpaceInner(const EffectColorSpace &srcRealColorSpace,
     const std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace, EffectColorSpace &outputColorSpace)
 {
     if (filtersSupportedColorSpace.find(srcRealColorSpace) != filtersSupportedColorSpace.end()) {
+        outputColorSpace = srcRealColorSpace;
+        return ErrorCode::SUCCESS;
+    }
+
+    if (std::find(DEFAULT_SUPPORTED_COLORSPACE.begin(), DEFAULT_SUPPORTED_COLORSPACE.end(), srcRealColorSpace) !=
+        DEFAULT_SUPPORTED_COLORSPACE.end()) {
         outputColorSpace = srcRealColorSpace;
         return ErrorCode::SUCCESS;
     }
@@ -122,8 +115,37 @@ ErrorCode ChooseColorSpaceWithoutOutput(const EffectColorSpace &srcRealColorSpac
     }
 
     outputColorSpace = it->second;
-
     return ErrorCode::SUCCESS;
+}
+
+ErrorCode ChooseColorSpaceWithOutput(const EffectColorSpace &srcRealColorSpace, EffectBuffer *src, EffectBuffer *dst,
+    const std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace, EffectColorSpace &outputColorSpace)
+{
+    const std::shared_ptr<BufferInfo> &dstBufferInfo = dst->bufferInfo_;
+    CHECK_AND_RETURN_RET_LOG(dstBufferInfo != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "ChooseColorSpaceWithOutput: dstBufferInfo is null!");
+
+    EffectColorSpace chooseColorSpace = EffectColorSpace::DEFAULT;
+    ErrorCode res = ChooseColorSpaceInner(srcRealColorSpace, filtersSupportedColorSpace, chooseColorSpace);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ChooseColorSpaceWithOutput: ChooseColorSpaceInner fail!");
+
+    if (src->extraInfo_->dataType == DataType::PIXEL_MAP && dst->extraInfo_->dataType == DataType::PIXEL_MAP) {
+        // color space is same.
+        bool isSrcHdr = ColorSpaceHelper::IsHdrColorSpace(srcRealColorSpace);
+        bool isChoseHdr = ColorSpaceHelper::IsHdrColorSpace(chooseColorSpace);
+        CHECK_AND_RETURN_RET_LOG(isSrcHdr == isChoseHdr, ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
+            "ChooseColorSpaceWithOutput: input and output color space not same! "
+            "srcRealColorSpace=%{public}d, chooseColorSpace=%{public}d", srcRealColorSpace, chooseColorSpace);
+    }
+
+    outputColorSpace = srcRealColorSpace;
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode ChooseColorSpaceWithoutOutput(const EffectColorSpace &srcRealColorSpace,
+    const std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace, EffectColorSpace &outputColorSpace)
+{
+    return ChooseColorSpaceInner(srcRealColorSpace, filtersSupportedColorSpace, outputColorSpace);
 }
 
 ErrorCode ColorSpaceStrategy::ChooseColorSpace(const std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace,
@@ -134,7 +156,8 @@ ErrorCode ColorSpaceStrategy::ChooseColorSpace(const std::unordered_set<EffectCo
     if (dst_ == nullptr || dst_->buffer_ == src_->buffer_) {
         return ChooseColorSpaceWithoutOutput(srcRealColorSpace, filtersSupportedColorSpace, outputColorSpace);
     }
-    return ChooseColorSpaceWithOutput(srcRealColorSpace, dst_.get(), filtersSupportedColorSpace, outputColorSpace);
+    return ChooseColorSpaceWithOutput(srcRealColorSpace, src_.get(), dst_.get(), filtersSupportedColorSpace,
+        outputColorSpace);
 }
 
 ErrorCode ColorSpaceStrategy::CheckConverterColorSpace(const EffectColorSpace &targetColorSpace)

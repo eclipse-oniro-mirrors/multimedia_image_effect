@@ -13,24 +13,24 @@
  * limitations under the License.
  */
 
-#ifndef IMAGE_EFFECT_MOCK_SURFACE_BUFFER_YUV_NV21_H
-#define IMAGE_EFFECT_MOCK_SURFACE_BUFFER_YUV_NV21_H
+#ifndef IMAGE_EFFECT_TEST_NATIVE_BUFFER_UTILS_H
+#define IMAGE_EFFECT_TEST_NATIVE_BUFFER_UTILS_H
 
-#include "image_type.h"
+#include <memory>
+#include "native_buffer.h"
+#include "surface_type.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
-class MockSurfaceBufferYuvNv21 : public MockSurfaceBuffer {
+namespace Test {
+class TestNativeBufferUtils {
 public:
-
-    int32_t GetFormat() const override
-    {
-        return PIXEL_FMT_YCRCB_420_SP;
-    }
+    static std::shared_ptr<OH_NativeBuffer> CreateNativeBuffer(GraphicPixelFormat format);
 };
-} // namespace Effect
-} // namespace Media
-} // namespace OHOS
+}
+}
+}
+}
 
-#endif // IMAGE_EFFECT_MOCK_SURFACE_BUFFER_YUV_NV21_H
+#endif // IMAGE_EFFECT_TEST_NATIVE_BUFFER_UTILS_H

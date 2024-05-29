@@ -510,10 +510,19 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
         "not supported dataType. srcDataType=%{public}d, dstDataType=%{public}d", srcDataType, dtsDataType);
 
     // color space is same or not.
-    if (srcDataType == dtsDataType) {
+    if (srcDataType == DataType::PIXEL_MAP) {
+        // the format for pixel map is same or not.
+        CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->bufferInfo_->formatType_ == dstEffectBuffer->bufferInfo_->formatType_,
+            ErrorCode::ERR_NOT_SUPPORT_DIFF_FORMAT,
+            "not support different format, srcFormat=%{public}d, dstFormat=%{public}d",
+            srcEffectBuffer->bufferInfo_->formatType_, dstEffectBuffer->bufferInfo_->formatType_);
+
+        // color space is same or not.
         EffectColorSpace srcColorSpace = srcEffectBuffer->bufferInfo_->colorSpace_;
         EffectColorSpace dstColorSpace = dstEffectBuffer->bufferInfo_->colorSpace_;
-        CHECK_AND_RETURN_RET_LOG(srcColorSpace == dstColorSpace, ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
+        bool isSrcHdr = ColorSpaceHelper::IsHdrColorSpace(srcColorSpace);
+        bool isDstHdr = ColorSpaceHelper::IsHdrColorSpace(dstColorSpace);
+        CHECK_AND_RETURN_RET_LOG(isSrcHdr == isDstHdr, ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
             "not support different colorspace. src=%{public}d, dst=%{public}d", srcColorSpace, dstColorSpace);
     }
 
