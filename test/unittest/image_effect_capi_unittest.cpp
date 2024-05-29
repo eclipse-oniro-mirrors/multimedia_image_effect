@@ -35,9 +35,23 @@ using namespace OHOS::Media::Effect::Test;
 namespace OHOS {
 namespace Media {
 namespace Effect {
-void ImageEffectCApiUnittest::SetUpTestCase() {}
+void ImageEffectCApiUnittest::SetUpTestCase()
+{
+    consumerSurface_ = Surface::CreateSurfaceAsConsumer("UnitTest");
+    sptr<IBufferProducer> producer = consumerSurface_->GetProducer();
+    ohSurface_ = Surface::CreateSurfaceAsProducer(producer);
+    nativeWindow_ = CreateNativeWindowFromSurface(&ohSurface_);
+}
 
-void ImageEffectCApiUnittest::TearDownTestCase() {}
+void ImageEffectCApiUnittest::TearDownTestCase()
+{
+    if (nativeWindow_ != nullptr) {
+        DestoryNativeWindow(nativeWindow_);
+        nativeWindow_ = nullptr;
+    }
+    consumerSurface_ = nullptr;
+    ohSurface_ = nullptr;
+}
 
 void ImageEffectCApiUnittest::SetUp()
 {
@@ -1945,10 +1959,9 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputSurface001, TestSize.Lev
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputSurface001 start";
 
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
-    OHNativeWindow *nativeWindow = new OHNativeWindow();
-    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputSurface(imageEffect, nativeWindow);
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputSurface(imageEffect, nativeWindow_);
 
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputSurface failed";
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputSurface failed";
 
     GTEST_LOG_(INFO) << "OHImageEffectSetOutputSurface001 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputSurface001 END";
@@ -2199,12 +2212,14 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest003, TestSize
     errorCode = OH_ImageEffect_Save(imageEffect, &imageEffectInfo);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSaveAndRestoreUnittest003 OH_EffectFilter_SetValue failed";
+    ASSERT_NE(imageEffectInfo, nullptr);
+    std::string infoStr = imageEffectInfo;
 
     errorCode = OH_ImageEffect_Release(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSaveAndRestoreUnittest003 OH_ImageEffect_Release failed";
 
-    imageEffect = OH_ImageEffect_Restore(imageEffectInfo);
+    imageEffect = OH_ImageEffect_Restore(infoStr.c_str());
     ASSERT_NE(imageEffect, nullptr) << "ImageEffectSaveAndRestoreUnittest00 OH_ImageEffect_Restore failed";
 
     errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
