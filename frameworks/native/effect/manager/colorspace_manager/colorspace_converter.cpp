@@ -103,7 +103,7 @@ sptr<SurfaceBuffer> AllocGainmapSurfaceBuffer(std::vector<std::shared_ptr<Memory
     MemoryInfo allocMemInfo;
     BufferInfo &bufferInfo = allocMemInfo.bufferInfo;
     bufferInfo = *inputHdr->bufferInfo_;
-    int32_t half = 2;
+    uint32_t half = 2;
     bufferInfo.width_ = bufferInfo.width_ / half;
     bufferInfo.height_ = bufferInfo.height_ / half;
     bufferInfo.formatType_ = IEffectFormat::RGBA8888;
