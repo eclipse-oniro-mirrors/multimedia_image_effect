@@ -19,6 +19,7 @@
     ],
     "rom": "",
     "ram": "",
+    "hisysevent_config": [ "//foundation/multimedia/image_effect/hisysevent.yaml" ],
     "deps": {
       "components": [
         "hitrace",
@@ -31,7 +32,8 @@
         "ability_base",
         "bounds_checking_function",
         "json",
-        "drivers_interface_display"
+        "drivers_interface_display",
+        "hisysevent"
       ],
       "third_party": [
         "egl",

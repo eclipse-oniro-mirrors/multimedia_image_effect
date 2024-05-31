@@ -47,6 +47,12 @@ public:
     static void ParseLookupKey(std::string &key, std::vector<const char *> &matchEFilter);
 
     static void SwitchToEffectInfo(const OH_EffectFilterInfo *info, const std::shared_ptr<EffectInfo> &effectInfo);
+
+    static uint32_t GetSupportedFormats(const OH_EffectFilterInfo *ohFilterInfo);
+
+    static void ReportEventStartFailed(ImageEffect_ErrorCode errorCode, const char *errorMsg);
+
+    static ImageEffect_ErrorCode ConvertStartResult(ErrorCode errorCode);
 };
 } // namespace Effect
 } // namespace Media
