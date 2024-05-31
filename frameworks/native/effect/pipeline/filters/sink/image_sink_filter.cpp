@@ -381,7 +381,7 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
     }
 
     if (output->extraInfo_->dataType == DataType::NATIVE_WINDOW && buffer->extraInfo_->surfaceBuffer != nullptr) {
-        int tex =static_cast<int>(GLUtils::CreateTextureFromSurfaceBuffer(buffer->extraInfo_->surfaceBuffer));
+        int tex = static_cast<int>(GLUtils::CreateTextureFromSurfaceBuffer(buffer->extraInfo_->surfaceBuffer));
         context->renderEnvironment_->UpdateCanvas();
         GraphicTransformType transformType = buffer->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
         context->renderEnvironment_->DrawFrame(tex, transformType);
