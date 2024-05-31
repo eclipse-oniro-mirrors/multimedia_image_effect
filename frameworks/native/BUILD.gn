@@ -111,6 +111,7 @@ ohos_shared_library("image_effect_impl") {
     "$image_effect_root_dir/frameworks/native/utils/common/string_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/vpe_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/dfx/error_code.cpp",
+    "$image_effect_root_dir/frameworks/native/utils/dfx/event_report.cpp",
     "$image_effect_root_dir/frameworks/native/utils/format/format_helper.cpp",
   ]
 
@@ -127,6 +128,7 @@ ohos_shared_library("image_effect_impl") {
     "graphic_2d:librender_service_client",
     "graphic_surface:surface",
     "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image_native",
     "json:nlohmann_json_static",

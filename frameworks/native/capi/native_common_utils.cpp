@@ -22,6 +22,7 @@
 #include "efilter_factory.h"
 #include "native_effect_base.h"
 #include "pixelmap_native_impl.h"
+#include "event_report.h"
 
 namespace OHOS {
 namespace Media {
@@ -49,6 +50,13 @@ static const std::unordered_map<std::string, std::unordered_map<std::string, uin
 static const std::map<IPType, ImageEffect_BufferType> IPTYPE_TABLE = {
     { IPType::CPU, ImageEffect_BufferType::EFFECT_BUFFER_TYPE_PIXEL },
     { IPType::GPU, ImageEffect_BufferType::EFFECT_BUFFER_TYPE_TEXTURE },
+};
+
+static const std::map<ErrorCode, ImageEffect_ErrorCode> ERRORCODE_TABLE = {
+    { ErrorCode::ERR_ALLOC_MEMORY_FAIL, ImageEffect_ErrorCode::EFFECT_ALLOCATE_MEMORY_FAILED },
+    { ErrorCode::ERR_NOT_SUPPORT_DIFF_DATATYPE, ImageEffect_ErrorCode::EFFECT_INPUT_OUTPUT_NOT_MATCH },
+    { ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE, ImageEffect_ErrorCode ::EFFECT_INPUT_OUTPUT_NOT_SUPPORTED },
+    { ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE, ImageEffect_ErrorCode::EFFECT_COLOR_SPACE_NOT_MATCH },
 };
 
 template <class ValueType>
@@ -281,6 +289,44 @@ void NativeCommonUtils::SwitchToEffectInfo(const OH_EffectFilterInfo *info,
     effectInfo->colorSpaces_.emplace_back(EffectColorSpace::SRGB_LIMIT);
     effectInfo->colorSpaces_.emplace_back(EffectColorSpace::DISPLAY_P3);
     effectInfo->colorSpaces_.emplace_back(EffectColorSpace::DISPLAY_P3_LIMIT);
+}
+
+uint32_t NativeCommonUtils::GetSupportedFormats(const OH_EffectFilterInfo *ohFilterInfo)
+{
+    if (ohFilterInfo == nullptr) {
+        return 0;
+    }
+
+    uint32_t supportedFormats = 0;
+    auto formatBitLen = sizeof(supportedFormats);
+    for (auto format : ohFilterInfo->supportedFormats) {
+        if (format >= formatBitLen) {
+            continue;
+        }
+        supportedFormats |= (1 << format);
+    }
+
+    return supportedFormats;
+}
+
+void NativeCommonUtils::ReportEventStartFailed(ImageEffect_ErrorCode errorCode, const char *errorMsg)
+{
+    EventInfo eventInfo = {
+        .errorInfo = {
+            .errorCode = errorCode,
+            .errorMsg = errorMsg,
+        }
+    };
+    EventReport::ReportHiSysEvent(RENDER_FAILED_FAULT, eventInfo);
+}
+
+ImageEffect_ErrorCode NativeCommonUtils::ConvertStartResult(ErrorCode errorCode)
+{
+    auto iter = ERRORCODE_TABLE.find(errorCode);
+    if (iter == ERRORCODE_TABLE.end()) {
+        return ImageEffect_ErrorCode::EFFECT_UNKNOWN;
+    }
+    return iter->second;
 }
 } // namespace Effect
 } // namespace Media

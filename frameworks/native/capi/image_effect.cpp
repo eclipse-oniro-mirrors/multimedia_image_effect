@@ -23,7 +23,7 @@
 #include "native_effect_base.h"
 #include "native_common_utils.h"
 #include "native_window.h"
-#include "surface_buffer.h"
+#include "event_report.h"
 
 #define MAX_EFILTER_NUMS 100
 
@@ -70,6 +70,11 @@ OH_EffectFilter *OH_ImageEffect_AddFilter(OH_ImageEffect *imageEffect, const cha
 
     imageEffect->imageEffect_->AddEFilter(filter->filter_);
     imageEffect->filters_.emplace_back(filter, filterName);
+
+    EventInfo eventInfo = {
+        .filterName = filterName,
+    };
+    EventReport::ReportHiSysEvent(ADD_FILTER_STATISTIC, eventInfo);
     return filter;
 }
 
@@ -93,6 +98,10 @@ OH_EffectFilter *OH_ImageEffect_InsertFilter(OH_ImageEffect *imageEffect, uint32
     }
 
     imageEffect->filters_.emplace_back(filter, filterName);
+    EventInfo eventInfo = {
+        .filterName = filterName,
+    };
+    EventReport::ReportHiSysEvent(ADD_FILTER_STATISTIC, eventInfo);
     return filter;
 }
 
@@ -114,6 +123,12 @@ int32_t OH_ImageEffect_RemoveFilter(OH_ImageEffect *imageEffect, const char *fil
         }
     }
     EFFECT_LOGI("Remove filter. name=%{public}s, count=%{public}d", filterName, count);
+
+    EventInfo eventInfo = {
+        .filterName = filterName,
+        .filterNum = count,
+    };
+    EventReport::ReportHiSysEvent(REMOVE_FILTER_STATISTIC, eventInfo);
     return count;
 }
 
@@ -155,6 +170,10 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputSurface(OH_ImageEffect *imageEffec
         return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
     }
 
+    EventInfo eventInfo = {
+        .dataType = EventDataType::SURFACE,
+    };
+    EventReport::ReportHiSysEvent(INPUT_DATA_TYPE_STATISTIC, eventInfo);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
@@ -171,6 +190,11 @@ ImageEffect_ErrorCode OH_ImageEffect_GetInputSurface(OH_ImageEffect *imageEffect
         "GetInputSurface: get input surface fail! surface is null!");
 
     *nativeWindow = OH_NativeWindow_CreateNativeWindow(&surface);
+
+    EventInfo eventInfo = {
+        .dataType = EventDataType::SURFACE,
+    };
+    EventReport::ReportHiSysEvent(OUTPUT_DATA_TYPE_STATISTIC, eventInfo);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
@@ -186,6 +210,11 @@ ImageEffect_ErrorCode OH_ImageEffect_SetInputPixelmap(OH_ImageEffect *imageEffec
         imageEffect->imageEffect_->SetInputPixelMap(NativeCommonUtils::GetPixelMapFromOHPixelmap(pixelmap));
     CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "SetInputPixelMap: set input pixelmap fail! errorCode=%{public}d", errorCode);
+
+    EventInfo eventInfo = {
+        .dataType = EventDataType::PIXEL_MAP,
+    };
+    EventReport::ReportHiSysEvent(INPUT_DATA_TYPE_STATISTIC, eventInfo);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
@@ -199,6 +228,11 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputPixelmap(OH_ImageEffect *imageEffe
         imageEffect->imageEffect_->SetOutputPixelMap(NativeCommonUtils::GetPixelMapFromOHPixelmap(pixelmap));
     CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "SetOutputPixelmap: set output pixelmap fail! errorCode=%{public}d", errorCode);
+
+    EventInfo eventInfo = {
+        .dataType = EventDataType::PIXEL_MAP,
+    };
+    EventReport::ReportHiSysEvent(OUTPUT_DATA_TYPE_STATISTIC, eventInfo);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
@@ -216,6 +250,11 @@ ImageEffect_ErrorCode OH_ImageEffect_SetInputNativeBuffer(OH_ImageEffect *imageE
     CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS,
         ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "SetInputNativeBuffer: set input native buffer fail! errorCode=%{public}d", errorCode);
+
+    EventInfo eventInfo = {
+        .dataType = EventDataType::SURFACE_BUFFER,
+    };
+    EventReport::ReportHiSysEvent(INPUT_DATA_TYPE_STATISTIC, eventInfo);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
@@ -230,6 +269,11 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputNativeBuffer(OH_ImageEffect *image
     ErrorCode errorCode = imageEffect->imageEffect_->SetOutputSurfaceBuffer(surfaceBuffer);
     CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "SetOutputNativeBuffer: set output native buffer fail! errorCode=%{public}d", errorCode);
+
+    EventInfo eventInfo = {
+        .dataType = EventDataType::SURFACE_BUFFER,
+    };
+    EventReport::ReportHiSysEvent(OUTPUT_DATA_TYPE_STATISTIC, eventInfo);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
@@ -247,6 +291,11 @@ ImageEffect_ErrorCode OH_ImageEffect_SetInputUri(OH_ImageEffect *imageEffect, co
         EFFECT_LOGE("SetInputUri: set input uri fail! errorCode=%{public}d", errorCode);
         return ImageEffect_ErrorCode::EFFECT_PARAM_ERROR;
     }
+
+    EventInfo eventInfo = {
+        .dataType = EventDataType::URI,
+    };
+    EventReport::ReportHiSysEvent(INPUT_DATA_TYPE_STATISTIC, eventInfo);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
@@ -266,19 +315,30 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputUri(OH_ImageEffect *imageEffect, c
         EFFECT_LOGE("SetOutputUri: set output uri fail! errorCode=%{public}d", errorCode);
         return ImageEffect_ErrorCode::EFFECT_PARAM_ERROR;
     }
+
+    EventInfo eventInfo = {
+        .dataType = EventDataType::URI,
+    };
+    EventReport::ReportHiSysEvent(OUTPUT_DATA_TYPE_STATISTIC, eventInfo);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_Start(OH_ImageEffect *imageEffect)
 {
-    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
-        "Start: input parameter imageEffect is null!");
+    if (imageEffect == nullptr) {
+        ImageEffect_ErrorCode errorCode = ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
+        NativeCommonUtils::ReportEventStartFailed(errorCode, "OH_ImageEffect_Start: imageEffect is null");
+        EFFECT_LOGE("Start: input parameter imageEffect is null!");
+        return errorCode;
+    }
 
     ErrorCode errorCode = imageEffect->imageEffect_->Start();
     if (errorCode != ErrorCode::SUCCESS) {
+        ImageEffect_ErrorCode res = NativeCommonUtils::ConvertStartResult(errorCode);
+        NativeCommonUtils::ReportEventStartFailed(res, "OH_ImageEffect_Start fail!");
         EFFECT_LOGE("Start: start fail! errorCode=%{public}d", errorCode);
-        return ImageEffect_ErrorCode::EFFECT_UNKNOWN;
+        return res;
     }
 
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
@@ -329,6 +389,9 @@ ImageEffect_ErrorCode OH_ImageEffect_Save(OH_ImageEffect *imageEffect, char **in
         return ImageEffect_ErrorCode::EFFECT_UNKNOWN;
     }
     *info = infoChar;
+
+    EventInfo eventInfo;
+    EventReport::ReportHiSysEvent(SAVE_IMAGE_EFFECT_BEHAVIOR, eventInfo);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
@@ -375,6 +438,9 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
         ohImageEffect->imageEffect_->AddEFilter(efilter);
     }
     ohImageEffect->imageEffect_->SetExtraInfo(root);
+
+    EventInfo eventInfo;
+    EventReport::ReportHiSysEvent(RESTORE_IMAGE_EFFECT_BEHAVIOR, eventInfo);
     return ohImageEffect;
 }
 

@@ -24,6 +24,7 @@
 #include "native_common_utils.h"
 #include "memcpy_helper.h"
 #include "format_helper.h"
+#include "event_report.h"
 
 using namespace OHOS::Media;
 using namespace OHOS::Media::Effect;
@@ -608,6 +609,12 @@ ImageEffect_ErrorCode OH_EffectFilter_Register(const OH_EffectFilterInfo *info,
     std::shared_ptr<EffectInfo> effectInfo = std::make_shared<EffectInfo>();
     NativeCommonUtils::SwitchToEffectInfo(info, effectInfo);
     EFilterFactory::Instance()->RegisterDelegate(info->filterName, effectDelegate, effectInfo);
+
+    EventInfo eventInfo = {
+        .filterName = info->filterName,
+        .supportedFormats = NativeCommonUtils::GetSupportedFormats(info),
+    };
+    EventReport::ReportHiSysEvent(REGISTER_CUSTOM_FILTER_STATISTIC, eventInfo);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
