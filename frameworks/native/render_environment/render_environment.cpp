@@ -145,9 +145,9 @@ bool RenderEnvironment::IsPrepared()
 
 void RenderEnvironment::GenMainTex(const std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &output)
 {
-    std::shared_ptr<BufferInfo> info = source->bufferInfo_;
-    int width = info->width_;
-    int height = info->height_;
+    std::shared_ptr<BufferInfo> info =source->bufferInfo_;
+    int width = static_cast<int>(info->width_);
+    int height = static_cast<int>(info->height_);
     RenderTexturePtr renderTex;
     bool needRender = true;
     renderTex = param_->resCache_->GetTexGlobalCache("Main");
@@ -184,8 +184,8 @@ void RenderEnvironment::DrawFlipTex(RenderTexturePtr input, RenderTexturePtr out
 EffectBuffer *RenderEnvironment::ConvertBufferToTexture(EffectBuffer *source)
 {
     std::shared_ptr<BufferInfo> info = source->bufferInfo_;
-    int width = info->width_;
-    int height = info->height_;
+    int width = static_cast<int>(info->width_);
+    int height = static_cast<int>(info->height_);
     RenderTexturePtr renderTex = param_->resCache_->RequestTexture(param_->context_, width, height, GL_RGBA8);
     DrawImageToFBO(param_->context_, renderTex, source, width, height);
 
@@ -252,10 +252,10 @@ void RenderEnvironment::DrawImageToFBO(RenderContext *context, RenderTexturePtr 
 GLuint RenderEnvironment::GenTexFromEffectBuffer(const EffectBuffer *source)
 {
     GLuint tex;
-    int width = source->bufferInfo_->width_;
-    int height = source->bufferInfo_->height_;
+    int width = static_cast<int>(source->bufferInfo_->width_);
+    int height = static_cast<int>(source->bufferInfo_->height_);
     if (source->bufferInfo_->formatType_ == IEffectFormat::RGBA8888) {
-        int stride = source->bufferInfo_->rowStride_ / 4;
+        int stride = static_cast<int>(source->bufferInfo_->rowStride_) / 4;
         if (source->extraInfo_->surfaceBuffer != nullptr) {
             tex = GLUtils::CreateTextureFromSurfaceBuffer(source->extraInfo_->surfaceBuffer);
         } else {
@@ -283,8 +283,8 @@ GLuint RenderEnvironment::GenTexFromEffectBuffer(const EffectBuffer *source)
 
 GLuint RenderEnvironment::ConvertFromYUVToRGB(const EffectBuffer *source, IEffectFormat format)
 {
-    int width = source->bufferInfo_->width_;
-    int height = source->bufferInfo_->height_;
+    uint32_t width = source->bufferInfo_->width_;
+    uint32_t height = source->bufferInfo_->height_;
     auto *srcNV12 = static_cast<unsigned char *>(source->buffer_);
     uint8_t *srcNV12UV = srcNV12 + width * height;
     unsigned char *data = new unsigned char[width * height * RGBA_SIZE_PER_PIXEL];
@@ -321,8 +321,8 @@ GLuint RenderEnvironment::ConvertFromYUVToRGB(const EffectBuffer *source, IEffec
 
 void RenderEnvironment::ConvertFromRGBToYUV(RenderTexturePtr input, IEffectFormat format, void *data)
 {
-    int width = input->Width();
-    int height = input->Height();
+    uint32_t width = input->Width();
+    uint32_t height = input->Height();
     unsigned char *rgbData = new unsigned char[width * height * RGBA_SIZE_PER_PIXEL];
     ReadPixelsFromTex(input, rgbData, width, height, width);
     auto *srcNV12 = static_cast<unsigned char *>(data);
@@ -415,8 +415,8 @@ void RenderEnvironment::DrawFrame(GLuint texId, GraphicTransformType type)
 
 void RenderEnvironment::ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output)
 {
-    int w = source->Width();
-    int h = source->Height();
+    int w = static_cast<int>(source->Width());
+    int h = static_cast<int>(source->Height());
     if (output->extraInfo_->surfaceBuffer == nullptr) {
         if (output->bufferInfo_->formatType_ == IEffectFormat::RGBA8888) {
             ReadPixelsFromTex(source, output->buffer_, w, h, output->bufferInfo_->rowStride_ / RGBA_SIZE_PER_PIXEL);
@@ -431,8 +431,8 @@ void RenderEnvironment::ConvertTextureToBuffer(RenderTexturePtr source, EffectBu
 
 void RenderEnvironment::ConvertYUV2RGBA(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out)
 {
-    int width = source->bufferInfo_->width_;
-    int height = source->bufferInfo_->height_;
+    int width = static_cast<int>(source->bufferInfo_->width_);
+    int height = static_cast<int>(source->bufferInfo_->height_);
     RenderTexturePtr outTex;
     if (source->extraInfo_->surfaceBuffer == nullptr) {
         outTex = std::make_shared<RenderTexture>(param_->context_, width, height, GL_RGBA8);
@@ -455,8 +455,8 @@ void RenderEnvironment::ConvertYUV2RGBA(std::shared_ptr<EffectBuffer> &source, s
 
 void RenderEnvironment::ConvertRGBA2YUV(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out)
 {
-    int width = source->bufferInfo_->width_;
-    int height = source->bufferInfo_->height_;
+    int width = static_cast<int>(source->bufferInfo_->width_);
+    int height = static_cast<int>(source->bufferInfo_->height_);
     RenderTexturePtr sourceTex = source->tex;
     GLuint outTex = GLUtils::CreateTextureFromSurfaceBuffer(out->extraInfo_->surfaceBuffer);
     RenderTexturePtr tex = std::make_shared<RenderTexture>(param_->context_, width, height, GL_RGBA8);
@@ -467,8 +467,8 @@ void RenderEnvironment::ConvertRGBA2YUV(std::shared_ptr<EffectBuffer> &source, s
 
 void RenderEnvironment::Draw2D2OES(RenderTexturePtr source, RenderTexturePtr output)
 {
-    int w = source->Width();
-    int h = source->Height();
+    int w = static_cast<int>(source->Width());
+    int h = static_cast<int>(source->Height());
     GLuint tempFbo = GLUtils::CreateFramebufferWithTarget(output->GetName(), GL_TEXTURE_EXTERNAL_OES);
     RenderViewport vp(0, 0, w, h);
     param_->renderer_->Draw(source->GetName(), tempFbo, param_->meshBaseDMA_, param_->shaderBaseRGB2D2YUVDMA_, &vp,

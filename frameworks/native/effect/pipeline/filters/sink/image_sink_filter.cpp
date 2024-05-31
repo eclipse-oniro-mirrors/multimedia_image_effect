@@ -73,8 +73,8 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
     }
 
     if (buffer->extraInfo_->dataType == DataType::TEX) {
-        if (pixelMap->GetWidth() == buffer->bufferInfo_->width_ &&
-            pixelMap->GetHeight() == buffer->bufferInfo_->height_) {
+        if (pixelMap->GetWidth() == static_cast<uint32_t>(buffer->bufferInfo_->width_) &&
+            pixelMap->GetHeight() == static_cast<uint32_t>(buffer->bufferInfo_->height_)) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
             CommonUtils::UpdateImageExifDateTime(pixelMap);
             return ColorSpaceHelper::UpdateMetadata(src);
@@ -125,8 +125,8 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
     }
 
     if (buffer->extraInfo_->dataType == DataType::TEX) {
-        if (surfaceBuffer->GetWidth() == buffer->bufferInfo_->width_ &&
-            surfaceBuffer->GetHeight() == buffer->bufferInfo_->height_) {
+        if (surfaceBuffer->GetWidth() == static_cast<uint32_t>(buffer->bufferInfo_->width_) &&
+            surfaceBuffer->GetHeight() == static_cast<uint32_t>(buffer->bufferInfo_->height_)) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
 
             // update metadata
@@ -381,7 +381,7 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
     }
 
     if (output->extraInfo_->dataType == DataType::NATIVE_WINDOW && buffer->extraInfo_->surfaceBuffer != nullptr) {
-        int tex = GLUtils::CreateTextureFromSurfaceBuffer(buffer->extraInfo_->surfaceBuffer);
+        int tex = static_cast<int>(GLUtils::CreateTextureFromSurfaceBuffer(buffer->extraInfo_->surfaceBuffer));
         context->renderEnvironment_->UpdateCanvas();
         GraphicTransformType transformType = buffer->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
         context->renderEnvironment_->DrawFrame(tex, transformType);
