@@ -33,7 +33,6 @@ void ExternLoader::LoadExtSo()
     if (isExtLoad_) {
         return;
     }
-    isExtLoad_ = true;
     void *effectExtHandle = dlopen("/system/lib64/platformsdk/libimage_effect_ext.so", RTLD_NOW);
     if (effectExtHandle == nullptr) {
         EFFECT_LOGE("EFilterFactory: dlopen libimage_effect_ext.so failed! dlerror=%{public}s", dlerror());
@@ -48,6 +47,7 @@ void ExternLoader::LoadExtSo()
     deinitFunc_ = reinterpret_cast<InitModuleFunc>(dlsym(effectExtHandle, "Deinit"));
     initModuleFunc_ = reinterpret_cast<InitModuleFunc>(dlsym(effectExtHandle, "InitModule"));
     deinitModuleFunc_ = reinterpret_cast<InitModuleFunc>(dlsym(effectExtHandle, "DeinitModule"));
+    isExtLoad_ = true;
 }
 
 bool ExternLoader::IsExtLoad() const
@@ -91,13 +91,13 @@ void ExternLoader::InitExt()
         return;
     }
 
-    hasInitExt_ = true;
     auto initFunc = ExternLoader::Instance()->GetInitFunc();
     if (initFunc) {
         initFunc();
     } else {
         EFFECT_LOGE("EFilterFactory: shared lib so not find function!");
     }
+    hasInitExt_ = true;
 }
 } // namespace Effect
 } // namespace Media
