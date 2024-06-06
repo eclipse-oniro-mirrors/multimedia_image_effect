@@ -3,14 +3,10 @@
 # ImageEffect
 
 - [Introduction](#Introduction)
-  - [Basic Concepts](#Basic-Concepts)
 - [Directory Structure](#Directory-Structure)
 - [Compilation](#Compilation)
 - [Repositories Involved](#Repositories-Involved)
-  - [Filter Chain Processing](#Filter-Chain-Processing)
-  - [Single Filter Processing](#Single-Filter-Processing)
-  - [Custom Filter Processing](#Custom-Filter-Processing)
-
+  
 ## Introduction
  
 
