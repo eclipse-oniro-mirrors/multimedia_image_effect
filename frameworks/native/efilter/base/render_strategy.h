@@ -27,7 +27,7 @@ public:
     RenderStrategy() = default;
     ~RenderStrategy() = default;
 
-    void Init(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst);
+    void Init(const std::shared_ptr<EffectBuffer> &src, const std::shared_ptr<EffectBuffer> &dst);
 
     EffectBuffer *ChooseBestOutput(EffectBuffer *buffer, std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap);
 

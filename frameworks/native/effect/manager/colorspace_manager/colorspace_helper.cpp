@@ -184,7 +184,7 @@ ErrorCode ColorSpaceHelper::UpdateMetadata(SurfaceBuffer *input, const EffectCol
     return metadataGenerator->ProcessImage(input);
 }
 
-ErrorCode ApplyColorSpaceIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std::shared_ptr<EffectContext> &context,
+ErrorCode ApplyColorSpaceIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, const std::shared_ptr<EffectContext> &context,
     EffectColorSpace &colorSpace)
 {
     if (!ColorSpaceManager::IsNeedConvertColorSpace(colorSpace)) {
@@ -220,7 +220,7 @@ ErrorCode ApplyColorSpaceIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std::s
 }
 
 ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const EffectColorSpace &chosenColorSpace,
-    std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
+    std::shared_ptr<EffectBuffer> &buffer, const std::shared_ptr<EffectContext> &context)
 {
     bool isNeedDecompose =
         ColorSpaceHelper::IsHdrColorSpace(colorSpace) && !ColorSpaceHelper::IsHdrColorSpace(chosenColorSpace);
@@ -231,7 +231,7 @@ ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const Effe
     EFFECT_LOGD("ColorSpaceHelper::DecomposeHdrImage");
     std::shared_ptr<Memory> oldMemory = context->memoryManager_->GetMemoryByAddr(buffer->buffer_);
     std::shared_ptr<ColorSpaceConverter> converter = std::make_shared<ColorSpaceConverter>();
-    std::shared_ptr<EffectBuffer> sdrImage;
+    std::shared_ptr<EffectBuffer> sdrImage = nullptr;
     ErrorCode res = converter->ProcessHdrImage(buffer.get(), sdrImage);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "DecomposeHdrImageIfNeed: ProcessHdrImage fail! "
         "res=%{public}d, colorSpace=%{public}d, chosenColorSpace=%{public}d", res, colorSpace, chosenColorSpace);

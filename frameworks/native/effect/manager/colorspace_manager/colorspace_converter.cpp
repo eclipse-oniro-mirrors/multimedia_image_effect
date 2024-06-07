@@ -197,7 +197,7 @@ ErrorCode ColorSpaceConverter::DecomposeHdrImageInner(int32_t vpeColorSpaceInsta
         "DecomposeHdrImageInner: ColorSpaceConverterDecomposeImage fail! res=%{public}d", res);
 
     // update effectBuffer
-    std::shared_ptr<EffectBuffer> buffer;
+    std::shared_ptr<EffectBuffer> buffer = nullptr;
     ErrorCode errorCode = CommonUtils::ParseSurfaceData(sdrSb, buffer, inputHdr->extraInfo_->dataType);
     CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode,
         "DecomposeHdrImageInner: ParseSurfaceData fail! errorCode=%{public}d", errorCode);
@@ -299,7 +299,7 @@ PixelMap *CreatePixelMap(EffectBuffer *effectBuffer)
         "CreatePixelMap: pixelFormat error! pixelFormat=%{public}d, optionPixelFormat=%{public}d",
         pixelMap->GetPixelFormat(), options.pixelFormat);
 
-    std::shared_ptr<ExtraInfo> &extraInfo = effectBuffer->extraInfo_;
+    const std::shared_ptr<ExtraInfo> &extraInfo = effectBuffer->extraInfo_;
     extraInfo->innerPixelMap = std::move(pixelMap);
     return extraInfo->innerPixelMap.get();
 }
