@@ -125,8 +125,8 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
     }
 
     if (buffer->extraInfo_->dataType == DataType::TEX) {
-        if (surfaceBuffer->GetWidth() == static_cast<uint32_t>(buffer->bufferInfo_->width_) &&
-            surfaceBuffer->GetHeight() == static_cast<uint32_t>(buffer->bufferInfo_->height_)) {
+        if (surfaceBuffer->GetWidth() == static_cast<int32_t>(buffer->bufferInfo_->width_) &&
+            surfaceBuffer->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_)) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
 
             // update metadata

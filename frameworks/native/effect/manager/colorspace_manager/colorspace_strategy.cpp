@@ -88,7 +88,7 @@ std::unordered_set<EffectColorSpace> ColorSpaceStrategy::GetAllSupportedColorSpa
     return supportedColorSpace;
 }
 
-void ColorSpaceStrategy::Init(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
+void ColorSpaceStrategy::Init(const std::shared_ptr<EffectBuffer> &src, const std::shared_ptr<EffectBuffer> &dst)
 {
     src_ = src;
     dst_ = dst;

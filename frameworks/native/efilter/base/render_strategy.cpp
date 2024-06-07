@@ -20,7 +20,7 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-void RenderStrategy::Init(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
+void RenderStrategy::Init(const std::shared_ptr<EffectBuffer> &src, const std::shared_ptr<EffectBuffer> &dst)
 {
     src_ = src;
     dst_ = dst;
