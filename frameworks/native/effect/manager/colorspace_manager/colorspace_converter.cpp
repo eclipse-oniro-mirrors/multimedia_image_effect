@@ -201,6 +201,9 @@ ErrorCode ColorSpaceConverter::DecomposeHdrImageInner(int32_t vpeColorSpaceInsta
     ErrorCode errorCode = CommonUtils::ParseSurfaceData(sdrSb, buffer, inputHdr->extraInfo_->dataType);
     CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode,
         "DecomposeHdrImageInner: ParseSurfaceData fail! errorCode=%{public}d", errorCode);
+    CHECK_AND_RETURN_RET_LOG(buffer != nullptr && buffer->extraInfo_ != nullptr,
+        "DecomposeHdrImageInner: buffer is null! or extraInfo of buffer is null!
+        buffer=%{public}p, buffer->extraInfo_=%{public}p", buffer, buffer->extraInfo_);
     *buffer->extraInfo_ = *inputHdr->extraInfo_;
     buffer->extraInfo_->surfaceBuffer = sdrSb;
     buffer->extraInfo_->bufferType = BufferType::DMA_BUFFER;

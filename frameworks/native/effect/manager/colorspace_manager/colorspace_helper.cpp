@@ -235,6 +235,9 @@ ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const Effe
     ErrorCode res = converter->ProcessHdrImage(buffer.get(), sdrImage);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "DecomposeHdrImageIfNeed: ProcessHdrImage fail! "
         "res=%{public}d, colorSpace=%{public}d, chosenColorSpace=%{public}d", res, colorSpace, chosenColorSpace);
+    CHECK_AND_RETURN_RET_LOG(sdrImage != nullptr && sdrImage->extraInfo_ != nullptr,
+        "DecomposeHdrImageIfNeed: sdrImage is null! or extraInfo of sdrImage is null!
+        sdrImage=%{public}p, sdrImage->extraInfo_=%{public}p", sdrImage, sdrImage->extraInfo_);
 
     context->memoryManager_->RemoveMemory(oldMemory);
     std::shared_ptr<MemoryData> memoryData = converter->GetMemoryData(sdrImage->extraInfo_->surfaceBuffer);
