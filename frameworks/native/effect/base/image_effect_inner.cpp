@@ -831,6 +831,26 @@ void ImageEffect::ClearDataInfo(DataInfo &dataInfo)
     dataInfo.path_ = "";
 }
 
+bool IsSameInOutputData(DataInfo &inDataInfo, DataInfo &outDataInfo)
+{
+    if (inDataInfo.dataType_ != outDataInfo.dataType_) {
+        return false;
+    }
+
+    switch (inDataInfo.dataType_) {
+        case DataType::PIXEL_MAP:
+            return inDataInfo.pixelMap_ == outDataInfo.pixelMap_;
+        case DataType::SURFACE_BUFFER:
+            return inDataInfo.surfaceBuffer_ == outDataInfo.surfaceBuffer_;
+        case DataType::PATH:
+            return inDataInfo.path_ == outDataInfo.path_;
+        case DataType::URI:
+            return inDataInfo.uri_ == outDataInfo.uri_;
+        default:
+            return false;
+    }
+}
+
 ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     std::shared_ptr<EffectBuffer> &dstEffectBuffer)
 {
@@ -841,7 +861,7 @@ ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     }
     EFFECT_LOGI("input data set, parse data info success! dataType=%{public}d", inDateInfo_.dataType_);
 
-    if (outDateInfo_.dataType_ != DataType::UNKNOWN) {
+    if (outDateInfo_.dataType_ != DataType::UNKNOWN && !IsSameInOutputData(inDateInfo_, outDateInfo_)) {
         EFFECT_LOGI("output data set, start parse data info. dataType=%{public}d", outDateInfo_.dataType_);
         res = ParseDataInfo(outDateInfo_, dstEffectBuffer, true);
         if (res != ErrorCode::SUCCESS) {
