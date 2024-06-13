@@ -34,6 +34,7 @@
 #include "render_task.h"
 #include "colorspace_helper.h"
 #include "render_environment.h"
+#include "memcpy_helper.h"
 
 #define RENDER_QUEUE_SIZE 8
 #define COMMON_TASK_TAG 0
@@ -702,6 +703,29 @@ void ImageEffect::ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer)
     }
 }
 
+void MemoryCopyInfo(sptr<SurfaceBuffer> &buffer, OHOS::sptr<SurfaceBuffer> outBuffer)
+{
+    CopyInfo src = {
+        .bufferInfo = {
+            .width_ = buffer->GetWidth(),
+            .height_ = buffer->GetWidth(),
+            .len_ = buffer->GetSize(),
+            .formatType_ = static_cast<IEffectFormat>(buffer->GetFormat()),
+            .rowStride_ = buffer->GetStride(),
+        }
+    };
+    CopyInfo dst = {
+        .bufferInfo = {
+            .width_ = outBuffer->GetWidth(),
+            .height_ = outBuffer->GetWidth(),
+            .len_ = outBuffer->GetSize(),
+            .formatType_ = static_cast<IEffectFormat>(outBuffer->GetFormat()),
+            .rowStride_ = outBuffer->GetStride(),
+        }
+    };
+    MemcpyHelper::CopyData(src, dst);
+}
+
 void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
     if (outDateInfo_.dataType_ == DataType::NATIVE_WINDOW) {
@@ -742,9 +766,7 @@ void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHO
     }
 
     if (isNeedCpy) {
-        errno_t errorCode = memcpy_s(outBuffer->GetVirAddr(), outBuffer->GetSize(), buffer->GetVirAddr(),
-            buffer->GetSize());
-        CHECK_AND_RETURN_LOG(errorCode == 0, "ConsumerBufferAvailable memcpy_s failed. %{public}d", errorCode);
+        MemoryCopyInfo(buffer, outBuffer);
     }
 
     BufferFlushConfig flushConfig = {
