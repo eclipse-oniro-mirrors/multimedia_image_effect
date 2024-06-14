@@ -39,7 +39,7 @@ using ContrastFilterDataPtr = std::shared_ptr<ContrastFilterData>;
 class GpuContrastAlgo {
 public:
     ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
-        std::shared_ptr<EffectContext> &context);
+        const std::shared_ptr<EffectContext> &context);
     ErrorCode Release();
     ErrorCode Init();
     void Render(GLenum target, RenderTexturePtr tex);

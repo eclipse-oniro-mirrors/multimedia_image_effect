@@ -167,7 +167,7 @@ public:
     RenderContext* GetContext();
     ResourceCache* GetResourceCache();
     bool BeginFrame();
-    void DrawFrameWithTransform(std::shared_ptr<EffectBuffer> &buffer, GraphicTransformType type);
+    void DrawFrameWithTransform(const std::shared_ptr<EffectBuffer> &buffer, GraphicTransformType type);
     void DrawFrame(GLuint texId, GraphicTransformType type);
     void ConvertYUV2RGBA(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out);
     void ConvertRGBA2YUV(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out);

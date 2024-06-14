@@ -48,7 +48,7 @@ public:
     static ErrorCode ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
         const std::shared_ptr<EffectMemoryManager> &memoryManager);
     static ErrorCode ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
-        std::shared_ptr<EffectContext> &context);
+        const std::shared_ptr<EffectContext> &context);
     static ErrorCode ParseNativeWindowData(std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType);
     static void UpdateImageExifDateTime(PixelMap *pixelMap);
     static void UpdateImageExifInfo(PixelMap *pixelMap);

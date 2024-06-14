@@ -73,8 +73,8 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
     }
 
     if (buffer->extraInfo_->dataType == DataType::TEX) {
-        if (pixelMap->GetWidth() == static_cast<uint32_t>(buffer->bufferInfo_->width_) &&
-            pixelMap->GetHeight() == static_cast<uint32_t>(buffer->bufferInfo_->height_)) {
+        if (pixelMap->GetWidth() == static_cast<int32_t>(buffer->bufferInfo_->width_) &&
+            pixelMap->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_)) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
             CommonUtils::UpdateImageExifDateTime(pixelMap);
             return ColorSpaceHelper::UpdateMetadata(src);

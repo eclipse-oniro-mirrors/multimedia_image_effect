@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-constexpr const static int RGBA_SIZE_PER_PIXEL = 4;
+constexpr const int RGBA_SIZE_PER_PIXEL = 4;
 
 const std::vector<std::vector<float>> DEFAULT_VERTEX_DATA = { { -1.0f, -1.0f, 0.0f, 1.0f, -1.0f, 0.0f, -1.0f, 1.0f,
     0.0f, 1.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f } };
