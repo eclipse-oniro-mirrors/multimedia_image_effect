@@ -377,7 +377,7 @@ glm::mat4 GetTransformMatrix(GraphicTransformType type)
     return trans;
 }
 
-void RenderEnvironment::DrawFrameWithTransform(std::shared_ptr<EffectBuffer> &buffer, GraphicTransformType type)
+void RenderEnvironment::DrawFrameWithTransform(const std::shared_ptr<EffectBuffer> &buffer, GraphicTransformType type)
 {
     if (param_ != nullptr) {
         BeginFrame();

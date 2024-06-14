@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-AlgorithmProgram::AlgorithmProgram(RenderContext *context, std::string vertex, std::string fragment)
+AlgorithmProgram::AlgorithmProgram(RenderContext *context, const std::string vertex, const std::string fragment)
 {
     context_ = context;
     shader_ = new RenderGeneralProgram(context, vertex.c_str(), fragment.c_str());
@@ -39,7 +39,7 @@ AlgorithmProgram::~AlgorithmProgram()
     }
 }
 
-void AlgorithmProgram::UpdateShader(std::string vertex, std::string fragment)
+void AlgorithmProgram::UpdateShader(const std::string vertex, const std::string fragment)
 {
     if (strcmp(vertex.c_str(), vertexShaderCode_.c_str()) == 0 &&
         strcmp(fragment.c_str(), fragmentShaderCode_.c_str()) == 0) {
@@ -66,32 +66,32 @@ void AlgorithmProgram::Unbind()
     shader_->Unbind();
 }
 
-int AlgorithmProgram::GetAttributeLocation(std::string attributeName)
+int AlgorithmProgram::GetAttributeLocation(const std::string attributeName)
 {
     return shader_->GetAttributeLocation(attributeName.c_str());
 }
 
-int AlgorithmProgram::GetUniformLocation(std::string uniformName)
+int AlgorithmProgram::GetUniformLocation(const std::string uniformName)
 {
     return shader_->GetUniformLocation(uniformName.c_str());
 }
 
-void AlgorithmProgram::SetInt(std::string name, int value)
+void AlgorithmProgram::SetInt(const std::string name, int value)
 {
     shader_->SetUniform(name.c_str(), value);
 }
 
-void AlgorithmProgram::SetFloat(std::string name, float value)
+void AlgorithmProgram::SetFloat(const std::string name, float value)
 {
     shader_->SetUniform(name.c_str(), value);
 }
 
-void AlgorithmProgram::SetMat4(std::string name, const void *value)
+void AlgorithmProgram::SetMat4(const std::string name, const void *value)
 {
     shader_->SetUniform(name.c_str(), value);
 }
 
-void AlgorithmProgram::BindTexture(std::string name, int unitId, int textureId, GLenum target)
+void AlgorithmProgram::BindTexture(const std::string name, int unitId, int textureId, GLenum target)
 {
     glActiveTexture(GL_TEXTURE0 + unitId);
     glBindTexture(target, textureId);

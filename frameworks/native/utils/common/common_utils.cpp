@@ -523,7 +523,7 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
 }
 
 ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
-    std::shared_ptr<EffectContext> &context)
+    const std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("ModifyPixelMapPropertyForTexture enter!");
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixel map is null");

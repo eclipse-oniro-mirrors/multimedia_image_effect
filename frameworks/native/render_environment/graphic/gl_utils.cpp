@@ -199,11 +199,12 @@ unsigned int GLUtils::CreateProgram(const std::string &vss, const std::string &f
 EGLImageKHR GLUtils::CreateEGLImage(EGLDisplay display, SurfaceBuffer *buffer)
 {
     NativeWindowBuffer *nBuffer = CreateNativeWindowBufferFromSurfaceBuffer(&buffer);
-    EGLint attrs[] = {
+    EGLint attrsList[] = {
         EGL_IMAGE_PRESERVED,
         EGL_TRUE,
         EGL_NONE,
     };
+    EGLint *attrs = attrsList;
     EGLImageKHR img = eglCreateImageKHR(display, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_OHOS, nBuffer, attrs);
     if (img == EGL_NO_IMAGE_KHR) {
         EGLint error = eglGetError();

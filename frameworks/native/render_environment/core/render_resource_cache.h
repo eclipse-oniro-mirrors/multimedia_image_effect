@@ -45,7 +45,7 @@ public:
         DeleteAllShader();
         DeleteAllMesh();
     }
-    RenderGeneralProgram *GetShader(std::string name)
+    RenderGeneralProgram *GetShader(const std::string name)
     {
         auto ite = shadersMap_.find(name);
         if (ite == shadersMap_.end()) {
@@ -54,7 +54,7 @@ public:
         return ite->second;
     }
 
-    RenderMesh *GetMesh(std::string name)
+    RenderMesh *GetMesh(const std::string name)
     {
         auto ite = meshesMap_.find(name);
         if (ite == meshesMap_.end()) {
@@ -63,7 +63,7 @@ public:
         return ite->second;
     }
 
-    RenderEffectBasePtr GetEffect(std::string name)
+    RenderEffectBasePtr GetEffect(const std::string name)
     {
         auto ite = effectMap_.find(name);
         if (ite == effectMap_.end()) {
@@ -158,7 +158,7 @@ public:
         texGlobalCache_.insert_or_assign(id, tex);
     }
 
-    RenderTexturePtr GetTexGlobalCache(std::string id)
+    RenderTexturePtr GetTexGlobalCache(const std::string id)
     {
         auto ite = texGlobalCache_.find(id);
         if (ite != texGlobalCache_.end()) {
@@ -167,7 +167,7 @@ public:
         return nullptr;
     }
 
-    void RemoveTexGlobalCache(std::string id)
+    void RemoveTexGlobalCache(const std::string id)
     {
         auto ite = texGlobalCache_.find(id);
         if (ite != texGlobalCache_.end()) {

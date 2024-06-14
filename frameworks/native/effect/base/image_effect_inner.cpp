@@ -853,7 +853,7 @@ void ImageEffect::ClearDataInfo(DataInfo &dataInfo)
     dataInfo.path_ = "";
 }
 
-bool IsSameInOutputData(DataInfo &inDataInfo, DataInfo &outDataInfo)
+bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
 {
     if (inDataInfo.dataType_ != outDataInfo.dataType_) {
         return false;
