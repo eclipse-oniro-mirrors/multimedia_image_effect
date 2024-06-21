@@ -224,6 +224,7 @@ ErrorCode PackToFile(const std::string &path, const std::shared_ptr<PixelMap> &p
     PackOption option = {
         .format = "image/jpeg",
         .desiredDynamicRange = EncodeDynamicRange::AUTO,
+        .needsPackProperties = true,
     };
     uint32_t result = imagePacker->StartPacking(path, option);
     CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
