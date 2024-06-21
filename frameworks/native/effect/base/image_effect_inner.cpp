@@ -388,6 +388,7 @@ ErrorCode ImageEffect::Start()
 
 void ImageEffect::Stop()
 {
+    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
     impl_->effectState_ = EffectState::IDLE;
     impl_->effectContext_->memoryManager_->ClearMemory();
 }
@@ -703,31 +704,34 @@ void ImageEffect::ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer)
     }
 }
 
-void MemoryCopyInfo(sptr<SurfaceBuffer> &buffer, OHOS::sptr<SurfaceBuffer> outBuffer)
+void MemoryCopyForSurfaceBuffer(sptr<SurfaceBuffer> &buffer, OHOS::sptr<SurfaceBuffer> outBuffer)
 {
     CopyInfo src = {
         .bufferInfo = {
-            .width_ = buffer->GetWidth(),
-            .height_ = buffer->GetWidth(),
+            .width_ = static_cast<uint32_t>(buffer->GetWidth()),
+            .height_ = static_cast<uint32_t>(buffer->GetHeight()),
             .len_ = buffer->GetSize(),
-            .formatType_ = static_cast<IEffectFormat>(buffer->GetFormat()),
-            .rowStride_ = buffer->GetStride(),
-        }
+            .formatType_ = CommonUtils::SwitchToEffectFormat((GraphicPixelFormat)buffer->GetFormat()),
+            .rowStride_ = static_cast<uint32_t>(buffer->GetStride()),
+        },
+        .data = static_cast<uint8_t *>(buffer->GetVirAddr()),
     };
     CopyInfo dst = {
         .bufferInfo = {
-            .width_ = outBuffer->GetWidth(),
-            .height_ = outBuffer->GetWidth(),
+            .width_ = static_cast<uint32_t>(outBuffer->GetWidth()),
+            .height_ = static_cast<uint32_t>(outBuffer->GetHeight()),
             .len_ = outBuffer->GetSize(),
-            .formatType_ = static_cast<IEffectFormat>(outBuffer->GetFormat()),
-            .rowStride_ = outBuffer->GetStride(),
-        }
+            .formatType_ = CommonUtils::SwitchToEffectFormat((GraphicPixelFormat)outBuffer->GetFormat()),
+            .rowStride_ = static_cast<uint32_t>(outBuffer->GetStride()),
+        },
+        .data = static_cast<uint8_t *>(outBuffer->GetVirAddr()),
     };
     MemcpyHelper::CopyData(src, dst);
 }
 
 void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
+    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
     if (outDateInfo_.dataType_ == DataType::NATIVE_WINDOW) {
         ConsumerBufferWithGPU(buffer);
         return;
@@ -766,7 +770,7 @@ void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHO
     }
 
     if (isNeedCpy) {
-        MemoryCopyInfo(buffer, outBuffer);
+        MemoryCopyForSurfaceBuffer(buffer, outBuffer);
     }
 
     BufferFlushConfig flushConfig = {
