@@ -17,6 +17,7 @@
 #define IMAGE_EFFECT_IMAGE_EFFECT_H
 
 #include <vector>
+#include <mutex>
 
 #include "any.h"
 #include "effect.h"
@@ -133,6 +134,8 @@ private:
     std::shared_ptr<Impl> impl_;
     RenderThread<> *m_renderThread{ nullptr };
     std::atomic_ullong m_currentTaskId{0};
+
+    std::mutex bufferAvailableMutex_;
 };
 } // namespace Effect
 } // namespace Media
