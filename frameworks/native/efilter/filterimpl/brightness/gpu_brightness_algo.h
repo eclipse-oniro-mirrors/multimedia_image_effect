@@ -44,7 +44,7 @@ public:
     ErrorCode Init();
     void Render(GLenum target, RenderTexturePtr tex);
 private:
-    float ParseBrightness(std::map<std::string, Plugin::Any> &value);
+    static float ParseBrightness(std::map<std::string, Plugin::Any> &value);
     BrightnessFilterDataPtr renderEffectData_;
     void PreDraw(GLenum target);
     void PostDraw(GLenum target);

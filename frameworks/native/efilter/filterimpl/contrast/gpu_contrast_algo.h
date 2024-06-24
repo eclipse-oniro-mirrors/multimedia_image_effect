@@ -44,7 +44,7 @@ public:
     ErrorCode Init();
     void Render(GLenum target, RenderTexturePtr tex);
 private:
-    float ParseContrast(std::map<std::string, Plugin::Any> &value);
+    static float ParseContrast(std::map<std::string, Plugin::Any> &value);
     ContrastFilterDataPtr renderEffectData_;
     void PreDraw(GLenum target);
     void PostDraw(GLenum target);

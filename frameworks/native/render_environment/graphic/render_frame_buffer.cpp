@@ -50,7 +50,7 @@ void RenderFrameBuffer::Resize(int width, int height)
     }
 }
 
-RenderTexturePtr RenderFrameBuffer::Texture()
+RenderTexturePtr RenderFrameBuffer::Texture() const
 {
     return texture_;
 }

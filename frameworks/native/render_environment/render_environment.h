@@ -62,6 +62,9 @@ public:
         resCache_ = new ResourceCache;
     }
 
+    RenderParam(const RenderParam& renderParam) = delete;
+    RenderParam& operator=(const RenderParam& renderParam) = delete;
+
     ~RenderParam()
     {
         if (renderer_) {
@@ -160,7 +163,7 @@ public:
     void Prepare();
     void InitEngine(OHNativeWindow *window);
     void NotifyInputChanged();
-    bool IfNeedGenMainTex();
+    bool IfNeedGenMainTex() const;
     void GenMainTex(const std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &output);
     EffectBuffer *ConvertBufferToTexture(EffectBuffer *source);
     void ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output);
@@ -173,18 +176,18 @@ public:
     void ConvertRGBA2YUV(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out);
     void Draw2D2OES(RenderTexturePtr source, RenderTexturePtr output);
     void UpdateCanvas();
-    EGLStatus GetEGLStatus();
+    EGLStatus GetEGLStatus() const;
     RenderTexturePtr RequestBuffer(int width, int height);
-    bool IsPrepared();
-    DataType GetOutputType();
+    bool IsPrepared() const;
+    DataType GetOutputType() const;
     void SetOutputType(DataType type);
-    void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
+    static void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
     void DrawSurfaceBufferFromTex(RenderTexturePtr tex, SurfaceBuffer *buffer, IEffectFormat format);
     void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer);
     void DrawFlipTex(RenderTexturePtr input, RenderTexturePtr output);
     std::shared_ptr<EffectBuffer> GenTexEffectBuffer(std::shared_ptr<EffectBuffer> input);
     GLuint GenTexFromEffectBuffer(const EffectBuffer *source);
-    GLuint ConvertFromYUVToRGB(const EffectBuffer *source, IEffectFormat format);
+    static GLuint ConvertFromYUVToRGB(const EffectBuffer *source, IEffectFormat format);
     void ConvertFromRGBToYUV(RenderTexturePtr input, IEffectFormat format, void *data);
     void ReleaseParam();
     void Release();
@@ -202,8 +205,8 @@ private:
     void DrawImageToFBO(RenderContext *context, RenderTexturePtr renderTex, const EffectBuffer *source,
         int width, int height);
     void InitDefaultMeshMT(RenderParam *param);
-    void InitDefaultShaderMT(RenderParam *param);
-    RenderMesh *CreateMeshMT(RenderParam *param, bool isBackGround, RenderGeneralProgram *shader);
+    static void InitDefaultShaderMT(RenderParam *param);
+    static RenderMesh *CreateMeshMT(RenderParam *param, bool isBackGround, RenderGeneralProgram *shader);
 };
 } // namespace Effect
 } // namespace Media
