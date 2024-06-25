@@ -30,8 +30,6 @@ constexpr int RENDERMESH_BUFFER_SIZE = 2;
 class RenderMesh {
 public:
     explicit RenderMesh(const std::vector<std::vector<float>> &meshData);
-    RenderMesh(const RenderMesh& renderMesh) = delete;
-    RenderMesh& operator=(const RenderMesh& renderMesh) = delete;
     ~RenderMesh();
     void Bind(RenderGeneralProgram *shader);
 

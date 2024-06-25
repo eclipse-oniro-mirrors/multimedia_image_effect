@@ -33,7 +33,7 @@ public:
     void Resize(int width, int height);
     RenderTexturePtr Texture() const;
     void Bind();
-    static void UnBind();
+    void UnBind();
     int Width();
     int Height();
 

@@ -62,9 +62,6 @@ public:
         resCache_ = new ResourceCache;
     }
 
-    RenderParam(const RenderParam& renderParam) = delete;
-    RenderParam& operator=(const RenderParam& renderParam) = delete;
-
     ~RenderParam()
     {
         if (renderer_) {
@@ -181,13 +178,13 @@ public:
     bool IsPrepared() const;
     DataType GetOutputType() const;
     void SetOutputType(DataType type);
-    static void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
+    void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
     void DrawSurfaceBufferFromTex(RenderTexturePtr tex, SurfaceBuffer *buffer, IEffectFormat format);
     void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer);
     void DrawFlipTex(RenderTexturePtr input, RenderTexturePtr output);
     std::shared_ptr<EffectBuffer> GenTexEffectBuffer(std::shared_ptr<EffectBuffer> input);
     GLuint GenTexFromEffectBuffer(const EffectBuffer *source);
-    static GLuint ConvertFromYUVToRGB(const EffectBuffer *source, IEffectFormat format);
+    GLuint ConvertFromYUVToRGB(const EffectBuffer *source, IEffectFormat format);
     void ConvertFromRGBToYUV(RenderTexturePtr input, IEffectFormat format, void *data);
     void ReleaseParam();
     void Release();
@@ -205,8 +202,8 @@ private:
     void DrawImageToFBO(RenderContext *context, RenderTexturePtr renderTex, const EffectBuffer *source,
         int width, int height);
     void InitDefaultMeshMT(RenderParam *param);
-    static void InitDefaultShaderMT(RenderParam *param);
-    static RenderMesh *CreateMeshMT(RenderParam *param, bool isBackGround, RenderGeneralProgram *shader);
+    void InitDefaultShaderMT(RenderParam *param);
+    RenderMesh *CreateMeshMT(RenderParam *param, bool isBackGround, RenderGeneralProgram *shader);
 };
 } // namespace Effect
 } // namespace Media

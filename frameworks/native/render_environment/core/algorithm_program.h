@@ -27,8 +27,6 @@ namespace Effect {
 class AlgorithmProgram {
 public:
     AlgorithmProgram(RenderContext *context, const std::string vertex, const std::string fragment);
-    AlgorithmProgram(const AlgorithmProgram& algorithmProgram) = delete;
-    AlgorithmProgram& operator=(const AlgorithmProgram& algorithmProgram) = delete;
     ~AlgorithmProgram();
     void UpdateShader(const std::string vertex, const std::string fragment);
     void Bind();
@@ -39,7 +37,7 @@ public:
     void SetFloat(const std::string name, float value);
     void SetMat4(const std::string name, const void* value);
     void BindTexture(const std::string name, int unitId, int textureId, GLenum target = GL_TEXTURE_2D);
-    static void UnBindTexture(int unitId, GLenum target = GL_TEXTURE_2D);
+    void UnBindTexture(int unitId, GLenum target = GL_TEXTURE_2D);
     RenderGeneralProgram *GetShader();
 private:
     RenderGeneralProgram *shader_ = nullptr;
