@@ -115,7 +115,7 @@ void EventReport::ReportRegisterCustomFilterEvent(const EventInfo &eventInfo)
 {
     EventWrite(
         REGISTER_CUSTOM_FILTER_STATISTIC,
-        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         EVENT_PARAM_FILTER_NAME, eventInfo.filterName,
         EVENT_PARAM_SUPPORTED_FORMATS, eventInfo.supportedFormats);
 }
@@ -124,7 +124,7 @@ void EventReport::ReportAddFilterEvent(const EventInfo &eventInfo)
 {
     EventWrite(
         ADD_FILTER_STATISTIC,
-        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         EVENT_PARAM_FILTER_NAME, eventInfo.filterName);
 }
 
@@ -132,7 +132,7 @@ void EventReport::ReportRemoveFilterEvent(const EventInfo &eventInfo)
 {
     EventWrite(
         REMOVE_FILTER_STATISTIC,
-        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         EVENT_PARAM_FILTER_NAME, eventInfo.filterName,
         EVENT_PARAM_FILTER_NUMBER, eventInfo.filterNum);
 }
@@ -151,7 +151,7 @@ void EventReport::ReportInputDataTypeEvent(const EventInfo &eventInfo)
 {
     EventWrite(
         INPUT_DATA_TYPE_STATISTIC,
-        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         EVENT_PARAM_DATA_TYPE, ConvertDataType(eventInfo.dataType));
 }
 
@@ -159,7 +159,7 @@ void EventReport::ReportOutputDataTypeEvent(const EventInfo &eventInfo)
 {
     EventWrite(
         OUTPUT_DATA_TYPE_STATISTIC,
-        HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         EVENT_PARAM_DATA_TYPE, ConvertDataType(eventInfo.dataType));
 }
 
@@ -167,7 +167,7 @@ void EventReport::ReportRenderFailedEvent(const EventInfo &eventInfo)
 {
     EventWrite(
         RENDER_FAILED_FAULT,
-        HiviewDFX::HiSysEvent::EventType::FAULT,
+        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         EVENT_PARAM_ERROR_TYPE, eventInfo.errorInfo.errorCode,
         EVENT_PARAM_ERROR_MSG, eventInfo.errorInfo.errorMsg);
 }
