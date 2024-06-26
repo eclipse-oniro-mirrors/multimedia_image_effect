@@ -22,14 +22,14 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-constexpr const char* const REGISTER_CUSTOM_FILTER_STATISTIC = "REGISTER_CUSTOM_FILTER_STATISTIC";
-constexpr const char* const ADD_FILTER_STATISTIC = "ADD_FILTER_STATISTIC";
-constexpr const char* const REMOVE_FILTER_STATISTIC = "REMOVE_FILTER_STATISTIC";
-constexpr const char* const INPUT_DATA_TYPE_STATISTIC = "INPUT_DATA_TYPE_STATISTIC";
-constexpr const char* const OUTPUT_DATA_TYPE_STATISTIC = "OUTPUT_DATA_TYPE_STATISTIC";
-constexpr const char* const RENDER_FAILED_FAULT = "RENDER_FAILED_FAULT";
-constexpr const char* const SAVE_IMAGE_EFFECT_BEHAVIOR = "SAVE_IMAGE_EFFECT_BEHAVIOR";
-constexpr const char* const RESTORE_IMAGE_EFFECT_BEHAVIOR = "RESTORE_IMAGE_EFFECT_BEHAVIOR";
+constexpr const char* const REGISTER_CUSTOM_FILTER_STATISTIC = "REGISTER_CUSTOM_FILTER";
+constexpr const char* const ADD_FILTER_STATISTIC = "ADD_FILTER";
+constexpr const char* const REMOVE_FILTER_STATISTIC = "REMOVE_FILTER";
+constexpr const char* const INPUT_DATA_TYPE_STATISTIC = "INPUT_DATA_TYPE";
+constexpr const char* const OUTPUT_DATA_TYPE_STATISTIC = "OUTPUT_DATA_TYPE";
+constexpr const char* const RENDER_FAILED_FAULT = "RENDER_FAILED";
+constexpr const char* const SAVE_IMAGE_EFFECT_BEHAVIOR = "SAVE_IMAGE_EFFECT";
+constexpr const char* const RESTORE_IMAGE_EFFECT_BEHAVIOR = "RESTORE_IMAGE_EFFECT";
 
 enum class EventDataType {
     PIXEL_MAP = 0,

@@ -13,51 +13,51 @@
 
 domain: IMAGE_EFFECT_UE
 
-REGISTER_CUSTOM_FILTER_STATISTIC:
-  __BASE: {type: STATISTIC, level: MINOR, desc: Collect statistics on the info of custom filter such as FilterName PixelMap, preserve: true}
+REGISTER_CUSTOM_FILTER:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Collect statistics on the info of custom filter such as FilterName PixelMap, preserve: true}
   PNAMEID: {type: STRING, desc: package name}
   PVERSIONID: {type: STRING, desc: application version}
   FILTER_NAME: {type: STRING, desc: filter name}
   SUPPORTED_FORMATS: {type: UINT32, desc: supported formats}
 
-ADD_FILTER_STATISTIC:
-  __BASE: {type: STATISTIC, level: MINOR, desc: Collect statistics on the filter usage, preserve: true}
+ADD_FILTER:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Collect statistics on the filter usage, preserve: true}
   PNAMEID: {type: STRING, desc: package name}
   PVERSIONID: {type: STRING, desc: application version}
   FILTER_NAME: {type: STRING, desc: filter name}
 
-REMOVE_FILTER_STATISTIC:
-  __BASE: {type: STATISTIC, level: MINOR, desc: Collect statistics on the filter usage, preserve: true}
+REMOVE_FILTER:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Collect statistics on the filter usage, preserve: true}
   PNAMEID: {type: STRING, desc: package name}
   PVERSIONID: {type: STRING, desc: application version}
   FILTER_NAME: {type: STRING, desc: filter name}
   FILTER_NUMBER: {type: INT32, desc: filter number}
 
-INPUT_DATA_TYPE_STATISTIC:
-  __BASE: {type: STATISTIC, level: MINOR, desc: Collect statistics on the input data type such as pixelmap surfacebuffer uri surface, preserve: true}
+INPUT_DATA_TYPE:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Collect statistics on the input data type such as pixelmap surfacebuffer uri surface, preserve: true}
   PNAMEID: {type: STRING, desc: package name}
   PVERSIONID: {type: STRING, desc: application version}
   DATA_TYPE: {type: STRING, desc: input data type such as pixelmap surfacebuffer uri surface}
 
-OUTPUT_DATA_TYPE_STATISTIC:
-  __BASE: {type: STATISTIC, level: MINOR, desc: Collect statistics on the output data type such as pixelmap surfacebuffer uri surface, preserve: true}
+OUTPUT_DATA_TYPE:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Collect statistics on the output data type such as pixelmap surfacebuffer uri surface, preserve: true}
   PNAMEID: {type: STRING, desc: package name}
   PVERSIONID: {type: STRING, desc: application version}
   DATA_TYPE: {type: STRING, desc: output data type such as pixelmap surfacebuffer uri surface}
 
-RENDER_FAILED_FAULT:
-  __BASE: {type: FAULT, level: MINOR, desc: Failure to render image such as InvalidParam, preserve: true}
+RENDER_FAILED:
+  __BASE: {type: BEHAVIOR, level: MINOR, desc: Failure to render image such as InvalidParam, preserve: true}
   PNAMEID: {type: STRING, desc: package name}
   PVERSIONID: {type: STRING, desc: application version}
   ERROR_TYPE: {type: INT32, desc: error code}
   ERROR_MSG: {type: STRING, desc: error info}
 
-SAVE_IMAGE_EFFECT_BEHAVIOR:
+SAVE_IMAGE_EFFECT:
   __BASE: {type: BEHAVIOR, level: MINOR, desc: Collect effector serialization behavior, preserve: true}
   PNAMEID: {type: STRING, desc: package name}
   PVERSIONID: {type: STRING, desc: application version}
 
-RESTORE_IMAGE_EFFECT_BEHAVIOR:
+RESTORE_IMAGE_EFFECT:
   __BASE: {type: BEHAVIOR, level: MINOR, desc: Collect effector deserialization behavior, preserve: true}
   PNAMEID: {type: STRING, desc: package name}
   PVERSIONID: {type: STRING, desc: application version}
