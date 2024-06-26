@@ -39,7 +39,7 @@ constexpr const static int G_POS = 1;
 constexpr const static int B_POS = 2;
 constexpr const static int UV_PLANE_SIZE = 2;
 
-EGLStatus RenderEnvironment::GetEGLStatus()
+EGLStatus RenderEnvironment::GetEGLStatus() const
 {
     return isEGLReady;
 }
@@ -138,7 +138,7 @@ RenderTexturePtr RenderEnvironment::RequestBuffer(int width, int height)
     return renderTex;
 }
 
-bool RenderEnvironment::IsPrepared()
+bool RenderEnvironment::IsPrepared() const
 {
     return param_->threadReady_;
 }
@@ -207,7 +207,7 @@ void RenderEnvironment::NotifyInputChanged()
     hasInputChanged = true;
 }
 
-bool RenderEnvironment::IfNeedGenMainTex()
+bool RenderEnvironment::IfNeedGenMainTex() const
 {
     return hasInputChanged;
 }
@@ -531,7 +531,7 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::GenTexEffectBuffer(std::shared_
     return out;
 }
 
-DataType RenderEnvironment::GetOutputType()
+DataType RenderEnvironment::GetOutputType() const
 {
     return outType_;
 }

@@ -34,7 +34,7 @@ public:
     virtual bool Init() = 0;
     virtual bool Release() = 0;
 
-    bool IsReady()
+    bool IsReady() const
     {
         return isReady_;
     }
@@ -49,7 +49,7 @@ public:
         tag_ = tag;
     }
 
-    std::string GetTag()
+    std::string GetTag() const
     {
         return tag_;
     }

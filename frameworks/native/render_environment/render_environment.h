@@ -160,7 +160,7 @@ public:
     void Prepare();
     void InitEngine(OHNativeWindow *window);
     void NotifyInputChanged();
-    bool IfNeedGenMainTex();
+    bool IfNeedGenMainTex() const;
     void GenMainTex(const std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &output);
     EffectBuffer *ConvertBufferToTexture(EffectBuffer *source);
     void ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output);
@@ -173,10 +173,10 @@ public:
     void ConvertRGBA2YUV(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out);
     void Draw2D2OES(RenderTexturePtr source, RenderTexturePtr output);
     void UpdateCanvas();
-    EGLStatus GetEGLStatus();
+    EGLStatus GetEGLStatus() const;
     RenderTexturePtr RequestBuffer(int width, int height);
-    bool IsPrepared();
-    DataType GetOutputType();
+    bool IsPrepared() const;
+    DataType GetOutputType() const;
     void SetOutputType(DataType type);
     void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
     void DrawSurfaceBufferFromTex(RenderTexturePtr tex, SurfaceBuffer *buffer, IEffectFormat format);

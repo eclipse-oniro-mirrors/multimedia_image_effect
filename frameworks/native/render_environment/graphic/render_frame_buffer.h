@@ -31,7 +31,7 @@ public:
     ~RenderFrameBuffer();
 
     void Resize(int width, int height);
-    RenderTexturePtr Texture();
+    RenderTexturePtr Texture() const;
     void Bind();
     void UnBind();
     int Width();

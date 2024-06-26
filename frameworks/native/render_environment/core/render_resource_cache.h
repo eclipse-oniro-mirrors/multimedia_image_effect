@@ -203,7 +203,7 @@ private:
         std::unordered_map<std::string, RenderGeneralProgram *>::iterator iter = shadersMap_.begin();
         while (iter != shadersMap_.end()) {
             iter->second->Release();
-            iter++;
+            ++iter;
         }
         shadersMap_.clear();
     }
