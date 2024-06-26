@@ -39,6 +39,8 @@ ohos_unittest("image_effect_unittest") {
     "$image_effect_root_dir/test/unittest/mock/src/mock_pixel_map.cpp",
     "$image_effect_root_dir/test/unittest/native_image_effect_unittest.cpp",
     "$image_effect_root_dir/test/unittest/utils/test_native_buffer_utils.cpp",
+    "$image_effect_root_dir/test/unittest/utils/test_pixel_map_utils.cpp",
+    
   ]
 
   deps = [
