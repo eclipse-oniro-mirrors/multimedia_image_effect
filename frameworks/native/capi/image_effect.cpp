@@ -30,6 +30,8 @@
 using namespace OHOS::Media;
 using namespace OHOS::Media::Effect;
 
+std::mutex effectMutex_;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,6 +62,7 @@ OH_ImageEffect *OH_ImageEffect_Create(const char *name)
 EFFECT_EXPORT
 OH_EffectFilter *OH_ImageEffect_AddFilter(OH_ImageEffect *imageEffect, const char *filterName)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, nullptr, "AddFilter: input parameter imageEffect is null!");
     CHECK_AND_RETURN_RET_LOG(filterName != nullptr, nullptr, "AddFilter: input parameter filterName is null!");
     EFFECT_LOGI("Add filter. name=%{public}s", filterName);
@@ -81,6 +84,7 @@ OH_EffectFilter *OH_ImageEffect_AddFilter(OH_ImageEffect *imageEffect, const cha
 EFFECT_EXPORT
 OH_EffectFilter *OH_ImageEffect_InsertFilter(OH_ImageEffect *imageEffect, uint32_t index, const char *filterName)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, nullptr, "InsertFilter: input parameter imageEffect is null!");
     CHECK_AND_RETURN_RET_LOG(filterName != nullptr, nullptr, "InsertFilter: input parameter filterName is null!");
     EFFECT_LOGI("Insert filter. name=%{public}s", filterName);
@@ -97,7 +101,8 @@ OH_EffectFilter *OH_ImageEffect_InsertFilter(OH_ImageEffect *imageEffect, uint32
         return nullptr;
     }
 
-    imageEffect->filters_.emplace_back(filter, filterName);
+    imageEffect->filters_.emplace(imageEffect->filters_.begin() + index,
+        std::pair<OH_EffectFilter *, std::string>(filter, filterName));
     EventInfo eventInfo = {
         .filterName = filterName,
     };
@@ -108,6 +113,7 @@ OH_EffectFilter *OH_ImageEffect_InsertFilter(OH_ImageEffect *imageEffect, uint32
 EFFECT_EXPORT
 int32_t OH_ImageEffect_RemoveFilter(OH_ImageEffect *imageEffect, const char *filterName)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, 0, "RemoveFilter: input parameter imageEffect is null!");
     CHECK_AND_RETURN_RET_LOG(filterName != nullptr, 0, "RemoveFilter: input parameter nativeEffect is null!");
 
@@ -447,6 +453,7 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
 EFFECT_EXPORT
 int32_t OH_ImageEffect_GetFilterCount(OH_ImageEffect *imageEffect)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, 0, "GetFilterCount: input parameter imageEffect is null!");
     return static_cast<int32_t>(imageEffect->filters_.size());
 }
@@ -454,6 +461,7 @@ int32_t OH_ImageEffect_GetFilterCount(OH_ImageEffect *imageEffect)
 EFFECT_EXPORT
 OH_EffectFilter *OH_ImageEffect_GetFilter(OH_ImageEffect *imageEffect, uint32_t index)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, nullptr, "GetFilter: input parameter imageEffect is null!");
     if (index >= static_cast<uint32_t>(imageEffect->filters_.size())) {
         EFFECT_LOGE("GetFilter: input parameter index is invalid!");
