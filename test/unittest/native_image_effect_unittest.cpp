@@ -169,6 +169,26 @@ public:
     ImageEffect_FilterDelegate delegate_ = {
         .setValue = [](OH_EffectFilter *filter, const char *key, const ImageEffect_Any *value) { return true; },
         .render = [](OH_EffectFilter *filter, OH_EffectBufferInfo *src, OH_EffectFilterDelegate_PushData pushData) {
+            void *addr = nullptr;
+            (void)OH_EffectBufferInfo_GetAddr(src, &addr);
+            int32_t width = 0;
+            (void)OH_EffectBufferInfo_GetWidth(src, &width);
+            int32_t height = 0;
+            (void)OH_EffectBufferInfo_GetHeight(src, &height);
+            int32_t rowSize = 0;
+            (void)OH_EffectBufferInfo_GetRowSize(src, &rowSize);
+            ImageEffect_Format format = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
+            (void)OH_EffectBufferInfo_GetEffectFormat(src, &format);
+            int64_t timestamp = 0;
+            (void)OH_EffectBufferInfo_GetTimestamp(src, &timestamp);
+
+            (void)OH_EffectBufferInfo_SetAddr(src, addr);
+            (void)OH_EffectBufferInfo_SetWidth(src, width);
+            (void)OH_EffectBufferInfo_SetHeight(src, height);
+            (void)OH_EffectBufferInfo_SetRowSize(src, rowSize);
+            (void)OH_EffectBufferInfo_SetEffectFormat(src, format);
+            (void)OH_EffectBufferInfo_SetTimestamp(src, timestamp);
+
             pushData(filter, src);
             return true;
         },

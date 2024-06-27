@@ -461,6 +461,32 @@ ImageEffect_ErrorCode OH_EffectBufferInfo_SetEffectFormat(OH_EffectBufferInfo *i
 ImageEffect_ErrorCode OH_EffectBufferInfo_GetEffectFormat(OH_EffectBufferInfo *info, ImageEffect_Format *format);
 
 /**
+ * @brief Set the timestamp of the image for OH_EffectBufferInfo
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param info Encapsulate OH_EffectBufferInfo structure instance pointer
+ * @param timestamp Indicates the timestamp of the image frame data for the OHNativeWindow input type.
+ * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
+ * {@link ImageEffect_ErrorCode}
+ * {@link EFFECT_ERROR_PARAM_INVALID}, the input parameter is a null pointer.
+ * @since 12
+ */
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetTimestamp(OH_EffectBufferInfo *info, int64_t timestamp);
+
+/**
+ * @brief Get the timestamp of the image from OH_EffectBufferInfo
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param info Encapsulate OH_EffectBufferInfo structure instance pointer
+ * @param timestamp Indicates the timestamp of the image frame data for the OHNativeWindow input type.
+ * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
+ * {@link ImageEffect_ErrorCode}
+ * {@link EFFECT_ERROR_PARAM_INVALID}, the input parameter is a null pointer.
+ * @since 12
+ */
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetTimestamp(OH_EffectBufferInfo *info, int64_t *timestamp);
+
+/**
  * @brief Clear the internal resources of the OH_EffectBufferInfo and destroy the OH_EffectBufferInfo instance
  *
  * @syscap SystemCapability.Multimedia.ImageEffect.Core

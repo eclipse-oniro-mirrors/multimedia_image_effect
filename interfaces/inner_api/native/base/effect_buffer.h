@@ -55,6 +55,7 @@ struct ExtraInfo {
     OHOS::SurfaceBuffer *surfaceBuffer = nullptr;
     std::string uri;
     std::string path;
+    int64_t timestamp = 0;
 };
 
 class RenderTexture;

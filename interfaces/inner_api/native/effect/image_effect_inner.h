@@ -30,10 +30,15 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
+struct SurfaceBufferInfo {
+    SurfaceBuffer *surfaceBuffer_ = nullptr;
+    int64_t timestamp_ = 0;
+};
+
 struct DataInfo {
     DataType dataType_ = DataType::UNKNOWN;
     PixelMap *pixelMap_ = nullptr;
-    SurfaceBuffer *surfaceBuffer_ = nullptr;
+    SurfaceBufferInfo surfaceBufferInfo_;
     std::string uri_;
     std::string path_;
 };

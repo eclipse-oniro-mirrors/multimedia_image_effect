@@ -149,7 +149,7 @@ ErrorCode CommonUtils::ParseNativeWindowData(std::shared_ptr<EffectBuffer> &effe
 }
 
 ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
-    std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType)
+    std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType, int64_t timestamp)
 {
     CHECK_AND_RETURN_RET_LOG(surfaceBuffer != nullptr, ErrorCode::ERR_INPUT_NULL, "surfaceBuffer is null!");
 
@@ -168,6 +168,7 @@ ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
     extraInfo->bufferType = BufferType::DMA_BUFFER;
     extraInfo->pixelMap = nullptr;
     extraInfo->surfaceBuffer = surfaceBuffer;
+    extraInfo->timestamp = timestamp;
 
     effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, surfaceBuffer->GetVirAddr(), extraInfo);
     EFFECT_LOGI("surfaceBuffer width=%{public}d, height=%{public}d, stride=%{public}d, format=%{public}d, "
