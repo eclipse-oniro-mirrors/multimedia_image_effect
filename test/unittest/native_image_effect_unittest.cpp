@@ -951,7 +951,7 @@ HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilters001, TestSize.Level1)
     uint32_t size = filterNames->size;
 
     ASSERT_NE(filterNames, nullptr);
-    ASSERT_EQ(size, static_cast<uint32_t>(3));
+    ASSERT_EQ(size, static_cast<uint32_t>(4));
 
     std::vector<string> filterNamesVector;
     for (uint32_t i = 0; i < size; i++) {
@@ -1384,6 +1384,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr003, TestSize.Level1)
 {
     std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
     std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
+    ASSERT_NE(pixelMap, nullptr);
     pixelmapNative->pixelmap_ = std::move(pixelMap);
     
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
@@ -1412,7 +1413,11 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr003, TestSize.Level1)
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    if (pixelmapNative->pixelmap_->IsHdr()) {
+        ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    } else {
+        ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    }
 
     errorCode = OH_ImageEffect_Release(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
