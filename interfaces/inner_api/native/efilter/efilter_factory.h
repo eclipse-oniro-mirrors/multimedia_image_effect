@@ -21,6 +21,7 @@
 
 #include "delegate.h"
 #include "efilter.h"
+#include "image_effect_marco_define.h"
 
 #define REGISTER_EFILTER_FACTORY(T, U) static AutoRegisterEFilter<T> gAutoRegster_##T(U)
 
@@ -43,22 +44,23 @@ public:
 
     EFilterFactory operator = (const EFilterFactory &) = delete;
 
-    static EFilterFactory *Instance();
+    IMAGE_EFFECT_EXPORT static EFilterFactory *Instance();
 
-    void RegisterFunction(const std::string &name, const EFilterFunction &function);
+    IMAGE_EFFECT_EXPORT void RegisterFunction(const std::string &name, const EFilterFunction &function);
 
-    void RegisterDelegate(const std::string &name, const std::shared_ptr<IFilterDelegate> &delegate,
+    IMAGE_EFFECT_EXPORT void RegisterDelegate(const std::string &name, const std::shared_ptr<IFilterDelegate> &delegate,
         std::shared_ptr<EffectInfo> &effectInfo);
 
-    std::shared_ptr<IFilterDelegate> GetDelegate(const std::string &name);
+    IMAGE_EFFECT_EXPORT std::shared_ptr<IFilterDelegate> GetDelegate(const std::string &name);
 
-    std::shared_ptr<EFilter> Create(const std::string &name, void *handler);
+    IMAGE_EFFECT_EXPORT std::shared_ptr<EFilter> Create(const std::string &name, void *handler);
 
     inline std::shared_ptr<EFilter> Create(const std::string &name)
     {
         return Create(name, nullptr);
     }
 
+    IMAGE_EFFECT_EXPORT
     std::shared_ptr<EFilter> Restore(const std::string &name, const nlohmann::json &root, void *handler);
 
     template <class T> void RegisterEFilter(const std::string &name)
@@ -71,9 +73,9 @@ public:
         RegisterFunction(name, function);
     }
 
-    std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name);
+    IMAGE_EFFECT_EXPORT std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name);
 
-    void GetAllEffectNames(std::vector<const char *> &names);
+    IMAGE_EFFECT_EXPORT void GetAllEffectNames(std::vector<const char *> &names);
 private:
     EFilterFactory() = default;
 

@@ -19,7 +19,7 @@
 #include <string>
 #include <atomic>
 #include <mutex>
-
+#include "image_effect_marco_define.h"
 #include "effect_log.h"
 
 namespace OHOS {
@@ -34,20 +34,20 @@ class ExternLoader {
 public:
     ~ExternLoader() = default;
 
-    static ExternLoader *Instance();
+    IMAGE_EFFECT_EXPORT static ExternLoader *Instance();
 
-    bool IsExtLoad() const;
+    IMAGE_EFFECT_EXPORT bool IsExtLoad() const;
 
-    void LoadExtSo();
+    IMAGE_EFFECT_EXPORT void LoadExtSo();
 
-    CreateImageEffectExtFunc GetCreateImageEffectExtFunc() const;
+    IMAGE_EFFECT_EXPORT CreateImageEffectExtFunc GetCreateImageEffectExtFunc() const;
 
     InitFunc GetInitFunc() const;
     DeinitFunc GetDeinitFunc() const;
     InitModuleFunc GetInitModuleFunc() const;
     DeinitModuleFunc GetDeinitModuleFunc() const;
 
-    void InitExt();
+    IMAGE_EFFECT_EXPORT void InitExt();
 private:
     ExternLoader() = default;
 

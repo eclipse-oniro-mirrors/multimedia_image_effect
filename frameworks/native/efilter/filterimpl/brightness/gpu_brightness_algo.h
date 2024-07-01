@@ -24,6 +24,7 @@
 #include "core/algorithm_program.h"
 #include "render_environment.h"
 #include "effect_context.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -38,6 +39,7 @@ public:
 using BrightnessFilterDataPtr = std::shared_ptr<BrightnessFilterData>;
 class GpuBrightnessAlgo {
 public:
+    IMAGE_EFFECT_EXPORT
     ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
         const std::shared_ptr<EffectContext> &context);
     ErrorCode Release();

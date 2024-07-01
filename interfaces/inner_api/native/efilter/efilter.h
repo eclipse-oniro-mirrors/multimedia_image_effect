@@ -25,6 +25,7 @@
 #include "efilter_base.h"
 #include "error_code.h"
 #include "nlohmann/json.hpp"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -38,39 +39,41 @@ public:
 
     explicit EFilter(const std::string &name) : EFilterBase(name) {}
 
-    ~EFilter() override = default;
+    IMAGE_EFFECT_EXPORT ~EFilter() override;
 
-    virtual ErrorCode Render(EffectBuffer *buffer, std::shared_ptr<EffectContext> &context) = 0;
+    IMAGE_EFFECT_EXPORT virtual ErrorCode Render(EffectBuffer *buffer, std::shared_ptr<EffectContext> &context) = 0;
 
-    ErrorCode Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst);
+    IMAGE_EFFECT_EXPORT ErrorCode Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst);
 
-    virtual ErrorCode PreRender(IEffectFormat &format);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode PreRender(IEffectFormat &format);
 
+    IMAGE_EFFECT_EXPORT
     virtual ErrorCode Render(EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context) = 0;
 
-    virtual ErrorCode SetValue(const std::string &key, Plugin::Any &value);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode SetValue(const std::string &key, Plugin::Any &value);
 
-    virtual ErrorCode GetValue(const std::string &key, Plugin::Any &value);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode GetValue(const std::string &key, Plugin::Any &value);
 
-    virtual ErrorCode Save(nlohmann::json &res);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode Save(nlohmann::json &res);
 
-    virtual ErrorCode Restore(const nlohmann::json &values) = 0;
+    IMAGE_EFFECT_EXPORT virtual ErrorCode Restore(const nlohmann::json &values) = 0;
 
     static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name)
     {
         return nullptr;
     }
 
-    ErrorCode PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
+    IMAGE_EFFECT_EXPORT ErrorCode PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context) override;
 
-    ErrorCode PushData(EffectBuffer *buffer, std::shared_ptr<EffectContext> &context);
+    IMAGE_EFFECT_EXPORT ErrorCode PushData(EffectBuffer *buffer, std::shared_ptr<EffectContext> &context);
 
     std::map<std::string, Plugin::Any> &GetValues()
     {
         return values_;
     }
 
+    IMAGE_EFFECT_EXPORT
     virtual std::shared_ptr<MemNegotiatedCap> Negotiate(const std::shared_ptr<MemNegotiatedCap> &input);
 protected:
     ErrorCode CalculateEFilterIPType(IEffectFormat &formatType, IPType &ipType);
@@ -78,7 +81,7 @@ protected:
     std::map<std::string, Plugin::Any> values_;
 
 private:
-    void Negotiate(const std::string &inPort, const std::shared_ptr<Capability> &capability,
+    IMAGE_EFFECT_EXPORT void Negotiate(const std::string &inPort, const std::shared_ptr<Capability> &capability,
         std::shared_ptr<EffectContext> &context) override;
     
     EffectBuffer *IpTypeConvert(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context);

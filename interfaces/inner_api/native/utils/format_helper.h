@@ -17,6 +17,7 @@
 #define IMAGE_EFFECT_FORMAT_HELPER_H
 
 #include "effect_info.h"
+#include "image_effect_marco_define.h"
 
 #define UNSIGHED_CHAR_MAX 255
 
@@ -25,9 +26,9 @@ namespace Media {
 namespace Effect {
 class FormatHelper {
 public:
-    static uint32_t CalculateDataRowCount(uint32_t height, IEffectFormat format);
-    static uint32_t CalculateRowStride(uint32_t width, IEffectFormat format);
-    static uint32_t CalculateSize(uint32_t width, uint32_t height, IEffectFormat format);
+    IMAGE_EFFECT_EXPORT static uint32_t CalculateDataRowCount(uint32_t height, IEffectFormat format);
+    IMAGE_EFFECT_EXPORT static uint32_t CalculateRowStride(uint32_t width, IEffectFormat format);
+    IMAGE_EFFECT_EXPORT static uint32_t CalculateSize(uint32_t width, uint32_t height, IEffectFormat format);
 
     static inline int Clip(int a, int aMin, int aMax)
     {

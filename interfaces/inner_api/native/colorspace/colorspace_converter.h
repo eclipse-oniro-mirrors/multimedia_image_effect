@@ -19,6 +19,7 @@
 #include "error_code.h"
 #include "effect_buffer.h"
 #include "effect_memory.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -27,14 +28,18 @@ class ColorSpaceConverter {
 public:
     ColorSpaceConverter() = default;
     ~ColorSpaceConverter();
-
+    IMAGE_EFFECT_EXPORT
     ErrorCode ComposeHdrImage(const EffectBuffer *inputSdr, const SurfaceBuffer *inputGainmap, EffectBuffer *outputHdr);
+
+    IMAGE_EFFECT_EXPORT
     ErrorCode DecomposeHdrImage(const EffectBuffer *inputHdr, std::shared_ptr<EffectBuffer> &outputSdr,
         SurfaceBuffer **outputGainmap);
-    ErrorCode ProcessHdrImage(const EffectBuffer *inputHdr, std::shared_ptr<EffectBuffer> &outputSdr);
-    std::shared_ptr<MemoryData> GetMemoryData(SurfaceBuffer *sb);
 
-    static ErrorCode ApplyColorSpace(EffectBuffer *effectBuffer, EffectColorSpace targetColorSpace);
+    IMAGE_EFFECT_EXPORT
+    ErrorCode ProcessHdrImage(const EffectBuffer *inputHdr, std::shared_ptr<EffectBuffer> &outputSdr);
+    IMAGE_EFFECT_EXPORT std::shared_ptr<MemoryData> GetMemoryData(SurfaceBuffer *sb);
+
+    IMAGE_EFFECT_EXPORT static ErrorCode ApplyColorSpace(EffectBuffer *effectBuffer, EffectColorSpace targetColorSpace);
 private:
     static int32_t CreateVpeColorSpaceInstance();
     static void DestroyVpeColorSpaceInstance(int32_t vpeColorSpaceInstance);

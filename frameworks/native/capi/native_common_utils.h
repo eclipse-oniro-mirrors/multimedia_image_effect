@@ -24,6 +24,7 @@
 #include "image_effect_filter.h"
 #include "image_type.h"
 #include "pixel_map_napi.h"
+#include "image_effect_marco_define.h"
 
 #define EFFECT_EXPORT __attribute__((visibility("default")))
 
@@ -32,9 +33,9 @@ namespace Media {
 namespace Effect {
 class NativeCommonUtils {
 public:
-    static ErrorCode ParseOHAny(const ImageEffect_Any *value, Plugin::Any &any);
+    IMAGE_EFFECT_EXPORT static ErrorCode ParseOHAny(const ImageEffect_Any *value, Plugin::Any &any);
 
-    static ErrorCode SwitchToOHAny(const Plugin::Any &any, ImageEffect_Any *value);
+    IMAGE_EFFECT_EXPORT static ErrorCode SwitchToOHAny(const Plugin::Any &any, ImageEffect_Any *value);
 
     static void SwitchToOHFormatType(const IEffectFormat &formatType, ImageEffect_Format &ohFormatType);
 
@@ -42,7 +43,7 @@ public:
 
     static void SwitchToOHEffectInfo(const EffectInfo *effectInfo, OH_EffectFilterInfo *ohFilterInfo);
 
-    static PixelMap *GetPixelMapFromOHPixelmap(OH_PixelmapNative *pixelmapNative);
+    IMAGE_EFFECT_EXPORT static PixelMap *GetPixelMapFromOHPixelmap(OH_PixelmapNative *pixelmapNative);
 
     static void ParseLookupKey(std::string &key, std::vector<const char *> &matchEFilter);
 

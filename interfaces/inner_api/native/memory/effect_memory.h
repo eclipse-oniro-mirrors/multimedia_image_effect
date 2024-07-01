@@ -22,6 +22,7 @@
 #include "error_code.h"
 #include "surface_buffer.h"
 #include "effect_buffer.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -106,7 +107,7 @@ private:
 
 class EffectMemory {
 public:
-    static std::unique_ptr<AbsMemory> CreateMemory(BufferType type);
+    IMAGE_EFFECT_EXPORT static std::unique_ptr<AbsMemory> CreateMemory(BufferType type);
 };
 
 } // namespace Effect

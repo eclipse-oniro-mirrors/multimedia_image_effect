@@ -21,6 +21,7 @@
 #include "effect_info.h"
 #include "effect_buffer.h"
 #include "effect_memory.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -32,12 +33,12 @@ struct CopyInfo {
 
 class MemcpyHelper {
 public:
-    static void CopyData(CopyInfo &src, CopyInfo &dst);
-    static void CopyData(EffectBuffer *src, EffectBuffer *dst);
-    static void CopyData(EffectBuffer *src, CopyInfo &dst);
-    static void CopyData(CopyInfo &src, EffectBuffer *dst);
-    static void CopyData(EffectBuffer *buffer, MemoryData *memoryData);
-    static void CopyData(MemoryData *src, MemoryData *dst);
+    IMAGE_EFFECT_EXPORT static void CopyData(CopyInfo &src, CopyInfo &dst);
+    IMAGE_EFFECT_EXPORT static void CopyData(EffectBuffer *src, EffectBuffer *dst);
+    IMAGE_EFFECT_EXPORT static void CopyData(EffectBuffer *src, CopyInfo &dst);
+    IMAGE_EFFECT_EXPORT static void CopyData(CopyInfo &src, EffectBuffer *dst);
+    IMAGE_EFFECT_EXPORT static void CopyData(EffectBuffer *buffer, MemoryData *memoryData);
+    IMAGE_EFFECT_EXPORT static void CopyData(MemoryData *src, MemoryData *dst);
 };
 } // namespace Effect
 } // namespace Media

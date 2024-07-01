@@ -19,6 +19,7 @@
 #include "effect_memory.h"
 #include "error_code.h"
 #include "effect_buffer.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -41,20 +42,20 @@ public:
     EffectMemoryManager() = default;
     ~EffectMemoryManager() = default;
 
-    ErrorCode Init(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
+    IMAGE_EFFECT_EXPORT ErrorCode Init(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
         const std::shared_ptr<EffectBuffer> &dstEffectBuffer);
-    void SetIPType(IPType ipType);
+    IMAGE_EFFECT_EXPORT void SetIPType(IPType ipType);
 
-    MemoryData *AllocMemory(void *srcAddr, MemoryInfo &allocMemInfo);
-    std::shared_ptr<Memory> GetAllocMemoryByAddr(void *addr);
+    IMAGE_EFFECT_EXPORT MemoryData *AllocMemory(void *srcAddr, MemoryInfo &allocMemInfo);
+    IMAGE_EFFECT_EXPORT std::shared_ptr<Memory> GetAllocMemoryByAddr(void *addr);
 
-    std::shared_ptr<Memory> GetMemoryByAddr(void *addr);
-    void AddMemory(std::shared_ptr<Memory> &memory);
-    void RemoveMemory(std::shared_ptr<Memory> &memory);
+    IMAGE_EFFECT_EXPORT std::shared_ptr<Memory> GetMemoryByAddr(void *addr);
+    IMAGE_EFFECT_EXPORT void AddMemory(std::shared_ptr<Memory> &memory);
+    IMAGE_EFFECT_EXPORT void RemoveMemory(std::shared_ptr<Memory> &memory);
 
-    void ClearMemory();
+    IMAGE_EFFECT_EXPORT void ClearMemory();
 
-    void Deinit();
+    IMAGE_EFFECT_EXPORT void Deinit();
 private:
     void AddFilterMemory(const std::shared_ptr<EffectBuffer> &effectBuffer, MemDataType memDataType,
         bool isAllowModify);
