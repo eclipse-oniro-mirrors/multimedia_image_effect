@@ -29,7 +29,7 @@ public:
         static const std::string KEY_REGION;
     };
 
-    IMAGE_EFFECT_EXPORT explicit CropEFilter(const std::string &name) : EFilter(name) {}
+    IMAGE_EFFECT_EXPORT explicit CropEFilter(const std::string &name);
 
     ~CropEFilter() override = default;
 

@@ -45,6 +45,8 @@ struct Region {
     int32_t height;
 };
 
+CropEFilter::CropEFilter(const std::string &name) : EFilter(name) {}
+
 void CalculateCropRegion(int32_t srcWidth, int32_t srcHeight, std::map<std::string, Plugin::Any> &values,
     Region *region)
 {
