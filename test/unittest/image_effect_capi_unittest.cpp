@@ -1370,15 +1370,25 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest001, TestSize
 
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
-    value.dataValue.floatValue = 100.f;
+    value.dataValue.floatValue = 200.f;
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectStandardFilterUnittest001 OH_EffectFilter_SetValue failed";
 
+    ImageEffect_Any result;
+    errorCode = OH_EffectFilter_GetValue(filter, KEY_FILTER_INTENSITY, &result);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_EffectFilter_GetValue failed";
+    ASSERT_EQ(result.dataType, ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT) <<
+        "OH_EffectFilter_GetValue dataType failed";
+    ASSERT_EQ(result.dataValue.floatValue, 100.f) << "OH_EffectFilter_GetValue dataValue failed";
+
     errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectStandardFilterUnittest001 OH_ImageEffect_SetInputPixelmap failed";
-    errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, pixelmapNative_);
+        
+    std::shared_ptr<PixelMap> outputPixelmap = std::make_shared<MockPixelMap>();
+    std::shared_ptr<OH_PixelmapNative> outputPixelmapNative = std::make_shared<OH_PixelmapNative>(outputPixelmap);
+    errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, outputPixelmapNative.get());
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectStandardFilterUnittest001 OH_ImageEffect_SetOutputPixelmap failed";
 
@@ -2309,9 +2319,15 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest005, TestSize
 
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
-    value.dataValue.floatValue = 100.f;
+    value.dataValue.floatValue = 200.f;
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    ImageEffect_Any result;
+    errorCode = OH_EffectFilter_GetValue(filter, KEY_FILTER_INTENSITY, &result);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_EQ(result.dataType, ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT);
+    ASSERT_EQ(result.dataValue.floatValue, 100.f);
 
     char *imageEffectInfo = nullptr;
     errorCode = OH_ImageEffect_Save(imageEffect, &imageEffectInfo);
@@ -2327,6 +2343,11 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest005, TestSize
     ASSERT_NE(imageEffect, nullptr);
 
     errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    std::shared_ptr<PixelMap> outputPixelmap = std::make_shared<MockPixelMap>();
+    std::shared_ptr<OH_PixelmapNative> outputPixelmapNative = std::make_shared<OH_PixelmapNative>(outputPixelmap);
+    errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, outputPixelmapNative.get());
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);
