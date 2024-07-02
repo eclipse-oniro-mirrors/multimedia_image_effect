@@ -17,7 +17,7 @@
 #define IMAGE_EFFECT_COLORSPACE_MANAGER_H
 
 #include <memory>
-
+#include "image_effect_marco_define.h"
 #include "colorspace_strategy.h"
 
 namespace OHOS {
@@ -28,16 +28,18 @@ public:
     ColorSpaceManager();
     ~ColorSpaceManager() = default;
 
-    static bool IsNeedConvertColorSpace(EffectColorSpace colorSpace);
-    static bool IsSupportedColorSpace(EffectColorSpace colorSpace);
-    static std::unordered_set<EffectColorSpace> GetAllSupportedColorSpaces();
+    IMAGE_EFFECT_EXPORT static bool IsNeedConvertColorSpace(EffectColorSpace colorSpace);
+    IMAGE_EFFECT_EXPORT static bool IsSupportedColorSpace(EffectColorSpace colorSpace);
+    IMAGE_EFFECT_EXPORT static std::unordered_set<EffectColorSpace> GetAllSupportedColorSpaces();
 
-    void Init(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst);
-    ErrorCode ApplyColorSpace(EffectBuffer *effectBuffer, const EffectColorSpace &colorSpace,
+    IMAGE_EFFECT_EXPORT void Init(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst);
+    IMAGE_EFFECT_EXPORT ErrorCode ApplyColorSpace(EffectBuffer *effectBuffer, const EffectColorSpace &colorSpace,
         EffectColorSpace &outputColorSpace);
+
+    IMAGE_EFFECT_EXPORT
     ErrorCode ChooseColorSpace(const std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace,
         const EffectColorSpace &srcRealColorSpace, EffectColorSpace &outputColorSpace);
-    void Deinit();
+    IMAGE_EFFECT_EXPORT void Deinit();
 private:
     std::shared_ptr<ColorSpaceStrategy> strategy_;
 };

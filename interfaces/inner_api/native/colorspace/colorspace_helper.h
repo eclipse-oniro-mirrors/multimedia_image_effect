@@ -25,34 +25,40 @@
 #include "v1_0/cm_color_space.h"
 #include "effect_buffer.h"
 #include "effect_context.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 class ColorSpaceHelper {
 public:
-    static bool IsHdrColorSpace(EffectColorSpace colorSpace);
+    IMAGE_EFFECT_EXPORT static bool IsHdrColorSpace(EffectColorSpace colorSpace);
 
+    IMAGE_EFFECT_EXPORT
     static EffectColorSpace ConvertToEffectColorSpace(OHOS::ColorManager::ColorSpaceName colorSpaceName);
-    static OHOS::ColorManager::ColorSpaceName ConvertToColorSpaceName(EffectColorSpace colorSpace);
-    static EffectColorSpace ConvertToEffectColorSpace(
+    IMAGE_EFFECT_EXPORT static OHOS::ColorManager::ColorSpaceName ConvertToColorSpaceName(EffectColorSpace colorSpace);
+    IMAGE_EFFECT_EXPORT static EffectColorSpace ConvertToEffectColorSpace(
         OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType type);
-    static OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType ConvertToCMColorSpace(
+    IMAGE_EFFECT_EXPORT static OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType ConvertToCMColorSpace(
         EffectColorSpace colorSpace);
-    static ErrorCode SetSurfaceBufferMetadataType(SurfaceBuffer *sb,
+    IMAGE_EFFECT_EXPORT static ErrorCode SetSurfaceBufferMetadataType(SurfaceBuffer *sb,
         const OHOS::HDI::Display::Graphic::Common::V1_0::CM_HDR_Metadata_Type &type);
-    static ErrorCode GetSurfaceBufferMetadataType(SurfaceBuffer *sb,
+    IMAGE_EFFECT_EXPORT static ErrorCode GetSurfaceBufferMetadataType(SurfaceBuffer *sb,
         OHOS::HDI::Display::Graphic::Common::V1_0::CM_HDR_Metadata_Type &type);
-    static ErrorCode SetSurfaceBufferColorSpaceType(SurfaceBuffer *sb,
+    IMAGE_EFFECT_EXPORT static ErrorCode SetSurfaceBufferColorSpaceType(SurfaceBuffer *sb,
         const OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType &type);
-    static ErrorCode GetSurfaceBufferColorSpaceType(SurfaceBuffer *sb,
+    IMAGE_EFFECT_EXPORT static ErrorCode GetSurfaceBufferColorSpaceType(SurfaceBuffer *sb,
         OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType &type);
+
+    IMAGE_EFFECT_EXPORT
     static ErrorCode SetHDRDynamicMetadata(SurfaceBuffer *sb, const std::vector<uint8_t> &hdrDynamicMetadata);
+
+    IMAGE_EFFECT_EXPORT
     static ErrorCode SetHDRStaticMetadata(SurfaceBuffer *sb, const std::vector<uint8_t> &hdrStaticMetadata);
 
-    static ErrorCode UpdateMetadata(EffectBuffer *input);
-    static ErrorCode UpdateMetadata(SurfaceBuffer *input, const EffectColorSpace &colorSpace);
-    static ErrorCode ConvertColorSpace(std::shared_ptr<EffectBuffer> &srcBuffer,
+    IMAGE_EFFECT_EXPORT static ErrorCode UpdateMetadata(EffectBuffer *input);
+    IMAGE_EFFECT_EXPORT static ErrorCode UpdateMetadata(SurfaceBuffer *input, const EffectColorSpace &colorSpace);
+    IMAGE_EFFECT_EXPORT static ErrorCode ConvertColorSpace(std::shared_ptr<EffectBuffer> &srcBuffer,
         std::shared_ptr<EffectContext> &context);
 };
 } // namespace Effect

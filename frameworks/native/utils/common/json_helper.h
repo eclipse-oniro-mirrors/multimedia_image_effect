@@ -21,16 +21,26 @@
 #include "effect_log.h"
 #include "error_code.h"
 #include "nlohmann/json.hpp"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 class JsonHelper final {
 public:
+    IMAGE_EFFECT_EXPORT
     static ErrorCode CheckElementExitstence(const nlohmann::json &jsonObject, const std::string &key);
+
+    IMAGE_EFFECT_EXPORT
     static ErrorCode GetStringValue(const nlohmann::json &jsonObject, const std::string &key, std::string &value);
+
+    IMAGE_EFFECT_EXPORT
     static ErrorCode GetFloatValue(const nlohmann::json &jsonObject, const std::string &key, float &value);
+
+    IMAGE_EFFECT_EXPORT
     static ErrorCode GetInt32Value(const nlohmann::json &jsonObject, const std::string &key, int32_t &value);
+
+    IMAGE_EFFECT_EXPORT
     static ErrorCode GetArray(const nlohmann::json &jsonObject, const std::string &key, nlohmann::json &value);
 
 private:

@@ -26,6 +26,7 @@
 #include "surface.h"
 #include "pixel_map.h"
 #include "render_thread.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -40,54 +41,54 @@ struct DataInfo {
 
 class ImageEffect : public Effect {
 public:
-    ImageEffect(const char *name = nullptr);
-    ~ImageEffect();
+    IMAGE_EFFECT_EXPORT ImageEffect(const char *name = nullptr);
+    IMAGE_EFFECT_EXPORT ~ImageEffect();
 
-    void AddEFilter(const std::shared_ptr<EFilter> &effect) override;
+    IMAGE_EFFECT_EXPORT void AddEFilter(const std::shared_ptr<EFilter> &effect) override;
 
-    ErrorCode InsertEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index) override;
+    IMAGE_EFFECT_EXPORT ErrorCode InsertEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index) override;
 
-    void RemoveEFilter(const std::shared_ptr<EFilter> &efilter) override;
+    IMAGE_EFFECT_EXPORT void RemoveEFilter(const std::shared_ptr<EFilter> &efilter) override;
 
-    virtual ErrorCode SetInputPixelMap(PixelMap *pixelMap);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode SetInputPixelMap(PixelMap *pixelMap);
 
-    ErrorCode Start() override;
+    IMAGE_EFFECT_EXPORT ErrorCode Start() override;
 
-    ErrorCode Save(nlohmann::json &res) override;
+    IMAGE_EFFECT_EXPORT ErrorCode Save(nlohmann::json &res) override;
 
-    static std::shared_ptr<ImageEffect> Restore(std::string &info);
+    IMAGE_EFFECT_EXPORT static std::shared_ptr<ImageEffect> Restore(std::string &info);
 
-    virtual ErrorCode SetOutputPixelMap(PixelMap *pixelMap);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode SetOutputPixelMap(PixelMap *pixelMap);
 
-    virtual ErrorCode SetOutputSurface(sptr<Surface> &surface);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode SetOutputSurface(sptr<Surface> &surface);
 
-    virtual ErrorCode SetOutNativeWindow(OHNativeWindow *nativeWindow);
-    sptr<Surface> GetInputSurface();
+    IMAGE_EFFECT_EXPORT virtual ErrorCode SetOutNativeWindow(OHNativeWindow *nativeWindow);
+    IMAGE_EFFECT_EXPORT sptr<Surface> GetInputSurface();
 
-    virtual ErrorCode Configure(const std::string &key, const Plugin::Any &value);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode Configure(const std::string &key, const Plugin::Any &value);
 
-    void Stop();
+    IMAGE_EFFECT_EXPORT void Stop();
 
-    ErrorCode SetInputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer);
+    IMAGE_EFFECT_EXPORT ErrorCode SetInputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer);
 
-    ErrorCode SetOutputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer);
+    IMAGE_EFFECT_EXPORT ErrorCode SetOutputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer);
 
-    ErrorCode SetInputUri(const std::string &uri);
+    IMAGE_EFFECT_EXPORT ErrorCode SetInputUri(const std::string &uri);
 
-    ErrorCode SetOutputUri(const std::string &uri);
+    IMAGE_EFFECT_EXPORT ErrorCode SetOutputUri(const std::string &uri);
 
-    ErrorCode SetInputPath(const std::string &path);
+    IMAGE_EFFECT_EXPORT ErrorCode SetInputPath(const std::string &path);
 
-    ErrorCode SetOutputPath(const std::string &path);
+    IMAGE_EFFECT_EXPORT ErrorCode SetOutputPath(const std::string &path);
 
-    ErrorCode SetExtraInfo(nlohmann::json res);
+    IMAGE_EFFECT_EXPORT ErrorCode SetExtraInfo(nlohmann::json res);
 
 protected:
-    virtual ErrorCode Render();
+    IMAGE_EFFECT_EXPORT virtual ErrorCode Render();
 
-    static void ClearDataInfo(DataInfo &dataInfo);
+    IMAGE_EFFECT_EXPORT static void ClearDataInfo(DataInfo &dataInfo);
 
-    static ErrorCode ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectBuffer> &effectBuffer,
+    IMAGE_EFFECT_EXPORT static ErrorCode ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectBuffer> &effectBuffer,
         bool isOutputData);
 
     DataInfo inDateInfo_;
@@ -104,6 +105,7 @@ private:
 
     void DestroyEGLEnv();
 
+    IMAGE_EFFECT_EXPORT
     void ConsumerBufferAvailable(sptr<SurfaceBuffer> &buffer, const OHOS::Rect &damages, int64_t timestamp);
     void UpdateProducerSurfaceInfo();
 

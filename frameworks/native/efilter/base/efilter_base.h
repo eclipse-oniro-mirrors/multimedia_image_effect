@@ -23,16 +23,13 @@ namespace Media {
 namespace Effect {
 class EFilterBase : public FilterBase {
 public:
-    explicit EFilterBase(const std::string &name) : FilterBase(name)
-    {
-        filterType_ = FilterType::IMAGE_EFFECT;
-    }
+    IMAGE_EFFECT_EXPORT explicit EFilterBase(const std::string &name);
 
     ~EFilterBase() override = default;
 
-    std::vector<WorkMode> GetWorkModes() override;
+    IMAGE_EFFECT_EXPORT std::vector<WorkMode> GetWorkModes() override;
 
-    ErrorCode PullData(const std::string &outPort, std::shared_ptr<EffectBuffer> &data) override;
+    IMAGE_EFFECT_EXPORT ErrorCode PullData(const std::string &outPort, std::shared_ptr<EffectBuffer> &data) override;
 };
 } // namespace Effect
 } // namespace Media

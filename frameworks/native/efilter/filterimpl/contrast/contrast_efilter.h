@@ -18,6 +18,7 @@
 
 #include "efilter.h"
 #include "gpu_contrast_algo.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -30,7 +31,7 @@ public:
         static const std::string KEY_INTENSITY;
     };
 
-    explicit ContrastEFilter(const std::string &name);
+    IMAGE_EFFECT_EXPORT explicit ContrastEFilter(const std::string &name);
 
     ~ContrastEFilter() override;
 
@@ -42,7 +43,7 @@ public:
 
     ErrorCode Restore(const nlohmann::json &values) override;
 
-    static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name);
+    IMAGE_EFFECT_EXPORT static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name);
 
     ErrorCode PreRender(IEffectFormat &format) override;
 private:

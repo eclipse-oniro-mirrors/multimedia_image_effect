@@ -17,7 +17,7 @@
 #define IE_PIPELINE_CORE_FILTER_BASE_H
 
 #include <atomic>
-
+#include "image_effect_marco_define.h"
 #include "filter.h"
 #include "filter_type.h"
 
@@ -32,11 +32,11 @@ public:
 
     ~FilterBase() override;
 
-    void Initialize(EventReceiver *receiver) override;
+    IMAGE_EFFECT_EXPORT void Initialize(EventReceiver *receiver) override;
 
-    PInPort GetInPort(const std::string &name) override;
+    IMAGE_EFFECT_EXPORT PInPort GetInPort(const std::string &name) override;
 
-    POutPort GetOutPort(const std::string &name) override;
+    IMAGE_EFFECT_EXPORT POutPort GetOutPort(const std::string &name) override;
 
     const std::string &GetName() override
     {
@@ -61,9 +61,9 @@ public:
         return eventReceiver_;
     }
 
-    ErrorCode Prepare() override;
+    IMAGE_EFFECT_EXPORT ErrorCode Prepare() override;
 
-    ErrorCode Start() override;
+    IMAGE_EFFECT_EXPORT ErrorCode Start() override;
 
     ErrorCode SetParameter(int32_t key, const Media::Plugin::Any &value) override
     {
@@ -75,19 +75,19 @@ public:
         return ErrorCode::ERR_UNIMPLEMENTED;
     }
 
-    void UnlinkPrevFilters() override;
+    IMAGE_EFFECT_EXPORT void UnlinkPrevFilters() override;
 
-    std::vector<Filter *> GetNextFilters() override;
+    IMAGE_EFFECT_EXPORT std::vector<Filter *> GetNextFilters() override;
 
-    std::vector<Filter *> GetPreFilters() override;
+    IMAGE_EFFECT_EXPORT std::vector<Filter *> GetPreFilters() override;
 
     // Port调用此方法向Filter报告事件
-    void OnEvent(const Event &event) override;
+    IMAGE_EFFECT_EXPORT void OnEvent(const Event &event) override;
 
     template <typename T> static T FindPort(const std::vector<T> &ports, const std::string &name);
 
 protected:
-    virtual void InitPorts();
+    IMAGE_EFFECT_EXPORT virtual void InitPorts();
 
     std::string NamePort(const std::string &mime);
 

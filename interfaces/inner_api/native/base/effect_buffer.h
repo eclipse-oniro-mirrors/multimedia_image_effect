@@ -17,7 +17,7 @@
 #define IMAGE_EFFECT_EFFECT_BUFFER_H
 
 #include <memory>
-
+#include "image_effect_marco_define.h"
 #include "effect_info.h"
 #include "effect_type.h"
 #include "pixel_map.h"
@@ -61,6 +61,7 @@ class RenderTexture;
 using RenderTexturePtr = std::shared_ptr<RenderTexture>;
 class EffectBuffer {
 public:
+    IMAGE_EFFECT_EXPORT
     EffectBuffer(std::shared_ptr<BufferInfo> &info, void *buffer, std::shared_ptr<ExtraInfo> &extraInfo)
         : bufferInfo_(info), buffer_(buffer), extraInfo_(extraInfo) {};
 

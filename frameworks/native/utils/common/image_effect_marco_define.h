@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,31 +13,17 @@
  * limitations under the License.
  */
 
-#include "efilter_base.h"
-
-#include "effect_log.h"
-#include "filter_factory.h"
+#ifndef IMAGE_EFFECT_IMAGE_EFFECT_MARCO_DEFINE_H
+#define IMAGE_EFFECT_IMAGE_EFFECT_MARCO_DEFINE_H
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 
-EFilterBase::EFilterBase(const std::string &name) : FilterBase(name)
-{
-    filterType_ = FilterType::IMAGE_EFFECT;
-}
+#define IMAGE_EFFECT_EXPORT __attribute__((visibility ("default")))
 
-std::vector<WorkMode> EFilterBase::GetWorkModes()
-{
-    return FilterBase::GetWorkModes();
-}
+} // namespace Effect
+} // namespace Media
+} // namespace OHOS
 
-ErrorCode EFilterBase::PullData(const std::string &outPort, std::shared_ptr<EffectBuffer> &data)
-{
-    EFFECT_LOGI("PullData, set sinkBuffer");
-    sinkBuffer_ = data;
-    return ErrorCode::SUCCESS;
-}
-}
-}
-}
+#endif // IMAGE_EFFECT_IMAGE_EFFECT_MARCO_DEFINE_H

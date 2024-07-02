@@ -30,6 +30,8 @@ namespace OHOS {
 namespace Media {
 namespace Effect {
 const std::string EFilter::Parameter::KEY_DEFAULT_VALUE = "default_value";
+EFilter::~EFilter() {}
+
 ErrorCode EFilter::SetValue(const std::string &key, Plugin::Any &value)
 {
     auto it = values_.find(key);

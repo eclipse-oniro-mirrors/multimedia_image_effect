@@ -29,6 +29,7 @@
 #include "surface.h"
 #include "effect_memory_manager.h"
 #include "effect_context.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -36,13 +37,13 @@ namespace Effect {
 class CommonUtils {
 public:
     static const int32_t RGBA_BYTES_PER_PIXEL = 4;
-    static ErrorCode LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
+    IMAGE_EFFECT_EXPORT static ErrorCode LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
     static ErrorCode ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
         std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType);
     static std::string UrlToPath(const std::string &url);
     static ErrorCode ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData);
     static ErrorCode ParsePath(std::string &path, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData);
-    static void UnlockPixelMap(const PixelMap *pixelMap);
+    IMAGE_EFFECT_EXPORT static void UnlockPixelMap(const PixelMap *pixelMap);
     static ErrorCode ParseAnyToJson(Plugin::Any &any, nlohmann::json &result);
     static bool EndsWithJPG(const std::string &input);
     static ErrorCode ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,

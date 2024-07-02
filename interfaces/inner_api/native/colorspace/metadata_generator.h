@@ -18,6 +18,7 @@
 
 #include "error_code.h"
 #include "surface_buffer.h"
+#include "image_effect_marco_define.h"
 
 #define VPE_INVALID_INSTANCE_ID (-1)
 
@@ -29,7 +30,7 @@ public:
     MetadataGenerator() = default;
     ~MetadataGenerator();
 
-    ErrorCode ProcessImage(SurfaceBuffer *inputImage);
+    IMAGE_EFFECT_EXPORT ErrorCode ProcessImage(SurfaceBuffer *inputImage);
 private:
     int32_t GetVpeMetadataGeneratorInstance();
 

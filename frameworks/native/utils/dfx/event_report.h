@@ -18,6 +18,7 @@
 
 #include <string>
 #include <unordered_map>
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -53,7 +54,7 @@ struct EventInfo {
 
 class EventReport {
 public:
-    static void ReportHiSysEvent(const std::string &eventName, const EventInfo &eventInfo);
+    IMAGE_EFFECT_EXPORT static void ReportHiSysEvent(const std::string &eventName, const EventInfo &eventInfo);
 
 private:
     static void ReportRegisterCustomFilterEvent(const EventInfo &eventInfo);

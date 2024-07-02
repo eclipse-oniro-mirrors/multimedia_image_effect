@@ -23,6 +23,7 @@
 #include "effect_info.h"
 #include "nlohmann/json.hpp"
 #include "effect_context.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -31,18 +32,19 @@ class IFilterDelegate {
 public:
     virtual ~IFilterDelegate() = default;
 
-    virtual bool Render(void *efilter, EffectBuffer *src, EffectBuffer *dst,
+    IMAGE_EFFECT_EXPORT virtual bool Render(void *efilter, EffectBuffer *src, EffectBuffer *dst,
         std::shared_ptr<EffectContext> &context) = 0;
 
+    IMAGE_EFFECT_EXPORT
     virtual bool Render(void *efilter, EffectBuffer *src, std::shared_ptr<EffectContext> &context) = 0;
 
-    virtual bool SetValue(void *efilter, const std::string &key, const Plugin::Any &value) = 0;
+    IMAGE_EFFECT_EXPORT virtual bool SetValue(void *efilter, const std::string &key, const Plugin::Any &value) = 0;
 
-    virtual bool Save(void *efilter, nlohmann::json &res) = 0;
+    IMAGE_EFFECT_EXPORT virtual bool Save(void *efilter, nlohmann::json &res) = 0;
 
-    virtual void *Restore(const nlohmann::json &values) = 0;
+    IMAGE_EFFECT_EXPORT virtual void *Restore(const nlohmann::json &values) = 0;
 
-    virtual void *GetEffectInfo() = 0;
+    IMAGE_EFFECT_EXPORT virtual void *GetEffectInfo() = 0;
 };
 } // namespace Effect
 } // namespace Media
