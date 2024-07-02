@@ -30,7 +30,9 @@
 using namespace OHOS::Media;
 using namespace OHOS::Media::Effect;
 
-std::mutex effectMutex_;
+namespace {
+    std::mutex effectMutex_;
+}
 
 #ifdef __cplusplus
 extern "C" {
