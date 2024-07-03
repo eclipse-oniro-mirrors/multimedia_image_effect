@@ -93,6 +93,7 @@ public:
         srcBuffer->height = src->bufferInfo_->height_;
         srcBuffer->rowSize = src->bufferInfo_->rowStride_;
         NativeCommonUtils::SwitchToOHFormatType(src->bufferInfo_->formatType_, srcBuffer->format);
+        srcBuffer->timestamp = src->extraInfo_->timestamp;
 
         OH_EffectFilter *ohEFilter = (OH_EffectFilter *)efilter;
         CHECK_AND_RETURN_RET_LOG(ohEFilter != nullptr && ohEFilter->filter_ != nullptr, false,
@@ -506,6 +507,28 @@ ImageEffect_ErrorCode OH_EffectBufferInfo_GetEffectFormat(OH_EffectBufferInfo *i
         "BufferInfoGetEffectFormat: input parameter format is null!");
 
     *format = info->format;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+}
+
+EFFECT_EXPORT
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetTimestamp(OH_EffectBufferInfo *info, int64_t timestamp)
+{
+    CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "BufferInfoSetTimestamp: input parameter info is null!");
+    EFFECT_LOGD("BufferInfoSetTimestamp: timestamp=%{public}lld", static_cast<long long>(timestamp));
+    info->timestamp = timestamp;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+}
+
+EFFECT_EXPORT
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetTimestamp(OH_EffectBufferInfo *info, int64_t *timestamp)
+{
+    CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "BufferInfoGetTimestamp: input parameter info is null!");
+    CHECK_AND_RETURN_RET_LOG(timestamp != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "BufferInfoGetTimestamp: input parameter timestamp is null!");
+
+    *timestamp = info->timestamp;
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 

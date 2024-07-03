@@ -39,7 +39,7 @@ public:
     static const int32_t RGBA_BYTES_PER_PIXEL = 4;
     IMAGE_EFFECT_EXPORT static ErrorCode LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
     static ErrorCode ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
-        std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType);
+        std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType, int64_t timestamp = 0);
     static std::string UrlToPath(const std::string &url);
     static ErrorCode ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData);
     static ErrorCode ParsePath(std::string &path, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData);

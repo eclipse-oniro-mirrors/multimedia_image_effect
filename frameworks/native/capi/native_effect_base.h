@@ -70,6 +70,7 @@ struct OH_EffectBufferInfo {
     int32_t height = 0;
     int32_t rowSize = 0;
     ImageEffect_Format format = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
+    int64_t timestamp = 0;
 };
 
 #endif // IMAGE_EFFECT_NATIVE_BASE_H

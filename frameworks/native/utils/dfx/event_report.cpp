@@ -36,7 +36,7 @@ const std::string DEFAULT_PACKAGE_NAME = "entry";
 const std::string DEFAULT_VERSION_ID = "1";
 const std::string PROC_SELF_CMDLINE_PATH = "/proc/self/cmdline";
 }
-    
+
 std::unordered_map<std::string, void (*)(const EventInfo &eventInfo)> EventReport::sysEventFuncMap_ = {
     { REGISTER_CUSTOM_FILTER_STATISTIC, [](const EventInfo &eventInfo) {
         ReportRegisterCustomFilterEvent(eventInfo);

@@ -400,7 +400,7 @@ ErrorCode ImageEffect::SetInputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer)
 
     ClearDataInfo(inDateInfo_);
     inDateInfo_.dataType_ = DataType::SURFACE_BUFFER;
-    inDateInfo_.surfaceBuffer_ = surfaceBuffer;
+    inDateInfo_.surfaceBufferInfo_.surfaceBuffer_ = surfaceBuffer;
 
     return ErrorCode::SUCCESS;
 }
@@ -414,7 +414,7 @@ ErrorCode ImageEffect::SetOutputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer
     }
 
     outDateInfo_.dataType_ = DataType::SURFACE_BUFFER;
-    outDateInfo_.surfaceBuffer_ = surfaceBuffer;
+    outDateInfo_.surfaceBufferInfo_.surfaceBuffer_ = surfaceBuffer;
 
     return ErrorCode::SUCCESS;
 }
@@ -683,7 +683,7 @@ void ImageEffect::UpdateProducerSurfaceInfo()
 
 void ImageEffect::ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer)
 {
-    inDateInfo_.surfaceBuffer_ = buffer;
+    inDateInfo_.surfaceBufferInfo_.surfaceBuffer_ = buffer;
     GraphicTransformType transform = impl_->surfaceAdapter_->GetTransform();
     buffer->SetSurfaceBufferTransform(transform);
     if (impl_->effectState_ == EffectState::RUNNING) {
@@ -753,18 +753,21 @@ void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHO
     };
 
     auto ret = toProducerSurface_->RequestBuffer(outBuffer, syncFence, requestConfig);
-    if (ret != 0) {
-        EFFECT_LOGE("RequestBuffer failed. %{public}d", ret);
-        return;
-    }
+    CHECK_AND_RETURN_LOG(ret == 0, "RequestBuffer failed. %{public}d", ret);
 
     constexpr uint32_t waitForEver = -1;
     (void)syncFence->Wait(waitForEver);
 
     bool isNeedCpy = true;
     if (impl_->effectState_ == EffectState::RUNNING) {
-        inDateInfo_.surfaceBuffer_ = buffer;
-        outDateInfo_.surfaceBuffer_ = outBuffer;
+        inDateInfo_.surfaceBufferInfo_ = {
+            .surfaceBuffer_ = buffer,
+            .timestamp_ = timestamp,
+        };
+        outDateInfo_.surfaceBufferInfo_ = {
+            .surfaceBuffer_ = outBuffer,
+            .timestamp_ = timestamp,
+        };
         ErrorCode res = this->Render();
         isNeedCpy = (res != ErrorCode::SUCCESS);
     }
@@ -852,7 +855,8 @@ void ImageEffect::ClearDataInfo(DataInfo &dataInfo)
 {
     dataInfo.dataType_ = DataType::UNKNOWN;
     dataInfo.pixelMap_ = nullptr;
-    dataInfo.surfaceBuffer_ = nullptr;
+    dataInfo.surfaceBufferInfo_.surfaceBuffer_ = nullptr;
+    dataInfo.surfaceBufferInfo_.timestamp_ = 0;
     dataInfo.uri_ = "";
     dataInfo.path_ = "";
 }
@@ -867,7 +871,7 @@ bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
         case DataType::PIXEL_MAP:
             return inDataInfo.pixelMap_ == outDataInfo.pixelMap_;
         case DataType::SURFACE_BUFFER:
-            return inDataInfo.surfaceBuffer_ == outDataInfo.surfaceBuffer_;
+            return inDataInfo.surfaceBufferInfo_.surfaceBuffer_ == outDataInfo.surfaceBufferInfo_.surfaceBuffer_;
         case DataType::PATH:
             return inDataInfo.path_ == outDataInfo.path_;
         case DataType::URI:
@@ -908,7 +912,8 @@ ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectB
             return CommonUtils::LockPixelMap(dataInfo.pixelMap_, effectBuffer);
         case DataType::SURFACE:
         case DataType::SURFACE_BUFFER:
-            return CommonUtils::ParseSurfaceData(dataInfo.surfaceBuffer_, effectBuffer, dataInfo.dataType_);
+            return CommonUtils::ParseSurfaceData(dataInfo.surfaceBufferInfo_.surfaceBuffer_, effectBuffer,
+                dataInfo.dataType_, dataInfo.surfaceBufferInfo_.timestamp_);
         case DataType::URI:
             return CommonUtils::ParseUri(dataInfo.uri_, effectBuffer, isOutputData);
         case DataType::PATH:
