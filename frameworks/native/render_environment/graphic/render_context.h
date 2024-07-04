@@ -21,13 +21,14 @@
 #include "graphic/render_lib_header.h"
 #include "graphic/render_object.h"
 #include "graphic/render_surface.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 class RenderContext : public RenderObject {
 public:
-    RenderContext();
+    IMAGE_EFFECT_EXPORT RenderContext();
     ~RenderContext();
 
     virtual bool Create(RenderContext *sharedContext);

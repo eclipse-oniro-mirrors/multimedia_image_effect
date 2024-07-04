@@ -21,7 +21,7 @@
 
 #include "any.h"
 #include "error_code.h"
-
+#include "image_effect_marco_define.h"
 #include "base/render_base.h"
 #include "core/render_opengl_renderer.h"
 #include "core/render_default_data.h"
@@ -163,10 +163,10 @@ public:
     bool IfNeedGenMainTex() const;
     void GenMainTex(const std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &output);
     EffectBuffer *ConvertBufferToTexture(EffectBuffer *source);
-    void ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output);
-    RenderContext* GetContext();
-    ResourceCache* GetResourceCache();
-    bool BeginFrame();
+    IMAGE_EFFECT_EXPORT void ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output);
+    IMAGE_EFFECT_EXPORT RenderContext* GetContext();
+    IMAGE_EFFECT_EXPORT ResourceCache* GetResourceCache();
+    IMAGE_EFFECT_EXPORT bool BeginFrame();
     void DrawFrameWithTransform(const std::shared_ptr<EffectBuffer> &buffer, GraphicTransformType type);
     void DrawFrame(GLuint texId, GraphicTransformType type);
     void ConvertYUV2RGBA(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out);
@@ -174,13 +174,13 @@ public:
     void Draw2D2OES(RenderTexturePtr source, RenderTexturePtr output);
     void UpdateCanvas();
     EGLStatus GetEGLStatus() const;
-    RenderTexturePtr RequestBuffer(int width, int height);
+    IMAGE_EFFECT_EXPORT RenderTexturePtr RequestBuffer(int width, int height);
     bool IsPrepared() const;
     DataType GetOutputType() const;
     void SetOutputType(DataType type);
     void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
     void DrawSurfaceBufferFromTex(RenderTexturePtr tex, SurfaceBuffer *buffer, IEffectFormat format);
-    void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer);
+    IMAGE_EFFECT_EXPORT void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer);
     void DrawFlipTex(RenderTexturePtr input, RenderTexturePtr output);
     std::shared_ptr<EffectBuffer> GenTexEffectBuffer(std::shared_ptr<EffectBuffer> input);
     GLuint GenTexFromEffectBuffer(const EffectBuffer *source);

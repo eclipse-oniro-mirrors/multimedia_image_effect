@@ -19,6 +19,7 @@
 #include "base/render_base.h"
 #include "graphic/render_context.h"
 #include "graphic/render_general_program.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -29,9 +30,9 @@ constexpr int RENDERMESH_ONE_VEC_SIZE = 5;
 constexpr int RENDERMESH_BUFFER_SIZE = 2;
 class RenderMesh {
 public:
-    explicit RenderMesh(const std::vector<std::vector<float>> &meshData);
-    ~RenderMesh();
-    void Bind(RenderGeneralProgram *shader);
+    IMAGE_EFFECT_EXPORT explicit RenderMesh(const std::vector<std::vector<float>> &meshData);
+    IMAGE_EFFECT_EXPORT ~RenderMesh();
+    IMAGE_EFFECT_EXPORT void Bind(RenderGeneralProgram *shader);
 
     GLuint *vboIds_ = nullptr;
     GLuint vaoId_ = 0;

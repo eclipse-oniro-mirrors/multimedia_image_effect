@@ -18,16 +18,17 @@
 
 #include "base/render_base.h"
 #include "graphic/render_program.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 class RenderGeneralProgram : public RenderProgram {
 public:
-    RenderGeneralProgram(RenderContext *context, const std::string &vss, const std::string &fss);
-    ~RenderGeneralProgram() = default;
-    bool Init() override;
-    bool Release() override;
+    IMAGE_EFFECT_EXPORT RenderGeneralProgram(RenderContext *context, const std::string &vss, const std::string &fss);
+    IMAGE_EFFECT_EXPORT ~RenderGeneralProgram();
+    IMAGE_EFFECT_EXPORT bool Init() override;
+    IMAGE_EFFECT_EXPORT bool Release() override;
 
 private:
     std::string vss_;

@@ -22,21 +22,24 @@
 #include "graphic/render_context.h"
 #include "graphic/render_frame_buffer.h"
 #include "core/render_default_data.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 class RenderOpenglRenderer {
 public:
-    explicit RenderOpenglRenderer();
+    IMAGE_EFFECT_EXPORT explicit RenderOpenglRenderer();
     virtual ~RenderOpenglRenderer();
 
     void Draw(GLuint texId, GLuint fbo, RenderMesh *mesh, RenderGeneralProgram *shader, RenderViewport *viewport,
         GLenum target);
 
+    IMAGE_EFFECT_EXPORT
     void Draw(GLuint texId, RenderMesh *mesh, RenderGeneralProgram *shader, RenderFrameBuffer *frameBuffer,
         RenderViewport *viewport);
 
+    IMAGE_EFFECT_EXPORT
     void DrawOnScreen(GLuint texId, RenderMesh *mesh, RenderGeneralProgram *shader, RenderViewport *viewport,
         const void *trans, GLenum target);
 };

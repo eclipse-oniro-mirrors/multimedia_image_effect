@@ -20,6 +20,7 @@
 #include "render_lib_header.h"
 #include "render_object.h"
 #include "base/render_base.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -31,7 +32,7 @@ public:
         SURFACE_TYPE_ON_SCREEN,
         SURFACE_TYPE_OFF_SCREEN
     };
-    explicit RenderSurface(const std::string &tag);
+    IMAGE_EFFECT_EXPORT explicit RenderSurface(const std::string &tag);
     ~RenderSurface() override;
 
     virtual void SetAttrib(const RenderAttribute& attrib);

@@ -20,6 +20,7 @@
 #include "core/render_resource_cache.h"
 #include "graphic/render_context.h"
 #include "graphic/render_texture.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -27,13 +28,14 @@ namespace Effect {
 class ResourceCache;
 class RenderFrameBuffer {
 public:
+    IMAGE_EFFECT_EXPORT
     RenderFrameBuffer(RenderContext *ctx, ResourceCache *cache, int width, int height, GLenum interFmt = GL_RGBA8);
-    ~RenderFrameBuffer();
+    IMAGE_EFFECT_EXPORT ~RenderFrameBuffer();
 
-    void Resize(int width, int height);
-    RenderTexturePtr Texture() const;
-    void Bind();
-    void UnBind();
+    IMAGE_EFFECT_EXPORT void Resize(int width, int height);
+    IMAGE_EFFECT_EXPORT RenderTexturePtr Texture() const;
+    IMAGE_EFFECT_EXPORT void Bind();
+    IMAGE_EFFECT_EXPORT void UnBind();
     int Width();
     int Height();
 
