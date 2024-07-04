@@ -19,6 +19,7 @@
 #include "base/render_base.h"
 #include "graphic/render_context.h"
 #include "graphic/render_object.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -28,16 +29,16 @@ public:
     const static unsigned int INVALID_PROGRAM_NAME = 0;
     RenderProgram(RenderContext *context);
     ~RenderProgram() = default;
-    void Bind();
-    static void Unbind();
-    void SetUniform(const std::string &name, float value);
-    void SetUniform(const std::string &name, int value);
+    IMAGE_EFFECT_EXPORT void Bind();
+    IMAGE_EFFECT_EXPORT static void Unbind();
+    IMAGE_EFFECT_EXPORT void SetUniform(const std::string &name, float value);
+    IMAGE_EFFECT_EXPORT void SetUniform(const std::string &name, int value);
     void SetUniform(const std::string &name, unsigned int value);
     void SetUniform(const std::string &name, const void *value);
 
     unsigned int GetName();
     int GetAttributeLocation(const std::string &name);
-    int GetUniformLocation(const std::string &name);
+    IMAGE_EFFECT_EXPORT int GetUniformLocation(const std::string &name);
 protected:
     unsigned int program_;
     RenderContext *context_;

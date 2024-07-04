@@ -27,6 +27,8 @@ RenderGeneralProgram::RenderGeneralProgram(RenderContext *context, const std::st
     SetTag("RenderGeneralProgram");
 }
 
+RenderGeneralProgram::~RenderGeneralProgram() {}
+
 bool RenderGeneralProgram::Init()
 {
     EFFECT_TRACE_NAME("Init RenderGeneralProgram");

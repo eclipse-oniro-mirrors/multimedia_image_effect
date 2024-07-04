@@ -19,32 +19,35 @@
 #include "render_context.h"
 #include "base/render_base.h"
 #include "surface_buffer.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 class GLUtils {
 public:
+    IMAGE_EFFECT_EXPORT
     static GLuint CreateTexture2D(GLsizei width, GLsizei height, GLsizei levels, GLenum internalFormat,
         GLint minFilter, GLint magFilter, GLint wrapS, GLint wrapT);
 
-    static unsigned int CreateFramebuffer(unsigned int textureId = 0);
+    IMAGE_EFFECT_EXPORT static unsigned int CreateFramebuffer(unsigned int textureId = 0);
 
     static unsigned int CreateFramebufferWithTarget(unsigned int textureId, GLenum target);
 
-    static void DeleteTexture(unsigned int textureId);
+    IMAGE_EFFECT_EXPORT static void DeleteTexture(unsigned int textureId);
 
-    static void DeleteFboOnly(unsigned int fbo);
+    IMAGE_EFFECT_EXPORT static void DeleteFboOnly(unsigned int fbo);
 
     static unsigned int LoadShader(const std::string &src, unsigned int shaderType);
 
     static unsigned int CreateProgram(const std::string &vss, const std::string &fss);
 
+    IMAGE_EFFECT_EXPORT
     static GLuint CreateTexWithStorage(GLenum target, int levels, GLenum internalFormat, int width, int height);
 
-    static size_t GetInternalFormatPixelByteSize(GLenum internalFormat);
+    IMAGE_EFFECT_EXPORT static size_t GetInternalFormatPixelByteSize(GLenum internalFormat);
 
-    static void CheckError(const char *file, int line);
+    IMAGE_EFFECT_EXPORT static void CheckError(const char *file, int line);
 
     static EGLImageKHR CreateEGLImage(EGLDisplay display, SurfaceBuffer *buffer);
 
