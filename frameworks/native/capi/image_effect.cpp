@@ -167,6 +167,7 @@ ImageEffect_ErrorCode OH_ImageEffect_Configure(OH_ImageEffect *imageEffect, cons
 EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_SetOutputSurface(OH_ImageEffect *imageEffect, NativeWindow *nativeWindow)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputSurface: input parameter imageEffect is null!");
     CHECK_AND_RETURN_RET_LOG(nativeWindow != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -209,6 +210,7 @@ ImageEffect_ErrorCode OH_ImageEffect_GetInputSurface(OH_ImageEffect *imageEffect
 EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_SetInputPixelmap(OH_ImageEffect *imageEffect, OH_PixelmapNative *pixelmap)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputPixelmap: input parameter imageEffect is null!");
     CHECK_AND_RETURN_RET_LOG(pixelmap != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -229,6 +231,7 @@ ImageEffect_ErrorCode OH_ImageEffect_SetInputPixelmap(OH_ImageEffect *imageEffec
 EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_SetOutputPixelmap(OH_ImageEffect *imageEffect, OH_PixelmapNative *pixelmap)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputPixelmap: input parameter imageEffect is null!");
 
@@ -247,6 +250,7 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputPixelmap(OH_ImageEffect *imageEffe
 EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_SetInputNativeBuffer(OH_ImageEffect *imageEffect, OH_NativeBuffer *nativeBuffer)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputNativeBuffer: input parameter imageEffect is null!");
     CHECK_AND_RETURN_RET_LOG(nativeBuffer != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -269,6 +273,7 @@ ImageEffect_ErrorCode OH_ImageEffect_SetInputNativeBuffer(OH_ImageEffect *imageE
 EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_SetOutputNativeBuffer(OH_ImageEffect *imageEffect, OH_NativeBuffer *nativeBuffer)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputNativeBuffer: input parameter imageEffect is null!");
 
@@ -288,6 +293,7 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputNativeBuffer(OH_ImageEffect *image
 EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_SetInputUri(OH_ImageEffect *imageEffect, const char *uri)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     EFFECT_LOGD("Set input uri");
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputUri: input parameter imageEffect is null!");
@@ -310,6 +316,7 @@ ImageEffect_ErrorCode OH_ImageEffect_SetInputUri(OH_ImageEffect *imageEffect, co
 EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_SetOutputUri(OH_ImageEffect *imageEffect, const char *uri)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     EFFECT_LOGD("Set output uri.");
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputUri: input parameter imageEffect is null!");
@@ -334,6 +341,7 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputUri(OH_ImageEffect *imageEffect, c
 EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_Start(OH_ImageEffect *imageEffect)
 {
+    std::unique_lock<std::mutex> lock(effectMutex_);
     if (imageEffect == nullptr) {
         ImageEffect_ErrorCode errorCode = ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
         NativeCommonUtils::ReportEventStartFailed(errorCode, "OH_ImageEffect_Start: imageEffect is null");
