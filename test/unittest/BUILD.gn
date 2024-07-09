@@ -16,10 +16,28 @@ import("//foundation/multimedia/image_effect/config.gni")
 
 module_output_path = "image_effect/image_effect_unittest"
 
+base_include_dirs = [
+  "$image_effect_root_dir/interfaces/inner_api/native/memory",
+  "$image_effect_root_dir/frameworks/native/effect/pipeline/include/core",
+  "$image_effect_root_dir/frameworks/native/utils/dfx",
+  "$image_effect_root_dir/frameworks/native/utils/common",
+]
+
+base_sources = [
+  "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory.cpp",
+  "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory_manager.cpp",
+  "$image_effect_root_dir/frameworks/native/effect/pipeline/core/pipeline_core.cpp",
+  "$image_effect_root_dir/frameworks/native/effect/pipeline/core/port.cpp",
+  "$image_effect_root_dir/frameworks/native/utils/common/common_utils.cpp",
+  "$image_effect_root_dir/frameworks/native/utils/dfx/error_code.cpp",
+]
+
 ohos_unittest("image_effect_unittest") {
   module_out_path = module_output_path
   resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
-  include_dirs = [
+  include_dirs = base_include_dirs
+
+  include_dirs += [
     "$image_effect_root_dir/frameworks/native/effect/render_environment/gpu_render",
     "$image_effect_root_dir/frameworks/native/effect/render_environment/utils",
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness",
@@ -31,7 +49,9 @@ ohos_unittest("image_effect_unittest") {
     "$image_effect_root_dir/test/unittest/utils",
   ]
 
-  sources = [
+  sources = base_sources
+
+  sources += [
     "$image_effect_root_dir/test/unittest/TestImageEffect.cpp",
     "$image_effect_root_dir/test/unittest/TestUtils.cpp",
     "$image_effect_root_dir/test/unittest/image_effect_capi_unittest.cpp",
@@ -51,10 +71,12 @@ ohos_unittest("image_effect_unittest") {
 
   external_deps = [
     "c_utils:utils",
+    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "graphic_2d:EGL",
     "graphic_2d:GLESv3",
     "graphic_surface:surface",
     "hilog:libhilog",
+    "hitrace:hitrace_meter",
     "image_framework:image_native",
     "image_framework:pixelmap",
     "json:nlohmann_json_static",
