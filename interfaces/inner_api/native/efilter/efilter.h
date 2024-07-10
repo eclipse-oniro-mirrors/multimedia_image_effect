@@ -37,7 +37,7 @@ public:
         static const std::string KEY_DEFAULT_VALUE;
     };
 
-    explicit EFilter(const std::string &name) : EFilterBase(name) {}
+    IMAGE_EFFECT_EXPORT explicit EFilter(const std::string &name);
 
     IMAGE_EFFECT_EXPORT ~EFilter() override;
 
