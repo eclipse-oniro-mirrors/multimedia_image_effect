@@ -54,7 +54,7 @@ OH_ImageEffect *OH_ImageEffect_Create(const char *name)
         EFFECT_LOGE("OH_ImageEffect_Create: shared lib so not find function!");
     }
 
-    EFFECT_LOGI("Creat image effect. name=%{public}s", name);
+    EFFECT_LOGI("Creat image effect");
     std::shared_ptr<ImageEffect> imageEffect = std::make_unique<ImageEffect>(name);
     std::unique_ptr<OH_ImageEffect> nativeImageEffect = std::make_unique<OH_ImageEffect>();
     nativeImageEffect->imageEffect_ = imageEffect;
