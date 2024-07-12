@@ -15,21 +15,16 @@
 
 #include "event_report.h"
 
-#include <fstream>
+#include <vector>
 
 #include "effect_log.h"
-#include "hisysevent.h"
+#include "hisysevent_c.h"
+#include "file_ex.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 namespace {
-const std::string EVENT_PARAM_FILTER_NAME = "FILTER_NAME";
-const std::string EVENT_PARAM_SUPPORTED_FORMATS = "SUPPORTED_FORMATS";
-const std::string EVENT_PARAM_FILTER_NUMBER = "FILTER_NUMBER";
-const std::string EVENT_PARAM_DATA_TYPE = "DATA_TYPE";
-const std::string EVENT_PARAM_ERROR_TYPE = "ERROR_TYPE";
-const std::string EVENT_PARAM_ERROR_MSG = "ERROR_MSG";
 constexpr char IMAGE_EFFECT_UE[] = "IMAGE_EFFECT_UE";
 const std::string DEFAULT_STR = "default";
 const std::string DEFAULT_PACKAGE_NAME = "entry";
@@ -74,14 +69,8 @@ std::unordered_map<EventDataType, std::string> EventReport::sysEventDataTypeMap_
 std::string GetCurrentProcessName()
 {
     std::string procName;
-    std::ifstream procFile(PROC_SELF_CMDLINE_PATH);
-    if (procFile.is_open()) {
-        std::ostringstream oss;
-        oss << procFile.rdbuf();
-        procFile.close();
-
-        //Extract proc name from the command line
-        std::string cmdline = oss.str();
+    std::string cmdline;
+    if (OHOS::LoadStringFromFile(PROC_SELF_CMDLINE_PATH, cmdline)) {
         size_t pos = cmdline.find_first_of('\0');
         if (pos != std::string::npos) {
             procName = cmdline.substr(0, pos);
@@ -90,14 +79,26 @@ std::string GetCurrentProcessName()
     return procName;
 }
 
-template<typename... Types>
-void EventWrite(const std::string &eventName, HiviewDFX::HiSysEvent::EventType type, Types... keyValues)
+void EventWrite(const char *func, int64_t line, const char *name, HiSysEventEventType type,
+    std::vector<HiSysEventParam> &params)
 {
     std::string processName = GetCurrentProcessName();
-    HiSysEventWrite(IMAGE_EFFECT_UE, eventName, type,
-        "PNAMEID", processName.empty() ? DEFAULT_PACKAGE_NAME : processName,
-        "PVERSIONID", DEFAULT_VERSION_ID,
-        keyValues...);
+    HiSysEventParam processNamePara = {
+        .name = "PNAMEID",
+        .t = HISYSEVENT_STRING,
+        .v = { .s = processName.empty() ? const_cast<char *>(DEFAULT_PACKAGE_NAME.c_str()) :
+            const_cast<char *>(processName.c_str()) },
+        .arraySize = 0,
+    };
+    HiSysEventParam versionPara = {
+        .name = "PVERSIONID",
+        .t = HISYSEVENT_STRING,
+        .v = { .s = const_cast<char *>(DEFAULT_VERSION_ID.c_str()) },
+        .arraySize = 0,
+    };
+    params.insert(params.begin(), processNamePara);
+    params.insert(params.begin() + 1, versionPara);
+    HiSysEvent_Write(func, line, IMAGE_EFFECT_UE, name, type, params.data(), params.size());
 }
 
 void EventReport::ReportHiSysEvent(const std::string &eventName, const EventInfo &eventInfo)
@@ -113,28 +114,53 @@ void EventReport::ReportHiSysEvent(const std::string &eventName, const EventInfo
 
 void EventReport::ReportRegisterCustomFilterEvent(const EventInfo &eventInfo)
 {
-    EventWrite(
-        REGISTER_CUSTOM_FILTER_STATISTIC,
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-        EVENT_PARAM_FILTER_NAME, eventInfo.filterName,
-        EVENT_PARAM_SUPPORTED_FORMATS, eventInfo.supportedFormats);
+    HiSysEventParam processNamePara = {
+        .name = { "FILTER_NAME" },
+        .t = HISYSEVENT_STRING,
+        .v = { .s = const_cast<char *>(eventInfo.filterName.c_str()) },
+        .arraySize = 0,
+    };
+    HiSysEventParam supportedFormatsPara = {
+        .name = { "SUPPORTED_FORMATS" },
+        .t = HISYSEVENT_UINT32,
+        .v = { .ui32 = eventInfo.supportedFormats },
+        .arraySize = 0,
+    };
+    std::vector<HiSysEventParam> params = { processNamePara, supportedFormatsPara };
+    EventWrite(__FUNCTION__, __LINE__, REGISTER_CUSTOM_FILTER_STATISTIC, HiSysEventEventType::HISYSEVENT_BEHAVIOR,
+        params);
 }
 
 void EventReport::ReportAddFilterEvent(const EventInfo &eventInfo)
 {
-    EventWrite(
-        ADD_FILTER_STATISTIC,
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-        EVENT_PARAM_FILTER_NAME, eventInfo.filterName);
+    HiSysEventParam processNamePara = {
+        .name = { "FILTER_NAME" },
+        .t = HISYSEVENT_STRING,
+        .v = { .s = const_cast<char *>(eventInfo.filterName.c_str()) },
+        .arraySize = 0,
+    };
+    std::vector<HiSysEventParam> params = { processNamePara };
+    EventWrite(__FUNCTION__, __LINE__, ADD_FILTER_STATISTIC, HiSysEventEventType::HISYSEVENT_BEHAVIOR,
+        params);
 }
 
 void EventReport::ReportRemoveFilterEvent(const EventInfo &eventInfo)
 {
-    EventWrite(
-        REMOVE_FILTER_STATISTIC,
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-        EVENT_PARAM_FILTER_NAME, eventInfo.filterName,
-        EVENT_PARAM_FILTER_NUMBER, eventInfo.filterNum);
+    HiSysEventParam processNamePara = {
+        .name = { "FILTER_NAME" },
+        .t = HISYSEVENT_STRING,
+        .v = { .s = const_cast<char *>(eventInfo.filterName.c_str()) },
+        .arraySize = 0,
+    };
+    HiSysEventParam filterNumPara = {
+        .name = { "FILTER_NUMBER" },
+        .t = HISYSEVENT_INT32,
+        .v = { .i32 = eventInfo.filterNum },
+        .arraySize = 0,
+    };
+    std::vector<HiSysEventParam> params = { processNamePara, filterNumPara };
+    EventWrite(__FUNCTION__, __LINE__, REMOVE_FILTER_STATISTIC, HiSysEventEventType::HISYSEVENT_BEHAVIOR,
+        params);
 }
 
 std::string EventReport::ConvertDataType(const EventDataType &dataType)
@@ -149,41 +175,64 @@ std::string EventReport::ConvertDataType(const EventDataType &dataType)
 
 void EventReport::ReportInputDataTypeEvent(const EventInfo &eventInfo)
 {
-    EventWrite(
-        INPUT_DATA_TYPE_STATISTIC,
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-        EVENT_PARAM_DATA_TYPE, ConvertDataType(eventInfo.dataType));
+    std::string dataType = ConvertDataType(eventInfo.dataType);
+    HiSysEventParam dataTypePara = {
+        .name = { "DATA_TYPE" },
+        .t = HISYSEVENT_STRING,
+        .v = { .s = const_cast<char *>(dataType.c_str()) },
+        .arraySize = 0,
+    };
+    std::vector<HiSysEventParam> params = { dataTypePara };
+    EventWrite(__FUNCTION__, __LINE__, INPUT_DATA_TYPE_STATISTIC, HiSysEventEventType::HISYSEVENT_BEHAVIOR,
+        params);
 }
 
 void EventReport::ReportOutputDataTypeEvent(const EventInfo &eventInfo)
 {
-    EventWrite(
-        OUTPUT_DATA_TYPE_STATISTIC,
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-        EVENT_PARAM_DATA_TYPE, ConvertDataType(eventInfo.dataType));
+    std::string dataType = ConvertDataType(eventInfo.dataType);
+    HiSysEventParam dataTypePara = {
+        .name = { "DATA_TYPE" },
+        .t = HISYSEVENT_STRING,
+        .v = { .s = const_cast<char *>(dataType.c_str()) },
+        .arraySize = 0,
+    };
+    std::vector<HiSysEventParam> params = { dataTypePara };
+    EventWrite(__FUNCTION__, __LINE__, OUTPUT_DATA_TYPE_STATISTIC, HiSysEventEventType::HISYSEVENT_BEHAVIOR,
+        params);
 }
 
 void EventReport::ReportRenderFailedEvent(const EventInfo &eventInfo)
 {
-    EventWrite(
-        RENDER_FAILED_FAULT,
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
-        EVENT_PARAM_ERROR_TYPE, eventInfo.errorInfo.errorCode,
-        EVENT_PARAM_ERROR_MSG, eventInfo.errorInfo.errorMsg);
+    HiSysEventParam errorCodePara = {
+        .name = { "ERROR_TYPE" },
+        .t = HISYSEVENT_INT32,
+        .v = { .i32 = eventInfo.errorInfo.errorCode },
+        .arraySize = 0,
+    };
+    HiSysEventParam errorMsgPara = {
+        .name = { "ERROR_MSG" },
+        .t = HISYSEVENT_STRING,
+        .v = { .s = const_cast<char *>(eventInfo.errorInfo.errorMsg.c_str()) },
+        .arraySize = 0,
+    };
+
+    std::vector<HiSysEventParam> params = { errorCodePara, errorMsgPara };
+    EventWrite(__FUNCTION__, __LINE__, RENDER_FAILED_FAULT, HiSysEventEventType::HISYSEVENT_BEHAVIOR,
+        params);
 }
 
 void EventReport::ReportSaveImageEffectEvent(const EventInfo &eventInfo)
 {
-    EventWrite(
-        SAVE_IMAGE_EFFECT_BEHAVIOR,
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR);
+    std::vector<HiSysEventParam> params;
+    EventWrite(__FUNCTION__, __LINE__, SAVE_IMAGE_EFFECT_BEHAVIOR, HiSysEventEventType::HISYSEVENT_BEHAVIOR,
+        params);
 }
 
 void EventReport::ReportRestoreImageEffectEvent(const EventInfo &eventInfo)
 {
-    EventWrite(
-        RESTORE_IMAGE_EFFECT_BEHAVIOR,
-        HiviewDFX::HiSysEvent::EventType::BEHAVIOR);
+    std::vector<HiSysEventParam> params;
+    EventWrite(__FUNCTION__, __LINE__, RESTORE_IMAGE_EFFECT_BEHAVIOR, HiSysEventEventType::HISYSEVENT_BEHAVIOR,
+        params);
 }
 
 } // namespace Effect
