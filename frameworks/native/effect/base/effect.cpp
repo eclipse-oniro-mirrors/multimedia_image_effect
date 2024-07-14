@@ -44,6 +44,23 @@ void Effect::RemoveEFilter(const std::shared_ptr<EFilter> &efilter)
         }
     }
 }
+
+ErrorCode Effect::RemoveEFilter(uint32_t index)
+{
+    CHECK_AND_RETURN_RET_LOG(index < static_cast<uint32_t>(efilters_.size()), ErrorCode::ERR_INVALID_INDEX,
+        "RemoveEFilter: index is invalid! index=%{public}d, efilterSize=%{public}zu", index, efilters_.size());
+
+    efilters_.erase(efilters_.begin() + index);
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode Effect::ReplaceEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index)
+{
+    CHECK_AND_RETURN_RET_LOG(index < static_cast<uint32_t>(efilters_.size()), ErrorCode::ERR_INVALID_INDEX,
+        "ReplaceEFilter: index is invalid! index=%{public}d, efilterSize=%{public}zu", index, efilters_.size());
+    efilters_[index] = efilter;
+    return ErrorCode::SUCCESS;
+}
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS

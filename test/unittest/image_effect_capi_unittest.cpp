@@ -23,6 +23,7 @@
 #include "test_common.h"
 #include "native_window.h"
 #include "external_loader.h"
+#include "crop_efilter.h"
 
 #define MAX_TEST_ADD_EFILTE_NUMS 120
 
@@ -61,6 +62,7 @@ void ImageEffectCApiUnittest::SetUp()
     EFilterFactory::Instance()->functions_.clear();
     EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
     EFilterFactory::Instance()->RegisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);
+    EFilterFactory::Instance()->RegisterEFilter<CropEFilter>(CROP_EFILTER);
     EFilterFactory::Instance()->delegates_.clear();
     filterInfo_ = OH_EffectFilterInfo_Create();
     OH_EffectFilterInfo_SetFilterName(filterInfo_, BRIGHTNESS_EFILTER);
@@ -500,6 +502,67 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectRemoveFilter005, TestSize.Level1)
 
     GTEST_LOG_(INFO) << "OHImageEffectRemoveFilter005 success! result: " << result;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectRemoveFilter005 END";
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test Add Remove Replace Filter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test Add Remove Replace Filter
+ */
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectCRUDFilter001, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *contrastFilter = OH_EffectFilter_Create(CONTRAST_EFILTER);
+    ASSERT_NE(contrastFilter, nullptr);
+    OH_EffectFilter *brightnessFilter = OH_EffectFilter_Create(BRIGHTNESS_EFILTER);
+    ASSERT_NE(brightnessFilter, nullptr);
+
+    // 0: contrastFilter, 1: brightnessFilter, 2: cropFilter
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_AddFilterByFilter(imageEffect, contrastFilter);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    OH_EffectFilter *cropFilter = OH_ImageEffect_InsertFilter(imageEffect, 1, CROP_EFILTER);
+    ASSERT_NE(cropFilter, nullptr);
+    errorCode = OH_ImageEffect_InsertFilterByFilter(imageEffect, 1, brightnessFilter);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    int32_t filterCnt = OH_ImageEffect_GetFilterCount(imageEffect);
+    ASSERT_EQ(filterCnt, 3);
+
+    // 0: brightnessFilter1, 1: brightnessFilter, 2: cropFilter
+    OH_EffectFilter *brightnessFilter1 = OH_ImageEffect_ReplaceFilter(imageEffect, 0, BRIGHTNESS_EFILTER);
+    ASSERT_NE(brightnessFilter1, nullptr);
+    filterCnt = OH_ImageEffect_GetFilterCount(imageEffect);
+    ASSERT_EQ(filterCnt, 3);
+
+    // 0: brightnessFilter, 1: contrastFilter, 2: cropFilter
+    errorCode = OH_ImageEffect_ReplaceFilterByFilter(imageEffect, 1, contrastFilter);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_ImageEffect_ReplaceFilterByFilter(imageEffect, 0, brightnessFilter);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    filterCnt = OH_ImageEffect_GetFilterCount(imageEffect);
+    ASSERT_EQ(filterCnt, 3);
+
+    // 0: contrastFilter
+    int32_t removeNum = OH_ImageEffect_RemoveFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_EQ(removeNum, 1);
+    errorCode = OH_ImageEffect_RemoveFilterByIndex(imageEffect, 2);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_ImageEffect_RemoveFilterByIndex(imageEffect, 1);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    filterCnt = OH_ImageEffect_GetFilterCount(imageEffect);
+    ASSERT_EQ(filterCnt, 1);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_EffectFilter_Release(contrastFilter);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_EffectFilter_Release(brightnessFilter);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 }
 
 /**
