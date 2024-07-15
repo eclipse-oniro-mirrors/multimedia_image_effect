@@ -76,6 +76,19 @@ OH_ImageEffect *OH_ImageEffect_Create(const char *name);
 OH_EffectFilter *OH_ImageEffect_AddFilter(OH_ImageEffect *imageEffect, const char *filterName);
 
 /**
+ * @brief Add the OH_EffectFilter to the OH_ImageEffect
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
+ * @param filter Indicates the filter instance that created by invoking OH_EffectFilter_Create
+ * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
+ * {@link ImageEffect_ErrorCode}
+ * {@link EFFECT_ERROR_PARAM_INVALID}, the input parameter is a null pointer
+ * @since 12
+ */
+ImageEffect_ErrorCode OH_ImageEffect_AddFilterByFilter(OH_ImageEffect *imageEffect, OH_EffectFilter *filter);
+
+/**
  * @brief Create and add the OH_EffectFilter to the OH_ImageEffect by specified position
  *
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
@@ -89,6 +102,21 @@ OH_EffectFilter *OH_ImageEffect_AddFilter(OH_ImageEffect *imageEffect, const cha
 OH_EffectFilter *OH_ImageEffect_InsertFilter(OH_ImageEffect *imageEffect, uint32_t index, const char *filterName);
 
 /**
+ * @brief Add the OH_EffectFilter to the OH_ImageEffect by specified position
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
+ * @param index Indicates the position of the OH_EffectFilter witch is added
+ * @param filter Indicates the filter instance that created by invoking OH_EffectFilter_Create
+ * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
+ * {@link ImageEffect_ErrorCode}
+ * {@link EFFECT_ERROR_PARAM_INVALID}, the input parameter is a null pointer or the index is invalid value
+ * @since 12
+ */
+ImageEffect_ErrorCode OH_ImageEffect_InsertFilterByFilter(OH_ImageEffect *imageEffect, uint32_t index,
+    OH_EffectFilter *filter);
+
+/**
  * @brief Remove all filters of the specified filter name
  *
  * @syscap SystemCapability.Multimedia.ImageEffect.Core
@@ -98,6 +126,47 @@ OH_EffectFilter *OH_ImageEffect_InsertFilter(OH_ImageEffect *imageEffect, uint32
  * @since 12
  */
 int32_t OH_ImageEffect_RemoveFilter(OH_ImageEffect *imageEffect, const char *filterName);
+
+/**
+ * @brief Remove the filter of the specified position
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
+ * @param index Indicates the position of the OH_EffectFilter witch is removed
+ * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
+ * {@link ImageEffect_ErrorCode}
+ * {@link EFFECT_ERROR_PARAM_INVALID}, the input parameter is a null pointer or the index is invalid value
+ * @since 12
+ */
+ImageEffect_ErrorCode OH_ImageEffect_RemoveFilterByIndex(OH_ImageEffect *imageEffect, uint32_t index);
+
+/**
+ * @brief Create and replace the OH_EffectFilter to the OH_ImageEffect by specified position
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
+ * @param index Indicates the position of the OH_EffectFilter witch is created and replaced
+ * @param filterName Indicates the name of the filter that can be customized by the developer or supported by the system
+ * @return Returns a pointer to an OH_EffectFilter instance if the index and filter name is valid, otherwise returns
+ * nullptr
+ * @since 12
+ */
+OH_EffectFilter *OH_ImageEffect_ReplaceFilter(OH_ImageEffect *imageEffect, uint32_t index, const char *filterName);
+
+/**
+ * @brief Replace the OH_EffectFilter to the OH_ImageEffect by specified position
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
+ * @param index Indicates the position of the OH_EffectFilter witch is replaced
+ * @param filter Indicates the filter instance that created by invoking OH_EffectFilter_Create
+ * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
+ * {@link ImageEffect_ErrorCode}
+ * {@link EFFECT_ERROR_PARAM_INVALID}, the input parameter is a null pointer or the index is invalid value
+ * @since 12
+ */
+ImageEffect_ErrorCode OH_ImageEffect_ReplaceFilterByFilter(OH_ImageEffect *imageEffect, uint32_t index,
+    OH_EffectFilter *filter);
 
 /**
  * @brief Get the number of the filters in OH_ImageEffect

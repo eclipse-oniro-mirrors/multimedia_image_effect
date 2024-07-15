@@ -29,6 +29,7 @@ struct OH_EffectFilter {
     void SetParameter(const std::string &key, OHOS::Media::Plugin::Any &param);
     OHOS::Media::Effect::ErrorCode GetParameter(const std::string &key, OHOS::Media::Plugin::Any &param);
     void RemoveParameter(const std::string &key);
+    bool isCreatedBySystem_ = false;
 private:
     std::unordered_map<std::string, OHOS::Media::Plugin::Any&> params_;
 };
@@ -45,7 +46,10 @@ struct OH_ImageEffect {
             saveJson = nullptr;
         }
         for (const auto &filter : filters_) {
-            OH_EffectFilter_Release(filter.first);
+            auto ohEFilter = filter.first;
+            if (ohEFilter != nullptr && ohEFilter->isCreatedBySystem_) {
+                OH_EffectFilter_Release(filter.first);
+            }
         }
         filters_.clear();
     }

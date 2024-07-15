@@ -54,6 +54,9 @@ public:
     IMAGE_EFFECT_EXPORT ErrorCode InsertEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index) override;
 
     IMAGE_EFFECT_EXPORT void RemoveEFilter(const std::shared_ptr<EFilter> &efilter) override;
+    IMAGE_EFFECT_EXPORT ErrorCode RemoveEFilter(uint32_t index) override;
+
+    IMAGE_EFFECT_EXPORT ErrorCode ReplaceEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index) override;
 
     IMAGE_EFFECT_EXPORT virtual ErrorCode SetInputPixelMap(PixelMap *pixelMap);
 

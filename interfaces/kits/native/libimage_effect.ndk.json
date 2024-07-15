@@ -77,6 +77,14 @@
   },
   {
     "first_introduced": "12",
+    "name": "OH_EffectBufferInfo_SetTimestamp"
+  },
+  {
+    "first_introduced": "12",
+    "name": "OH_EffectBufferInfo_GetTimestamp"
+  },
+  {
+    "first_introduced": "12",
     "name": "OH_EffectBufferInfo_Release"
   },
   {
@@ -125,11 +133,31 @@
   },
   {
     "first_introduced": "12",
+    "name": "OH_ImageEffect_AddFilterByFilter"
+  },
+  {
+    "first_introduced": "12",
     "name": "OH_ImageEffect_InsertFilter"
   },
   {
     "first_introduced": "12",
+    "name": "OH_ImageEffect_InsertFilterByFilter"
+  },
+  {
+    "first_introduced": "12",
     "name": "OH_ImageEffect_RemoveFilter"
+  },
+  {
+    "first_introduced": "12",
+    "name": "OH_ImageEffect_RemoveFilterByIndex"
+  },
+  {
+    "first_introduced": "12",
+    "name": "OH_ImageEffect_ReplaceFilter"
+  },
+  {
+    "first_introduced": "12",
+    "name": "OH_ImageEffect_ReplaceFilterByFilter"
   },
   {
     "first_introduced": "12",

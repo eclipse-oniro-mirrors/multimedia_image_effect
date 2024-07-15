@@ -64,52 +64,99 @@ OH_ImageEffect *OH_ImageEffect_Create(const char *name)
 EFFECT_EXPORT
 OH_EffectFilter *OH_ImageEffect_AddFilter(OH_ImageEffect *imageEffect, const char *filterName)
 {
-    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, nullptr, "AddFilter: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(imageEffect->filters_.size() < MAX_EFILTER_NUMS, nullptr,
+        "AddFilter: filter nums is out of range!");
     CHECK_AND_RETURN_RET_LOG(filterName != nullptr, nullptr, "AddFilter: input parameter filterName is null!");
-    EFFECT_LOGI("Add filter. name=%{public}s", filterName);
-    CHECK_AND_RETURN_RET_LOG(imageEffect->filters_.size() < MAX_EFILTER_NUMS, nullptr, "filter nums is out of range!");
 
     OH_EffectFilter *filter = OH_EffectFilter_Create(filterName);
     CHECK_AND_RETURN_RET_LOG(filter != nullptr, nullptr, "AddFilter: create filter fail! name=%{public}s", filterName);
 
+    filter->isCreatedBySystem_ = true;
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_AddFilterByFilter(imageEffect, filter);
+    if (errorCode != ImageEffect_ErrorCode::EFFECT_SUCCESS) {
+        OH_EffectFilter_Release(filter);
+        filter = nullptr;
+    }
+    return filter;
+}
+
+EFFECT_EXPORT
+ImageEffect_ErrorCode OH_ImageEffect_AddFilterByFilter(OH_ImageEffect *imageEffect, OH_EffectFilter *filter)
+{
+    std::unique_lock<std::mutex> lock(effectMutex_);
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "AddFilter: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(filter != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "AddFilter: input parameter filter is null!");
+    CHECK_AND_RETURN_RET_LOG(imageEffect->filters_.size() < MAX_EFILTER_NUMS,
+        ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID, "AddFilterByFilter: filter nums is out of range!");
+
+    EFFECT_LOGI("Add filter. name=%{public}s", filter->filter_->GetName().c_str());
+
     imageEffect->imageEffect_->AddEFilter(filter->filter_);
-    imageEffect->filters_.emplace_back(filter, filterName);
+    imageEffect->filters_.emplace_back(filter, filter->filter_->GetName());
 
     EventInfo eventInfo = {
-        .filterName = filterName,
+        .filterName = filter->filter_->GetName(),
     };
     EventReport::ReportHiSysEvent(ADD_FILTER_STATISTIC, eventInfo);
-    return filter;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
 OH_EffectFilter *OH_ImageEffect_InsertFilter(OH_ImageEffect *imageEffect, uint32_t index, const char *filterName)
 {
-    std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, nullptr, "InsertFilter: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(imageEffect->filters_.size() < MAX_EFILTER_NUMS, nullptr,
+        "InsertFilter: filter nums is out of range!");
     CHECK_AND_RETURN_RET_LOG(filterName != nullptr, nullptr, "InsertFilter: input parameter filterName is null!");
-    EFFECT_LOGI("Insert filter. name=%{public}s", filterName);
-    CHECK_AND_RETURN_RET_LOG(imageEffect->filters_.size() < MAX_EFILTER_NUMS, nullptr, "filter nums is out of range!");
 
     OH_EffectFilter *filter = OH_EffectFilter_Create(filterName);
     CHECK_AND_RETURN_RET_LOG(filter != nullptr, nullptr, "InsertFilter: create filter fail! filterName=%{public}s",
         filterName);
 
+    filter->isCreatedBySystem_ = true;
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_InsertFilterByFilter(imageEffect, index, filter);
+    if (errorCode != ImageEffect_ErrorCode::EFFECT_SUCCESS) {
+        OH_EffectFilter_Release(filter);
+        filter = nullptr;
+    }
+    return filter;
+}
+
+EFFECT_EXPORT
+ImageEffect_ErrorCode OH_ImageEffect_InsertFilterByFilter(OH_ImageEffect *imageEffect, uint32_t index,
+    OH_EffectFilter *filter)
+{
+    std::unique_lock<std::mutex> lock(effectMutex_);
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "InsertFilter: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(imageEffect->filters_.size() < MAX_EFILTER_NUMS,
+        ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID, "InsertFilter: filter nums is out of range!");
+    CHECK_AND_RETURN_RET_LOG(filter != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "InsertFilter: input parameter filterName is null!");
+    CHECK_AND_RETURN_RET_LOG(index <= static_cast<uint32_t>(imageEffect->filters_.size()),
+        ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "InsertFilter: input parameter index is invalid! index=%{public}d, efilterSize=%{public}zu",
+        index, imageEffect->filters_.size());
+
+    std::string filterName = filter->filter_->GetName();
+    EFFECT_LOGI("Insert filter. name=%{public}s", filterName.c_str());
+
     ErrorCode result = imageEffect->imageEffect_->InsertEFilter(filter->filter_, index);
     if (result != ErrorCode::SUCCESS) {
-        EFFECT_LOGE("InsertFilter: insert filter fail! result=%{public}d, name=%{public}s", result, filterName);
-        OH_EffectFilter_Release(filter);
-        return nullptr;
+        EFFECT_LOGE("InsertFilter: insert filter fail! result=%{public}d, name=%{public}s", result, filterName.c_str());
+        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
     }
 
-    imageEffect->filters_.emplace(imageEffect->filters_.begin() + index,
-        std::pair<OH_EffectFilter *, std::string>(filter, filterName));
+    imageEffect->filters_.emplace(imageEffect->filters_.begin() + index, filter, filterName);
     EventInfo eventInfo = {
         .filterName = filterName,
     };
     EventReport::ReportHiSysEvent(ADD_FILTER_STATISTIC, eventInfo);
-    return filter;
+
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
@@ -123,7 +170,10 @@ int32_t OH_ImageEffect_RemoveFilter(OH_ImageEffect *imageEffect, const char *fil
     for (auto it = imageEffect->filters_.begin(); it != imageEffect->filters_.end();) {
         if (it->second.compare(filterName) == 0) {
             imageEffect->imageEffect_->RemoveEFilter(it->first->filter_);
-            OH_EffectFilter_Release(it->first);
+            auto filter = it->first;
+            if (filter != nullptr && filter->isCreatedBySystem_) {
+                OH_EffectFilter_Release(filter);
+            }
             it = imageEffect->filters_.erase(it);
             count++;
         } else {
@@ -138,6 +188,95 @@ int32_t OH_ImageEffect_RemoveFilter(OH_ImageEffect *imageEffect, const char *fil
     };
     EventReport::ReportHiSysEvent(REMOVE_FILTER_STATISTIC, eventInfo);
     return count;
+}
+
+EFFECT_EXPORT
+ImageEffect_ErrorCode OH_ImageEffect_RemoveFilterByIndex(OH_ImageEffect *imageEffect, uint32_t index)
+{
+    std::unique_lock<std::mutex> lock(effectMutex_);
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "RemoveFilterByIndex: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(index < static_cast<uint32_t>(imageEffect->filters_.size()),
+        ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "RemoveFilterByIndex: input parameter index is invalid! index=%{public}d, efilterSize=%{public}zu",
+        index, imageEffect->filters_.size());
+
+    ErrorCode result = imageEffect->imageEffect_->RemoveEFilter(index);
+    if (result != ErrorCode::SUCCESS) {
+        EFFECT_LOGE("RemoveFilterByIndex: remove filter fail! result=%{public}d", result);
+        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
+    }
+
+    auto &filter = imageEffect->filters_.at(index);
+    auto ohEFilter = filter.first;
+    std::string filterName = ohEFilter->filter_->GetName();
+    if (ohEFilter != nullptr && ohEFilter->isCreatedBySystem_) {
+        OH_EffectFilter_Release(ohEFilter);
+    }
+    imageEffect->filters_.erase(imageEffect->filters_.begin() + index);
+    EFFECT_LOGI("Remove filter by index. name=%{public}s, index=%{public}d", filterName.c_str(), index);
+
+    EventInfo eventInfo = {
+        .filterName = filterName,
+        .filterNum = 1,
+    };
+    EventReport::ReportHiSysEvent(REMOVE_FILTER_STATISTIC, eventInfo);
+
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+}
+
+EFFECT_EXPORT
+OH_EffectFilter *OH_ImageEffect_ReplaceFilter(OH_ImageEffect *imageEffect, uint32_t index, const char *filterName)
+{
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, nullptr, "ReplaceFilter: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(index < static_cast<uint32_t>(imageEffect->filters_.size()), nullptr,
+        "ReplaceFilter: input parameter index is invalid! index=%{public}d, efilterSize=%{public}zu",
+        index, imageEffect->filters_.size());
+
+    CHECK_AND_RETURN_RET_LOG(filterName != nullptr, nullptr, "ReplaceFilter: input parameter filterName is null!");
+
+    OH_EffectFilter *filter = OH_EffectFilter_Create(filterName);
+    CHECK_AND_RETURN_RET_LOG(filter != nullptr, nullptr,
+        "ReplaceFilter: create filter fail! name=%{public}s", filterName);
+
+    filter->isCreatedBySystem_ = true;
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_ReplaceFilterByFilter(imageEffect, index, filter);
+    if (errorCode != ImageEffect_ErrorCode::EFFECT_SUCCESS) {
+        OH_EffectFilter_Release(filter);
+        filter = nullptr;
+    }
+    return filter;
+}
+
+EFFECT_EXPORT
+ImageEffect_ErrorCode OH_ImageEffect_ReplaceFilterByFilter(OH_ImageEffect *imageEffect, uint32_t index,
+    OH_EffectFilter *filter)
+{
+    std::unique_lock<std::mutex> lock(effectMutex_);
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "ReplaceFilter: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(index < static_cast<uint32_t>(imageEffect->filters_.size()),
+        ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "ReplaceFilter: input parameter index is invalid! index=%{public}d, efilterSize=%{public}zu",
+        index, imageEffect->filters_.size());
+    CHECK_AND_RETURN_RET_LOG(filter != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "ReplaceFilter: input parameter filterName is null!");
+
+    EFFECT_LOGI("Replace filter. index=%{public}d, name=%{public}s", index, filter->filter_->GetName().c_str());
+
+    ErrorCode result = imageEffect->imageEffect_->ReplaceEFilter(filter->filter_, index);
+    if (result != ErrorCode::SUCCESS) {
+        EFFECT_LOGE("ReplaceFilter fail! result=%{public}d, index=%{public}d", result, index);
+        return ImageEffect_ErrorCode ::EFFECT_ERROR_PARAM_INVALID;
+    }
+
+    auto &originFilter = imageEffect->filters_.at(index);
+    if (originFilter.first->isCreatedBySystem_) {
+        OH_EffectFilter_Release(originFilter.first);
+    }
+    imageEffect->filters_[index] = std::pair<OH_EffectFilter *, std::string>(filter, filter->filter_->GetName());
+
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
 EFFECT_EXPORT
@@ -442,6 +581,7 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
         if (filterDelegate != nullptr) {
             auto *filter = static_cast<OH_EffectFilter *>(filterDelegate->Restore(effect));
             CHECK_AND_CONTINUE_LOG(filter != nullptr, "Restore: filter restore fail! name=%{public}s", name.c_str());
+            filter->isCreatedBySystem_ = true;
             ohImageEffect->imageEffect_->AddEFilter(filter->filter_);
             ohImageEffect->filters_.emplace_back(filter, filter->filter_->GetName());
             continue;
@@ -450,6 +590,7 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
         std::unique_ptr<OH_EffectFilter> nativeEFilter = std::make_unique<OH_EffectFilter>();
         std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Restore(name, effect, nativeEFilter.get());
         nativeEFilter->filter_ = efilter;
+        nativeEFilter->isCreatedBySystem_ = true;
         ohImageEffect->filters_.emplace_back(nativeEFilter.release(), efilter->GetName());
         ohImageEffect->imageEffect_->AddEFilter(efilter);
     }

@@ -33,6 +33,10 @@ public:
 
     virtual void RemoveEFilter(const std::shared_ptr<EFilter> &efilter);
 
+    virtual ErrorCode RemoveEFilter(uint32_t index);
+
+    virtual ErrorCode ReplaceEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index);
+
     virtual ErrorCode Start() = 0;
 
     virtual ErrorCode Save(nlohmann::json &res) = 0;

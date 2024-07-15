@@ -210,6 +210,25 @@ void ImageEffect::RemoveEFilter(const std::shared_ptr<EFilter> &efilter)
     impl_->CreatePipeline(efilters_);
 }
 
+ErrorCode ImageEffect::RemoveEFilter(uint32_t index)
+{
+    ErrorCode res = Effect::RemoveEFilter(index);
+    if (res == ErrorCode::SUCCESS) {
+        impl_->CreatePipeline(efilters_);
+    }
+    return res;
+}
+
+ErrorCode ImageEffect::ReplaceEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index)
+{
+    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
+    ErrorCode res = Effect::ReplaceEFilter(efilter, index);
+    if (res == ErrorCode::SUCCESS) {
+        impl_->CreatePipeline(efilters_);
+    }
+    return res;
+}
+
 unsigned long int ImageEffect::RequestTaskId()
 {
     return m_currentTaskId.fetch_add(1);
