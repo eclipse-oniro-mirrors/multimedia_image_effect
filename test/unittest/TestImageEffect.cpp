@@ -121,7 +121,7 @@ public:
     ImageEffect *imageEffect_ = nullptr;
 };
 
-HWTEST_F(TestImageEffect, AddEfilter001, TestSize.Level0)
+HWTEST_F(TestImageEffect, AddEfilter001, TestSize.Level1)
 {
     std::shared_ptr<ImageEffect> imageEffect = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     std::shared_ptr<EFilter> brightnessEFilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
@@ -159,7 +159,7 @@ HWTEST_F(TestImageEffect, Start001, TestSize.Level1)
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(TestImageEffect, InsertEfilter001, TestSize.Level0)
+HWTEST_F(TestImageEffect, InsertEfilter001, TestSize.Level1)
 {
     std::shared_ptr<ImageEffect> imageEffect = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     std::shared_ptr<EFilter> brightnessEFilter1 = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
@@ -181,7 +181,7 @@ HWTEST_F(TestImageEffect, InsertEfilter001, TestSize.Level0)
     ASSERT_EQ(imageEffect->efilters_.at(2), contrastEFilter);
 }
 
-HWTEST_F(TestImageEffect, InsertEfilter002, TestSize.Level0)
+HWTEST_F(TestImageEffect, InsertEfilter002, TestSize.Level1)
 {
     std::shared_ptr<ImageEffect> imageEffect = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     std::shared_ptr<EFilter> brightnessEFilter1 = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
@@ -197,7 +197,7 @@ HWTEST_F(TestImageEffect, InsertEfilter002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetInputPath with normal param
  */
-HWTEST_F(TestImageEffect, SetInputPath001, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetInputPath001, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetInputPath(g_jpgPath);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -211,7 +211,7 @@ HWTEST_F(TestImageEffect, SetInputPath001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetInputPath with nullptr param
  */
-HWTEST_F(TestImageEffect, SetInputPath002, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetInputPath002, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetInputPath(nullptr);
     ASSERT_NE(result, ErrorCode::SUCCESS);
@@ -225,7 +225,7 @@ HWTEST_F(TestImageEffect, SetInputPath002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetInputPath with not support type param
  */
-HWTEST_F(TestImageEffect, SetInputPath003, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetInputPath003, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetInputPath(g_notJpgPath);
     ASSERT_NE(result, ErrorCode::SUCCESS);
@@ -239,7 +239,7 @@ HWTEST_F(TestImageEffect, SetInputPath003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetOutputPath with normal param
  */
-HWTEST_F(TestImageEffect, SetOutputPath001, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetOutputPath001, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetOutputPath(g_jpgPath);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -253,7 +253,7 @@ HWTEST_F(TestImageEffect, SetOutputPath001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetOutputPath with nullptr param
  */
-HWTEST_F(TestImageEffect, SetOutputPath002, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetOutputPath002, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetOutputPath(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -267,7 +267,7 @@ HWTEST_F(TestImageEffect, SetOutputPath002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetOutputPath with not support type param
  */
-HWTEST_F(TestImageEffect, SetOutputPath003, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetOutputPath003, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetOutputPath(g_notJpgPath);
     ASSERT_NE(result, ErrorCode::SUCCESS);
@@ -281,7 +281,7 @@ HWTEST_F(TestImageEffect, SetOutputPath003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetInputUri with normal param
  */
-HWTEST_F(TestImageEffect, SetInputUri001, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetInputUri001, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetInputUri(g_jpgUri);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -295,7 +295,7 @@ HWTEST_F(TestImageEffect, SetInputUri001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetInputUri with nullptr param
  */
-HWTEST_F(TestImageEffect, SetInputUri002, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetInputUri002, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetInputUri(nullptr);
     ASSERT_NE(result, ErrorCode::SUCCESS);
@@ -309,7 +309,7 @@ HWTEST_F(TestImageEffect, SetInputUri002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetInputUri with not support type param
  */
-HWTEST_F(TestImageEffect, SetInputUri003, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetInputUri003, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetInputUri(g_notJpgUri);
     ASSERT_NE(result, ErrorCode::SUCCESS);
@@ -323,7 +323,7 @@ HWTEST_F(TestImageEffect, SetInputUri003, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetOutputUri with normal param
  */
-HWTEST_F(TestImageEffect, SetOutputUri001, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetOutputUri001, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetOutputUri(g_jpgUri);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -337,7 +337,7 @@ HWTEST_F(TestImageEffect, SetOutputUri001, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetOutputUri with nullptr param
  */
-HWTEST_F(TestImageEffect, SetOutputUri002, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetOutputUri002, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetOutputUri(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -351,7 +351,7 @@ HWTEST_F(TestImageEffect, SetOutputUri002, TestSize.Level0)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffect::SetOutputUri with not support type param
  */
-HWTEST_F(TestImageEffect, SetOutputUri003, TestSize.Level0)
+HWTEST_F(TestImageEffect, SetOutputUri003, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetOutputUri(g_notJpgUri);
     ASSERT_NE(result, ErrorCode::SUCCESS);

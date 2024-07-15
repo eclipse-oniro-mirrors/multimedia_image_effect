@@ -91,7 +91,7 @@ void ImageEffectCApiUnittest::TearDown()
  * EnvConditions: NA
  * CaseDescription: Test image_effect capi unittest example
  */
-HWTEST_F(ImageEffectCApiUnittest, Image_effect_capi_unittest_001, TestSize.Level0)
+HWTEST_F(ImageEffectCApiUnittest, Image_effect_capi_unittest_001, TestSize.Level1)
 {
     InSequence s;
 
@@ -986,7 +986,7 @@ HWTEST_F(ImageEffectCApiUnittest, OHEFilterRelease003, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffectSingleFilter with normal parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest001, TestSize.Level0)
+HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest001, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSingleFilterUnittest001 start";
     InSequence s;
@@ -1021,7 +1021,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest001, TestSize.L
  * CaseDescription: Test ImageEffectSingleFilter submethod OH_EffectFilter_Create with not exist OH_EffectFilter
  * parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest002, TestSize.Level0)
+HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest002, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSingleFilterUnittest002 start";
     InSequence s;
@@ -1055,7 +1055,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest002, TestSize.L
  * EnvConditions: NA
  * CaseDescription: Test ImageEffectSingleFilter submethod OH_EffectFilter_SetValue with not exist key parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest003, TestSize.Level0)
+HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest003, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSingleFilterUnittest003 start";
     InSequence s;
@@ -1089,7 +1089,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest003, TestSize.L
  * EnvConditions: NA
  * CaseDescription: Test ImageEffectSingleFilter submethod OH_EffectFilter_Render unobstructed
  */
-HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest004, TestSize.Level0)
+HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest004, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSingleFilterUnittest004 start";
 
@@ -1259,7 +1259,7 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap003, TestSize.Le
  * EnvConditions: NA
  * CaseDescription: Test OH_ImageEffect_SetOutputPixelmap with empty OH_ImageEffect parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap004, TestSize.Level0)
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputPixelMap004, TestSize.Level1)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputPixelMap004 start";
     InSequence s;
@@ -1385,7 +1385,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest001, TestSize
     errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectStandardFilterUnittest001 OH_ImageEffect_SetInputPixelmap failed";
-        
+
     std::shared_ptr<PixelMap> outputPixelmap = std::make_shared<MockPixelMap>();
     std::shared_ptr<OH_PixelmapNative> outputPixelmapNative = std::make_shared<OH_PixelmapNative>(outputPixelmap);
     errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, outputPixelmapNative.get());

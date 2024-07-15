@@ -102,7 +102,7 @@ void ImageEffectInnerUnittest::TearDown()
     delete(effectBuffer_);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_001, TestSize.Level0)
+HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_001, TestSize.Level1)
 {
     InSequence s;
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
@@ -115,7 +115,7 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_001, TestSize.Level0)
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_002, TestSize.Level0)
+HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_002, TestSize.Level1)
 {
     InSequence s;
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
