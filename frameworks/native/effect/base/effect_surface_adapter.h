@@ -37,6 +37,9 @@ public:
     sptr<Surface> GetProducerSurface();
     ErrorCode SetConsumerListener(ConsumerBufferAvailable &&consumerBufferAvailable);
     GraphicTransformType GetTransform() const;
+    void SetOutputSurfaceDefaultUsage(uint64_t usage);
+
+    void ConsumerRequestCpuAccess(bool isCpuAccess);
 
     // IBufferConsumerListener 接口的实现 begin
     void OnBufferAvailable() override;
@@ -48,9 +51,10 @@ public:
 private:
     ErrorCode Initialize();
 
-    OHOS::sptr<Surface> receiverConsumerSurface_ = nullptr;
+    OHOS::sptr<IConsumerSurface> receiverConsumerSurface_ = nullptr;
     OHOS::sptr<Surface> fromProducerSurface_ = nullptr;
     ConsumerBufferAvailable consumerBufferAvailable_;
+    uint64_t outputSurfaceDefaultUsage_ = 0;
 };
 }
 }
