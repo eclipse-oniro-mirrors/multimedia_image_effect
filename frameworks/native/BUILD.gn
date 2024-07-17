@@ -121,6 +121,7 @@ ohos_shared_library("image_effect_impl") {
   external_deps = [
     "ability_base:zuri",
     "bounds_checking_function:libsec_shared",
+    "cJSON:cjson",
     "c_utils:utils",
     "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "graphic_2d:EGL",
@@ -132,7 +133,6 @@ ohos_shared_library("image_effect_impl") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image_native",
-    "json:nlohmann_json_static",
     "napi:ace_napi",
   ]
 
@@ -182,13 +182,13 @@ ohos_shared_library("image_effect") {
   deps = [ ":image_effect_impl" ]
 
   external_deps = [
+    "cJSON:cjson",
     "c_utils:utils",
     "graphic_2d:librender_service_client",
     "graphic_surface:surface",
     "hilog:libhilog",
     "image_framework:image_native",
     "image_framework:pixelmap",
-    "json:nlohmann_json_static",
     "napi:ace_napi",
   ]
 

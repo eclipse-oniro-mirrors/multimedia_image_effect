@@ -24,7 +24,7 @@
 #include "effect_type.h"
 #include "efilter_base.h"
 #include "error_code.h"
-#include "nlohmann/json.hpp"
+#include "json_helper.h"
 #include "image_effect_marco_define.h"
 
 namespace OHOS {
@@ -54,9 +54,9 @@ public:
 
     IMAGE_EFFECT_EXPORT virtual ErrorCode GetValue(const std::string &key, Plugin::Any &value);
 
-    IMAGE_EFFECT_EXPORT virtual ErrorCode Save(nlohmann::json &res);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode Save(EffectJsonPtr &res);
 
-    IMAGE_EFFECT_EXPORT virtual ErrorCode Restore(const nlohmann::json &values) = 0;
+    IMAGE_EFFECT_EXPORT virtual ErrorCode Restore(const EffectJsonPtr &values) = 0;
 
     static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name)
     {

@@ -53,16 +53,16 @@ public:
         return true;
     }
 
-    bool Save(void *efilter, nlohmann::json &res) override
+    bool Save(void *efilter, EffectJsonPtr &res) override
     {
         auto *filter = static_cast<EFilter *>(efilter);
         return filter != nullptr && filter->Save(res) == ErrorCode::SUCCESS;
     }
 
-    void *Restore(const nlohmann::json &values) override
+    void *Restore(const EffectJsonPtr &values) override
     {
         filter_ = EFilterFactory::Instance()->Create(CUSTOM_TEST_EFILTER);
-        Plugin::Any brightness = values.at("brightness").get<float>();
+        Plugin::Any brightness = values->GetFloat("brightness");
         filter_->SetValue("brightness", brightness);
         return filter_.get();
     }

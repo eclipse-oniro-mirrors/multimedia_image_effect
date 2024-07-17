@@ -52,7 +52,7 @@ public:
         return ErrorCode::SUCCESS;
     }
 
-    ErrorCode Restore(const nlohmann::json &values) override
+    ErrorCode Restore(const EffectJsonPtr &values) override
     {
         return ErrorCode::SUCCESS;
     }

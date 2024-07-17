@@ -122,7 +122,7 @@ public:
         return ohDelegate_->setValue((OH_EffectFilter *)efilter, key.c_str(), ohValue.get());
     }
 
-    bool Save(void *efilter, nlohmann::json &res) override
+    bool Save(void *efilter, EffectJsonPtr &res) override
     {
         EFFECT_LOGI("FilterDelegate Save.");
         char *result = nullptr;
@@ -133,23 +133,14 @@ public:
             return true;
         }
         std::string content = result;
-        res = nlohmann::json::parse(content, nullptr, false);
-        if (res.is_discarded()) {
-            EFFECT_LOGW("json object is null");
-        }
+        res = JsonHelper::ParseJsonData(content);
         return true;
     }
 
-    void *Restore(const nlohmann::json &values) override
+    void *Restore(const EffectJsonPtr &values) override
     {
         EFFECT_LOGI("FilterDelegate Restore.");
-        std::string valueStr;
-        try {
-            valueStr = values.dump();
-        } catch (nlohmann::json::type_error &exception) {
-            EFFECT_LOGE("FilterDelegate Restore: json dump fail! error:%{public}s", exception.what());
-            return nullptr;
-        }
+        std::string valueStr = values->ToString();
         return ohDelegate_->restore(valueStr.c_str());
     }
 

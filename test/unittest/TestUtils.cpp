@@ -16,7 +16,6 @@
 #include "gtest/gtest.h"
 
 #include "native_common_utils.h"
-#include "nlohmann/json.hpp"
 #include "json_helper.h"
 
 using namespace testing::ext;
@@ -162,44 +161,45 @@ HWTEST_F(TestUtils, NativeCommonUtilsSwitchToOHAny001, TestSize.Level1) {
 }
 
 HWTEST_F(TestUtils, JsonHelper001, TestSize.Level1) {
-    nlohmann::json json = {
-        {"stringKey", "testString"},
-        {"floatKey", 1.23f},
-        {"intKey", 123},
-        {"arrayKey", nlohmann::json::array({1, 2, 3})}
-    };
+    EffectJsonPtr root = JsonHelper::CreateObject();
+    ASSERT_NE(root, nullptr);
+    ASSERT_TRUE(root->IsObject());
+    ASSERT_TRUE(root->Put("stringKey", "testString"));
+    ASSERT_TRUE(root->Put("floatKey", 1.23f));
+    ASSERT_TRUE(root->Put("intKey", 123));
+    EffectJsonPtr intRoot = JsonHelper::CreateArray();
+    ASSERT_TRUE(intRoot->Add(1));
+    ASSERT_TRUE(intRoot->Add(2));
+    ASSERT_TRUE(intRoot->Add(3));
+    ASSERT_TRUE(root->Put("arrayKey", intRoot));
 
-    std::string stringValue;
-    float floatValue;
-    int32_t intValue;
-    nlohmann::json arrayValue;
+    ASSERT_TRUE(root->HasElement("stringKey"));
+    EffectJsonPtr stringKeyJsonPtr = root->GetElement("stringKey");
+    ASSERT_NE(stringKeyJsonPtr, nullptr);
+    ASSERT_TRUE(stringKeyJsonPtr->IsString());
+    ASSERT_FALSE(stringKeyJsonPtr->IsNumber());
+    std::string stringValue = stringKeyJsonPtr->GetString();
+    ASSERT_STREQ(stringValue.c_str(), "testString");
 
-    ErrorCode result = JsonHelper::GetStringValue(json, "stringKey", stringValue);
-    EXPECT_EQ(result, ErrorCode::SUCCESS);
-    result = JsonHelper::GetFloatValue(json, "floatKey", floatValue);
-    EXPECT_EQ(result, ErrorCode::SUCCESS);
-    result = JsonHelper::GetInt32Value(json, "intKey", intValue);
-    EXPECT_EQ(result, ErrorCode::SUCCESS);
-    result = JsonHelper::GetArray(json, "arrayKey", arrayValue);
-    EXPECT_EQ(result, ErrorCode::SUCCESS);
+    ASSERT_TRUE(root->HasElement("floatKey"));
+    EffectJsonPtr floatKeyJsonPtr = root->GetElement("floatKey");
+    ASSERT_NE(floatKeyJsonPtr, nullptr);
+    ASSERT_TRUE(floatKeyJsonPtr->IsNumber());
+    ASSERT_FALSE(floatKeyJsonPtr->IsString());
+    float floatValue = floatKeyJsonPtr->GetFloat();
+    ASSERT_EQ(floatValue, 1.23f);
 
-    result = JsonHelper::GetStringValue(json, "nonExistKey", stringValue);
-    EXPECT_NE(result, ErrorCode::SUCCESS);
-    result = JsonHelper::GetFloatValue(json, "nonExistKey", floatValue);
-    EXPECT_NE(result, ErrorCode::SUCCESS);
-    result = JsonHelper::GetInt32Value(json, "nonExistKey", intValue);
-    EXPECT_NE(result, ErrorCode::SUCCESS);
-    result = JsonHelper::GetArray(json, "nonExistKey", arrayValue);
-    EXPECT_NE(result, ErrorCode::SUCCESS);
+    ASSERT_FALSE(root->HasElement("nonExistKey"));
 
-    result = JsonHelper::GetStringValue(json, "intKey", stringValue);
-    EXPECT_NE(result, ErrorCode::SUCCESS);
-    result = JsonHelper::GetFloatValue(json, "stringKey", floatValue);
-    EXPECT_NE(result, ErrorCode::SUCCESS);
-    result = JsonHelper::GetInt32Value(json, "arrayKey", intValue);
-    EXPECT_NE(result, ErrorCode::SUCCESS);
-    result = JsonHelper::GetArray(json, "floatKey", arrayValue);
-    EXPECT_NE(result, ErrorCode::SUCCESS);
+    ASSERT_TRUE(root->HasElement("arrayKey"));
+    EffectJsonPtr arrayKeyJsonPtr = root->GetElement("arrayKey");
+    ASSERT_NE(arrayKeyJsonPtr, nullptr);
+    ASSERT_TRUE(arrayKeyJsonPtr->IsArray());
+    std::vector<EffectJsonPtr> arrayJsonPtr = arrayKeyJsonPtr->GetArray();
+    ASSERT_EQ(arrayJsonPtr.size(), 3);
+    ASSERT_EQ(arrayJsonPtr[0]->GetInt(), 1);
+    ASSERT_EQ(arrayJsonPtr[1]->GetInt(), 2);
+    ASSERT_EQ(arrayJsonPtr[2]->GetInt(), 3);
 }
 }
 }

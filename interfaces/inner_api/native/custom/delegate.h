@@ -21,9 +21,9 @@
 #include "any.h"
 #include "effect_buffer.h"
 #include "effect_info.h"
-#include "nlohmann/json.hpp"
 #include "effect_context.h"
 #include "image_effect_marco_define.h"
+#include "json_helper.h"
 
 namespace OHOS {
 namespace Media {
@@ -40,9 +40,9 @@ public:
 
     IMAGE_EFFECT_EXPORT virtual bool SetValue(void *efilter, const std::string &key, const Plugin::Any &value) = 0;
 
-    IMAGE_EFFECT_EXPORT virtual bool Save(void *efilter, nlohmann::json &res) = 0;
+    IMAGE_EFFECT_EXPORT virtual bool Save(void *efilter, EffectJsonPtr &res) = 0;
 
-    IMAGE_EFFECT_EXPORT virtual void *Restore(const nlohmann::json &values) = 0;
+    IMAGE_EFFECT_EXPORT virtual void *Restore(const EffectJsonPtr &values) = 0;
 
     IMAGE_EFFECT_EXPORT virtual void *GetEffectInfo() = 0;
 };

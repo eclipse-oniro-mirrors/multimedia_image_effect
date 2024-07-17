@@ -53,7 +53,7 @@ ErrorCode CustomEFilter::SetValue(const std::string &key, Plugin::Any &value)
     return EFilter::SetValue(key, value);
 }
 
-ErrorCode CustomEFilter::Save(nlohmann::json &res)
+ErrorCode CustomEFilter::Save(EffectJsonPtr &res)
 {
     CHECK_AND_RETURN_RET_LOG(delegate_ != nullptr, ErrorCode::ERR_INPUT_NULL, "delegate_ is null");
     if (!delegate_->Save(handler_, res)) {
@@ -63,7 +63,7 @@ ErrorCode CustomEFilter::Save(nlohmann::json &res)
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode CustomEFilter::Restore(const nlohmann::json &value)
+ErrorCode CustomEFilter::Restore(const EffectJsonPtr &value)
 {
     CHECK_AND_RETURN_RET_LOG(delegate_ != nullptr, ErrorCode::ERR_INPUT_NULL, "delegate_ is null");
     void *result = delegate_->Restore(value);

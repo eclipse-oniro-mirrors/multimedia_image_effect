@@ -116,16 +116,15 @@ ErrorCode ContrastEFilter::SetValue(const std::string &key, Plugin::Any &value)
     return EFilter::SetValue(key, value);
 }
 
-ErrorCode ContrastEFilter::Restore(const nlohmann::json &values)
+ErrorCode ContrastEFilter::Restore(const EffectJsonPtr &values)
 {
-    float contrast;
-
     // If the developer does not set parameters, the function returns a failure, but it is a normal case.
-    ErrorCode result = JsonHelper::GetFloatValue(values, Parameter::KEY_INTENSITY, contrast);
-    if (result != ErrorCode::SUCCESS) {
+    if (!values->HasElement(Parameter::KEY_INTENSITY)) {
         EFFECT_LOGW("not set value! key=%{public}s", Parameter::KEY_INTENSITY.c_str());
         return ErrorCode::SUCCESS;
     }
+
+    float contrast = values->GetFloat(Parameter::KEY_INTENSITY);
     if (contrast < Parameter::INTENSITY_RANGE[0] || contrast > Parameter::INTENSITY_RANGE[1]) {
         return ErrorCode::ERR_VALUE_OUT_OF_RANGE;
     }

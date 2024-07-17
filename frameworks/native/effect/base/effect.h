@@ -39,7 +39,7 @@ public:
 
     virtual ErrorCode Start() = 0;
 
-    virtual ErrorCode Save(nlohmann::json &res) = 0;
+    virtual ErrorCode Save(EffectJsonPtr &res) = 0;
 
     std::vector<std::shared_ptr<EFilter>> &GetEFilters()
     {
