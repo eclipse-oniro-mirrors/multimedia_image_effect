@@ -73,12 +73,12 @@ std::shared_ptr<IFilterDelegate> EFilterFactory::GetDelegate(const std::string &
     return nullptr;
 }
 
-std::shared_ptr<EFilter> EFilterFactory::Restore(const std::string &name, const nlohmann::json &root, void *handler)
+std::shared_ptr<EFilter> EFilterFactory::Restore(const std::string &name, const EffectJsonPtr &root, void *handler)
 {
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(name, handler);
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::CheckElementExitstence(root, "values") == ErrorCode::SUCCESS, efilter,
-        "[values] not exist!");
-    const nlohmann::json values = *(root.find("values"));
+    CHECK_AND_RETURN_RET_LOG(root->HasElement("values"), efilter, "[values] not exist!");
+
+    const EffectJsonPtr values = root->GetElement("values");
     CHECK_AND_RETURN_RET_LOG(efilter->Restore(values) == ErrorCode::SUCCESS, efilter, "values restore fail!");
     return efilter;
 }

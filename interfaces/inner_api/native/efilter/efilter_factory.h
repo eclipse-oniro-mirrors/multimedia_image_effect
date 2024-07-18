@@ -61,7 +61,7 @@ public:
     }
 
     IMAGE_EFFECT_EXPORT
-    std::shared_ptr<EFilter> Restore(const std::string &name, const nlohmann::json &root, void *handler);
+    std::shared_ptr<EFilter> Restore(const std::string &name, const EffectJsonPtr &root, void *handler);
 
     template <class T> void RegisterEFilter(const std::string &name)
     {

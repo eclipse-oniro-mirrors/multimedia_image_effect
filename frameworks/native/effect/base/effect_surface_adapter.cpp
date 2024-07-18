@@ -37,11 +37,17 @@ EffectSurfaceAdapter::~EffectSurfaceAdapter()
 
 ErrorCode EffectSurfaceAdapter::Initialize()
 {
-    receiverConsumerSurface_ = Surface::CreateSurfaceAsConsumer("EffectSurfaceAdapter");
+    receiverConsumerSurface_ = IConsumerSurface::Create("EffectSurfaceAdapter");
     if (receiverConsumerSurface_ == nullptr) {
         EFFECT_LOGE("Surface::CreateSurfaceAsConsumer::Create failed.");
         return ErrorCode::ERR_IMAGE_EFFECT_RECEIVER_INIT_FAILED;
     }
+
+    uint64_t usage = BUFFER_USAGE_CPU_HW_BOTH | BUFFER_USAGE_MEM_MMZ_CACHE;
+    if (outputSurfaceDefaultUsage_ & BUFFER_USAGE_HW_COMPOSER) {
+        usage |= BUFFER_USAGE_HW_COMPOSER;
+    }
+    (void)receiverConsumerSurface_->SetDefaultUsage(usage);
 
     auto producer = receiverConsumerSurface_->GetProducer();
     fromProducerSurface_ = Surface::CreateSurfaceAsProducer(producer);
@@ -95,6 +101,20 @@ GraphicTransformType EffectSurfaceAdapter::GetTransform() const
     }
 
     return GRAPHIC_ROTATE_BUTT;
+}
+
+void EffectSurfaceAdapter::SetOutputSurfaceDefaultUsage(uint64_t usage)
+{
+    EFFECT_LOGD("SetOutputSurfaceDefaultUsage: usage=%{public}llu", static_cast<unsigned long long>(usage));
+    outputSurfaceDefaultUsage_ = usage;
+}
+
+void EffectSurfaceAdapter::ConsumerRequestCpuAccess(bool isCpuAccess)
+{
+    EFFECT_LOGD("ConsumerRequestCpuAccess: isCpuAccess=%{public}d", isCpuAccess);
+    if (receiverConsumerSurface_) {
+        receiverConsumerSurface_->ConsumerRequestCpuAccess(isCpuAccess);
+    }
 }
 
 void EffectSurfaceAdapter::OnBufferAvailable()

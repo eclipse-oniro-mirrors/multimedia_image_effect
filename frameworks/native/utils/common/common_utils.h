@@ -24,12 +24,12 @@
 #include "effect_log.h"
 #include "error_code.h"
 #include "image_type.h"
-#include "nlohmann/json.hpp"
 #include "pixel_map.h"
 #include "surface.h"
 #include "effect_memory_manager.h"
 #include "effect_context.h"
 #include "image_effect_marco_define.h"
+#include "json_helper.h"
 
 namespace OHOS {
 namespace Media {
@@ -44,7 +44,7 @@ public:
     static ErrorCode ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData);
     static ErrorCode ParsePath(std::string &path, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData);
     IMAGE_EFFECT_EXPORT static void UnlockPixelMap(const PixelMap *pixelMap);
-    static ErrorCode ParseAnyToJson(Plugin::Any &any, nlohmann::json &result);
+    static ErrorCode ParseAnyAndAddToJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &result);
     static bool EndsWithJPG(const std::string &input);
     static ErrorCode ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
         const std::shared_ptr<EffectMemoryManager> &memoryManager);

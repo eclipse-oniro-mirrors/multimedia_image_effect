@@ -62,7 +62,7 @@ public:
 
     IMAGE_EFFECT_EXPORT ErrorCode Start() override;
 
-    IMAGE_EFFECT_EXPORT ErrorCode Save(nlohmann::json &res) override;
+    IMAGE_EFFECT_EXPORT ErrorCode Save(EffectJsonPtr &res) override;
 
     IMAGE_EFFECT_EXPORT static std::shared_ptr<ImageEffect> Restore(std::string &info);
 
@@ -89,7 +89,7 @@ public:
 
     IMAGE_EFFECT_EXPORT ErrorCode SetOutputPath(const std::string &path);
 
-    IMAGE_EFFECT_EXPORT ErrorCode SetExtraInfo(nlohmann::json res);
+    IMAGE_EFFECT_EXPORT ErrorCode SetExtraInfo(EffectJsonPtr res);
 
 protected:
     IMAGE_EFFECT_EXPORT virtual ErrorCode Render();
@@ -123,6 +123,8 @@ private:
     unsigned long int RequestTaskId();
 
     void ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer);
+    void OnBufferAvailableWithCPU(sptr<SurfaceBuffer> &buffer, const OHOS::Rect &damages, int64_t timestamp);
+    void OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<SurfaceBuffer> &outBuffer, int64_t timestamp);
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
@@ -136,7 +138,7 @@ private:
 
     std::map<ConfigType, Plugin::Any> config_ = { { ConfigType::IPTYPE, ipType_ } };
 
-    nlohmann::json extraInfo_ = nullptr;
+    EffectJsonPtr extraInfo_ = nullptr;
 
     std::string name_;
 

@@ -55,6 +55,7 @@ ohos_unittest("image_effect_unittest") {
     "$image_effect_root_dir/test/unittest/TestEffectMemoryManager.cpp",
     "$image_effect_root_dir/test/unittest/TestEffectPipeline.cpp",
     "$image_effect_root_dir/test/unittest/TestImageEffect.cpp",
+    "$image_effect_root_dir/test/unittest/TestJsonHelper.cpp",
     "$image_effect_root_dir/test/unittest/TestPort.cpp",
     "$image_effect_root_dir/test/unittest/TestUtils.cpp",
     "$image_effect_root_dir/test/unittest/image_effect_capi_unittest.cpp",
@@ -74,6 +75,7 @@ ohos_unittest("image_effect_unittest") {
 
   external_deps = [
     "ability_base:zuri",
+    "cJSON:cjson",
     "c_utils:utils",
     "drivers_interface_display:libdisplay_commontype_proxy_1.0",
     "graphic_2d:EGL",
@@ -83,7 +85,6 @@ ohos_unittest("image_effect_unittest") {
     "hitrace:hitrace_meter",
     "image_framework:image_native",
     "image_framework:pixelmap",
-    "json:nlohmann_json_static",
     "napi:ace_napi",
   ]
 

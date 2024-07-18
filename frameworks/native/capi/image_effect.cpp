@@ -526,15 +526,9 @@ ImageEffect_ErrorCode OH_ImageEffect_Save(OH_ImageEffect *imageEffect, char **in
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Save: input parameter info is null!");
 
-    nlohmann::json effectInfo;
+    EffectJsonPtr effectInfo = JsonHelper::CreateObject();
     imageEffect->imageEffect_->Save(effectInfo);
-    std::string infoStr;
-    try {
-        infoStr = effectInfo.dump();
-    } catch (nlohmann::json::type_error &err) {
-        EFFECT_LOGE("Save: fail to dump json object! error:%{public}s", err.what());
-        return ImageEffect_ErrorCode::EFFECT_UNKNOWN;
-    }
+    std::string infoStr = effectInfo->ToString();
 
     char *infoChar = new char[infoStr.length() + 1];
     imageEffect->saveJson = infoChar;
@@ -555,28 +549,23 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, nullptr, "Restore: input parameter info is null!");
     std::string infoStr = info;
-    const nlohmann::json root = nlohmann::json::parse(infoStr, nullptr, false);
-    CHECK_AND_RETURN_RET_LOG(!root.is_discarded(), nullptr, "Restore: json object is null");
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::CheckElementExitstence(root, "imageEffect") == ErrorCode::SUCCESS, nullptr,
-        "OH_ImageEffect_Restore no imageEffect");
-    nlohmann::json imageInfo = root["imageEffect"];
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::CheckElementExitstence(imageInfo, "name") == ErrorCode::SUCCESS, nullptr,
-        "OH_ImageEffect_Restore no name");
-    std::string effectName;
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::GetStringValue(imageInfo, "name", effectName) == ErrorCode::SUCCESS, nullptr,
-        "OH_ImageEffect_Restore imageEffect get name failed");
+    const EffectJsonPtr root = JsonHelper::ParseJsonData(infoStr);
+    CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "OH_ImageEffect_Restore no imageEffect");
+    EffectJsonPtr imageInfo = root->GetElement("imageEffect");
+    CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("name"), nullptr, "OH_ImageEffect_Restore no name");
+
+    std::string effectName = imageInfo->GetString("name");
+    CHECK_AND_RETURN_RET_LOG(!effectName.empty(), nullptr, "OH_ImageEffect_Restore imageEffect get name failed");
     OH_ImageEffect* ohImageEffect = OH_ImageEffect_Create(effectName.c_str());
     CHECK_AND_RETURN_RET_LOG(ohImageEffect != nullptr, nullptr, "ohImageEffect create failed");
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::CheckElementExitstence(imageInfo, "filters") == ErrorCode::SUCCESS, nullptr,
-        "OH_ImageEffect_Restore no filters");
-    nlohmann::json effects;
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::GetArray(imageInfo, "filters", effects) == ErrorCode::SUCCESS, nullptr,
-        "OH_ImageEffect_Restore filters not array");
+    CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("filters"), nullptr, "OH_ImageEffect_Restore no filters");
+    EffectJsonPtr filters = imageInfo->GetElement("filters");
+    CHECK_AND_RETURN_RET_LOG(filters->IsArray(), nullptr, "OH_ImageEffect_Restore filters not array");
+    std::vector<EffectJsonPtr> effects = filters->GetArray();
 
     for (auto &effect : effects) {
-        std::string name;
-        CHECK_AND_CONTINUE_LOG(JsonHelper::GetStringValue(effect, "name", name) == ErrorCode::SUCCESS,
-            "Restore: [name] not exist");
+        std::string name = effect->GetString("name");
+        CHECK_AND_CONTINUE_LOG(!name.empty(), "Restore: [name] not exist");
         std::shared_ptr<IFilterDelegate> filterDelegate = EFilterFactory::Instance()->GetDelegate(name);
         if (filterDelegate != nullptr) {
             auto *filter = static_cast<OH_EffectFilter *>(filterDelegate->Restore(effect));

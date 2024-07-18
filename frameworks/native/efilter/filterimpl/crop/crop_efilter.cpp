@@ -244,7 +244,7 @@ std::shared_ptr<EffectInfo> CropEFilter::GetEffectInfo(const std::string &name)
     return info_;
 }
 
-ErrorCode CropEFilter::Restore(const nlohmann::json &values)
+ErrorCode CropEFilter::Restore(const EffectJsonPtr &values)
 {
     return ErrorCode::SUCCESS;
 }

@@ -41,7 +41,7 @@ public:
 
     ErrorCode SetValue(const std::string &key, Plugin::Any &value) override;
 
-    ErrorCode Restore(const nlohmann::json &values) override;
+    ErrorCode Restore(const EffectJsonPtr &values) override;
 
     IMAGE_EFFECT_EXPORT static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name);
 

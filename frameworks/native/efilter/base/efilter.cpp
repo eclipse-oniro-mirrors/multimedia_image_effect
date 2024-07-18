@@ -59,20 +59,18 @@ ErrorCode EFilter::GetValue(const std::string &key, Plugin::Any &value)
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode EFilter::Save(nlohmann::json &res)
+ErrorCode EFilter::Save(EffectJsonPtr &res)
 {
-    res["name"] = name_;
-    nlohmann::json jsonValues;
+    res->Put("name", name_);
+    EffectJsonPtr jsonValues = JsonHelper::CreateObject();
     for (auto value : values_) {
-        nlohmann::json jsonValue;
-        if (CommonUtils::ParseAnyToJson(value.second, jsonValue) == ErrorCode::SUCCESS) {
-            jsonValues[value.first] = jsonValue;
-        } else {
+        if (CommonUtils::ParseAnyAndAddToJson(value.first, value.second, jsonValues) !=
+            ErrorCode::SUCCESS) {
             EFFECT_LOGE("not support switch to json! key:%{public}s", value.first.c_str());
         }
     }
-    if (!jsonValues.empty()) {
-        res["values"] = jsonValues;
+    if (jsonValues->IsValid()) {
+        res->Put("values", jsonValues);
     }
     return ErrorCode::SUCCESS;
 }

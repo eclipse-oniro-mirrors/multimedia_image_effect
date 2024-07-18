@@ -62,14 +62,14 @@ const std::unordered_map<AllocatorType, BufferType> CommonUtils::allocatorTypeTo
 };
 
 template <class ValueType>
-ErrorCode ParseJson(Plugin::Any any, nlohmann::json &value)
+ErrorCode ParseJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &json)
 {
     auto result = Plugin::AnyCast<ValueType>(&any);
     if (result == nullptr) {
         return ErrorCode::ERR_ANY_CAST_TYPE_NOT_MATCH;
     }
 
-    value = *result;
+    json->Put(key, *result);
     return ErrorCode::SUCCESS;
 }
 
@@ -316,11 +316,11 @@ void CommonUtils::UnlockPixelMap(const PixelMap *pixelMap)
     EFFECT_LOGI("UnlockPixelMap! pixelMap=%{public}p", pixelMap);
 }
 
-ErrorCode CommonUtils::ParseAnyToJson(Plugin::Any &any, nlohmann::json &result)
+ErrorCode CommonUtils::ParseAnyAndAddToJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &result)
 {
-    CHECK_AND_RETURN_RET(ParseJson<float>(any, result) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
-    CHECK_AND_RETURN_RET(ParseJson<int32_t>(any, result) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
-    CHECK_AND_RETURN_RET(ParseJson<uint32_t>(any, result) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
+    CHECK_AND_RETURN_RET(ParseJson<float>(key, any, result) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
+    CHECK_AND_RETURN_RET(ParseJson<int32_t>(key, any, result) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
+    CHECK_AND_RETURN_RET(ParseJson<uint32_t>(key, any, result) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
 #ifndef HST_ANY_WITH_NO_RTTI
     EFFECT_LOGE("inner any type not support switch to json! type:%{public}s", any.Type().name());
 #else

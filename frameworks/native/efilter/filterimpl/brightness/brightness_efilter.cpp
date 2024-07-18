@@ -117,16 +117,15 @@ ErrorCode BrightnessEFilter::SetValue(const std::string &key, Plugin::Any &value
     return EFilter::SetValue(key, value);
 }
 
-ErrorCode BrightnessEFilter::Restore(const nlohmann::json &values)
+ErrorCode BrightnessEFilter::Restore(const EffectJsonPtr &values)
 {
-    float brightness;
-
     // If the developer does not set parameters, the function returns a failure, but it is a normal case.
-    ErrorCode result = JsonHelper::GetFloatValue(values, Parameter::KEY_INTENSITY, brightness);
-    if (result != ErrorCode::SUCCESS) {
+    if (!values->HasElement(Parameter::KEY_INTENSITY)) {
         EFFECT_LOGW("not set value! key=%{public}s", Parameter::KEY_INTENSITY.c_str());
         return ErrorCode::SUCCESS;
     }
+
+    float brightness = values->GetFloat(Parameter::KEY_INTENSITY);
     if (brightness < Parameter::INTENSITY_RANGE[0] || brightness > Parameter::INTENSITY_RANGE[1]) {
         return ErrorCode::ERR_VALUE_OUT_OF_RANGE;
     }
