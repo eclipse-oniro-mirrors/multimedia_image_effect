@@ -31,7 +31,7 @@
         "c_utils",
         "ability_base",
         "bounds_checking_function",
-        "json",
+        "cJSON",
         "drivers_interface_display",
         "hisysevent"
       ],
@@ -71,7 +71,8 @@
               "effect_memory.h",
               "effect_memory_manager.h",
               "format_helper.h",
-              "memcpy_helper.h"
+              "memcpy_helper.h",
+              "json_helper.h"
             ]
           },
           "name": "//foundation/multimedia/image_effect/frameworks/native:image_effect_impl"

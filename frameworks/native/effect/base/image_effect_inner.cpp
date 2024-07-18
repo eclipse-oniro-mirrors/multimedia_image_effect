@@ -602,52 +602,45 @@ ErrorCode ImageEffect::Render()
     return res;
 }
 
-ErrorCode ImageEffect::Save(nlohmann::json &res)
+ErrorCode ImageEffect::Save(EffectJsonPtr &res)
 {
-    nlohmann::json effect = nlohmann::json::array();
+    EffectJsonPtr effect = JsonHelper::CreateArray();
     for (auto it = efilters_.begin(); it != efilters_.end(); it++) {
-        nlohmann::json data;
+        EffectJsonPtr data = JsonHelper::CreateObject();
         std::shared_ptr<EFilter> efilter = *it;
         efilter->Save(data);
-        effect.push_back(data);
+        effect->Add(data);
     }
-    nlohmann::json info;
-    info["filters"] = effect;
-    info["name"] = name_;
+
+    EffectJsonPtr info  = JsonHelper::CreateObject();
+    info->Put("filters", effect);
+    info->Put("name", name_);
     if (extraInfo_ != nullptr) {
-        extraInfo_["imageEffect"] = info;
+        extraInfo_->Replace("imageEffect", info);
         res = extraInfo_;
     } else {
-        res["imageEffect"] = info;
+        res->Put("imageEffect", info);
     }
     return ErrorCode::SUCCESS;
 }
 
 std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
 {
-    const nlohmann::json root = nlohmann::json::parse(info, nullptr, false);
-    CHECK_AND_RETURN_RET_LOG(!root.is_discarded(), nullptr, "json object is null");
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::CheckElementExitstence(root, "imageEffect") == ErrorCode::SUCCESS, nullptr,
-        "Restore: no imageEffect");
+    const EffectJsonPtr root = JsonHelper::ParseJsonData(info);
+    CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "Restore: no imageEffect");
+    const EffectJsonPtr &imageInfo = root->GetElement("imageEffect");
+    CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("name"), nullptr, "Restore: imageEffect no name");
+    std::string effectName = imageInfo->GetString("name");
+    CHECK_AND_RETURN_RET_LOG(!effectName.empty(), nullptr, "Restore: imageEffect get name failed");
 
-    const nlohmann::json &imageInfo = root["imageEffect"];
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::CheckElementExitstence(imageInfo, "name") == ErrorCode::SUCCESS, nullptr,
-        "Restore: imageEffect no name");
-    std::string effectName;
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::GetStringValue(imageInfo, "name", effectName) == ErrorCode::SUCCESS, nullptr,
-        "Restore: imageEffect get name failed");
-
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::CheckElementExitstence(imageInfo, "filters") == ErrorCode::SUCCESS, nullptr,
-        "Restore: imageEffect no filters");
-    nlohmann::json efiltersInfo;
-    CHECK_AND_RETURN_RET_LOG(JsonHelper::GetArray(imageInfo, "filters", efiltersInfo) == ErrorCode::SUCCESS, nullptr,
-        "Restore: filters not array");
+    CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("filters"), nullptr, "Restore: imageEffect no filters");
+    std::vector<EffectJsonPtr> efiltersInfo = imageInfo->GetArray("filters");
+    CHECK_AND_RETURN_RET_LOG(!efiltersInfo.empty(), nullptr, "Restore: filters not array");
 
     std::shared_ptr<ImageEffect> imageEffect = std::make_unique<ImageEffect>(effectName.c_str());
     for (auto &efilterInfo : efiltersInfo) {
-        std::string name;
-        CHECK_AND_CONTINUE_LOG(JsonHelper::GetStringValue(efilterInfo, "name", name) == ErrorCode::SUCCESS,
-            "Restore: [name] not exist");
+        std::string name = efilterInfo->GetString("name");
+        CHECK_AND_CONTINUE_LOG(!name.empty(), "Restore: [name] not exist");
         std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Restore(name, efilterInfo, nullptr);
         imageEffect->AddEFilter(efilter);
     }
@@ -981,7 +974,7 @@ void ImageEffect::DestroyEGLEnv()
     impl_->effectContext_->renderEnvironment_->Release();
 }
 
-ErrorCode ImageEffect::SetExtraInfo(nlohmann::json res)
+ErrorCode ImageEffect::SetExtraInfo(EffectJsonPtr res)
 {
     extraInfo_ = res;
     return ErrorCode::SUCCESS;

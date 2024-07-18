@@ -68,7 +68,7 @@ public:
         return ErrorCode::SUCCESS;
     }
 
-    ErrorCode Restore(const nlohmann::json &values) override
+    ErrorCode Restore(const EffectJsonPtr &values) override
     {
         return ErrorCode::SUCCESS;
     }
@@ -78,10 +78,10 @@ public:
         return std::make_shared<EffectInfo>();
     }
 
-    ErrorCode Save(nlohmann::json &res) override
+    ErrorCode Save(EffectJsonPtr &res) override
     {
-        res["name"] = name_;
-        nlohmann::json jsonValues;
+        res->Put("name", name_);
+        EffectJsonPtr jsonValues = JsonHelper::CreateObject();
         Plugin::Any any;
         auto it = values_.find(Test::KEY_FILTER_INTENSITY);
         if (it == values_.end()) {
@@ -93,9 +93,9 @@ public:
             return ErrorCode::ERR_UNKNOWN;
         }
 
-        nlohmann::json jsonValue = *reinterpret_cast<char **>(value);
-        jsonValues[it->first] = jsonValue;
-        res["values"] = jsonValues;
+        std::string jsonValue = *reinterpret_cast<char **>(value);
+        jsonValues->Put(it->first, jsonValue);
+        res->Put("values", jsonValues);
         return ErrorCode::SUCCESS;
     }
 };
@@ -202,9 +202,9 @@ public:
             return true;
         },
         .save = [](OH_EffectFilter *filter, char **info) {
-            nlohmann::json root;
-            root["name"] = std::string(CUSTOM_BRIGHTNESS_EFILTER);
-            std::string infoStr = root.dump();
+            EffectJsonPtr root = JsonHelper::CreateObject();
+            root->Put("name", std::string(CUSTOM_BRIGHTNESS_EFILTER));
+            std::string infoStr = root->ToString();
             char *infoChar = static_cast<char *>(malloc(infoStr.length() + 1));
             infoChar[infoStr.length()] = '\0';
             auto res = strcpy_s(infoChar, infoStr.length() + 1, infoStr.c_str());
@@ -1124,7 +1124,24 @@ HWTEST_F(NativeImageEffectUnittest, CustomTestFilterSave001, TestSize.Level1)
 
     char *info = nullptr;
     errorCode = OH_ImageEffect_Save(imageEffect, &info);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_NE(info, nullptr);
+
+    std::string data = info;
+    EffectJsonPtr root = JsonHelper::ParseJsonData(data);
+    ASSERT_NE(root, nullptr);
+
+    EffectJsonPtr imageInfo = root->GetElement("imageEffect");
+    ASSERT_NE(imageInfo, nullptr);
+
+    std::vector<EffectJsonPtr> filters = imageInfo->GetArray("filters");
+    ASSERT_EQ(filters.size(), 1);
+
+    EffectJsonPtr values = filters[0]->GetElement("values");
+    ASSERT_NE(values, nullptr);
+
+    std::string parsedValue = values->GetString(KEY_FILTER_INTENSITY);
+    ASSERT_STREQ(parsedValue.c_str(), value);
 }
 
 HWTEST_F(NativeImageEffectUnittest, OHImageEffectDataTypeSurface001, TestSize.Level1)

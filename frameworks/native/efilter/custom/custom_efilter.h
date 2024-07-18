@@ -42,9 +42,9 @@ public:
 
     ErrorCode SetValue(const std::string &key, Plugin::Any &value) override;
 
-    ErrorCode Save(nlohmann::json &res) override;
+    ErrorCode Save(EffectJsonPtr &res) override;
 
-    ErrorCode Restore(const nlohmann::json &value) override;
+    ErrorCode Restore(const EffectJsonPtr &value) override;
 
     static void SetEffectInfo(const std::string &name, const std::shared_ptr<EffectInfo> &effectInfo);
 
