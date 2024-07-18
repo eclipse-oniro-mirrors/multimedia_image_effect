@@ -76,6 +76,7 @@ std::shared_ptr<IFilterDelegate> EFilterFactory::GetDelegate(const std::string &
 std::shared_ptr<EFilter> EFilterFactory::Restore(const std::string &name, const EffectJsonPtr &root, void *handler)
 {
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(name, handler);
+    CHECK_AND_RETURN_RET_LOG(efilter != nullptr, nullptr, "Restore: create filter fail! name=%{public}s", name.c_str());
     CHECK_AND_RETURN_RET_LOG(root->HasElement("values"), efilter, "[values] not exist!");
 
     const EffectJsonPtr values = root->GetElement("values");
