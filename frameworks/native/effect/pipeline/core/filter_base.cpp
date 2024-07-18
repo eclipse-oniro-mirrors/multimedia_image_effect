@@ -63,6 +63,8 @@ ErrorCode FilterBase::Prepare()
 
     // Filter默认InPort按Push方式获取数据
     WorkMode mode;
+    auto inPort = GetInPort(PORT_NAME_DEFAULT);
+    FALSE_RETURN_E(!inPorts_.empty(), ErrorCode::ERR_PIPELINE_INVALID_FILTER_PORT);
     return GetInPort(PORT_NAME_DEFAULT)->Activate({ WorkMode::PUSH }, mode);
 }
 
