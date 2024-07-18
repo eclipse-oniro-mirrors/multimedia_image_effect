@@ -123,6 +123,8 @@ private:
     unsigned long int RequestTaskId();
 
     void ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer);
+    void OnBufferAvailableWithCPU(sptr<SurfaceBuffer> &buffer, const OHOS::Rect &damages, int64_t timestamp);
+    void OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<SurfaceBuffer> &outBuffer, int64_t timestamp);
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal

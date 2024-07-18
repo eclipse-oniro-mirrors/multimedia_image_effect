@@ -20,8 +20,8 @@
 #include <algorithm>
 #include <sync_fence.h>
 
+#include "metadata_helper.h"
 #include "common_utils.h"
-#include "effect_log.h"
 #include "filter_factory.h"
 #include "image_sink_filter.h"
 #include "image_source_filter.h"
@@ -35,6 +35,9 @@
 #include "colorspace_helper.h"
 #include "render_environment.h"
 #include "memcpy_helper.h"
+#include "v1_1/buffer_handle_meta_key_type.h"
+#include "effect_log.h"
+#include "effect_trace.h"
 
 #define RENDER_QUEUE_SIZE 8
 #define COMMON_TASK_TAG 0
@@ -42,6 +45,7 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
+using namespace OHOS::HDI::Display::Graphic::Common;
 
 enum class EffectState {
     IDLE,
@@ -397,6 +401,9 @@ ErrorCode ImageEffect::Start()
         }
         case DataType::SURFACE:
             impl_->effectState_ = EffectState::RUNNING;
+            if (impl_->surfaceAdapter_) {
+                impl_->surfaceAdapter_->ConsumerRequestCpuAccess(true);
+            }
             break;
         default:
             EFFECT_LOGE("Not set input data!");
@@ -409,6 +416,9 @@ void ImageEffect::Stop()
 {
     std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
     impl_->effectState_ = EffectState::IDLE;
+    if (impl_->surfaceAdapter_) {
+        impl_->surfaceAdapter_->ConsumerRequestCpuAccess(false);
+    }
     impl_->effectContext_->memoryManager_->ClearMemory();
 }
 
@@ -669,6 +679,11 @@ ErrorCode ImageEffect::SetOutputSurface(sptr<Surface>& surface)
     }
     outDateInfo_.dataType_ = DataType::SURFACE;
     toProducerSurface_ = surface;
+
+    if (impl_->surfaceAdapter_ == nullptr) {
+        impl_->surfaceAdapter_ = std::make_unique<EffectSurfaceAdapter>();
+    }
+    impl_->surfaceAdapter_->SetOutputSurfaceDefaultUsage(toProducerSurface_->GetDefaultUsage());
     return ErrorCode::SUCCESS;
 }
 
@@ -716,7 +731,7 @@ void ImageEffect::ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer)
     }
 }
 
-void MemoryCopyForSurfaceBuffer(sptr<SurfaceBuffer> &buffer, OHOS::sptr<SurfaceBuffer> outBuffer)
+void MemoryCopyForSurfaceBuffer(sptr<SurfaceBuffer> &buffer, OHOS::sptr<SurfaceBuffer> &outBuffer)
 {
     CopyInfo src = {
         .bufferInfo = {
@@ -741,17 +756,79 @@ void MemoryCopyForSurfaceBuffer(sptr<SurfaceBuffer> &buffer, OHOS::sptr<SurfaceB
     MemcpyHelper::CopyData(src, dst);
 }
 
-void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
+bool IsSurfaceBufferHebc(sptr<SurfaceBuffer> &buffer)
 {
-    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
-    if (outDateInfo_.dataType_ == DataType::NATIVE_WINDOW) {
-        ConsumerBufferWithGPU(buffer);
-        return;
+    V1_1::BufferHandleAttrKey key = V1_1::BufferHandleAttrKey::ATTRKEY_ACCESS_TYPE;
+    std::vector<uint8_t> values;
+    auto res = buffer->GetMetadata(key, values);
+    CHECK_AND_RETURN_RET_LOG(res == 0, false, "IsSurfaceBufferHebc: GetMetadata fail! res=%{public}d", res);
+
+    V1_1::HebcAccessType hebcAccessType = V1_1::HebcAccessType::HEBC_ACCESS_UNINIT;
+    res = MetadataHelper::ConvertVecToMetadata(values, hebcAccessType);
+    CHECK_AND_RETURN_RET_LOG(res == 0, false, "IsSurfaceBufferHebc: ConvertVecToMetadata fail! res=%{public}d", res);
+
+    if (hebcAccessType == V1_1::HEBC_ACCESS_HW_ONLY) {
+        EFFECT_LOGD("IsSurfaceBufferHebc: surface buffer is Hebc data!");
+        return true;
     }
+    return false;
+}
+
+void SetSurfaceBufferHebcAccessType(sptr<SurfaceBuffer> &buffer, V1_1::HebcAccessType hebcAccessType)
+{
+    std::vector<uint8_t> values;
+    auto res = MetadataHelper::ConvertMetadataToVec(hebcAccessType, values);
+    CHECK_AND_RETURN_LOG(res == 0, "SetSurfaceBufferHebcAccessType: ConvertVecToMetadata fail! res=%{public}d", res);
+
+    V1_1::BufferHandleAttrKey key = V1_1::BufferHandleAttrKey::ATTRKEY_ACCESS_TYPE;
+    res = buffer->SetMetadata(key, values);
+    CHECK_AND_RETURN_LOG(res == 0, "SetSurfaceBufferHebcAccessType: SetMetadata fail! res=%{public}d", res);
+}
+
+void ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<SurfaceBuffer> &outBuffer,
+    int64_t timestamp)
+{
+    bool isSrcHebcData = IsSurfaceBufferHebc(buffer);
+    SetSurfaceBufferHebcAccessType(outBuffer,
+        isSrcHebcData ? V1_1::HebcAccessType::HEBC_ACCESS_HW_ONLY : V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
+
+    bool isNeedRender = !isSrcHebcData && impl_->effectState_ == EffectState::RUNNING;
+    bool isNeedCpy = true;
+    if (isNeedRender) {
+        inDateInfo_.surfaceBufferInfo_ = {
+            .surfaceBuffer_ = buffer,
+            .timestamp_ = timestamp,
+        };
+        outDateInfo_.surfaceBufferInfo_ = {
+            .surfaceBuffer_ = outBuffer,
+            .timestamp_ = timestamp,
+        };
+        ErrorCode res = this->Render();
+        isNeedCpy = (res != ErrorCode::SUCCESS);
+    }
+
+    if (isNeedCpy) {
+        EFFECT_TRACE_NAME("ConsumerBufferAvailable::MemoryCopy");
+        if (isSrcHebcData) {
+            auto count = std::min(buffer->GetSize(), outBuffer->GetSize());
+            errno_t error = memcpy_s(outBuffer->GetVirAddr(), outBuffer->GetSize(), buffer->GetVirAddr(), count);
+            CHECK_AND_RETURN_LOG(error == 0, "ConsumerBufferAvailable memcpy_s failed! error=%{public}d", error);
+        } else {
+            MemoryCopyForSurfaceBuffer(buffer, outBuffer);
+        }
+    }
+}
+
+void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
+{
     UpdateProducerSurfaceInfo();
 
     OHOS::sptr<SurfaceBuffer> outBuffer;
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
+
+    EFFECT_TRACE_BEGIN("inBuffer::InvalidateCache");
+    (void)buffer->InvalidateCache();
+    EFFECT_TRACE_END();
 
     BufferRequestConfig requestConfig = {
         .width = buffer->GetWidth(),
@@ -770,23 +847,18 @@ void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHO
     constexpr uint32_t waitForEver = -1;
     (void)syncFence->Wait(waitForEver);
 
-    bool isNeedCpy = true;
-    if (impl_->effectState_ == EffectState::RUNNING) {
-        inDateInfo_.surfaceBufferInfo_ = {
-            .surfaceBuffer_ = buffer,
-            .timestamp_ = timestamp,
-        };
-        outDateInfo_.surfaceBufferInfo_ = {
-            .surfaceBuffer_ = outBuffer,
-            .timestamp_ = timestamp,
-        };
-        ErrorCode res = this->Render();
-        isNeedCpy = (res != ErrorCode::SUCCESS);
-    }
+    EFFECT_LOGD("inBuffer: w=%{public}d h=%{public}d stride=%{public}d len=%{public}d usage=%{public}lld",
+        buffer->GetWidth(), buffer->GetHeight(), buffer->GetStride(), buffer->GetSize(),
+        static_cast<unsigned long long>(buffer->GetUsage()));
+    EFFECT_LOGD("outBuffer: w=%{public}d h=%{public}d stride=%{public}d len=%{public}d usage=%{public}lld",
+        outBuffer->GetWidth(), outBuffer->GetHeight(), outBuffer->GetStride(), outBuffer->GetSize(),
+        static_cast<unsigned long long>(outBuffer->GetUsage()));
 
-    if (isNeedCpy) {
-        MemoryCopyForSurfaceBuffer(buffer, outBuffer);
-    }
+    OnBufferAvailableToProcess(buffer, outBuffer, timestamp);
+
+    EFFECT_TRACE_BEGIN("outBuffer::FlushCache");
+    (void)outBuffer->FlushCache();
+    EFFECT_TRACE_END();
 
     BufferFlushConfig flushConfig = {
         .damage = {
@@ -797,6 +869,16 @@ void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHO
     };
     constexpr int32_t invalidFence = -1;
     (void)toProducerSurface_->FlushBuffer(outBuffer, invalidFence, flushConfig);
+}
+
+void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
+{
+    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
+    if (outDateInfo_.dataType_ == DataType::NATIVE_WINDOW) {
+        ConsumerBufferWithGPU(buffer);
+        return;
+    }
+    OnBufferAvailableWithCPU(buffer, damages, timestamp);
 }
 
 sptr<Surface> ImageEffect::GetInputSurface()
