@@ -181,7 +181,7 @@ void RenderEnvironment::DrawFlipTex(RenderTexturePtr input, RenderTexturePtr out
     GLUtils::DeleteFboOnly(tempFbo);
 }
 
-std::shared_ptr<EffectBuffer> RenderEnvironment::ConvertBufferToTexture(EffectBuffer *source)
+EffectBuffer *RenderEnvironment::ConvertBufferToTexture(EffectBuffer *source)
 {
     std::shared_ptr<BufferInfo> info = source->bufferInfo_;
     int width = static_cast<int>(info->width_);
