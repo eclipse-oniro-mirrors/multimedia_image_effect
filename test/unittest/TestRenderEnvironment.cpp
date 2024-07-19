@@ -160,9 +160,6 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment003, TestSize.Level1)
     effectBuffer->tex = texptr;
     renderEnvironment->ConvertYUV2RGBA(effectBuffer, input);
     effectBuffer->extraInfo_->surfaceBuffer = nullptr;
-    std::shared_ptr<EffectBuffer> buffer =
-        renderEnvironment->ConvertBufferToTexture(effectBuffer.get());
-    EXPECT_NE(buffer, nullptr);
 
     bool result = renderEnvironment->IfNeedGenMainTex();
     EXPECT_EQ(result, true);

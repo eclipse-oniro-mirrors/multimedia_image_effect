@@ -163,7 +163,7 @@ public:
     IMAGE_EFFECT_EXPORT bool IfNeedGenMainTex() const;
     IMAGE_EFFECT_EXPORT void GenMainTex(const std::shared_ptr<EffectBuffer> &source,
         std::shared_ptr<EffectBuffer> &output);
-    IMAGE_EFFECT_EXPORT std::shared_ptr<EffectBuffer> ConvertBufferToTexture(EffectBuffer *source);
+    IMAGE_EFFECT_EXPORT EffectBuffer *ConvertBufferToTexture(EffectBuffer *source);
     IMAGE_EFFECT_EXPORT void ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output);
     IMAGE_EFFECT_EXPORT RenderContext* GetContext();
     IMAGE_EFFECT_EXPORT ResourceCache* GetResourceCache();
