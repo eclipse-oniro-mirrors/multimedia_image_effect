@@ -40,6 +40,10 @@ public:
         RenderViewport *viewport);
 
     IMAGE_EFFECT_EXPORT
+    void DrawOnScreenWithTransform(GLuint texId, RenderMesh *mesh, RenderGeneralProgram *shader,
+        RenderViewport *viewport, GraphicTransformType type, GLenum target);
+
+    IMAGE_EFFECT_EXPORT
     void DrawOnScreen(GLuint texId, RenderMesh *mesh, RenderGeneralProgram *shader, RenderViewport *viewport,
         const void *trans, GLenum target);
 };

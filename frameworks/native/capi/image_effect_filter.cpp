@@ -172,6 +172,20 @@ protected:
         CHECK_AND_RETURN_LOG(src->extraInfo_ != nullptr,
             "FilterDelegatePushData: extraInfo of src is null! src=%{public}p", src);
 
+        if (dst->addr == src->buffer_) {
+            std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(src->bufferInfo_,
+                dst->addr, src->extraInfo_);
+            Plugin::Any any;
+            res = filter->GetParameter(PARA_RENDER_INFO, any);
+            CHECK_AND_RETURN_LOG(res == ErrorCode::SUCCESS, "FilterDelegatePushData: get param fail! key=%{public}s",
+                                 PARA_RENDER_INFO);
+
+            auto &context = Plugin::AnyCast<std::shared_ptr<EffectContext> &>(any);
+            EFFECT_LOGE("OH_EffectFilter PushData bufferType %{public}d", effectBuffer->extraInfo_->bufferType);
+            filter->filter_->PushData(effectBuffer.get(), context);
+            return;
+        }
+
         std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
         bufferInfo->width_ = static_cast<uint32_t>(dst->width);
         bufferInfo->height_ = static_cast<uint32_t>(dst->height);

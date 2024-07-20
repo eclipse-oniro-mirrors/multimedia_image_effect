@@ -40,6 +40,9 @@ RenderMesh::~RenderMesh()
 
 void RenderMesh::Bind(RenderGeneralProgram *shader)
 {
+    if (shader == nullptr) {
+        return;
+    }
     if (vaoId_ == 0) {
         glGenVertexArrays(1, &vaoId_);
         glBindVertexArray(vaoId_);

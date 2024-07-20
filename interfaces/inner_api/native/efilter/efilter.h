@@ -83,8 +83,9 @@ protected:
 private:
     IMAGE_EFFECT_EXPORT void Negotiate(const std::string &inPort, const std::shared_ptr<Capability> &capability,
         std::shared_ptr<EffectContext> &context) override;
-    
-    EffectBuffer *IpTypeConvert(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context);
+
+    std::shared_ptr<EffectBuffer> IpTypeConvert(const std::shared_ptr<EffectBuffer> &buffer,
+        std::shared_ptr<EffectContext> &context);
 
     ErrorCode RenderWithGPU(std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &src,
         std::shared_ptr<EffectBuffer> &dst);
@@ -92,6 +93,12 @@ private:
     ErrorCode RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst);
 
     std::shared_ptr<Capability> outputCap_ = nullptr;
+
+    std::shared_ptr<EffectBuffer> ConvertFromGPU2CPU(const std::shared_ptr<EffectBuffer> &buffer,
+        std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source);
+
+    std::shared_ptr<EffectBuffer> ConvertFromCPU2GPU(const std::shared_ptr<EffectBuffer> &buffer,
+        std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source);
 };
 } // namespace Effect
 } // namespace Media

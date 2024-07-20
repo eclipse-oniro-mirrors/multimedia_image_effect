@@ -151,7 +151,7 @@ void RenderEnvironment::GenMainTex(const std::shared_ptr<EffectBuffer> &source, 
     RenderTexturePtr renderTex;
     bool needRender = true;
     renderTex = param_->resCache_->GetTexGlobalCache("Main");
-    if (renderTex == nullptr) {
+    if (renderTex == nullptr || hasInputChanged) {
         renderTex = param_->resCache_->RequestTexture(param_->context_, width, height, GL_RGBA8);
         param_->resCache_->AddTexGlobalCache("Main", renderTex);
     } else {
@@ -159,7 +159,7 @@ void RenderEnvironment::GenMainTex(const std::shared_ptr<EffectBuffer> &source, 
     }
 
     if (needRender || hasInputChanged) {
-        DrawImageToFBO(param_->context_, renderTex, source.get(), width, height);
+        DrawImageToFBO(renderTex, source.get());
         hasInputChanged = false;
     }
 
@@ -181,13 +181,13 @@ void RenderEnvironment::DrawFlipTex(RenderTexturePtr input, RenderTexturePtr out
     GLUtils::DeleteFboOnly(tempFbo);
 }
 
-EffectBuffer *RenderEnvironment::ConvertBufferToTexture(EffectBuffer *source)
+std::shared_ptr<EffectBuffer> RenderEnvironment::ConvertBufferToTexture(EffectBuffer *source)
 {
     std::shared_ptr<BufferInfo> info = source->bufferInfo_;
     int width = static_cast<int>(info->width_);
     int height = static_cast<int>(info->height_);
     RenderTexturePtr renderTex = param_->resCache_->RequestTexture(param_->context_, width, height, GL_RGBA8);
-    DrawImageToFBO(param_->context_, renderTex, source, width, height);
+    DrawImageToFBO(renderTex, source);
 
     std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
     bufferInfo->width_ = info->width_;
@@ -197,7 +197,7 @@ EffectBuffer *RenderEnvironment::ConvertBufferToTexture(EffectBuffer *source)
     bufferInfo->formatType_ = info->formatType_;
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = DataType::TEX;
-    EffectBuffer *output = new EffectBuffer(bufferInfo, nullptr, extraInfo);
+    std::shared_ptr<EffectBuffer> output = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
     output->tex = renderTex;
     return output;
 }
@@ -220,8 +220,7 @@ void RenderEnvironment::UpdateCanvas()
     }
 }
 
-void RenderEnvironment::DrawImageToFBO(RenderContext *context, RenderTexturePtr renderTex,
-    const EffectBuffer *source, int width, int height)
+void RenderEnvironment::DrawImageToFBO(RenderTexturePtr renderTex, const EffectBuffer *source)
 {
     GLuint tempFbo = GLUtils::CreateFramebuffer(renderTex->GetName());
     GLuint tex = GenTexFromEffectBuffer(source);
@@ -257,6 +256,7 @@ GLuint RenderEnvironment::GenTexFromEffectBuffer(const EffectBuffer *source)
     if (source->bufferInfo_->formatType_ == IEffectFormat::RGBA8888) {
         int stride = static_cast<int>(source->bufferInfo_->rowStride_) / 4;
         if (source->extraInfo_->surfaceBuffer != nullptr) {
+            source->extraInfo_->surfaceBuffer->FlushCache();
             tex = GLUtils::CreateTextureFromSurfaceBuffer(source->extraInfo_->surfaceBuffer);
         } else {
             tex = GLUtils::CreateTexWithStorage(GL_TEXTURE_2D, 1, GL_RGBA8, width, height);
@@ -272,6 +272,7 @@ GLuint RenderEnvironment::GenTexFromEffectBuffer(const EffectBuffer *source)
         }
     } else {
         if (source->extraInfo_->surfaceBuffer != nullptr) {
+            source->extraInfo_->surfaceBuffer->FlushCache();
             tex = GLUtils::CreateTextureFromSurfaceBuffer(source->extraInfo_->surfaceBuffer);
         } else {
             tex = ConvertFromYUVToRGB(source, source->bufferInfo_->formatType_);
@@ -385,11 +386,16 @@ void RenderEnvironment::DrawFrameWithTransform(const std::shared_ptr<EffectBuffe
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glm::mat4 trans = GetTransformMatrix(type);
+        if (buffer->tex == nullptr) {
+            EFFECT_LOGE("RenderEnvironment DrawFrameWithTransform tex is nullptr");
+            return;
+        }
         param_->renderer_->DrawOnScreen(buffer->tex->GetName(), param_->meshBaseDrawFrame_,
             param_->shaderBaseDrawFrame_, &param_->viewport_, MathUtils::NativePtr(trans), GL_TEXTURE_2D);
 
         if (screenSurface_ == nullptr) {
             EFFECT_LOGE("RenderEnvironment screenSurface_ is nullptr");
+            return;
         }
         param_->context_->SwapBuffers(screenSurface_);
         GLUtils::CheckError(__FILE_NAME__, __LINE__);
@@ -404,10 +410,16 @@ void RenderEnvironment::DrawFrame(GLuint texId, GraphicTransformType type)
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(1.0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        glm::mat4 trans = GetTransformMatrix(type);
-        param_->renderer_->DrawOnScreen(texId, param_->meshBaseDrawFrameYUV_,
-            param_->shaderBaseDrawFrameYUV_, &param_->viewport_, MathUtils::NativePtr(trans), GL_TEXTURE_EXTERNAL_OES);
+        
+        RenderMesh *mesh = new RenderMesh(DEFAULT_FLIP_VERTEX_DATA);
+        mesh->Bind(param_->shaderBaseDrawFrameYUV_);
+        param_->renderer_->DrawOnScreenWithTransform(texId, mesh,
+            param_->shaderBaseDrawFrameYUV_, &param_->viewport_, type, GL_TEXTURE_EXTERNAL_OES);
         glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
+        if (screenSurface_ == nullptr) {
+            EFFECT_LOGE("RenderEnvironment DrawFrame is nullptr");
+            return;
+        }
         param_->context_->SwapBuffers(screenSurface_);
         GLUtils::CheckError(__FILE_NAME__, __LINE__);
     }
@@ -498,6 +510,23 @@ void RenderEnvironment::DrawSurfaceBufferFromTex(RenderTexturePtr tex, SurfaceBu
     } else {
         param_->renderer_->Draw(tex->GetName(), tempFbo, param_->meshBaseDMA_, param_->shaderBaseRGB2D2YUVDMA_, &vp,
             GL_TEXTURE_2D);
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glFinish();
+    GLUtils::CheckError(__FILE_NAME__, __LINE__);
+}
+
+void RenderEnvironment::DrawFlipSurfaceBufferFromTex(RenderTexturePtr tex, SurfaceBuffer *buffer, IEffectFormat format)
+{
+    GLuint outTex = GLUtils::CreateTextureFromSurfaceBuffer(buffer);
+    GLuint tempFbo = GLUtils::CreateFramebufferWithTarget(outTex, GL_TEXTURE_EXTERNAL_OES);
+    RenderViewport vp(0, 0, tex->Width(), tex->Height());
+    if (format == IEffectFormat::RGBA8888) {
+        param_->renderer_->Draw(tex->GetName(), tempFbo, param_->meshBaseFlip_, param_->shaderBase_, &vp,
+            GL_TEXTURE_2D);
+    } else {
+        param_->renderer_->Draw(tex->GetName(), tempFbo, param_->meshBaseFlipYUVDMA_, param_->shaderBaseRGB2D2YUVDMA_,
+            &vp, GL_TEXTURE_2D);
     }
     glBindTexture(GL_TEXTURE_2D, 0);
     glFinish();
