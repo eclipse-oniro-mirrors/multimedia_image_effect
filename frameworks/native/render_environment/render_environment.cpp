@@ -18,6 +18,7 @@
 #include <GLES2/gl2ext.h>
 
 #include "effect_trace.h"
+#include "effect_log.h"
 #include "effect_memory.h"
 #include "format_helper.h"
 #include "base/math/math_utils.h"
