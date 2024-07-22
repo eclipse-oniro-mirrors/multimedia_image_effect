@@ -155,25 +155,27 @@ private:
 enum EGLStatus {READY, UNREADY};
 class RenderEnvironment {
 public:
-    RenderEnvironment() = default;
-    ~RenderEnvironment() = default;
-    void Init();
-    void Prepare();
+    IMAGE_EFFECT_EXPORT RenderEnvironment() = default;
+    IMAGE_EFFECT_EXPORT ~RenderEnvironment() = default;
+    IMAGE_EFFECT_EXPORT void Init();
+    IMAGE_EFFECT_EXPORT void Prepare();
     void InitEngine(OHNativeWindow *window);
     void NotifyInputChanged();
-    bool IfNeedGenMainTex() const;
-    void GenMainTex(const std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &output);
+    IMAGE_EFFECT_EXPORT bool IfNeedGenMainTex() const;
+    IMAGE_EFFECT_EXPORT void GenMainTex(const std::shared_ptr<EffectBuffer> &source,
+        std::shared_ptr<EffectBuffer> &output);
     IMAGE_EFFECT_EXPORT std::shared_ptr<EffectBuffer> ConvertBufferToTexture(EffectBuffer *source);
     IMAGE_EFFECT_EXPORT void ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output);
     IMAGE_EFFECT_EXPORT RenderContext* GetContext();
     IMAGE_EFFECT_EXPORT ResourceCache* GetResourceCache();
     IMAGE_EFFECT_EXPORT bool BeginFrame();
-    void DrawFrameWithTransform(const std::shared_ptr<EffectBuffer> &buffer, GraphicTransformType type);
-    void DrawFrame(GLuint texId, GraphicTransformType type);
-    void ConvertYUV2RGBA(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out);
-    void ConvertRGBA2YUV(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out);
-    void Draw2D2OES(RenderTexturePtr source, RenderTexturePtr output);
-    void UpdateCanvas();
+    IMAGE_EFFECT_EXPORT void DrawFrameWithTransform(const std::shared_ptr<EffectBuffer> &buffer,
+        GraphicTransformType type);
+    IMAGE_EFFECT_EXPORT void DrawFrame(GLuint texId, GraphicTransformType type);
+    IMAGE_EFFECT_EXPORT void ConvertYUV2RGBA(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out);
+    IMAGE_EFFECT_EXPORT void ConvertRGBA2YUV(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out);
+    IMAGE_EFFECT_EXPORT void Draw2D2OES(RenderTexturePtr source, RenderTexturePtr output);
+    IMAGE_EFFECT_EXPORT void UpdateCanvas();
     EGLStatus GetEGLStatus() const;
     IMAGE_EFFECT_EXPORT RenderTexturePtr RequestBuffer(int width, int height);
     bool IsPrepared() const;
@@ -181,15 +183,16 @@ public:
     void SetOutputType(DataType type);
     void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
     void DrawFlipSurfaceBufferFromTex(RenderTexturePtr tex, SurfaceBuffer *buffer, IEffectFormat format);
-    void DrawSurfaceBufferFromTex(RenderTexturePtr tex, SurfaceBuffer *buffer, IEffectFormat format);
+    IMAGE_EFFECT_EXPORT void DrawSurfaceBufferFromTex(RenderTexturePtr tex,
+        SurfaceBuffer *buffer, IEffectFormat format);
     IMAGE_EFFECT_EXPORT void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer);
-    void DrawFlipTex(RenderTexturePtr input, RenderTexturePtr output);
+    IMAGE_EFFECT_EXPORT void DrawFlipTex(RenderTexturePtr input, RenderTexturePtr output);
     std::shared_ptr<EffectBuffer> GenTexEffectBuffer(std::shared_ptr<EffectBuffer> input);
-    GLuint GenTexFromEffectBuffer(const EffectBuffer *source);
-    GLuint ConvertFromYUVToRGB(const EffectBuffer *source, IEffectFormat format);
-    void ConvertFromRGBToYUV(RenderTexturePtr input, IEffectFormat format, void *data);
-    void ReleaseParam();
-    void Release();
+    IMAGE_EFFECT_EXPORT GLuint GenTexFromEffectBuffer(const EffectBuffer *source);
+    IMAGE_EFFECT_EXPORT GLuint ConvertFromYUVToRGB(const EffectBuffer *source, IEffectFormat format);
+    IMAGE_EFFECT_EXPORT void ConvertFromRGBToYUV(RenderTexturePtr input, IEffectFormat format, void *data);
+    IMAGE_EFFECT_EXPORT void ReleaseParam();
+    IMAGE_EFFECT_EXPORT void Release();
 
 private:
     RenderParam *param_{ nullptr };

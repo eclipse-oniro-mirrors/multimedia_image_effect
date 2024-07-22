@@ -57,6 +57,7 @@ ohos_unittest("image_effect_unittest") {
     "$image_effect_root_dir/test/unittest/TestImageEffect.cpp",
     "$image_effect_root_dir/test/unittest/TestJsonHelper.cpp",
     "$image_effect_root_dir/test/unittest/TestPort.cpp",
+    "$image_effect_root_dir/test/unittest/TestRenderEnvironment.cpp",
     "$image_effect_root_dir/test/unittest/TestUtils.cpp",
     "$image_effect_root_dir/test/unittest/image_effect_capi_unittest.cpp",
     "$image_effect_root_dir/test/unittest/image_effect_inner_unittest.cpp",
