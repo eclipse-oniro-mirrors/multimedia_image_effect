@@ -53,6 +53,7 @@ struct ExtraInfo {
     PixelMap *pixelMap = nullptr;
     std::shared_ptr<PixelMap> innerPixelMap = nullptr; // decoded pixel map for url or path
     OHOS::SurfaceBuffer *surfaceBuffer = nullptr;
+    int *fd = nullptr;
     std::string uri;
     std::string path;
     int64_t timestamp = 0;

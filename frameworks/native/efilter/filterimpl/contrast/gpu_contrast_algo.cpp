@@ -125,7 +125,7 @@ ErrorCode GpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     EffectBuffer *inEffectBuffer = nullptr;
     if (src->extraInfo_->dataType != DataType::TEX) {
         context->renderEnvironment_->BeginFrame();
-        inEffectBuffer = context->renderEnvironment_->ConvertBufferToTexture(src);
+        inEffectBuffer = context->renderEnvironment_->ConvertBufferToTexture(src).get();
     } else {
         inEffectBuffer = src;
     }

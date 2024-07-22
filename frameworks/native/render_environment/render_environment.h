@@ -21,7 +21,7 @@
 
 #include "any.h"
 #include "error_code.h"
-#include "image_effect_marco_define.h"
+
 #include "base/render_base.h"
 #include "core/render_opengl_renderer.h"
 #include "core/render_default_data.h"
@@ -31,6 +31,7 @@
 #include "graphic/render_frame_buffer.h"
 #include "graphic/render_general_program.h"
 #include "effect_buffer.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -163,7 +164,7 @@ public:
     IMAGE_EFFECT_EXPORT bool IfNeedGenMainTex() const;
     IMAGE_EFFECT_EXPORT void GenMainTex(const std::shared_ptr<EffectBuffer> &source,
         std::shared_ptr<EffectBuffer> &output);
-    IMAGE_EFFECT_EXPORT EffectBuffer *ConvertBufferToTexture(EffectBuffer *source);
+    IMAGE_EFFECT_EXPORT std::shared_ptr<EffectBuffer> ConvertBufferToTexture(EffectBuffer *source);
     IMAGE_EFFECT_EXPORT void ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output);
     IMAGE_EFFECT_EXPORT RenderContext* GetContext();
     IMAGE_EFFECT_EXPORT ResourceCache* GetResourceCache();
@@ -181,6 +182,7 @@ public:
     DataType GetOutputType() const;
     void SetOutputType(DataType type);
     void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
+    void DrawFlipSurfaceBufferFromTex(RenderTexturePtr tex, SurfaceBuffer *buffer, IEffectFormat format);
     IMAGE_EFFECT_EXPORT void DrawSurfaceBufferFromTex(RenderTexturePtr tex,
         SurfaceBuffer *buffer, IEffectFormat format);
     IMAGE_EFFECT_EXPORT void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer);
@@ -202,8 +204,7 @@ private:
     int canvasHeight = 0;
     EGLStatus isEGLReady = EGLStatus::UNREADY;
     DataType outType_ = DataType::UNKNOWN;
-    void DrawImageToFBO(RenderContext *context, RenderTexturePtr renderTex, const EffectBuffer *source,
-        int width, int height);
+    void DrawImageToFBO(RenderTexturePtr renderTex, const EffectBuffer *source);
     void InitDefaultMeshMT(RenderParam *param);
     void InitDefaultShaderMT(RenderParam *param);
     RenderMesh *CreateMeshMT(RenderParam *param, bool isBackGround, RenderGeneralProgram *shader);

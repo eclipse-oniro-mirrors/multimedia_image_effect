@@ -89,9 +89,9 @@ public:
         EFFECT_LOGI("FilterDelegate Render.");
         std::unique_ptr<OH_EffectBufferInfo> srcBuffer = std::make_unique<OH_EffectBufferInfo>();
         srcBuffer->addr = src->buffer_;
-        srcBuffer->width = src->bufferInfo_->width_;
-        srcBuffer->height = src->bufferInfo_->height_;
-        srcBuffer->rowSize = src->bufferInfo_->rowStride_;
+        srcBuffer->width = static_cast<int32_t>(src->bufferInfo_->width_);
+        srcBuffer->height = static_cast<int32_t>(src->bufferInfo_->height_);
+        srcBuffer->rowSize = static_cast<int32_t>(src->bufferInfo_->rowStride_);
         NativeCommonUtils::SwitchToOHFormatType(src->bufferInfo_->formatType_, srcBuffer->format);
         srcBuffer->timestamp = src->extraInfo_->timestamp;
 
@@ -172,10 +172,24 @@ protected:
         CHECK_AND_RETURN_LOG(src->extraInfo_ != nullptr,
             "FilterDelegatePushData: extraInfo of src is null! src=%{public}p", src);
 
+        if (dst->addr == src->buffer_) {
+            std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(src->bufferInfo_,
+                dst->addr, src->extraInfo_);
+            Plugin::Any any;
+            res = filter->GetParameter(PARA_RENDER_INFO, any);
+            CHECK_AND_RETURN_LOG(res == ErrorCode::SUCCESS, "FilterDelegatePushData: get param fail! key=%{public}s",
+                                 PARA_RENDER_INFO);
+
+            auto &context = Plugin::AnyCast<std::shared_ptr<EffectContext> &>(any);
+            EFFECT_LOGE("OH_EffectFilter PushData bufferType %{public}d", effectBuffer->extraInfo_->bufferType);
+            filter->filter_->PushData(effectBuffer.get(), context);
+            return;
+        }
+
         std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
-        bufferInfo->width_ = dst->width;
-        bufferInfo->height_ = dst->height;
-        bufferInfo->rowStride_ = dst->rowSize;
+        bufferInfo->width_ = static_cast<uint32_t>(dst->width);
+        bufferInfo->height_ = static_cast<uint32_t>(dst->height);
+        bufferInfo->rowStride_ = static_cast<uint32_t>(dst->rowSize);
         NativeCommonUtils::SwitchToFormatType(dst->format, bufferInfo->formatType_);
         bufferInfo->len_ =
             FormatHelper::CalculateDataRowCount(bufferInfo->height_, bufferInfo->formatType_) * bufferInfo->rowStride_;
@@ -255,7 +269,7 @@ ImageEffect_ErrorCode OH_EffectFilterInfo_SetSupportedBufferTypes(OH_EffectFilte
         "InfoSetSupportedBufferTypes: input parameter bufferTypeArray is null!");
     EFFECT_LOGD("Set supported buffer types. size=%{public}d", size);
     info->supportedBufferTypes.clear();
-    for (auto index = 0; index < size; index++) {
+    for (uint32_t index = 0; index < size; index++) {
         info->supportedBufferTypes.emplace(bufferTypeArray[index]);
     }
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
@@ -320,7 +334,7 @@ ImageEffect_ErrorCode OH_EffectFilterInfo_SetSupportedFormats(OH_EffectFilterInf
         "InfoSetSupportedFormats: input parameter formatArray is null!");
     EFFECT_LOGD("Set supported formats. size=%{public}d", size);
     info->supportedFormats.clear();
-    for (auto index = 0; index < size; index++) {
+    for (uint32_t index = 0; index < size; index++) {
         info->supportedFormats.emplace(formatArray[index]);
     }
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;

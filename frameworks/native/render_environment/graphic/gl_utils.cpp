@@ -227,6 +227,9 @@ GLuint GLUtils::CreateTextureFromImage(EGLImageKHR img)
 }
 GLuint GLUtils::CreateTextureFromSurfaceBuffer(SurfaceBuffer *buffer)
 {
+    if (buffer == nullptr) {
+        return 0;
+    }
     EGLImageKHR img = CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY), buffer);
     GLuint tex = CreateTextureFromImage(img);
     return tex;

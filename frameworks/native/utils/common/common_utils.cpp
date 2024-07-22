@@ -76,11 +76,12 @@ ErrorCode ParseJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &jso
 ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer)
 {
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
+    ColorSpaceName colorSpaceName = pixelMap->InnerGetGrColorSpacePtr() == nullptr ? ColorSpaceName::NONE :
+        pixelMap->InnerGetGrColorSpacePtr()->GetColorSpaceName();
     EFFECT_LOGD("pixelMapInfos: width=%{public}d, height=%{public}d, formatType=%{public}d " \
         "rowStride=%{public}d, byteCount=%{public}d, addr=%{private}p, colorSpaceName=%{public}d",
         pixelMap->GetWidth(), pixelMap->GetHeight(), pixelMap->GetPixelFormat(), pixelMap->GetRowStride(),
-        pixelMap->GetByteCount(), pixelMap->GetPixels(), (pixelMap->InnerGetGrColorSpacePtr() == nullptr ?
-        ColorSpaceName::NONE : pixelMap->InnerGetGrColorSpacePtr()->GetColorSpaceName()));
+        pixelMap->GetByteCount(), pixelMap->GetPixels(), colorSpaceName);
 
     IEffectFormat formatType = SwitchToEffectFormat(pixelMap->GetPixelFormat());
     if (formatType == IEffectFormat::DEFAULT) {
@@ -94,10 +95,7 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
     bufferInfo->len_ = bufferInfo->height_ * bufferInfo->rowStride_;
     bufferInfo->formatType_ = formatType;
-    if (pixelMap->InnerGetGrColorSpacePtr() != nullptr) {
-        bufferInfo->colorSpace_ =
-            ColorSpaceHelper::ConvertToEffectColorSpace(pixelMap->InnerGetGrColorSpacePtr()->GetColorSpaceName());
-    }
+    bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceName);
 
     uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
     void *srcData = static_cast<void *>(pixels);
@@ -116,9 +114,11 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     if (extraInfo->bufferType == BufferType::DMA_BUFFER && pixelMap->GetFd() != nullptr) {
         extraInfo->surfaceBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
     }
-    EFFECT_LOGI("pixelMap extraInfos: dataType=%{public}d, bufferType=%{public}d, pixelMap=%{private}p,"
-        " surfaceBuffer=%{private}p", extraInfo->dataType, extraInfo->bufferType, extraInfo->pixelMap,
-        extraInfo->surfaceBuffer);
+    if (extraInfo->bufferType == BufferType::SHARED_MEMORY && pixelMap->GetFd() != nullptr) {
+        extraInfo->fd = reinterpret_cast<int *>(pixelMap->GetFd());
+    }
+    EFFECT_LOGI("pixelMap extraInfos: dataType=%{public}d, bufferType=%{public}d, pixelMap=%{public}p, sb=%{public}p",
+        extraInfo->dataType, extraInfo->bufferType, extraInfo->pixelMap, extraInfo->surfaceBuffer);
 
     if (extraInfo->surfaceBuffer != nullptr) {
         SurfaceBuffer *sb = extraInfo->surfaceBuffer;

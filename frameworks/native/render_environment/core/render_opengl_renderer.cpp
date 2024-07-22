@@ -15,6 +15,8 @@
 
 #include "core/render_opengl_renderer.h"
 
+#include "base/math/math_utils.h"
+
 namespace OHOS {
 namespace Media {
 namespace Effect {
@@ -72,6 +74,71 @@ void RenderOpenglRenderer::Draw(GLuint texId, GLuint fbo, RenderMesh *mesh, Rend
         shader->Unbind();
     }
     glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
+    GLUtils::CheckError(__FILE_NAME__, __LINE__);
+}
+
+void ProcessTransform(GraphicTransformType type, RenderGeneralProgram *shader)
+{
+    glm::mat4 trans = glm::mat4(1.0f);
+    switch (type) {
+        case GRAPHIC_ROTATE_90:
+            trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+            shader->SetUniform("transform", MathUtils::NativePtr(trans));
+            break;
+        case GRAPHIC_FLIP_H_ROT90:
+            trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+            shader->SetUniform("transform", MathUtils::NativePtr(trans));
+            shader->SetUniform("flipH", 1.0f);
+            break;
+        case GRAPHIC_FLIP_V_ROT90:
+            trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+            shader->SetUniform("transform", MathUtils::NativePtr(trans));
+            shader->SetUniform("flipv", 1.0f);
+            break;
+        case GRAPHIC_ROTATE_180:
+            trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));
+            shader->SetUniform("transform", MathUtils::NativePtr(trans));
+            break;
+        case GRAPHIC_FLIP_H_ROT180:
+            trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));
+            shader->SetUniform("transform", MathUtils::NativePtr(trans));
+            shader->SetUniform("flipH", 1.0f);
+            break;
+        case GRAPHIC_FLIP_V_ROT180:
+            trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));
+            shader->SetUniform("transform", MathUtils::NativePtr(trans));
+            shader->SetUniform("flipV", 1.0f);
+            break;
+        case GRAPHIC_ROTATE_270:
+            trans = glm::rotate(trans, glm::radians(270.0f), glm::vec3(0.0, 0.0, 1.0));
+            shader->SetUniform("transform", MathUtils::NativePtr(trans));
+            break;
+        case GRAPHIC_FLIP_H_ROT270:
+            trans = glm::rotate(trans, glm::radians(270.0f), glm::vec3(0.0, 0.0, 1.0));
+            shader->SetUniform("transform", MathUtils::NativePtr(trans));
+            shader->SetUniform("flipH", 1.0f);
+            break;
+        case GRAPHIC_FLIP_V_ROT270:
+            trans = glm::rotate(trans, glm::radians(270.0f), glm::vec3(0.0, 0.0, 1.0));
+            shader->SetUniform("transform", MathUtils::NativePtr(trans));
+            shader->SetUniform("flipV", 1.0f);
+            break;
+        default:
+            break;
+    }
+}
+
+void RenderOpenglRenderer::DrawOnScreenWithTransform(GLuint texId, RenderMesh *mesh, RenderGeneralProgram *shader,
+    RenderViewport *viewport, GraphicTransformType type, GLenum target)
+{
+    glViewport(viewport->leftBottomX_, viewport->leftBottomY_, viewport->width_, viewport->height_);
+    shader->Bind();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(target, texId);
+    ProcessTransform(type, shader);
+    mesh->Bind(shader);
+    glDrawArrays(mesh->primitiveType_, mesh->startVertex_, mesh->vertexNum_);
+    shader->Unbind();
     GLUtils::CheckError(__FILE_NAME__, __LINE__);
 }
 

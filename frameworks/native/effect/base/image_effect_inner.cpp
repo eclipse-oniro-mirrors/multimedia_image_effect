@@ -173,9 +173,15 @@ ImageEffect::~ImageEffect()
 
     impl_->surfaceAdapter_ = nullptr;
     impl_->effectContext_->renderEnvironment_ = nullptr;
-    toProducerSurface_ = nullptr;
+    if (toProducerSurface_ == nullptr) {
+        auto res = toProducerSurface_->Disconnect();
+        EFFECT_LOGI("ImageEffect::~ImageEffect disconnect res=%{public}d, id=%{public}lld",
+            res, toProducerSurface_->GetUniqueId());
+        toProducerSurface_ = nullptr;
+    }
     fromProducerSurface_ = nullptr;
     m_renderThread->Stop();
+    delete m_renderThread;
 }
 
 void ImageEffect::AddEFilter(const std::shared_ptr<EFilter> &efilter)
@@ -241,6 +247,7 @@ unsigned long int ImageEffect::RequestTaskId()
 ErrorCode ImageEffect::SetInputPixelMap(PixelMap* pixelMap)
 {
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INVALID_SRC_PIXELMAP, "invalid source pixelMap");
+    impl_->effectContext_->renderEnvironment_->NotifyInputChanged();
 
     ClearDataInfo(inDateInfo_);
     inDateInfo_.dataType_ = DataType::PIXEL_MAP;
@@ -302,7 +309,7 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
             continue;
         }
         std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
-        if (runningIPType != IPType::CPU) {
+        if (runningIPType == IPType::GPU) {
             effectFormat = IEffectFormat::RGBA8888;
         }
 
@@ -318,7 +325,9 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
             std::find(ipTypes.begin(), ipTypes.end(), priorityIPType) != ipTypes.end()) {
             runningIPType = IPType::GPU;
         } else {
-            runningIPType = IPType::CPU;
+            if (runningIPType == IPType::DEFAULT) {
+                runningIPType = IPType::CPU;
+            }
             return ErrorCode::SUCCESS;
         }
     }
@@ -541,7 +550,7 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
         "not supported dataType. srcDataType=%{public}d, dstDataType=%{public}d", srcDataType, dtsDataType);
 
     // color space is same or not.
-    if (srcDataType == DataType::PIXEL_MAP) {
+    if (srcDataType == DataType::PIXEL_MAP  && dtsDataType != DataType::NATIVE_WINDOW) {
         // the format for pixel map is same or not.
         CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->bufferInfo_->formatType_ == dstEffectBuffer->bufferInfo_->formatType_,
             ErrorCode::ERR_NOT_SUPPORT_DIFF_FORMAT,
