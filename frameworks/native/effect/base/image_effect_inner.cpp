@@ -175,7 +175,7 @@ ImageEffect::~ImageEffect()
     impl_->effectContext_->renderEnvironment_ = nullptr;
     if (toProducerSurface_ == nullptr) {
         auto res = toProducerSurface_->Disconnect();
-        EFFECT_LOGI("ImageEffect::~ImageEffect disconnect res=%{public}d, id=%{public}lld",
+        EFFECT_LOGI("ImageEffect::~ImageEffect disconnect res=%{public}d, id=%{public}llu",
             res, toProducerSurface_->GetUniqueId());
         toProducerSurface_ = nullptr;
     }
