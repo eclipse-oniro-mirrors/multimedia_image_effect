@@ -15,6 +15,7 @@
 
 #include "render_context.h"
 #include "render_environment.h"
+#include "effect_log.h"
 
 namespace OHOS {
 namespace Media {

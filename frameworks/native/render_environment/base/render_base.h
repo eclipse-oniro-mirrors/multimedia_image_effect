@@ -19,6 +19,5 @@
 #include <cassert>
 
 #include "base/im_base_type.h"
-#include "effect_log.h"
 
 #endif // RENDERBASE_H

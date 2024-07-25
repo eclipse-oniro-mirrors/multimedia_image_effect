@@ -24,12 +24,7 @@ namespace Effect {
 class RenderObject {
 public:
     explicit RenderObject() : isReady_(false) {}
-    virtual ~RenderObject()
-    {
-        if (isReady_) {
-            EFFECT_LOGE("Destructor called without Release()! %{public}s", tag_.c_str());
-        }
-    }
+    virtual ~RenderObject() {}
 
     virtual bool Init() = 0;
     virtual bool Release() = 0;

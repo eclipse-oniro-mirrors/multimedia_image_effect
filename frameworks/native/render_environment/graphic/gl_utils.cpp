@@ -20,6 +20,7 @@
 #include "surface_buffer.h"
 #include "native_window.h"
 #include "effect_trace.h"
+#include "effect_log.h"
 
 #include <GLES2/gl2ext.h>
 

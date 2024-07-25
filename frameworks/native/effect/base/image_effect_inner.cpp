@@ -38,6 +38,7 @@
 #include "v1_1/buffer_handle_meta_key_type.h"
 #include "effect_log.h"
 #include "effect_trace.h"
+#include "native_window.h"
 
 #define RENDER_QUEUE_SIZE 8
 #define COMMON_TASK_TAG 0
@@ -338,6 +339,10 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
 ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, EffectParameters &effectParameters,
     unsigned long int taskId, RenderThread<> *thread)
 {
+    if (thread == nullptr) {
+        EFFECT_LOGE("pipeline Prepare fail! render thread is nullptr");
+        return ErrorCode::ERR_INVALID_OPERATION;
+    }
     auto prom = std::make_shared<std::promise<ErrorCode>>();
     std::future<ErrorCode> fut = prom->get_future();
     auto task = std::make_shared<RenderTask<>>([pipeline, &effectParameters, &prom]() {
@@ -830,6 +835,7 @@ void ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<S
 
 void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
+    outDateInfo_.dataType_ = DataType::SURFACE;
     UpdateProducerSurfaceInfo();
 
     OHOS::sptr<SurfaceBuffer> outBuffer;
@@ -883,10 +889,6 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
 void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
     std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
-    if (outDateInfo_.dataType_ == DataType::NATIVE_WINDOW) {
-        ConsumerBufferWithGPU(buffer);
-        return;
-    }
     OnBufferAvailableWithCPU(buffer, damages, timestamp);
 }
 
@@ -918,6 +920,10 @@ sptr<Surface> ImageEffect::GetInputSurface()
 
 ErrorCode ImageEffect::SetOutNativeWindow(OHNativeWindow *nativeWindow)
 {
+    CHECK_AND_RETURN_RET_LOG(nativeWindow != nullptr, ErrorCode::ERR_INPUT_NULL, "nativeWindow is nullptr");
+    OHOS::sptr<OHOS::Surface> surface = nativeWindow->surface;
+    CHECK_AND_RETURN_RET_LOG(surface != nullptr, ErrorCode::ERR_INPUT_NULL, "surface is nullptr");
+    toProducerSurface_ = surface;
     outDateInfo_.dataType_ = DataType::NATIVE_WINDOW;
     impl_->effectContext_->renderEnvironment_->InitEngine(nativeWindow);
     return ErrorCode::SUCCESS;

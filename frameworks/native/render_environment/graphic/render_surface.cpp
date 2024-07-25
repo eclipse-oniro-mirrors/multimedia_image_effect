@@ -14,6 +14,7 @@
  */
 
 #include "render_surface.h"
+#include "effect_log.h"
 
 namespace OHOS {
 namespace Media {

@@ -32,7 +32,6 @@ config("image_effect_impl_public_config") {
     "$image_effect_root_dir/frameworks/native/effect/base",
     "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager",
     "$image_effect_root_dir/frameworks/native/efilter/base",
-    "$image_effect_root_dir/frameworks/native/utils/common",
     "$image_effect_root_dir/frameworks/native/utils/dfx",
     "$image_effect_root_dir/frameworks/native/render_environment",
     "$image_effect_root_dir/frameworks/native/render_environment/render_thread/queue",
