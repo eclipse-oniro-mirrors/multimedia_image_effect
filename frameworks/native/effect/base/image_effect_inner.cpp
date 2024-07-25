@@ -926,6 +926,10 @@ ErrorCode ImageEffect::SetOutNativeWindow(OHNativeWindow *nativeWindow)
     toProducerSurface_ = surface;
     outDateInfo_.dataType_ = DataType::NATIVE_WINDOW;
     impl_->effectContext_->renderEnvironment_->InitEngine(nativeWindow);
+    if (impl_->surfaceAdapter_ == nullptr) {
+        impl_->surfaceAdapter_ = std::make_unique<EffectSurfaceAdapter>();
+    }
+    impl_->surfaceAdapter_->SetOutputSurfaceDefaultUsage(toProducerSurface_->GetDefaultUsage());
     return ErrorCode::SUCCESS;
 }
 
