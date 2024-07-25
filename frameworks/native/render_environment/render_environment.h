@@ -182,7 +182,8 @@ public:
     DataType GetOutputType() const;
     void SetOutputType(DataType type);
     void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
-    void DrawFlipSurfaceBufferFromTex(RenderTexturePtr tex, SurfaceBuffer *buffer, IEffectFormat format);
+    IMAGE_EFFECT_EXPORT void DrawFlipSurfaceBufferFromTex(RenderTexturePtr tex,
+        SurfaceBuffer *buffer, IEffectFormat format);
     IMAGE_EFFECT_EXPORT void DrawSurfaceBufferFromTex(RenderTexturePtr tex,
         SurfaceBuffer *buffer, IEffectFormat format);
     IMAGE_EFFECT_EXPORT void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer);

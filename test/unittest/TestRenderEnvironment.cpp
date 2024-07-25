@@ -160,7 +160,10 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment003, TestSize.Level1)
     effectBuffer->tex = texptr;
     renderEnvironment->ConvertYUV2RGBA(effectBuffer, input);
     effectBuffer->extraInfo_->surfaceBuffer = nullptr;
-
+    std::shared_ptr<EffectBuffer> buffer =
+        renderEnvironment->ConvertBufferToTexture(effectBuffer.get());
+    EXPECT_NE(buffer, nullptr);
+    
     bool result = renderEnvironment->IfNeedGenMainTex();
     EXPECT_EQ(result, true);
 
@@ -231,7 +234,11 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment006, TestSize.Level1)
     GLuint tex = renderEnvironment->GenTexFromEffectBuffer(effectBuffer.get());
     EXPECT_NE(tex, 0);
 
-    IEffectFormat format = IEffectFormat::YUVNV12;
+    IEffectFormat format = IEffectFormat::RGBA8888;
+    renderEnvironment->DrawFlipSurfaceBufferFromTex(texptr, buffer, format);
+
+    format = IEffectFormat::YUVNV12;
+    renderEnvironment->DrawFlipSurfaceBufferFromTex(texptr, buffer, format);
     renderEnvironment->DrawSurfaceBufferFromTex(texptr, buffer, format);
 }
 }
