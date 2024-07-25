@@ -2341,11 +2341,14 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSaveAndRestoreUnittest004, TestSize
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSaveAndRestoreUnittest004 OH_EffectFilter_SetValue failed";
 
+    ASSERT_NE(imageEffectInfo, nullptr);
+    std::string info = imageEffectInfo;
+
     errorCode = OH_ImageEffect_Release(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSaveAndRestoreUnittest004 OH_ImageEffect_Release failed";
 
-    imageEffect = OH_ImageEffect_Restore(imageEffectInfo);
+    imageEffect = OH_ImageEffect_Restore(info.c_str());
     ASSERT_NE(imageEffect, nullptr) << "ImageEffectSaveAndRestoreUnittest004 OH_ImageEffect_Restore failed";
 
     errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, nullptr);
