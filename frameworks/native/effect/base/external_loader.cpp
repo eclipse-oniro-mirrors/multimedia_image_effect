@@ -33,7 +33,7 @@ void ExternLoader::LoadExtSo()
     if (isExtLoad_) {
         return;
     }
-    void *effectExtHandle = dlopen("/system/lib64/platformsdk/libimage_effect_ext.so", RTLD_NOW);
+    void *effectExtHandle = dlopen("libimage_effect_ext.so", RTLD_NOW);
     if (effectExtHandle == nullptr) {
         EFFECT_LOGE("EFilterFactory: dlopen libimage_effect_ext.so failed! dlerror=%{public}s", dlerror());
         isExtLoad_ = false;
