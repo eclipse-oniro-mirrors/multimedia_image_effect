@@ -1236,8 +1236,17 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest002, TestSize.Level1
 
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
-    value.dataValue.floatValue = 50.f;
+    value.dataValue.floatValue = 0.f;
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_EffectFilter *contrastFilter = OH_ImageEffect_AddFilter(imageEffect, CONTRAST_EFILTER);
+    ASSERT_NE(contrastFilter, nullptr);
+
+    ImageEffect_Any contrastValue;
+    contrastValue.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    contrastValue.dataValue.floatValue = 0.f;
+    errorCode = OH_EffectFilter_SetValue(contrastFilter, KEY_FILTER_INTENSITY, &contrastValue);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     OH_NativeBuffer *nativeBuffer = nativeBufferNV12_.get();
@@ -1281,8 +1290,17 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest003, TestSize.Level1
 
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
-    value.dataValue.floatValue = 50.f;
+    value.dataValue.floatValue = 0.f;
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    OH_EffectFilter *contrastFilter = OH_ImageEffect_AddFilter(imageEffect, CONTRAST_EFILTER);
+    ASSERT_NE(contrastFilter, nullptr);
+
+    ImageEffect_Any contrastValue;
+    contrastValue.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    contrastValue.dataValue.floatValue = 0.f;
+    errorCode = OH_EffectFilter_SetValue(contrastFilter, KEY_FILTER_INTENSITY, &contrastValue);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     OH_NativeBuffer *nativeBuffer = nativeBufferNV21_.get();

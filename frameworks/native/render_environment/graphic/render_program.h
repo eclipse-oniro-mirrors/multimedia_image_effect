@@ -27,8 +27,8 @@ namespace Effect {
 class RenderProgram : public RenderObject {
 public:
     const static unsigned int INVALID_PROGRAM_NAME = 0;
-    RenderProgram(RenderContext *context);
-    ~RenderProgram() = default;
+    IMAGE_EFFECT_EXPORT RenderProgram(RenderContext *context);
+    IMAGE_EFFECT_EXPORT ~RenderProgram() = default;
     IMAGE_EFFECT_EXPORT void Bind();
     IMAGE_EFFECT_EXPORT static void Unbind();
     IMAGE_EFFECT_EXPORT void SetUniform(const std::string &name, float value);

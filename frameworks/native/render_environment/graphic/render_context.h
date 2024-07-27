@@ -29,7 +29,7 @@ namespace Effect {
 class RenderContext : public RenderObject {
 public:
     IMAGE_EFFECT_EXPORT RenderContext();
-    ~RenderContext();
+    IMAGE_EFFECT_EXPORT ~RenderContext();
 
     virtual bool Create(RenderContext *sharedContext);
     bool Init() override;

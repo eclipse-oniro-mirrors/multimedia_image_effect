@@ -59,14 +59,16 @@ void EffectMemoryManager::AddFilterMemory(const std::shared_ptr<EffectBuffer> &e
     AddMemory(memory);
 }
 
-void UpdateMetaDataIfNeed(std::shared_ptr<MemoryData> &memoryData)
+void UpdateColorSpaceIfNeed(std::shared_ptr<MemoryData> &memoryData)
 {
     const MemoryInfo &memoryInfo = memoryData->memoryInfo;
+    EffectColorSpace colorSpace = memoryInfo.bufferInfo.colorSpace_;
     if (memoryInfo.bufferType != BufferType::DMA_BUFFER || memoryInfo.extra == nullptr ||
-        !ColorSpaceHelper::IsHdrColorSpace(memoryInfo.bufferInfo.colorSpace_)) {
+        !ColorSpaceHelper::IsHdrColorSpace(colorSpace)) {
         return;
     }
-
+    
+    EFFECT_LOGI("UpdateColorSpaceIfNeed UpdateColorSpace colorSpace=%{public}d", colorSpace);
     auto *sb = static_cast<SurfaceBuffer *>(memoryInfo.extra);
     ColorSpaceHelper::SetSurfaceBufferMetadataType(sb, CM_HDR_Metadata_Type::CM_IMAGE_HDR_VIVID_SINGLE);
     ColorSpaceHelper::SetSurfaceBufferColorSpaceType(sb, CM_ColorSpaceType::CM_BT2020_HLG_FULL);
@@ -82,7 +84,7 @@ std::shared_ptr<Memory> AllocMemoryInner(MemoryInfo &allocMemInfo, BufferType al
     CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, nullptr,
         "memoryData is null! bufferType=%{public}d", allocBufferType);
 
-    UpdateMetaDataIfNeed(memoryData);
+    UpdateColorSpaceIfNeed(memoryData);
 
     std::shared_ptr<Memory> memory = std::make_shared<Memory>();
     memory->memoryData_ = memoryData;

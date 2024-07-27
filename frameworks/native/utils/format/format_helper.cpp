@@ -27,6 +27,7 @@ uint32_t FormatHelper::CalculateDataRowCount(uint32_t height, IEffectFormat form
 {
     switch (format) {
         case IEffectFormat::RGBA8888:
+        case IEffectFormat::RGBA_1010102:
             return height;
         case IEffectFormat::YUVNV12:
         case IEffectFormat::YUVNV21:
@@ -40,6 +41,7 @@ uint32_t FormatHelper::CalculateRowStride(uint32_t width, IEffectFormat format)
 {
     switch (format) {
         case IEffectFormat::RGBA8888:
+        case IEffectFormat::RGBA_1010102:
             return width * RGBA_8888_BYTES_PER_PIXEL;
         case IEffectFormat::YUVNV12:
         case IEffectFormat::YUVNV21:

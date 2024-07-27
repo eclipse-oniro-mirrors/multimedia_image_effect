@@ -74,7 +74,7 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
 
     if (buffer->extraInfo_->dataType == DataType::TEX) {
         if (pixelMap->GetWidth() == static_cast<int32_t>(buffer->bufferInfo_->width_) &&
-            pixelMap->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_)) {
+            pixelMap->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_) && pixels == src->buffer_) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
             CommonUtils::UpdateImageExifDateTime(pixelMap);
             return ColorSpaceHelper::UpdateMetadata(src);
@@ -120,7 +120,6 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
     EFFECT_LOGD("ModifySurfaceBuffer: virAddr=%{public}p, inputBufAddr=%{public}p",
         surfaceBuffer->GetVirAddr(), buffer->buffer_);
     if (surfaceBuffer->GetVirAddr() == buffer->buffer_) {
-        // update metadata
         return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
 
@@ -128,8 +127,6 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
         if (surfaceBuffer->GetWidth() == static_cast<int32_t>(buffer->bufferInfo_->width_) &&
             surfaceBuffer->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_)) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
-
-            // update metadata
             return ColorSpaceHelper::UpdateMetadata(src);
         }
         return ErrorCode::ERR_BUFFER_NOT_ALLOW_CHANGE;
@@ -383,12 +380,12 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
 
     if (output->extraInfo_->dataType == DataType::NATIVE_WINDOW && buffer->extraInfo_->surfaceBuffer != nullptr) {
         int tex = static_cast<int>(GLUtils::CreateTextureFromSurfaceBuffer(buffer->extraInfo_->surfaceBuffer));
+        buffer->extraInfo_->surfaceBuffer->FlushCache();
         context->renderEnvironment_->UpdateCanvas();
         GraphicTransformType transformType = buffer->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
         context->renderEnvironment_->DrawFrame(tex, transformType);
         return ErrorCode::SUCCESS;
     }
-
     ErrorCode result = SaveData(buffer, sinkBuffer_, context);
     CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, result, "SaveData fail! result=%{public}d", result);
     eventReceiver_->OnEvent(Event{ name_, EventType::EVENT_COMPLETE, { buffer } });

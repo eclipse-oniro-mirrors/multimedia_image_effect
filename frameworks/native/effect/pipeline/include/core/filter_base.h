@@ -17,9 +17,10 @@
 #define IE_PIPELINE_CORE_FILTER_BASE_H
 
 #include <atomic>
-#include "image_effect_marco_define.h"
+
 #include "filter.h"
 #include "filter_type.h"
+#include "image_effect_marco_define.h"
 
 #define GET_FILTER_NAME(T) #T
 
@@ -28,9 +29,9 @@ namespace Media {
 namespace Effect {
 class FilterBase : public Filter {
 public:
-    explicit FilterBase(std::string name);
+    IMAGE_EFFECT_EXPORT explicit FilterBase(std::string name);
 
-    ~FilterBase() override;
+    IMAGE_EFFECT_EXPORT ~FilterBase() override;
 
     IMAGE_EFFECT_EXPORT void Initialize(EventReceiver *receiver) override;
 

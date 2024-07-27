@@ -21,9 +21,9 @@
 #include "efilter_factory.h"
 #include "memcpy_helper.h"
 #include "format_helper.h"
+#include "colorspace_helper.h"
 #include "render_thread.h"
 #include "render_task.h"
-#include "colorspace_helper.h"
 #include "render_environment.h"
 
 namespace OHOS {
@@ -33,7 +33,7 @@ const std::string EFilter::Parameter::KEY_DEFAULT_VALUE = "default_value";
 
 EFilter::EFilter(const std::string &name) : EFilterBase(name) {}
 
-EFilter::~EFilter() {}
+EFilter::~EFilter() = default;
 
 ErrorCode EFilter::SetValue(const std::string &key, Plugin::Any &value)
 {
@@ -172,9 +172,14 @@ std::shared_ptr<EffectBuffer> EFilter::IpTypeConvert(const std::shared_ptr<Effec
     std::shared_ptr<PixelFormatCap> pixelFormatCap = GetPixelFormatCap(name_);
     std::map<IEffectFormat, std::vector<IPType>> &formats = pixelFormatCap->formats;
     auto it = formats.find(formatType);
+    if (it == formats.end() && runningIPType == IPType::CPU) {
+        it = formats.find(IEffectFormat::RGBA8888);
+    }
     CHECK_AND_RETURN_RET_LOG(it != formats.end(), buffer,
         "format not support! format=%{public}d, name=%{public}s", formatType, name_.c_str());
     std::shared_ptr<EffectBuffer> source = buffer;
+    CHECK_AND_RETURN_RET_LOG(runningIPType != IPType::DEFAULT, buffer, "runningIPType is default");
+
     if (std::find(it->second.begin(), it->second.end(), runningIPType) == it->second.end()) {
         if (runningIPType == IPType::GPU) {
             source = ConvertFromGPU2CPU(buffer, context, source);
@@ -200,7 +205,7 @@ std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<
         .bufferType = BufferType::DMA_BUFFER,
     };
     MemoryData *memoryData = context->memoryManager_->AllocMemory(nullptr, memInfo);
-    CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, buffer, "Alloc new memory fail");
+    CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, buffer, "Alloc new memory fail!");
     MemoryInfo &allocMemInfo = memoryData->memoryInfo;
     std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
     *bufferInfo = allocMemInfo.bufferInfo;
@@ -230,7 +235,6 @@ std::shared_ptr<EffectBuffer> EFilter::ConvertFromCPU2GPU(const std::shared_ptr<
     if (source->extraInfo_->surfaceBuffer != nullptr) {
         source->extraInfo_->surfaceBuffer->FlushCache();
     }
-
     source = context->renderEnvironment_->ConvertBufferToTexture(buffer.get());
     if (context->renderEnvironment_->GetOutputType() == DataType::NATIVE_WINDOW) {
         RenderTexturePtr tempTex = context->renderEnvironment_->RequestBuffer(source->tex->Width(),
@@ -374,6 +378,7 @@ ErrorCode CreateDmaEffectBufferIfNeed(IPType runningType, EffectBuffer *current,
         .bufferInfo = *current->bufferInfo_,
         .bufferType = BufferType::DMA_BUFFER,
     };
+    memInfo.bufferInfo.colorSpace_ = src->bufferInfo_->colorSpace_;
     MemoryData *memData = context->memoryManager_->AllocMemory(src->buffer_, memInfo);
     CHECK_AND_RETURN_RET_LOG(memData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc memory fail!");
 
@@ -389,8 +394,12 @@ ErrorCode CreateDmaEffectBufferIfNeed(IPType runningType, EffectBuffer *current,
 }
 
 ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &src,
-    std::shared_ptr<EffectBuffer> &dst)
+    std::shared_ptr<EffectBuffer> &dst, bool needModifySource)
 {
+    if (context->renderEnvironment_->GetEGLStatus() != EGLStatus::READY) {
+        context->renderEnvironment_->Init();
+        context->renderEnvironment_->Prepare();
+    }
     std::shared_ptr<EffectBuffer> buffer = nullptr;
     context->renderEnvironment_->BeginFrame();
     if (src->bufferInfo_->formatType_ == IEffectFormat::RGBA8888) {
@@ -405,7 +414,11 @@ ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::s
     extraInfo->dataType = DataType::TEX;
     std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
     ErrorCode res = Render(buffer.get(), effectBuffer.get(), context);
-    context->renderEnvironment_->ConvertTextureToBuffer(effectBuffer->tex, dst.get());
+    if (needModifySource) {
+        CommonUtils::ModifyPixelMapPropertyForTexture(dst->extraInfo_->pixelMap, effectBuffer, context);
+    } else {
+        context->renderEnvironment_->ConvertTextureToBuffer(effectBuffer->tex, dst.get());
+    }
     return res;
 }
 
@@ -436,6 +449,31 @@ std::shared_ptr<EffectContext> CreateEffectContext(std::shared_ptr<EffectBuffer>
     return context;
 }
 
+ErrorCode CheckAndUpdateEffectBufferIfNeed(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectContext> &context,
+    std::string &name, std::shared_ptr<EffectBuffer> &dst)
+{
+    if (src->buffer_ == dst->buffer_) {
+        dst = src;
+    }
+
+    ErrorCode res = ColorSpaceHelper::ConvertColorSpace(src, context);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
+        "CheckAndUpdateEffectBufferIfNeed: ConvertColorSpace fail! res=%{public}d, name=%{public}s", res, name.c_str());
+
+    if (src->buffer_ != dst->buffer_) {
+        // color space is same or not after covert color sapce if need.
+        EffectColorSpace srcColorSpace = src->bufferInfo_->colorSpace_;
+        EffectColorSpace dstColorSpace = dst->bufferInfo_->colorSpace_;
+        bool isSrcHdr = ColorSpaceHelper::IsHdrColorSpace(srcColorSpace);
+        bool isDstHdr = ColorSpaceHelper::IsHdrColorSpace(dstColorSpace);
+        CHECK_AND_RETURN_RET_LOG(isSrcHdr == isDstHdr, ErrorCode::ERR_FILTER_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
+            "CheckAndUpdateEffectBufferIfNeed: input and output color space not support! srcColorSpace=%{public}d, "
+            "dstColorSpace=%{public}d", srcColorSpace, dstColorSpace);
+    }
+
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
 {
     EffectBuffer *srcBuf = src.get();
@@ -444,11 +482,14 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
         "src or dst is null! src=%{public}p, dst=%{public}p", srcBuf, dstBuf);
 
     outPorts_.clear();
+    void *originBuffer = src->buffer_;
 
     std::shared_ptr<EffectContext> context = CreateEffectContext(src, dst, name_);
-    ErrorCode res = ColorSpaceHelper::ConvertColorSpace(src, context);
-    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
-        "Render: ConvertColorSpace fail! res=%{public}d, name=%{public}s", res, name_.c_str());
+    ErrorCode res = CheckAndUpdateEffectBufferIfNeed(src, context, name_, dst);
+    CHECK_AND_RETURN_RET(res == ErrorCode::SUCCESS, res);
+    bool needMotifySource = (src->buffer_ != originBuffer) && (src->buffer_ == dst->buffer_);
+
+    PreRender(src->bufferInfo_->formatType_);
 
     IPType runningType = IPType::DEFAULT;
     res = CalculateEFilterIPType(src->bufferInfo_->formatType_, runningType);
@@ -470,8 +511,7 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
     }
 
     if (runningType == IPType::GPU) {
-        res = RenderWithGPU(context, src, dst);
-        return res;
+        return RenderWithGPU(context, src, dst, needMotifySource);
     }
 
     if (src->buffer_ != dst->buffer_) {

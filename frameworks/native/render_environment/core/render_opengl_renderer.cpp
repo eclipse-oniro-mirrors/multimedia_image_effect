@@ -93,7 +93,7 @@ void ProcessTransform(GraphicTransformType type, RenderGeneralProgram *shader)
         case GRAPHIC_FLIP_V_ROT90:
             trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
             shader->SetUniform("transform", MathUtils::NativePtr(trans));
-            shader->SetUniform("flipv", 1.0f);
+            shader->SetUniform("flipV", 1.0f);
             break;
         case GRAPHIC_ROTATE_180:
             trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));

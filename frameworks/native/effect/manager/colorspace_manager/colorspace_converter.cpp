@@ -160,11 +160,11 @@ ErrorCode ColorSpaceConverter::ComposeHdrImageInner(int32_t vpeColorSpaceInstanc
 ErrorCode ColorSpaceConverter::ComposeHdrImage(const EffectBuffer *inputSdr, const SurfaceBuffer *inputGainmap,
     EffectBuffer *outputHdr)
 {
-    EFFECT_LOGD("ComposeHdrImage IN");
+    EFFECT_LOGI("ComposeHdrImage IN");
     int32_t vpeColorSpaceInstance = CreateVpeColorSpaceInstance();
     ErrorCode res = ComposeHdrImageInner(vpeColorSpaceInstance, inputSdr, inputGainmap, outputHdr);
     DestroyVpeColorSpaceInstance(vpeColorSpaceInstance);
-    EFFECT_LOGD("ComposeHdrImage OUT");
+    EFFECT_LOGI("ComposeHdrImage OUT");
     return res;
 }
 
@@ -217,11 +217,11 @@ ErrorCode ColorSpaceConverter::DecomposeHdrImageInner(int32_t vpeColorSpaceInsta
 ErrorCode ColorSpaceConverter::DecomposeHdrImage(const EffectBuffer *inputHdr, std::shared_ptr<EffectBuffer> &outputSdr,
     SurfaceBuffer **outputGainmap)
 {
-    EFFECT_LOGD("DecomposeHdrImage IN");
+    EFFECT_LOGI("DecomposeHdrImage IN");
     int32_t vpeColorSpaceInstance = CreateVpeColorSpaceInstance();
     ErrorCode res = DecomposeHdrImageInner(vpeColorSpaceInstance, inputHdr, outputSdr, outputGainmap);
     DestroyVpeColorSpaceInstance(vpeColorSpaceInstance);
-    EFFECT_LOGD("DecomposeHdrImage OUT");
+    EFFECT_LOGI("DecomposeHdrImage OUT");
     return res;
 }
 
@@ -243,6 +243,9 @@ ErrorCode ColorSpaceConverter::ProcessHdrImageInner(int32_t vpeColorSpaceInstanc
     PrintColorSpaceInfo(hdrSb, "ProcessHdrImageInner:HdrSurfaceBuffer");
     PrintColorSpaceInfo(sdrSb, "ProcessHdrImageInner:SdrSurfaceBuffer");
 
+    ColorSpaceHelper::SetHDRDynamicMetadata(hdrSb, std::vector<uint8_t>(0));
+    ColorSpaceHelper::SetHDRStaticMetadata(hdrSb, std::vector<uint8_t>(0));
+
     int32_t res = VpeHelper::ColorSpaceConverterProcessImage(vpeColorSpaceInstance, hdrSb, sdrSb);
     CHECK_AND_RETURN_RET_LOG(res == 0, ErrorCode::ERR_VPE_PROCESS_IMAGE_FAIL,
         "ProcessHdrImageInner: ColorSpaceConverterProcessImage fail! res=%{public}d", res);
@@ -262,11 +265,11 @@ ErrorCode ColorSpaceConverter::ProcessHdrImageInner(int32_t vpeColorSpaceInstanc
 
 ErrorCode ColorSpaceConverter::ProcessHdrImage(const EffectBuffer *inputHdr, std::shared_ptr<EffectBuffer> &outputSdr)
 {
-    EFFECT_LOGD("ProcessHdrImage IN");
+    EFFECT_LOGI("ProcessHdrImage IN");
     int32_t vpeColorSpaceInstance = CreateVpeColorSpaceInstance();
     ErrorCode res = ProcessHdrImageInner(vpeColorSpaceInstance, inputHdr, outputSdr);
     DestroyVpeColorSpaceInstance(vpeColorSpaceInstance);
-    EFFECT_LOGD("ProcessHdrImage OUT");
+    EFFECT_LOGI("ProcessHdrImage OUT");
     return res;
 }
 

@@ -32,7 +32,7 @@ MetadataGenerator::~MetadataGenerator()
 
 ErrorCode MetadataGenerator::ProcessImage(SurfaceBuffer *inputImage)
 {
-    EFFECT_LOGD("MetadataGenerator::ProcessImage IN");
+    EFFECT_LOGI("MetadataGenerator::ProcessImage IN");
     int32_t vpeMetadataGeneratorInstance = GetVpeMetadataGeneratorInstance();
     CHECK_AND_RETURN_RET_LOG(vpeMetadataGeneratorInstance != VPE_INVALID_INSTANCE_ID,
         ErrorCode::ERR_INVALID_VPE_INSTANCE, "ProcessImage: invalid vpe instance!");
@@ -46,7 +46,7 @@ ErrorCode MetadataGenerator::ProcessImage(SurfaceBuffer *inputImage)
     CHECK_AND_RETURN_RET_LOG(res == 0, ErrorCode::ERR_VPE_METADATA_PROCESS_IMAGE_FAIL,
         "ProcessImage: MetadataGeneratorProcessImage fail! res=%{public}d", res);
 
-    EFFECT_LOGD("MetadataGenerator::ProcessImage OUT");
+    EFFECT_LOGI("MetadataGenerator::ProcessImage OUT");
     return ErrorCode::SUCCESS;
 }
 

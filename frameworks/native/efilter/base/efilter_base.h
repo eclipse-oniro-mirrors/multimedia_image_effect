@@ -25,7 +25,7 @@ class EFilterBase : public FilterBase {
 public:
     IMAGE_EFFECT_EXPORT explicit EFilterBase(const std::string &name);
 
-    ~EFilterBase() override = default;
+    IMAGE_EFFECT_EXPORT ~EFilterBase() override = default;
 
     IMAGE_EFFECT_EXPORT std::vector<WorkMode> GetWorkModes() override;
 

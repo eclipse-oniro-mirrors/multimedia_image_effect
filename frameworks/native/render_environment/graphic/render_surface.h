@@ -33,7 +33,7 @@ public:
         SURFACE_TYPE_OFF_SCREEN
     };
     IMAGE_EFFECT_EXPORT explicit RenderSurface(const std::string &tag);
-    ~RenderSurface() override;
+    IMAGE_EFFECT_EXPORT ~RenderSurface() override;
 
     virtual void SetAttrib(const RenderAttribute& attrib);
     virtual RenderAttribute GetAttrib();

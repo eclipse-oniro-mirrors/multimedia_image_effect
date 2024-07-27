@@ -166,7 +166,7 @@ int32_t VpeHelper::ColorSpaceConverterDestroy(int32_t *instance)
     CHECK_AND_RETURN_RET_LOG(instance != nullptr && destroyFunc != nullptr, (int32_t)ErrorCode::ERR_PARAM_INVALID,
         "ColorSpaceConverterDestroy: function is null!");
 
-    EFFECT_LOGD("ColorSpaceConverterDestroy: instance=%{public}d", *instance);
+    EFFECT_LOGI("ColorSpaceConverterDestroy: instance=%{public}d", *instance);
     return destroyFunc(instance);
 }
 
@@ -196,7 +196,7 @@ int32_t VpeHelper::MetadataGeneratorDestroy(int32_t *instance)
     CHECK_AND_RETURN_RET_LOG(instance != nullptr && destroyFunc != nullptr, (int32_t)ErrorCode::ERR_PARAM_INVALID,
         "MetadataGeneratorDestroy: function is null!");
 
-    EFFECT_LOGD("MetadataGeneratorDestroy: instance=%{public}d", *instance);
+    EFFECT_LOGI("MetadataGeneratorDestroy: instance=%{public}d", *instance);
     return destroyFunc(instance);
 }
 
