@@ -17,14 +17,15 @@
 #define IMAGE_EFFECT_STRING_HELPER_H
 
 #include <string>
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
 class StringHelp final {
 public:
-    static bool EndsWith(const std::string &input, const std::string &suffix);
-    static bool EndsWithIgnoreCase(const std::string &input, const std::string &suffix);
+    IMAGE_EFFECT_EXPORT static bool EndsWith(const std::string &input, const std::string &suffix);
+    IMAGE_EFFECT_EXPORT static bool EndsWithIgnoreCase(const std::string &input, const std::string &suffix);
 };
 } // namespace Effect
 } // namespace Media

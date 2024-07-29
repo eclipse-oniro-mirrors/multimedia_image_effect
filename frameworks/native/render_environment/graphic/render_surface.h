@@ -38,11 +38,11 @@ public:
     virtual void SetAttrib(const RenderAttribute& attrib);
     virtual RenderAttribute GetAttrib();
     virtual bool Create(void *window);
-    bool Init() override;
-    bool Release() override;
+    IMAGE_EFFECT_EXPORT bool Init() override;
+    IMAGE_EFFECT_EXPORT bool Release() override;
 
-    void *GetRawSurface() const;
-    SurfaceType GetSurfaceType() const;
+    IMAGE_EFFECT_EXPORT void *GetRawSurface() const;
+    IMAGE_EFFECT_EXPORT SurfaceType GetSurfaceType() const;
 
 private:
     EGLDisplay display_;
