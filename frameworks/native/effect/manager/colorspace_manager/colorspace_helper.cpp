@@ -176,6 +176,7 @@ ErrorCode ColorSpaceHelper::UpdateMetadata(EffectBuffer *input)
 
 ErrorCode ColorSpaceHelper::UpdateMetadata(SurfaceBuffer *input, const EffectColorSpace &colorSpace)
 {
+    EFFECT_LOGD("UpdateMetadata: colorSpace=%{public}d}", colorSpace);
     if (input == nullptr || !ColorSpaceHelper::IsHdrColorSpace(colorSpace)) {
         return ErrorCode::SUCCESS;
     }
@@ -228,7 +229,7 @@ ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const Effe
         return ErrorCode::SUCCESS;
     }
 
-    EFFECT_LOGD("ColorSpaceHelper::DecomposeHdrImage");
+    EFFECT_LOGI("ColorSpaceHelper::DecomposeHdrImage");
     std::shared_ptr<Memory> oldMemory = context->memoryManager_->GetMemoryByAddr(buffer->buffer_);
     std::shared_ptr<ColorSpaceConverter> converter = std::make_shared<ColorSpaceConverter>();
     std::shared_ptr<EffectBuffer> sdrImage = nullptr;
@@ -241,6 +242,11 @@ ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const Effe
 
     context->memoryManager_->RemoveMemory(oldMemory);
     std::shared_ptr<MemoryData> memoryData = converter->GetMemoryData(sdrImage->extraInfo_->surfaceBuffer);
+
+    SurfaceBuffer *sb = sdrImage->extraInfo_->surfaceBuffer;
+    ColorSpaceHelper::SetSurfaceBufferMetadataType(sb, CM_HDR_Metadata_Type::CM_METADATA_NONE);
+    ColorSpaceHelper::SetSurfaceBufferColorSpaceType(sb, CM_ColorSpaceType::CM_COLORSPACE_NONE);
+
     std::shared_ptr<Memory> memory = std::make_shared<Memory>();
     memory->memoryData_ = memoryData;
     context->memoryManager_->AddMemory(memory);
@@ -253,6 +259,7 @@ ErrorCode ColorSpaceHelper::ConvertColorSpace(std::shared_ptr<EffectBuffer> &src
     std::shared_ptr<EffectContext> &context)
 {
     EffectColorSpace colorSpace = srcBuffer->bufferInfo_->colorSpace_;
+    EFFECT_LOGD("ConvertColorSpace: colorSpace=%{public}d", colorSpace);
 
     // If color space is none, it means that color space is not supported. But it still should return success,
     // because the real color space maybe defined as ColorSpaceName::CUSTOM in ExtDecoder::getGrColorSpace or
@@ -271,8 +278,9 @@ ErrorCode ColorSpaceHelper::ConvertColorSpace(std::shared_ptr<EffectBuffer> &src
     res = context->colorSpaceManager_->ChooseColorSpace(
         context->filtersSupportedColorSpace_, colorSpace, chosenColorSpace);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ConvertColorSpace: ChooseColorSpace fail! "
-        "res=%{public}d, colorSpace=%{public}d, chosenColorSpace=%{public}d", res, colorSpace, chosenColorSpace);
+        "res=%{public}d, colorSpace=%{public}d", res, colorSpace);
 
+    EFFECT_LOGD("ConvertColorSpace: colorSpace=%{public}d, chosenColorSpace=%{public}d", colorSpace, chosenColorSpace);
     res = DecomposeHdrImageIfNeed(colorSpace, chosenColorSpace, srcBuffer, context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ConvertColorSpace: DecomposeHdrImageIfNeed fail! "
         "res=%{public}d, colorSpace=%{public}d, chosenColorSpace=%{public}d", res, colorSpace, chosenColorSpace);

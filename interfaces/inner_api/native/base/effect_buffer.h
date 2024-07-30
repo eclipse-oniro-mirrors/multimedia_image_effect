@@ -17,11 +17,12 @@
 #define IMAGE_EFFECT_EFFECT_BUFFER_H
 
 #include <memory>
-#include "image_effect_marco_define.h"
+
 #include "effect_info.h"
 #include "effect_type.h"
 #include "pixel_map.h"
 #include "surface_buffer.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {

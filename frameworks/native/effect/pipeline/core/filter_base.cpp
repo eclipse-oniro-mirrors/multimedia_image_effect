@@ -140,7 +140,7 @@ ErrorCode FilterBase::PullData(const std::string &outPort, std::shared_ptr<Effec
 
 void FilterBase::OnEvent(const Event &event)
 {
-    // Receive event from port and pass it to pipeline
+    // Receive event from port and pass it to pipeline.
     if (eventReceiver_ != nullptr) {
         eventReceiver_->OnEvent(event);
     }

@@ -19,6 +19,7 @@
 #include <string>
 #include <atomic>
 #include <mutex>
+
 #include "image_effect_marco_define.h"
 #include "effect_log.h"
 

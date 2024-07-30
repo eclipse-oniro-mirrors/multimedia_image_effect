@@ -65,7 +65,6 @@ EffectBuffer *RenderStrategy::ChooseBestOutput(EffectBuffer *buffer,
 {
     CHECK_AND_RETURN_RET_LOG(src_ != nullptr && buffer != nullptr, buffer,
         "src or input buffer is null! src_=%{public}d, buffer=%{public}p", src_ == nullptr, buffer);
-
     if (dst_ == nullptr || dst_->buffer_ == nullptr || src_->buffer_ == dst_->buffer_
         || dst_->extraInfo_->dataType == DataType::NATIVE_WINDOW) {
         return ChooseBufOnSetInput(buffer, src_.get(), memNegotiatedCap);

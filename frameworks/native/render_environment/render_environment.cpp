@@ -49,7 +49,7 @@ void RenderEnvironment::Init()
 {
     EFFECT_LOGI("RenderEnvironment start init");
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-    if (eglInitialize(display, nullptr, nullptr)) {
+    if (eglInitialize(display, nullptr, nullptr) == EGL_FALSE) {
         EFFECT_LOGE("EGL Initialize failed");
     }
     param_ = new RenderParam();

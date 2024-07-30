@@ -101,10 +101,13 @@ void Crop(EffectBuffer *src, EffectBuffer *dst, Region *region)
     uint32_t srcRowStride = src->bufferInfo_->rowStride_;
     uint32_t dstRowStride = dst->bufferInfo_->rowStride_;
     char *srcStart = srcBuffer + cropTop * static_cast<int32_t>(srcRowStride) + cropLeft * PIXEL_BYTES;
+    EFFECT_LOGD("Crop: srcBuffer=%{public}p, dstBuffer=%{public}p, srcStart=%{public}p, srcRowStride=%{public}d, "
+        "dstRowStride=%{public}d, rowCount=%{public}d, count=%{public}d",
+        srcBuffer, dstBuffer, srcStart, srcRowStride, dstRowStride, rowCount, count);
     for (int32_t i = 0; i < rowCount; ++i) {
         errno_t ret = memcpy_s(dstBuffer + i * dstRowStride, dstRowStride, srcStart + i * srcRowStride, count);
         if (ret != 0) {
-            EFFECT_LOGE("CropEFilter::Render memcpy_s failed. ret=%{public}d", ret);
+            EFFECT_LOGE("CropEFilter::Render memcpy_s failed. ret=%{public}d, i=%{public}d", ret, i);
             continue;
         }
     }

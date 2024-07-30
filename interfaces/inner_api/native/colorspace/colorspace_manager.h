@@ -17,8 +17,9 @@
 #define IMAGE_EFFECT_COLORSPACE_MANAGER_H
 
 #include <memory>
-#include "image_effect_marco_define.h"
+
 #include "colorspace_strategy.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {

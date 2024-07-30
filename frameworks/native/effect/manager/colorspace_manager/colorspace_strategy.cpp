@@ -47,7 +47,7 @@ static const std::vector<EffectColorSpace> DEFAULT_SUPPORTED_COLORSPACE = {
     EffectColorSpace::SRGB,
     EffectColorSpace::SRGB_LIMIT,
     EffectColorSpace::DISPLAY_P3,
-    EffectColorSpace::DISPLAY_P3_LIMIT,
+    EffectColorSpace::DISPLAY_P3_LIMIT
 };
 
 bool ColorSpaceStrategy::IsSupportedColorSpace(EffectColorSpace colorSpace)
@@ -110,7 +110,7 @@ ErrorCode ChooseColorSpaceInner(const EffectColorSpace &srcRealColorSpace,
 
     auto it = COLORSPACE_HDR_CONVERTER_MAP.find(srcRealColorSpace);
     if (it == COLORSPACE_HDR_CONVERTER_MAP.end()) {
-        EFFECT_LOGE("ChooseColorSpaceWithoutOutput: colorSpace[%{public}d] not support convert.", srcRealColorSpace);
+        EFFECT_LOGE("ChooseColorSpaceInner: colorSpace[%{public}d] not support convert.", srcRealColorSpace);
         return ErrorCode::ERR_COLORSPACE_NOT_SUPPORT_CONVERT;
     }
 
@@ -138,7 +138,7 @@ ErrorCode ChooseColorSpaceWithOutput(const EffectColorSpace &srcRealColorSpace, 
             "srcRealColorSpace=%{public}d, chooseColorSpace=%{public}d", srcRealColorSpace, chooseColorSpace);
     }
 
-    outputColorSpace = srcRealColorSpace;
+    outputColorSpace = chooseColorSpace;
     return ErrorCode::SUCCESS;
 }
 

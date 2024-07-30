@@ -88,7 +88,7 @@ private:
         std::shared_ptr<EffectContext> &context);
 
     ErrorCode RenderWithGPU(std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &src,
-        std::shared_ptr<EffectBuffer> &dst);
+        std::shared_ptr<EffectBuffer> &dst, bool needModifySource);
 
     ErrorCode RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst);
 

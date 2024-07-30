@@ -27,7 +27,8 @@ RenderGeneralProgram::RenderGeneralProgram(RenderContext *context, const std::st
     SetTag("RenderGeneralProgram");
 }
 
-RenderGeneralProgram::~RenderGeneralProgram() {}
+RenderGeneralProgram::~RenderGeneralProgram() = default;
+
 
 bool RenderGeneralProgram::Init()
 {

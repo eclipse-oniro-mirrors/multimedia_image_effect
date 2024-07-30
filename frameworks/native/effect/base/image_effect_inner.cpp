@@ -31,10 +31,10 @@
 #include "efilter_factory.h"
 #include "external_loader.h"
 #include "effect_context.h"
-#include "render_task.h"
 #include "colorspace_helper.h"
-#include "render_environment.h"
 #include "memcpy_helper.h"
+#include "render_task.h"
+#include "render_environment.h"
 #include "v1_1/buffer_handle_meta_key_type.h"
 #include "effect_log.h"
 #include "effect_trace.h"
@@ -42,7 +42,6 @@
 
 #define RENDER_QUEUE_SIZE 8
 #define COMMON_TASK_TAG 0
-
 namespace OHOS {
 namespace Media {
 namespace Effect {
@@ -152,8 +151,7 @@ ImageEffect::ImageEffect(const char *name)
     ExtInitModule();
 
     if (m_renderThread == nullptr) {
-        auto func = [this]() {
-        };
+        auto func = [this]() {};
         m_renderThread = new RenderThread<>(RENDER_QUEUE_SIZE, func);
         m_renderThread->Start();
         auto task = std::make_shared<RenderTask<>>([this]() { this->InitEGLEnv(); }, COMMON_TASK_TAG,
@@ -174,7 +172,7 @@ ImageEffect::~ImageEffect()
 
     impl_->surfaceAdapter_ = nullptr;
     impl_->effectContext_->renderEnvironment_ = nullptr;
-    if (toProducerSurface_ == nullptr) {
+    if (toProducerSurface_) {
         auto res = toProducerSurface_->Disconnect();
         EFFECT_LOGI("ImageEffect::~ImageEffect disconnect res=%{public}d, id=%{public}" PRIu64,
             res, toProducerSurface_->GetUniqueId());
@@ -336,7 +334,7 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, EffectParameters &effectParameters,
+ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters,
     unsigned long int taskId, RenderThread<> *thread)
 {
     if (thread == nullptr) {
@@ -384,7 +382,7 @@ ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, EffectPara
     return res;
 }
 
-ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, EffectParameters &effectParameters,
+ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters,
     unsigned long int taskId, RenderThread<> *thread)
 {
     effectParameters.effectContext_->renderStrategy_->Init(effectParameters.srcEffectBuffer_,
@@ -555,11 +553,11 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
         "not supported dataType. srcDataType=%{public}d, dstDataType=%{public}d", srcDataType, dtsDataType);
 
     // color space is same or not.
-    if (srcDataType == DataType::PIXEL_MAP  && dtsDataType != DataType::NATIVE_WINDOW) {
+    if (srcDataType == DataType::PIXEL_MAP && dtsDataType != DataType::NATIVE_WINDOW) {
         // the format for pixel map is same or not.
         CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->bufferInfo_->formatType_ == dstEffectBuffer->bufferInfo_->formatType_,
             ErrorCode::ERR_NOT_SUPPORT_DIFF_FORMAT,
-            "not support different format, srcFormat=%{public}d, dstFormat=%{public}d",
+            "not support different format. srcFormat=%{public}d, dstFormat=%{public}d",
             srcEffectBuffer->bufferInfo_->formatType_, dstEffectBuffer->bufferInfo_->formatType_);
 
         // color space is same or not.
