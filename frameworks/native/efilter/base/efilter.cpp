@@ -316,8 +316,6 @@ ErrorCode OnPushDataPortsEmpty(std::shared_ptr<EffectBuffer> &buffer, std::share
     // efilter create new buffer and inout with the same buffer.
     EffectBuffer *output = context->renderStrategy_->GetOutput();
     if (output == nullptr || input->buffer_ == output->buffer_) {
-        ErrorCode res = ColorSpaceHelper::UpdateMetadata(buffer.get());
-        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "OnPushDataPortsEmpty: UpdateMetadata fail!");
         return CommonUtils::ModifyPixelMapProperty(buffer->extraInfo_->pixelMap, buffer, context->memoryManager_);
     }
     EFFECT_LOGW("not support different input and output buffer! filterName=%{public}s", name.c_str());
@@ -461,13 +459,13 @@ ErrorCode CheckAndUpdateEffectBufferIfNeed(std::shared_ptr<EffectBuffer> &src, s
         "CheckAndUpdateEffectBufferIfNeed: ConvertColorSpace fail! res=%{public}d, name=%{public}s", res, name.c_str());
 
     if (src->buffer_ != dst->buffer_) {
-        // color space is same or not after covert color sapce if need.
+        // color space is same or not after covert color space if needed.
         EffectColorSpace srcColorSpace = src->bufferInfo_->colorSpace_;
         EffectColorSpace dstColorSpace = dst->bufferInfo_->colorSpace_;
         bool isSrcHdr = ColorSpaceHelper::IsHdrColorSpace(srcColorSpace);
         bool isDstHdr = ColorSpaceHelper::IsHdrColorSpace(dstColorSpace);
         CHECK_AND_RETURN_RET_LOG(isSrcHdr == isDstHdr, ErrorCode::ERR_FILTER_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
-            "CheckAndUpdateEffectBufferIfNeed: input and output color space not support! srcColorSpace=%{public}d, "
+            "CheckAndUpdateEffectBufferIfNeed: input and output color space not support! srcRealColorSpace=%{public}d, "
             "dstColorSpace=%{public}d", srcColorSpace, dstColorSpace);
     }
 

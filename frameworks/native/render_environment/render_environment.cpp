@@ -411,14 +411,14 @@ void RenderEnvironment::DrawFrame(GLuint texId, GraphicTransformType type)
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(1.0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        
+
         RenderMesh *mesh = new RenderMesh(DEFAULT_FLIP_VERTEX_DATA);
         mesh->Bind(param_->shaderBaseDrawFrameYUV_);
         param_->renderer_->DrawOnScreenWithTransform(texId, mesh,
             param_->shaderBaseDrawFrameYUV_, &param_->viewport_, type, GL_TEXTURE_EXTERNAL_OES);
         glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
         if (screenSurface_ == nullptr) {
-            EFFECT_LOGE("RenderEnvironment DrawFrame is nullptr");
+            EFFECT_LOGE("RenderEnvironment screenSurface_ is nullptr");
             return;
         }
         param_->context_->SwapBuffers(screenSurface_);

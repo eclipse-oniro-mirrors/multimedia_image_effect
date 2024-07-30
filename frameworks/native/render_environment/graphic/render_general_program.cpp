@@ -29,7 +29,6 @@ RenderGeneralProgram::RenderGeneralProgram(RenderContext *context, const std::st
 
 RenderGeneralProgram::~RenderGeneralProgram() = default;
 
-
 bool RenderGeneralProgram::Init()
 {
     EFFECT_TRACE_NAME("Init RenderGeneralProgram");

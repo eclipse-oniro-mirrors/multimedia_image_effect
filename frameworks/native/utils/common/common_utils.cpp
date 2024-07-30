@@ -479,7 +479,7 @@ ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, P
         pixelMap->InnerSetColorSpace(grColorSpace);
     }
 
-    // update metadata if need
+    // update colorspace if need
     if (memoryInfo.bufferType == BufferType::DMA_BUFFER) {
         res = ColorSpaceHelper::UpdateMetadata(static_cast<SurfaceBuffer *>(memoryInfo.extra),
             memoryInfo.bufferInfo.colorSpace_);

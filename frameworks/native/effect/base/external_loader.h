@@ -48,7 +48,7 @@ public:
     InitModuleFunc GetInitModuleFunc() const;
     DeinitModuleFunc GetDeinitModuleFunc() const;
 
-    IMAGE_EFFECT_EXPORT void InitExt();
+    void InitExt();
 private:
     ExternLoader() = default;
 
