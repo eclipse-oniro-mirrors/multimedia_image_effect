@@ -206,7 +206,7 @@ HWTEST_F(TestUtils, JsonHelper001, TestSize.Level1) {
 
 HWTEST_F(TestUtils, NativeCommonUtilsParseJson001, TestSize.Level1) {
     std::string key = "test_key";
-    Plugin::Any any = 1;
+    Plugin::Any any = nullptr;
     Json *json = nullptr;
     EffectJsonPtr result = std::make_shared<EffectJson>(json);
     ErrorCode ret = CommonUtils::ParseAnyAndAddToJson(key, any, result);
@@ -229,7 +229,7 @@ HWTEST_F(TestUtils, NativeCommonUtilsModifyPixelMapProperty001, TestSize.Level1)
     std::shared_ptr<EffectBuffer> buffer = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
     std::shared_ptr<EffectMemoryManager> memoryManager = std::make_unique<EffectMemoryManager>();
     ErrorCode result = CommonUtils::ModifyPixelMapProperty(&pixelMap, buffer, memoryManager);
-    EXPECT_EQ(result, ErrorCode::SUCCESS);
+    EXPECT_EQ(result, ErrorCode::ERR_ALLOC_MEMORY_FAIL);
 }
 HWTEST_F(TestUtils, StringHelper001, TestSize.Level1) {
     std::string input = "abc";

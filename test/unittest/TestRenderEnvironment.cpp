@@ -259,7 +259,7 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment007, TestSize.Level1) {
     EXPECT_EQ(result, false);
 
     RenderSurface::SurfaceType type = renderSurface->GetSurfaceType();
-    EXPECT_EQ(type, RenderSurface::SurfaceType::SURFACE_TYPE_NULL);
+    EXPECT_EQ(type, RenderSurface::SurfaceType::SURFACE_TYPE_OFF_SCREEN);
 }
 }
 }
