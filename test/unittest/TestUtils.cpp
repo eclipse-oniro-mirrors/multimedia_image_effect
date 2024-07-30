@@ -210,7 +210,7 @@ HWTEST_F(TestUtils, NativeCommonUtilsParseJson001, TestSize.Level1) {
     Json *json = nullptr;
     EffectJsonPtr result = std::make_shared<EffectJson>(json);
     ErrorCode ret = CommonUtils::ParseAnyAndAddToJson(key, any, result);
-    ASSERT_EQ(RET, ErrorCode::ERR_ANY_CAST_TYPE_NOT_MATCH);
+    ASSERT_EQ(ret, ErrorCode::ERR_ANY_CAST_TYPE_NOT_MATCH);
 }
 HWTEST_F(TestUtils, NativeCommonUtilsParseNativeWindowData001, TestSize.Level1) {
     std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
@@ -240,7 +240,7 @@ HWTEST_F(TestUtils, StringHelper001, TestSize.Level1) {
     EXPECT_FALSE(stringHelp->EndsWith(input, suffix));
     EXPECT_FALSE(stringHelp->EndsWithIgnoreCase(input, suffix));
     bool result = stringHelp->EndsWith(srcStr, endStr);
-    EXPECT_TURE(result);
+    EXPECT_TRUE(result);
 }
 }
 }
