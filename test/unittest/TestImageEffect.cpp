@@ -23,6 +23,7 @@
 #include "test_common.h"
 #include "external_loader.h"
 #include "crop_efilter.h"
+#include "mock_producer_surface.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media::Effect;
@@ -419,12 +420,25 @@ HWTEST_F(TestImageEffect, Restore003, TestSize.Level1)
 
 HWTEST_F(TestImageEffect, Surface001, TestSize.Level1)
 {
-    sptr<Surface> surface = Surface::CreateSurfaceAsConsumer("UnitTest");
-    ErrorCode result = imageEffect_->SetOutputSurface(surface);
+    sptr<Surface> consumerSurface = Surface::CreateSurfaceAsConsumer("UnitTest");
+    sptr<IBufferProducer> producer = consumerSurface->GetProducer();
+    sptr<ProducerSurface> surf = new(std::nothrow) MockProducerSurface(producer);
+    surf->Init();
+    sptr<Surface> outputSurface = surf;
+
+    ErrorCode result = imageEffect_->SetOutputSurface(outputSurface);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 
     sptr<Surface> inputSurface = imageEffect_->GetInputSurface();
     ASSERT_NE(inputSurface, nullptr);
+
+    sptr<SurfaceBuffer> surfaceBuffer;
+    MockProducerSurface::AllocDmaMemory(surfaceBuffer);
+    OHOS::Rect damages;
+    int64_t timeStamp = 0;
+
+    // running without filter
+    imageEffect_->ConsumerBufferAvailable(surfaceBuffer, damages, timeStamp);
 
     std::shared_ptr<EFilter> contrastEFilter = EFilterFactory::Instance()->Create(CONTRAST_EFILTER);
     Plugin::Any value = 50.f;
@@ -435,10 +449,9 @@ HWTEST_F(TestImageEffect, Surface001, TestSize.Level1)
     result = imageEffect_->Start();
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 
-    sptr<SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
-    OHOS::Rect damages;
-    int64_t timeStamp = 0;
+    // contrast filter
     imageEffect_->ConsumerBufferAvailable(surfaceBuffer, damages, timeStamp);
+    MockProducerSurface::ReleaseDmaBuffer(surfaceBuffer);
 }
 } // namespace Test
 } // namespace Effect

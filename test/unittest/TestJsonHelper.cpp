@@ -312,6 +312,34 @@ HWTEST_F(TestJsonHelper, Replace001, TestSize.Level0)
 
     ASSERT_FALSE(values->Replace(std::string(STRING_TEST), (char *)nullptr));
 }
+
+HWTEST_F(TestJsonHelper, Abnormal_001, TestSize.Level0)
+{
+    EffectJsonPtr root = JsonHelper::CreateObject(false);
+    ASSERT_NE(root, nullptr);
+    ASSERT_TRUE(root->IsObject());
+    ASSERT_TRUE(root->Put(INT_TEST, 10));
+    ASSERT_TRUE(root->Put(STRING_TEST, TEST_STR));
+
+    EffectJsonPtr intKeyJsonPtr = root->GetElement(INT_TEST);
+    ASSERT_NE(intKeyJsonPtr, nullptr);
+    ASSERT_TRUE(intKeyJsonPtr->GetString().empty());
+
+    EffectJsonPtr stringKeyJsonPtr = root->GetElement(STRING_TEST);
+    ASSERT_NE(stringKeyJsonPtr, nullptr);
+    ASSERT_EQ(stringKeyJsonPtr->GetInt(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetUInt(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetFloat(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetDouble(), 0);
+    ASSERT_FALSE(stringKeyJsonPtr->GetBool());
+    ASSERT_EQ(stringKeyJsonPtr->GetArray().size(), 0);
+
+    ASSERT_EQ(root->GetUInt(STRING_TEST, UINT32_MAX), UINT32_MAX);
+    ASSERT_EQ(root->GetFloat(STRING_TEST, 0), 0);
+    ASSERT_EQ(root->GetDouble(STRING_TEST, 0), 0);
+    ASSERT_EQ(root->GetBool(STRING_TEST, true), true);
+    ASSERT_EQ(root->GetArray(STRING_TEST).size(), 0);
+}
 } // namespace Test
 } // namespace Effect
 } // namespace Media

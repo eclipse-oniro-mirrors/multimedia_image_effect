@@ -180,6 +180,11 @@ HWTEST_F(TestUtils, JsonHelper001, TestSize.Level1) {
     ASSERT_NE(stringKeyJsonPtr, nullptr);
     ASSERT_TRUE(stringKeyJsonPtr->IsString());
     ASSERT_FALSE(stringKeyJsonPtr->IsNumber());
+    ASSERT_EQ(stringKeyJsonPtr->GetInt(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetUInt(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetFloat(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetDouble(), 0);
+    ASSERT_FALSE(stringKeyJsonPtr->GetBool());
     std::string stringValue = stringKeyJsonPtr->GetString();
     ASSERT_STREQ(stringValue.c_str(), "testString");
 
@@ -187,6 +192,7 @@ HWTEST_F(TestUtils, JsonHelper001, TestSize.Level1) {
     EffectJsonPtr floatKeyJsonPtr = root->GetElement("floatKey");
     ASSERT_NE(floatKeyJsonPtr, nullptr);
     ASSERT_TRUE(floatKeyJsonPtr->IsNumber());
+    ASSERT_TRUE(floatKeyJsonPtr->GetString().empty());
     ASSERT_FALSE(floatKeyJsonPtr->IsString());
     float floatValue = floatKeyJsonPtr->GetFloat();
     ASSERT_EQ(floatValue, 1.23f);

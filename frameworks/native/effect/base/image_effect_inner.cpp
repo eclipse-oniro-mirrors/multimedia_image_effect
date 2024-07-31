@@ -775,11 +775,11 @@ bool IsSurfaceBufferHebc(sptr<SurfaceBuffer> &buffer)
     V1_1::BufferHandleAttrKey key = V1_1::BufferHandleAttrKey::ATTRKEY_ACCESS_TYPE;
     std::vector<uint8_t> values;
     auto res = buffer->GetMetadata(key, values);
-    CHECK_AND_RETURN_RET_LOG(res == 0, false, "IsSurfaceBufferHebc: GetMetadata fail! res=%{public}d", res);
+    CHECK_AND_RETURN_RET(res == 0, false);
 
     V1_1::HebcAccessType hebcAccessType = V1_1::HebcAccessType::HEBC_ACCESS_UNINIT;
     res = MetadataHelper::ConvertVecToMetadata(values, hebcAccessType);
-    CHECK_AND_RETURN_RET_LOG(res == 0, false, "IsSurfaceBufferHebc: ConvertVecToMetadata fail! res=%{public}d", res);
+    CHECK_AND_RETURN_RET(res == 0, false);
 
     if (hebcAccessType == V1_1::HEBC_ACCESS_HW_ONLY) {
         EFFECT_LOGD("IsSurfaceBufferHebc: surface buffer is Hebc data!");
