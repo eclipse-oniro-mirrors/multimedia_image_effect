@@ -696,6 +696,8 @@ ErrorCode ImageEffect::SetOutputSurface(sptr<Surface>& surface)
         impl_->surfaceAdapter_ = std::make_unique<EffectSurfaceAdapter>();
     }
     impl_->surfaceAdapter_->SetOutputSurfaceDefaultUsage(toProducerSurface_->GetDefaultUsage());
+
+    toProducerSurface_->SetTransform(GRAPHIC_ROTATE_BUTT);
     return ErrorCode::SUCCESS;
 }
 
@@ -928,6 +930,8 @@ ErrorCode ImageEffect::SetOutNativeWindow(OHNativeWindow *nativeWindow)
         impl_->surfaceAdapter_ = std::make_unique<EffectSurfaceAdapter>();
     }
     impl_->surfaceAdapter_->SetOutputSurfaceDefaultUsage(toProducerSurface_->GetDefaultUsage());
+
+    toProducerSurface_->SetTransform(GRAPHIC_ROTATE_BUTT);
     return ErrorCode::SUCCESS;
 }
 
