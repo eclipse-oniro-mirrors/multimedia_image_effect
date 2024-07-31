@@ -241,6 +241,26 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment006, TestSize.Level1)
     renderEnvironment->DrawFlipSurfaceBufferFromTex(texptr, buffer, format);
     renderEnvironment->DrawSurfaceBufferFromTex(texptr, buffer, format);
 }
+HWTEST_F(TestRenderEnvironment, TestRenderEnvironment007, TestSize.Level1) {
+    std::string tag = "TestTag";
+    std::shared_ptr<RenderSurface> renderSurface = std::make_shared<RenderSurface>(tag);
+
+    bool result = renderSurface->Init();
+    EXPECT_EQ(result, true);
+
+    void *window = nullptr;
+    result = renderSurface->Create(window);
+    EXPECT_EQ(result, false);
+
+    void *rawSurface = renderSurface->GetRawSurface();
+    EXPECT_EQ(rawSurface, nullptr);
+    
+    result = renderSurface->Release();
+    EXPECT_EQ(result, false);
+
+    RenderSurface::SurfaceType type = renderSurface->GetSurfaceType();
+    EXPECT_EQ(type, RenderSurface::SurfaceType::SURFACE_TYPE_OFF_SCREEN);
+}
 }
 }
 }

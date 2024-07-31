@@ -17,6 +17,8 @@
 
 #include "native_common_utils.h"
 #include "json_helper.h"
+#include "common_utils.h"
+#include "string_helper.h"
 
 using namespace testing::ext;
 
@@ -200,6 +202,45 @@ HWTEST_F(TestUtils, JsonHelper001, TestSize.Level1) {
     ASSERT_EQ(arrayJsonPtr[0]->GetInt(), 1);
     ASSERT_EQ(arrayJsonPtr[1]->GetInt(), 2);
     ASSERT_EQ(arrayJsonPtr[2]->GetInt(), 3);
+}
+
+HWTEST_F(TestUtils, NativeCommonUtilsParseJson001, TestSize.Level1) {
+    std::string key = "test_key";
+    Plugin::Any any = nullptr;
+    Json *json = nullptr;
+    EffectJsonPtr result = std::make_shared<EffectJson>(json);
+    ErrorCode ret = CommonUtils::ParseAnyAndAddToJson(key, any, result);
+    ASSERT_EQ(ret, ErrorCode::ERR_ANY_CAST_TYPE_NOT_MATCH);
+}
+HWTEST_F(TestUtils, NativeCommonUtilsParseNativeWindowData001, TestSize.Level1) {
+    std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
+    void *addr = nullptr;
+    std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> effectBuffer = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
+    DataType datatype = DataType::UNKNOWN;
+    ErrorCode result = CommonUtils::ParseNativeWindowData(effectBuffer, datatype);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+HWTEST_F(TestUtils, NativeCommonUtilsModifyPixelMapProperty001, TestSize.Level1) {
+    PixelMap pixelMap;
+    std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
+    void *addr = nullptr;
+    std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> buffer = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
+    std::shared_ptr<EffectMemoryManager> memoryManager = std::make_unique<EffectMemoryManager>();
+    ErrorCode result = CommonUtils::ModifyPixelMapProperty(&pixelMap, buffer, memoryManager);
+    EXPECT_EQ(result, ErrorCode::ERR_ALLOC_MEMORY_FAIL);
+}
+HWTEST_F(TestUtils, StringHelper001, TestSize.Level1) {
+    std::string input = "abc";
+    std::string suffix = "abcd";
+    std::string srcStr = "abcdef";
+    std::string endStr = "def";
+    std::shared_ptr<StringHelp> stringHelp = std::make_shared<StringHelp>();
+    EXPECT_FALSE(stringHelp->EndsWith(input, suffix));
+    EXPECT_FALSE(stringHelp->EndsWithIgnoreCase(input, suffix));
+    bool result = stringHelp->EndsWith(srcStr, endStr);
+    EXPECT_TRUE(result);
 }
 }
 }
