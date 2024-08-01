@@ -116,7 +116,7 @@ public:
 
     bool SetValue(void *efilter, const std::string &key, const Plugin::Any &value) override
     {
-        EFFECT_LOGI("FilterDelegate SetValue.");
+        EFFECT_LOGD("FilterDelegate SetValue.");
         std::unique_ptr<ImageEffect_Any> ohValue = std::make_unique<ImageEffect_Any>();
         NativeCommonUtils::SwitchToOHAny(value, ohValue.get());
         return ohDelegate_->setValue((OH_EffectFilter *)efilter, key.c_str(), ohValue.get());

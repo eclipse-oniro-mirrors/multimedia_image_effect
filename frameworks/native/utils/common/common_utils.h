@@ -61,7 +61,7 @@ public:
             EFFECT_LOGE("value type is not match!");
             return ErrorCode::ERR_ANY_CAST_TYPE_NOT_MATCH;
         }
-        EFFECT_LOGI("value get success!");
+        EFFECT_LOGD("value get success!");
 
         value = *result;
         return ErrorCode::SUCCESS;
@@ -81,7 +81,7 @@ public:
             EFFECT_LOGE("value type is not match! key=%{public}s", key.c_str());
             return ErrorCode::ERR_ANY_CAST_TYPE_NOT_MATCH;
         }
-        EFFECT_LOGI("value get success! key=%{public}s", key.c_str());
+        EFFECT_LOGD("value get success! key=%{public}s", key.c_str());
 
         value = *result;
         return ErrorCode::SUCCESS;

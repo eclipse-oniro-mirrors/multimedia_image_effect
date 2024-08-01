@@ -66,7 +66,7 @@ ErrorCode PipelineCore::AddFilter(Filter *filterIn)
 
 ErrorCode PipelineCore::AddFilters(std::vector<Filter *> filtersIn)
 {
-    EFFECT_LOGI("AddFilters");
+    EFFECT_LOGD("AddFilters");
     if (filtersIn.empty()) {
         EFFECT_LOGI("add filters is empty");
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
@@ -109,7 +109,7 @@ ErrorCode PipelineCore::RemoveFilterChain(Filter *firstFilter)
 
 void PipelineCore::InitFilters(const std::vector<Filter *> &filters)
 {
-    EFFECT_LOGI("InitFilters");
+    EFFECT_LOGD("InitFilters");
     for (auto &filter : filters) {
         filter->Initialize(this);
     }
@@ -117,7 +117,7 @@ void PipelineCore::InitFilters(const std::vector<Filter *> &filters)
 
 ErrorCode PipelineCore::LinkFilters(std::vector<Filter *> filters)
 {
-    EFFECT_LOGI("LinkFilters");
+    EFFECT_LOGD("LinkFilters");
     FALSE_RETURN_MSG_E(!filters.empty(), ErrorCode::ERR_INVALID_PARAMETER_VALUE, "link filters is empty");
 
     int count = std::max((int)(filters.size()) - 1, 0);

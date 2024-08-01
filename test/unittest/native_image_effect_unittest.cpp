@@ -32,6 +32,8 @@
 #include "test_native_buffer_utils.h"
 #include "test_pixel_map_utils.h"
 #include "crop_efilter.h"
+#include "mock_producer_surface.h"
+#include "surface_utils.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -116,7 +118,11 @@ public:
         g_jpgHdrPath = std::string("/data/test/resource/image_effect_hdr_test1.jpg");
         consumerSurface_ = Surface::CreateSurfaceAsConsumer("UnitTest");
         sptr<IBufferProducer> producer = consumerSurface_->GetProducer();
-        ohSurface_ = Surface::CreateSurfaceAsProducer(producer);
+        sptr<ProducerSurface> surf = new(std::nothrow) MockProducerSurface(producer);
+        surf->Init();
+        auto utils = SurfaceUtils::GetInstance();
+        utils->Add(surf->GetUniqueId(), surf);
+        ohSurface_ = surf;
         g_nativeWindow = CreateNativeWindowFromSurface(&ohSurface_);
 
         nativeBufferRgba_ = TestNativeBufferUtils::CreateNativeBuffer(GraphicPixelFormat::GRAPHIC_PIXEL_FMT_RGBA_8888);

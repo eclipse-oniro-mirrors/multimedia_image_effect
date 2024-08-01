@@ -27,7 +27,7 @@ FilterBase::FilterBase(std::string name) : name_(std::move(name)), state_(Filter
     inPorts_.reserve(1);
     outPorts_.reserve(1);
     routeMap_.reserve(1);
-    EFFECT_LOGI("pipeline filter(name=%{public}s) Constructor", name_.c_str());
+    EFFECT_LOGD("pipeline filter(name=%{public}s) Constructor", name_.c_str());
 }
 
 FilterBase::~FilterBase()
@@ -44,21 +44,21 @@ void FilterBase::Initialize(EventReceiver *receiver)
 
 std::shared_ptr<InPort> FilterBase::GetInPort(const std::string &name)
 {
-    EFFECT_LOGI("GetInPort, name=%{public}s", name.c_str());
+    EFFECT_LOGD("GetInPort, name=%{public}s", name.c_str());
     FALSE_RETURN_E(!inPorts_.empty(), nullptr);
     return FindPort(inPorts_, name);
 }
 
 std::shared_ptr<OutPort> FilterBase::GetOutPort(const std::string &name)
 {
-    EFFECT_LOGI("GetOutPort, name=%{public}s", name.c_str());
+    EFFECT_LOGD("GetOutPort, name=%{public}s", name.c_str());
     FALSE_RETURN_E(!outPorts_.empty(), nullptr);
     return FindPort(outPorts_, name);
 }
 
 ErrorCode FilterBase::Prepare()
 {
-    EFFECT_LOGI("Prepare called");
+    EFFECT_LOGD("Prepare called");
     state_ = FilterState::PREPARING;
 
     // Filter默认InPort按Push方式获取数据
