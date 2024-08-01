@@ -18,23 +18,31 @@ module_output_path = "image_effect/image_effect_unittest"
 
 base_include_dirs = [
   "$image_effect_root_dir/interfaces/inner_api/native/memory",
+  "$image_effect_root_dir/frameworks/native/effect/base",
+  "$image_effect_root_dir/frameworks/native/capi",
   "$image_effect_root_dir/frameworks/native/effect/pipeline/include/core",
-  "$image_effect_root_dir/frameworks/native/utils/dfx",
+  "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop",
   "$image_effect_root_dir/frameworks/native/utils/common",
+  "$image_effect_root_dir/frameworks/native/utils/dfx",
 ]
 
 base_sources = [
+  "$image_effect_root_dir/frameworks/native/capi/native_common_utils.cpp",
+  "$image_effect_root_dir/frameworks/native/effect/base/external_loader.cpp",
   "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory.cpp",
   "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory_manager.cpp",
   "$image_effect_root_dir/frameworks/native/effect/pipeline/core/pipeline_core.cpp",
   "$image_effect_root_dir/frameworks/native/effect/pipeline/core/port.cpp",
+  "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop/crop_efilter.cpp",
   "$image_effect_root_dir/frameworks/native/utils/common/common_utils.cpp",
+  "$image_effect_root_dir/frameworks/native/utils/common/json_helper.cpp",
   "$image_effect_root_dir/frameworks/native/utils/dfx/error_code.cpp",
 ]
 
 ohos_unittest("image_effect_unittest") {
   module_out_path = module_output_path
   resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
+
   include_dirs = base_include_dirs
 
   include_dirs += [
@@ -76,7 +84,6 @@ ohos_unittest("image_effect_unittest") {
   ]
 
   external_deps = [
-    "ability_base:zuri",
     "cJSON:cjson",
     "c_utils:utils",
     "drivers_interface_display:libdisplay_commontype_proxy_1.0",

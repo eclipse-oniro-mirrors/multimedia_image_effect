@@ -17,7 +17,6 @@
 #define IMAGE_EFFECT_CROP_EFILER_H
 
 #include "efilter.h"
-#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -29,7 +28,7 @@ public:
         static const std::string KEY_REGION;
     };
 
-    IMAGE_EFFECT_EXPORT explicit CropEFilter(const std::string &name);
+    explicit CropEFilter(const std::string &name) : EFilter(name) {}
 
     ~CropEFilter() override = default;
 
@@ -37,7 +36,7 @@ public:
 
     ErrorCode Render(EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context) override;
 
-    IMAGE_EFFECT_EXPORT static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name);
+    static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name);
 
     ErrorCode Restore(const EffectJsonPtr &values) override;
 

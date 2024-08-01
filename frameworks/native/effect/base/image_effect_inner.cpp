@@ -857,7 +857,7 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
     };
 
     auto ret = toProducerSurface_->RequestBuffer(outBuffer, syncFence, requestConfig);
-    CHECK_AND_RETURN_LOG(ret == 0, "RequestBuffer failed. %{public}d", ret);
+    CHECK_AND_RETURN_LOG(ret == 0 && outBuffer != nullptr, "RequestBuffer failed. %{public}d", ret);
 
     constexpr uint32_t waitForEver = -1;
     (void)syncFence->Wait(waitForEver);

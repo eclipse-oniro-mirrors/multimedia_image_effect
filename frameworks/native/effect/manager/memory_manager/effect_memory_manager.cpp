@@ -68,7 +68,7 @@ void UpdateColorSpaceIfNeed(std::shared_ptr<MemoryData> &memoryData)
         return;
     }
     
-    EFFECT_LOGI("UpdateColorSpaceIfNeed UpdateColorSpace colorSpace=%{public}d", colorSpace);
+    EFFECT_LOGI("UpdateColorSpaceIfNeed: UpdateColorSpace colorSpace=%{public}d", colorSpace);
     auto *sb = static_cast<SurfaceBuffer *>(memoryInfo.extra);
     ColorSpaceHelper::SetSurfaceBufferMetadataType(sb, CM_HDR_Metadata_Type::CM_IMAGE_HDR_VIVID_SINGLE);
     ColorSpaceHelper::SetSurfaceBufferColorSpaceType(sb, CM_ColorSpaceType::CM_BT2020_HLG_FULL);
