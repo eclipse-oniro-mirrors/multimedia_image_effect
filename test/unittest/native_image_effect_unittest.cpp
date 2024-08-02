@@ -1527,11 +1527,11 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr003, TestSize.Level1)
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_Hdr with ConveerCPU2GPU and ConverGPU2CPU
+ * Function: Test OH_ImageEffect_Hdr with ConverCPU2GPU and ConverGPU2CPU
  * SubFunction: NA
  * FunctionPoints: NA
  * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_Hdr with ConveerCPU2GPU and ConverGPU2CPU
+ * CaseDescription: Test OH_ImageEffect_Hdr with ConverCPU2GPU and ConverGPU2CPU
  */
 HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr004, TestSize.Level1)
 {
