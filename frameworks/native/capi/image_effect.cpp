@@ -207,7 +207,7 @@ ImageEffect_ErrorCode OH_ImageEffect_RemoveFilterByIndex(OH_ImageEffect *imageEf
         return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
     }
 
-    auto &filter = imageEffect->filters_.at(index);
+    const auto &filter = imageEffect->filters_.at(index);
     auto ohEFilter = filter.first;
     std::string filterName = ohEFilter->filter_->GetName();
     if (ohEFilter != nullptr && ohEFilter->isCreatedBySystem_) {

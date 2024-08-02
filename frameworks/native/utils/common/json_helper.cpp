@@ -232,10 +232,9 @@ std::vector<EffectJsonPtr> EffectJson::GetArray()
 
 std::vector<EffectJsonPtr> EffectJson::GetArray(const std::string &key)
 {
-    std::vector<EffectJsonPtr> elements;
     auto element = GetElement(key);
     if (element == nullptr || element->IsNull() || !element->IsArray()) {
-        return elements;
+        return {};
     }
 
     return element->GetArray();
