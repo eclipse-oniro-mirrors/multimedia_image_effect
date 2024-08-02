@@ -86,7 +86,7 @@ ohos_unittest("image_effect_unittest") {
   external_deps = [
     "cJSON:cjson",
     "c_utils:utils",
-    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
+    "drivers_interface_display:display_commontype_idl_headers",
     "graphic_2d:EGL",
     "graphic_2d:GLESv3",
     "graphic_surface:surface",

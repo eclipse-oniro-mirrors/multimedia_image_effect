@@ -67,7 +67,7 @@ void UpdateColorSpaceIfNeed(std::shared_ptr<MemoryData> &memoryData)
         !ColorSpaceHelper::IsHdrColorSpace(colorSpace)) {
         return;
     }
-    
+
     EFFECT_LOGI("UpdateColorSpaceIfNeed: UpdateColorSpace colorSpace=%{public}d", colorSpace);
     auto *sb = static_cast<SurfaceBuffer *>(memoryInfo.extra);
     ColorSpaceHelper::SetSurfaceBufferMetadataType(sb, CM_HDR_Metadata_Type::CM_IMAGE_HDR_VIVID_SINGLE);

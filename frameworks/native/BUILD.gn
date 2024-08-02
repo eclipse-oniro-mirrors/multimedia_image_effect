@@ -122,7 +122,7 @@ ohos_shared_library("image_effect_impl") {
     "bounds_checking_function:libsec_shared",
     "cJSON:cjson",
     "c_utils:utils",
-    "drivers_interface_display:libdisplay_commontype_proxy_1.0",
+    "drivers_interface_display:display_commontype_idl_headers",
     "graphic_2d:EGL",
     "graphic_2d:GLESv3",
     "graphic_2d:color_manager",

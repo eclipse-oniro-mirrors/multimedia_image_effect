@@ -144,10 +144,9 @@ private:
 
     class Impl;
     std::shared_ptr<Impl> impl_;
+    std::mutex bufferAvailableMutex_;
     RenderThread<> *m_renderThread{ nullptr };
     std::atomic_ullong m_currentTaskId{0};
-
-    std::mutex bufferAvailableMutex_;
 };
 } // namespace Effect
 } // namespace Media
