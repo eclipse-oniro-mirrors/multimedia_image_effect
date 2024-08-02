@@ -1555,7 +1555,6 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr004, TestSize.Level1)
     ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative.get());
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    
     int32_t ipType = 1;
     ImageEffect_Any runningType;
     runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
