@@ -77,7 +77,9 @@ public:
 
     static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name)
     {
-        return std::make_shared<EffectInfo>();
+        std::shared_ptr<EffectInfo> effectInfo = std::make_shared<EffectInfo>();
+        effectInfo->formats_.emplace(IEffectFormat::RGBA8888, std::vector<IPType>{ IPType::GPU });
+        return effectInfo;
     }
 
     ErrorCode Save(EffectJsonPtr &res) override
@@ -99,6 +101,18 @@ public:
         jsonValues->Put(it->first, jsonValue);
         res->Put("values", jsonValues);
         return ErrorCode::SUCCESS;
+    }
+};
+
+class CustomTestEFilter2 : public CustomTestEFilter {
+public:
+    explicit CustomTestEFilter2(const std::string &name) : CustomTestEFilter(name) {}
+    ~CustomTestEFilter2() {}
+    static std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name)
+    {
+        std::shared_ptr<EffectInfo> effectInfo = std::make_shared<EffectInfo>();
+        effectInfo->formats_.emplace(IEffectFormat::RGBA8888, std::vector<IPType>{ IPType::CPU });
+        return effectInfo;
     }
 };
 
@@ -154,6 +168,7 @@ public:
         EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
         EFilterFactory::Instance()->RegisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);
         EFilterFactory::Instance()->RegisterEFilter<CustomTestEFilter>(CUSTOM_TEST_EFILTER);
+        EFilterFactory::Instance()->RegisterEFilter<CustomTestEFilter2>(CUSTOM_TEST_EFILTER2);
         EFilterFactory::Instance()->RegisterEFilter<CropEFilter>(CROP_EFILTER);
         EFilterFactory::Instance()->delegates_.clear();
         filterInfo_ = OH_EffectFilterInfo_Create();
@@ -977,7 +992,7 @@ HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilters001, TestSize.Level1)
     uint32_t size = filterNames->size;
 
     ASSERT_NE(filterNames, nullptr);
-    ASSERT_EQ(size, static_cast<uint32_t>(4));
+    ASSERT_EQ(size, static_cast<uint32_t>(5));
 
     std::vector<string> filterNamesVector;
     for (uint32_t i = 0; i < size; i++) {
@@ -1505,6 +1520,58 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr003, TestSize.Level1)
     } else {
         ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
     }
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_Hdr with ConveerCPU2GPU and ConverGPU2CPU
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_Hdr with ConveerCPU2GPU and ConverGPU2CPU
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr004, TestSize.Level1)
+{
+    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
+    std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
+    ASSERT_NE(pixelMap, nullptr);
+    pixelmapNative->pixelmap_ = std::move(pixelMap);
+    
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *customfilter = OH_ImageEffect_AddFilter(imageEffect, CUSTOM_TEST_EFILTER);
+    ASSERT_NE(customfilter, nullptr);
+
+    customfilter = OH_ImageEffect_AddFilter(imageEffect, CUSTOM_TEST_EFILTER2);
+    ASSERT_NE(customfilter, nullptr);
+
+    customfilter = OH_ImageEffect_AddFilter(imageEffect, CUSTOM_TEST_EFILTER);
+    ASSERT_NE(customfilter, nullptr);
+
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative.get());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    
+    int32_t ipType = 1;
+    ImageEffect_Any runningType;
+    runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
+    runningType.dataValue.int32Value = ipType;
+    errorCode = OH_ImageEffect_Configure(imageEffect, "runningType", &runningType);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    if (pixelmapNative->pixelmap_->IsHdr()) {
+        ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    } else {
+        ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    }
+
+    errorCode = OH_ImageEffect_Stop(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Release(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
