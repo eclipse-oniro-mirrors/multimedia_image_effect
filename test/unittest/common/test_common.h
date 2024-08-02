@@ -28,6 +28,7 @@ constexpr char const *IMAGE_EFFECT_NAME = "imageEdit";
 constexpr char const *KEY_FILTER_REGION = "FilterRegion";
 constexpr char const *CUSTOM_BRIGHTNESS_EFILTER = "CustomBrightnessEFilter";
 constexpr char const *CUSTOM_TEST_EFILTER = "CustomTestEFilter";
+constexpr char const *CUSTOM_TEST_EFILTER2 = "CustomTestEFilter2";
 } // namespace
 } // Test
 } // Effect

@@ -24,6 +24,7 @@
 #include "native_window.h"
 #include "external_loader.h"
 #include "crop_efilter.h"
+#include "test_pixel_map_utils.h"
 
 #define MAX_TEST_ADD_EFILTE_NUMS 120
 
@@ -33,11 +34,18 @@ using ::testing::InSequence;
 using ::testing::Mock;
 using namespace OHOS::Media::Effect::Test;
 
+static std::string g_jpgHdrPath;
+
+namespace {
+    constexpr uint32_t CROP_FACTOR = 2;
+}
+
 namespace OHOS {
 namespace Media {
 namespace Effect {
 void ImageEffectCApiUnittest::SetUpTestCase()
 {
+    g_jpgHdrPath = std::string("/data/test/resource/image_effect_hdr_test1.jpg");
     consumerSurface_ = Surface::CreateSurfaceAsConsumer("UnitTest");
     sptr<IBufferProducer> producer = consumerSurface_->GetProducer();
     ohSurface_ = Surface::CreateSurfaceAsProducer(producer);
@@ -1172,6 +1180,50 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest004, TestSize.L
     GTEST_LOG_(INFO) << "ImageEffectSingleFilterUnittest004 success! result: " << errorCode;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSingleFilterUnittest004 END";
 }
+
+/**
+ * Feature: ImageEffect
+ * Function: Test ImageEffectSingleFilter with normal parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test ImageEffectSingleFilter with normal parameter
+ */
+HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest005, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSingleFilterUnittest005 start";
+    InSequence s;
+
+    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
+    std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
+    ASSERT_NE(pixelMap, nullptr);
+    pixelmapNative->pixelmap_ = std::move(pixelMap);
+
+    OH_EffectFilter *filter = OH_EffectFilter_Create(CROP_EFILTER);
+    ASSERT_NE(filter, nullptr) << "ImageEffectSingleFilterUnittest005 OH_EffectFilter_Create failed";
+    
+    uint32_t x1 = static_cast<uint32_t>(pixelmapNative->pixelmap_->GetWidth() / CROP_FACTOR);
+    uint32_t y1 = static_cast<uint32_t>(pixelmapNative->pixelmap_->GetHeight() / CROP_FACTOR);
+    uint32_t areaInfo[] = { 0, 0, x1, y1};
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_PTR;
+    value.dataValue.ptrValue = static_cast<void *>(areaInfo);
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_REGION, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
+        "ImageEffectSingleFilterUnittest005 OH_EffectFilter_SetValue failed";
+
+    errorCode = OH_EffectFilter_Render(filter, pixelmapNative_, pixelmapNative_);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
+        "ImageEffectSingleFilterUnittest003 OH_EffectFilter_Render failed";
+
+    errorCode = OH_EffectFilter_Release(filter);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
+        "ImageEffectSingleFilterUnittest005 OH_EffectFilter_Release failed";
+
+    GTEST_LOG_(INFO) << "ImageEffectSingleFilterUnittest005 success! result: " << errorCode;
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSingleFilterUnittest005 END";
+}
+
 
 /**
  * Feature: ImageEffect
