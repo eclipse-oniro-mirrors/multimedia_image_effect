@@ -182,7 +182,7 @@ ErrorCode ModifyDataInfo(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
 }
 
 ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::shared_ptr<EffectBuffer> &outputBuffer,
-    std::shared_ptr<EffectContext> &context)
+    const std::shared_ptr<EffectContext> &context)
 {
     if (inputBuffer->buffer_ == outputBuffer->buffer_) {
         EFFECT_LOGI("ImageSinkFilter: not need copy!");

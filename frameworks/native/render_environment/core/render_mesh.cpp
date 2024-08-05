@@ -20,10 +20,9 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-RenderMesh::RenderMesh(const std::vector<std::vector<float>> &meshData)
+RenderMesh::RenderMesh(const std::vector<std::vector<float>> &meshData) : meshData_(meshData)
 {
     vboIds_ = new GLuint[2];
-    meshData_ = meshData;
 }
 
 RenderMesh::~RenderMesh()
