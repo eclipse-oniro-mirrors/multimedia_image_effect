@@ -218,9 +218,11 @@ std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<
     if (context->renderEnvironment_->GetOutputType() == DataType::NATIVE_WINDOW) {
         context->renderEnvironment_->DrawFlipSurfaceBufferFromTex(buffer->tex, extraInfo->surfaceBuffer,
             bufferInfo->formatType_);
-        extraInfo->surfaceBuffer->InvalidateCache();
     } else {
         context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, input.get());
+    }
+    if (extraInfo->surfaceBuffer != nullptr) {
+        extraInfo->surfaceBuffer->InvalidateCache();
     }
     input->extraInfo_->dataType = DataType::SURFACE_BUFFER;
     input->extraInfo_->bufferType = BufferType::DMA_BUFFER;
