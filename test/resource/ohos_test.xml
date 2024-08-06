@@ -19,6 +19,7 @@
         <preparer>
             <option name="push" value="image_effect_1k_test1.jpg -> /data/test/resource" src="res"/>
             <option name="push" value="image_effect_hdr_test1.jpg -> /data/test/resource" src="res"/>
+            <option name="push" value="image_effect_adobe_test1.jpg -> /data/test/resource" src="res"/>
             <option name="shell" value="cp /data/test/resource/image_effect_1k_test1.jpg /data/test/resource/image_effect_1k_test1.png"/>
         </preparer>
         <cleaner>

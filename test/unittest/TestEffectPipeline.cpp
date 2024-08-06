@@ -16,9 +16,9 @@
 #include "gtest/gtest.h"
 
 #include "pipeline_core.h"
-#include "effect.h"
 #include "efilter_factory.h"
 #include "test_common.h"
+#include "filter_base.h"
 
 using namespace testing::ext;
 
@@ -64,6 +64,83 @@ HWTEST_F(TestEffectPipeline, EffectPipelineStandard001, TestSize.Level1) {
 
     result = pipeline->RemoveFilterChain(contrastEFilter.get());
     EXPECT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(TestEffectPipeline, FilterBaseNamePort001, TestSize.Level1)
+{
+    FilterBase filterBase("testName_");
+    std::string mime = "image/png";
+    std::string expectedPortName = "image_1";
+    std::string portName = filterBase.NamePort(mime);
+
+    EXPECT_EQ(portName, expectedPortName);
+    EXPECT_EQ(filterBase.portTypeCntMap_["testName_image"], 1);
+
+    mime = "";
+    expectedPortName = "default_1";
+    portName = filterBase.NamePort(mime);
+    EXPECT_EQ(portName, expectedPortName);
+    EXPECT_EQ(filterBase.portTypeCntMap_["testName_default"], 1);
+}
+
+HWTEST_F(TestEffectPipeline, FilterBaseGetRouteInPort001, TestSize.Level1)
+{
+    FilterBase filterBase("testNmae_");
+    PInPort result = filterBase.GetRouteInPort("test");
+    EXPECT_EQ(result, nullptr);
+
+    filterBase.routeMap_.emplace_back("test", "test");
+    result = filterBase.GetRouteInPort("test");
+    EXPECT_EQ(result, nullptr);
+}
+
+HWTEST_F(TestEffectPipeline, FilterBaseGetRouteOutPort001, TestSize.Level1)
+{
+    FilterBase filterBase("testNmae_");
+    POutPort result = filterBase.GetRouteOutPort("test");
+    EXPECT_EQ(result, nullptr);
+
+    filterBase.routeMap_.emplace_back("test", "test");
+    result = filterBase.GetRouteOutPort("test");
+    EXPECT_EQ(result, nullptr);
+}
+
+HWTEST_F(TestEffectPipeline, FilterBaseOnEvent001, TestSize.Level1)
+{
+    FilterBase filterBase("testNmae_");
+    const Event &event = Event{ "name_", EventType::EVENT_COMPLETE, { nullptr } };
+    filterBase.OnEvent(event);
+
+    EventReceiver *eventReceiver{ nullptr };
+    filterBase.eventReceiver_ = eventReceiver;
+    filterBase.OnEvent(event);
+}
+
+HWTEST_F(TestEffectPipeline, FilterBaseGetNextFilters001, TestSize.Level1)
+{
+    FilterBase filterBase("testNmae_");
+    InfoTransfer *filterPtr = nullptr;
+    OutPort port(filterPtr);
+    auto outPort = std::make_shared<OutPort>(port);
+    filterBase.outPorts_.push_back(outPort);
+    std::vector<Filter *> filters = filterBase.GetNextFilters();
+    EXPECT_TRUE(filters.empty());
+}
+
+HWTEST_F(TestEffectPipeline, FilterBaseGetPreFilters001, TestSize.Level1)
+{
+    FilterBase filterBase("testNmae_");
+    InfoTransfer *filterPtr = nullptr;
+    InPort port(filterPtr);
+    auto inPort = std::make_shared<InPort>(port);
+    filterBase.inPorts_.push_back(inPort);
+    std::vector<Filter *> filters = filterBase.GetPreFilters();
+    EXPECT_TRUE(filters.empty());
+
+    filterBase.UnlinkPrevFilters();
+
+    auto result = filterBase.FindPort(filterBase.inPorts_, "test");
+    EXPECT_EQ(result, nullptr);
 }
 }
 }
