@@ -46,6 +46,7 @@ static std::string g_notJpgPath;
 static std::string g_jpgUri;
 static std::string g_notJpgUri;
 static std::string g_jpgHdrPath;
+static std::string g_adobeHdrPath;
 static OHNativeWindow *g_nativeWindow = nullptr;
 
 namespace {
@@ -130,6 +131,7 @@ public:
         g_jpgUri = std::string("file:///data/test/resource/image_effect_1k_test1.jpg");
         g_notJpgUri = std::string("file:///data/test/resource/image_effect_1k_test1.png");
         g_jpgHdrPath = std::string("/data/test/resource/image_effect_hdr_test1.jpg");
+        g_adobeHdrPath = std::string("/data/test/resource/image_effect_adobe_test1.jpg");
         consumerSurface_ = Surface::CreateSurfaceAsConsumer("UnitTest");
         sptr<IBufferProducer> producer = consumerSurface_->GetProducer();
         sptr<ProducerSurface> surf = new(std::nothrow) MockProducerSurface(producer);
@@ -1570,6 +1572,49 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr004, TestSize.Level1)
     }
 
     errorCode = OH_ImageEffect_Stop(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_Hdr with Adobe
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_Hdr with Adobe
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectAdobe001, TestSize.Level1)
+{
+    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
+    std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_adobeHdrPath);
+    pixelmapNative->pixelmap_ = std::move(pixelMap);
+    
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative.get());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    int32_t ipType = 2;
+    ImageEffect_Any runningType;
+    runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
+    runningType.dataValue.int32Value = ipType;
+    errorCode = OH_ImageEffect_Configure(imageEffect, "runningType", &runningType);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Release(imageEffect);
