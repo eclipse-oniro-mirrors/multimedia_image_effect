@@ -193,9 +193,7 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_006, TestSize.Level1)
     EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false), ErrorCode::ERR_NO_DATA);
 
     dataInfo.dataType_ = static_cast<DataType>(100);
-    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false), ErrorCode::ERR_UNSUPPORTED_DATA_TYPE);
-
-    
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false), ErrorCode::ERR_UNSUPPORTED_DATA_TYPE); 
 }
 } // namespace Effect
 } // namespace Media

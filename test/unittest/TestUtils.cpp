@@ -23,7 +23,8 @@
 #include "native_common_utils.h"
 
 using namespace testing::ext;
-namespace{
+namespace
+{
     const float YUV_BYTES_PER_PIXEL = 1.5f;
 }
 
@@ -286,7 +287,7 @@ HWTEST_F(TestUtils, ErrorCode001, TestSize.Level1) {
     code = ErrorCode::ERR_INPUT_NULL;
     expected = "Unknow error type";
     actual = GetErrorName(code);
-    ASSERT_EQ(expected , actual);
+    ASSERT_EQ(expected, actual);
 }
 }
 }
