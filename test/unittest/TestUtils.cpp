@@ -23,8 +23,7 @@
 #include "native_common_utils.h"
 
 using namespace testing::ext;
-namespace
-{
+namespace {
     const float YUV_BYTES_PER_PIXEL = 1.5f;
 }
 
