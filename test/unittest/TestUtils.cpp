@@ -19,8 +19,13 @@
 #include "json_helper.h"
 #include "common_utils.h"
 #include "string_helper.h"
+#include "format_helper.h"
+#include "native_common_utils.h"
 
 using namespace testing::ext;
+namespace {
+    const float YUV_BYTES_PER_PIXEL = 1.5f;
+}
 
 namespace OHOS {
 namespace Media {
@@ -247,6 +252,41 @@ HWTEST_F(TestUtils, StringHelper001, TestSize.Level1) {
     EXPECT_FALSE(stringHelp->EndsWithIgnoreCase(input, suffix));
     bool result = stringHelp->EndsWith(srcStr, endStr);
     EXPECT_TRUE(result);
+}
+
+HWTEST_F(TestUtils, FormatHelper001, TestSize.Level1) {
+    uint32_t height = 1280;
+    uint32_t width = 960;
+    std::shared_ptr<FormatHelper> formatHelper = std::make_shared<FormatHelper>();
+    uint32_t result = formatHelper->CalculateDataRowCount(height, IEffectFormat::YUVNV12);
+    ASSERT_EQ(result, height * YUV_BYTES_PER_PIXEL);
+
+    result = formatHelper->CalculateRowStride(width, IEffectFormat::DEFAULT);
+    ASSERT_EQ(result, width);
+}
+
+HWTEST_F(TestUtils, NativeCommonUtils001, TestSize.Level1) {
+    ImageEffect_Format ohFormatType = ImageEffect_Format::EFFECT_PIXEL_FORMAT_RGBA8888;
+    IEffectFormat formatType;
+    std::shared_ptr<NativeCommonUtils> nativeCommonUtils = std::make_shared<NativeCommonUtils>();
+    nativeCommonUtils->SwitchToFormatType(ohFormatType, formatType);
+    ASSERT_EQ(formatType, IEffectFormat::RGBA8888);
+
+    ohFormatType = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
+    nativeCommonUtils->SwitchToFormatType(ohFormatType, formatType);
+    ASSERT_EQ(formatType, IEffectFormat::DEFAULT);
+}
+
+HWTEST_F(TestUtils, ErrorCode001, TestSize.Level1) {
+    ErrorCode code = ErrorCode::ERR_PERMISSION_DENIED;
+    const char *expected = "ERROR_PERMISSION_DENIED";
+    const char *actual = GetErrorName(code);
+    ASSERT_EQ(expected, actual);
+
+    code = ErrorCode::ERR_INPUT_NULL;
+    expected = "Unknow error type";
+    actual = GetErrorName(code);
+    ASSERT_EQ(expected, actual);
 }
 }
 }
