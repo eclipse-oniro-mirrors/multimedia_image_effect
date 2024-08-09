@@ -26,17 +26,17 @@ namespace Media {
 namespace Effect {
 class AlgorithmProgram {
 public:
-    AlgorithmProgram(RenderContext *context, const std::string vertex, const std::string fragment);
+    AlgorithmProgram(RenderContext *context, const std::string &vertex, const std::string &fragment);
     ~AlgorithmProgram();
-    void UpdateShader(const std::string vertex, const std::string fragment);
+    void UpdateShader(const std::string &vertex, const std::string &fragment);
     void Bind();
     void Unbind();
-    int GetAttributeLocation(const std::string attributeName);
-    int GetUniformLocation(const std::string uniformName);
-    void SetInt(const std::string name, int value);
-    void SetFloat(const std::string name, float value);
-    void SetMat4(const std::string name, const void* value);
-    void BindTexture(const std::string name, int unitId, int textureId, GLenum target = GL_TEXTURE_2D);
+    int GetAttributeLocation(const std::string &attributeName);
+    int GetUniformLocation(const std::string &uniformName);
+    void SetInt(const std::string &name, int value);
+    void SetFloat(const std::string &name, float value);
+    void SetMat4(const std::string &name, const void* value);
+    void BindTexture(const std::string &name, int unitId, int textureId, GLenum target = GL_TEXTURE_2D);
     void UnBindTexture(int unitId, GLenum target = GL_TEXTURE_2D);
     RenderGeneralProgram *GetShader();
 private:
