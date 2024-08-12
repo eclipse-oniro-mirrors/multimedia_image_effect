@@ -110,8 +110,7 @@ ErrorCode ImageSourceFilter::Start()
     ErrorCode res = UpdateInputBufferIfNeed(srcBuffer_, buffer, context_);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Update input buffer fail! res=%{public}d", res);
 
-    outPorts_[0]->PushData(buffer, context_);
-    return ErrorCode::SUCCESS;
+    return outPorts_[0]->PushData(buffer, context_);
 }
 
 ErrorCode ImageSourceFilter::DoNegotiate()
