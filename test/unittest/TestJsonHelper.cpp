@@ -328,17 +328,26 @@ HWTEST_F(TestJsonHelper, Abnormal_001, TestSize.Level0)
     EffectJsonPtr stringKeyJsonPtr = root->GetElement(STRING_TEST);
     ASSERT_NE(stringKeyJsonPtr, nullptr);
     ASSERT_EQ(stringKeyJsonPtr->GetInt(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetInt(INT_TEST, INT32_MAX), INT32_MAX);
     ASSERT_EQ(stringKeyJsonPtr->GetUInt(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetUInt(INT_TEST, UINT32_MAX), UINT32_MAX);
     ASSERT_EQ(stringKeyJsonPtr->GetFloat(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetFloat(INT_TEST, 0), 0);
     ASSERT_EQ(stringKeyJsonPtr->GetDouble(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetDouble(INT_TEST, 0), 0);
     ASSERT_FALSE(stringKeyJsonPtr->GetBool());
+    ASSERT_EQ(stringKeyJsonPtr->GetBool(INT_TEST, true), true);
     ASSERT_EQ(stringKeyJsonPtr->GetArray().size(), 0);
+    ASSERT_EQ(stringKeyJsonPtr->GetArray(INT_TEST).size(), 0);
 
     ASSERT_EQ(root->GetUInt(STRING_TEST, UINT32_MAX), UINT32_MAX);
     ASSERT_EQ(root->GetFloat(STRING_TEST, 0), 0);
     ASSERT_EQ(root->GetDouble(STRING_TEST, 0), 0);
     ASSERT_EQ(root->GetBool(STRING_TEST, true), true);
     ASSERT_EQ(root->GetArray(STRING_TEST).size(), 0);
+
+    EffectJsonPtr boolKeyJsonPtr = root->GetElement(BOOL_TEST);
+    ASSERT_EQ(boolKeyJsonPtr, nullptr);
 }
 } // namespace Test
 } // namespace Effect

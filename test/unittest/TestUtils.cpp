@@ -25,6 +25,10 @@
 using namespace testing::ext;
 namespace {
     const float YUV_BYTES_PER_PIXEL = 1.5f;
+    const u_int32_t RGBA_BYTES_PER_PIXEL = 4;
+    constexpr uint32_t WIDTH = 1920;
+    constexpr uint32_t HEIGHT = 1080;
+    constexpr uint32_t MAX_ALLOC_SIZE = 600 * 1024 * 1024;
 }
 
 namespace OHOS {
@@ -263,6 +267,70 @@ HWTEST_F(TestUtils, FormatHelper001, TestSize.Level1) {
 
     result = formatHelper->CalculateRowStride(width, IEffectFormat::DEFAULT);
     ASSERT_EQ(result, width);
+}
+
+std::shared_ptr<void> AllocBuffer(size_t size)
+{
+    if (size <= 0 || size > MAX_ALLOC_SIZE) {
+        return nullptr;
+    }
+
+    void *buffer = malloc(size);
+    if (buffer == nullptr) {
+        return nullptr;
+    }
+
+    std::shared_ptr<void> bufferPtr(buffer, [](void *buffer) {
+        if (buffer != nullptr) {
+            free(buffer);
+        }
+    });
+    return bufferPtr;
+}
+
+FormatConverterInfo CreateConverterInfo(IEffectFormat format, void *addr, uint32_t rowStride)
+{
+    return {
+        .bufferInfo = {
+            .width_ = WIDTH,
+            .height_ = HEIGHT,
+            .len_ = FormatHelper::CalculateSize(WIDTH, HEIGHT, format),
+            .formatType_ = format,
+            .rowStride_ = rowStride,
+        },
+        .buffer = addr,
+    };
+}
+
+HWTEST_F(TestUtils, FormatHelper002, TestSize.Level1)
+{
+    std::unordered_set<IEffectFormat> formats = FormatHelper::GetAllSupportedFormats();
+    ASSERT_NE(formats.size(), 0);
+
+    ASSERT_TRUE(FormatHelper::IsSupportConvert(IEffectFormat::RGBA8888, IEffectFormat::YUVNV21));
+
+    std::shared_ptr<void> rgbaBuffer = AllocBuffer(FormatHelper::CalculateSize(WIDTH, HEIGHT, IEffectFormat::RGBA8888));
+    FormatConverterInfo rgbaConverterInfo = CreateConverterInfo(IEffectFormat::RGBA8888, rgbaBuffer.get(),
+        RGBA_BYTES_PER_PIXEL * WIDTH);
+    std::shared_ptr<void> nv12Buffer = AllocBuffer(FormatHelper::CalculateSize(WIDTH, HEIGHT, IEffectFormat::YUVNV12));
+    FormatConverterInfo nv12ConverterInfo = CreateConverterInfo(IEffectFormat::YUVNV12, nv12Buffer.get(), WIDTH);
+    std::shared_ptr<void> nv21Buffer = AllocBuffer(FormatHelper::CalculateSize(WIDTH, HEIGHT, IEffectFormat::YUVNV21));
+    FormatConverterInfo nv21ConverterInfo = CreateConverterInfo(IEffectFormat::YUVNV21, nv21Buffer.get(), WIDTH);
+
+    ErrorCode res = FormatHelper::ConvertFormat(rgbaConverterInfo, nv12ConverterInfo);
+    ASSERT_EQ(res, ErrorCode::SUCCESS);
+
+    res = FormatHelper::ConvertFormat(rgbaConverterInfo, nv21ConverterInfo);
+    ASSERT_EQ(res, ErrorCode::SUCCESS);
+
+    res = FormatHelper::ConvertFormat(nv12ConverterInfo, rgbaConverterInfo);
+    ASSERT_EQ(res, ErrorCode::SUCCESS);
+
+    res = FormatHelper::ConvertFormat(nv21ConverterInfo, rgbaConverterInfo);
+    ASSERT_EQ(res, ErrorCode::SUCCESS);
+
+    res = FormatHelper::ConvertFormat(nv12ConverterInfo, nv21ConverterInfo);
+    ASSERT_NE(res, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(TestUtils, NativeCommonUtils001, TestSize.Level1) {
