@@ -164,7 +164,7 @@ void GpuBrightnessAlgo::Render(GLenum target, RenderTexturePtr tex)
     glViewport(0, 0, renderEffectData_->outputWidth_, renderEffectData_->outputHeight_);
     shader_->Bind();
 
-    CHECK_AND_RETURN_LOG(renderMesh_ != nullptr,"Render: renderMesh is null! renderMesh=%{public}p", renderMesh_);
+    CHECK_AND_RETURN_LOG(renderMesh_ != nullptr, "Render: renderMesh is null! renderMesh=%{public}p", renderMesh_);
     renderMesh_->Bind(shader_->GetShader());
 
     PreDraw(target);
