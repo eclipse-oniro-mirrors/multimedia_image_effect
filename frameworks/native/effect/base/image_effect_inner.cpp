@@ -169,6 +169,8 @@ ImageEffect::~ImageEffect()
     m_renderThread->AddTask(task);
     task->Wait();
     ExtDeinitModule();
+    m_renderThread->Stop();
+    delete m_renderThread;
 
     impl_->surfaceAdapter_ = nullptr;
     impl_->effectContext_->renderEnvironment_ = nullptr;
@@ -179,8 +181,6 @@ ImageEffect::~ImageEffect()
         toProducerSurface_ = nullptr;
     }
     fromProducerSurface_ = nullptr;
-    m_renderThread->Stop();
-    delete m_renderThread;
 }
 
 void ImageEffect::AddEFilter(const std::shared_ptr<EFilter> &efilter)
