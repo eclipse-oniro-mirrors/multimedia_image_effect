@@ -209,8 +209,14 @@ ImageEffect_ErrorCode OH_ImageEffect_RemoveFilterByIndex(OH_ImageEffect *imageEf
 
     const auto &filter = imageEffect->filters_.at(index);
     auto ohEFilter = filter.first;
+
+    CHECK_AND_RETURN_RET_LOG(ohEFilter != nullptr && ohEFilter->filter_ != nullptr,
+        ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "RemoveFilterByIndex: ohEFilter is null or filter of ohEFilter is null!"
+        "ohEFilter=%{public}d, filter=%{public}d", ohEFilter == nullptr, ohEFilter->filter_ == nullptr);
+
     std::string filterName = ohEFilter->filter_->GetName();
-    if (ohEFilter != nullptr && ohEFilter->isCreatedBySystem_) {
+    if (ohEFilter->isCreatedBySystem_) {
         OH_EffectFilter_Release(ohEFilter);
     }
     imageEffect->filters_.erase(imageEffect->filters_.begin() + index);
