@@ -414,7 +414,8 @@ ErrorCode ImageEffect::Start()
         case DataType::PIXEL_MAP:
         case DataType::SURFACE_BUFFER:
         case DataType::URI:
-        case DataType::PATH: {
+        case DataType::PATH:
+        case DataType::PICTURE: {
             impl_->effectState_ = EffectState::RUNNING;
             ErrorCode res = this->Render();
             Stop();
@@ -471,6 +472,7 @@ ErrorCode ImageEffect::SetOutputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer
 
 ErrorCode ImageEffect::SetInputUri(const std::string &uri)
 {
+    EFFECT_LOGD("ImageEffect::SetInputUri");
     if (!CommonUtils::EndsWithJPG(uri)) {
         EFFECT_LOGE("SetInputUri: file type is not support! only support jpg/jpeg.");
         return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
@@ -484,6 +486,7 @@ ErrorCode ImageEffect::SetInputUri(const std::string &uri)
 
 ErrorCode ImageEffect::SetOutputUri(const std::string &uri)
 {
+    EFFECT_LOGD("ImageEffect::SetOutputUri");
     if (uri.empty()) {
         EFFECT_LOGI("SetOutputUri: uri set to null!");
         ClearDataInfo(outDateInfo_);
@@ -503,6 +506,7 @@ ErrorCode ImageEffect::SetOutputUri(const std::string &uri)
 
 ErrorCode ImageEffect::SetInputPath(const std::string &path)
 {
+    EFFECT_LOGD("ImageEffect::SetInputPath");
     if (!CommonUtils::EndsWithJPG(path)) {
         EFFECT_LOGE("SetInputPath: file type is not support! only support jpg/jpeg.");
         return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
@@ -516,6 +520,7 @@ ErrorCode ImageEffect::SetInputPath(const std::string &path)
 
 ErrorCode ImageEffect::SetOutputPath(const std::string &path)
 {
+    EFFECT_LOGD("ImageEffect::SetOutputPath");
     if (path.empty()) {
         EFFECT_LOGI("SetOutputPath: path set to null!");
         ClearDataInfo(outDateInfo_);
@@ -556,9 +561,20 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     // input and output type is same or not.
     DataType srcDataType = srcEffectBuffer->extraInfo_->dataType;
     DataType dtsDataType = dstEffectBuffer->extraInfo_->dataType;
-    CHECK_AND_RETURN_RET_LOG(
-        srcDataType == dtsDataType || (srcDataType == DataType::PIXEL_MAP && dtsDataType == DataType::NATIVE_WINDOW),
-        ErrorCode::ERR_NOT_SUPPORT_DIFF_DATATYPE,
+    std::function<bool(DataType, DataType)> dataTypeCheckFunc = [](DataType srcDataType, DataType dstDataType) {
+        if (srcDataType == dstDataType) {
+            return true;
+        }
+        std::vector<std::pair<DataType, DataType>> extraSupportTab = {
+            { DataType::PIXEL_MAP, DataType::NATIVE_WINDOW },
+            { DataType::PICTURE, DataType::NATIVE_WINDOW },
+        };
+        return extraSupportTab.end() != std::find_if(extraSupportTab.begin(), extraSupportTab.end(),
+            [&srcDataType, &dstDataType](const std::pair<DataType, DataType> &data) {
+            return data.first == srcDataType && data.second == dstDataType;
+        });
+    };
+    CHECK_AND_RETURN_RET_LOG(dataTypeCheckFunc(srcDataType, dtsDataType), ErrorCode::ERR_NOT_SUPPORT_DIFF_DATATYPE,
         "not supported dataType. srcDataType=%{public}d, dstDataType=%{public}d", srcDataType, dtsDataType);
 
     // color space is same or not.
@@ -1027,6 +1043,8 @@ bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
             return inDataInfo.path_ == outDataInfo.path_;
         case DataType::URI:
             return inDataInfo.uri_ == outDataInfo.uri_;
+        case DataType::PICTURE:
+            return inDataInfo.picture_ == outDataInfo.picture_;
         default:
             return false;
     }
@@ -1071,6 +1089,8 @@ ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectB
             return CommonUtils::ParsePath(dataInfo.path_, effectBuffer, isOutputData);
         case DataType::NATIVE_WINDOW:
             return CommonUtils::ParseNativeWindowData(effectBuffer, dataInfo.dataType_);
+        case DataType::PICTURE:
+            return CommonUtils::ParsePicture(dataInfo.picture_, effectBuffer);
         case DataType::UNKNOWN:
             EFFECT_LOGW("dataType is unknown! Data is not set!");
             return ErrorCode::ERR_NO_DATA;
@@ -1125,6 +1145,35 @@ void ImageEffect::ExtInitModule()
 
 void ImageEffect::ExtDeinitModule()
 {
+}
+
+ErrorCode ImageEffect::SetInputPicture(Picture *picture)
+{
+    EFFECT_LOGD("ImageEffect::SetInputPicture");
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "ImageEffect::SetInputPicture: picture is null!");
+
+    ClearDataInfo(inDateInfo_);
+    inDateInfo_.dataType_ = DataType::PICTURE;
+    inDateInfo_.picture_ = picture;
+
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode ImageEffect::SetOutputPicture(Picture *picture)
+{
+    EFFECT_LOGD("ImageEffect::SetOutputPicture");
+
+    ClearDataInfo(outDateInfo_);
+    if (picture == nullptr) {
+        EFFECT_LOGI("SetOutputPicture: picture set to null!");
+        return ErrorCode::SUCCESS;
+    }
+
+    outDateInfo_.dataType_ = DataType::PICTURE;
+    outDateInfo_.picture_ = picture;
+
+    return ErrorCode::SUCCESS;
 }
 } // namespace Effect
 } // namespace Media

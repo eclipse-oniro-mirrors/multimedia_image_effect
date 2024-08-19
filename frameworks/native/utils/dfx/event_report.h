@@ -36,7 +36,8 @@ enum class EventDataType {
     PIXEL_MAP = 0,
     URI,
     SURFACE,
-    SURFACE_BUFFER
+    SURFACE_BUFFER,
+    PICTURE
 };
 
 struct EventErrorInfo {

@@ -34,6 +34,8 @@
 #include "crop_efilter.h"
 #include "mock_producer_surface.h"
 #include "surface_utils.h"
+#include "mock_picture.h"
+#include "picture_native_impl.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media;
@@ -1574,6 +1576,92 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr004, TestSize.Level1)
 
     errorCode = OH_ImageEffect_Release(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect with picture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect with picture
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectPicture001, TestSize.Level1)
+{
+    std::shared_ptr<Picture> picture = std::make_shared<MockPicture>();
+    std::shared_ptr<OH_PictureNative> pictureNative = std::make_shared<OH_PictureNative>(picture);
+
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, OH_EFFECT_CONTRAST_FILTER);
+    ASSERT_NE(filter, nullptr);
+
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_SetInputPicture(imageEffect, pictureNative.get());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    // start with input
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    // start with in and out(input equal to output)
+    errorCode = OH_ImageEffect_SetOutputPicture(imageEffect, pictureNative.get());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    // start with in and out
+    std::shared_ptr<Picture> outputPicture = std::make_shared<MockPicture>();
+    std::shared_ptr<OH_PictureNative> outputPictureNative = std::make_shared<OH_PictureNative>(outputPicture);
+    errorCode = OH_ImageEffect_SetOutputPicture(imageEffect, outputPictureNative.get());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_ImageEffect_Release(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect with picture for abnormal input parameters.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect with picture for abnormal input parameters.
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectPicture002, TestSize.Level1)
+{
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    std::shared_ptr<OH_ImageEffect> imageEffectPtr(imageEffect, [](OH_ImageEffect *imageEffect) {
+        if (imageEffect != nullptr) {
+            OH_ImageEffect_Release(imageEffect);
+        }
+    });
+    std::shared_ptr<Picture> picture = std::make_shared<MockPicture>();
+    std::shared_ptr<OH_PictureNative> pictureNative = std::make_shared<OH_PictureNative>(picture);
+    std::shared_ptr<Picture> defaultPicture;
+    std::shared_ptr<OH_PictureNative> abnormalPictureNative = std::make_shared<OH_PictureNative>(defaultPicture);
+
+    ASSERT_NE(OH_ImageEffect_SetInputPicture(nullptr, pictureNative.get()), ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_NE(OH_ImageEffect_SetInputPicture(imageEffectPtr.get(), nullptr), ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_NE(OH_ImageEffect_SetInputPicture(imageEffectPtr.get(), abnormalPictureNative.get()),
+        ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_EQ(OH_ImageEffect_SetInputPicture(imageEffectPtr.get(), pictureNative.get()),
+        ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    ASSERT_NE(OH_ImageEffect_SetOutputPicture(nullptr, pictureNative.get()), ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_EQ(OH_ImageEffect_SetOutputPicture(imageEffectPtr.get(), nullptr), ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_EQ(OH_ImageEffect_SetOutputPicture(imageEffectPtr.get(), abnormalPictureNative.get()),
+        ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_EQ(OH_ImageEffect_SetOutputPicture(imageEffectPtr.get(), pictureNative.get()),
+        ImageEffect_ErrorCode::EFFECT_SUCCESS);
 }
 } // namespace Test
 } // namespace Effect

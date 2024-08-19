@@ -205,6 +205,14 @@
   },
   {
     "first_introduced": "12",
+    "name": "OH_ImageEffect_SetInputPicture"
+  },
+  {
+    "first_introduced": "12",
+    "name": "OH_ImageEffect_SetOutputPicture"
+  },
+  {
+    "first_introduced": "12",
     "name": "OH_ImageEffect_Start"
   },
   {

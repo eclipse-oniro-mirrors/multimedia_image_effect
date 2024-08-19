@@ -65,6 +65,7 @@ ohos_shared_library("image_effect_impl") {
 
   sources = [
     "$image_effect_root_dir/frameworks/native/effect/base/effect.cpp",
+    "$image_effect_root_dir/frameworks/native/effect/base/effect_context.cpp",
     "$image_effect_root_dir/frameworks/native/effect/base/effect_surface_adapter.cpp",
     "$image_effect_root_dir/frameworks/native/effect/base/external_loader.cpp",
     "$image_effect_root_dir/frameworks/native/effect/base/image_effect_inner.cpp",
@@ -132,6 +133,7 @@ ohos_shared_library("image_effect_impl") {
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "image_framework:image_native",
+    "libexif:libexif",
     "napi:ace_napi",
   ]
 
@@ -187,6 +189,7 @@ ohos_shared_library("image_effect") {
     "graphic_surface:surface",
     "hilog:libhilog",
     "image_framework:image_native",
+    "image_framework:picture",
     "image_framework:pixelmap",
     "napi:ace_napi",
   ]
