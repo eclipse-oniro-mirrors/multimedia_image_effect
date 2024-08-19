@@ -24,6 +24,7 @@
 #include "image_effect_filter.h"
 #include "image_type.h"
 #include "pixel_map_napi.h"
+#include "picture_native_impl.h"
 
 #define EFFECT_EXPORT __attribute__((visibility("default")))
 
@@ -43,6 +44,8 @@ public:
     static void SwitchToOHEffectInfo(const EffectInfo *effectInfo, OH_EffectFilterInfo *ohFilterInfo);
 
     static PixelMap *GetPixelMapFromOHPixelmap(OH_PixelmapNative *pixelmapNative);
+
+    static Picture *GetPictureFromNativePicture(OH_PictureNative *pictureNative);
 
     static void ParseLookupKey(std::string &key, std::vector<const char *> &matchEFilter);
 

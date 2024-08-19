@@ -484,6 +484,46 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputUri(OH_ImageEffect *imageEffect, c
 }
 
 EFFECT_EXPORT
+ImageEffect_ErrorCode OH_ImageEffect_SetInputPicture(OH_ImageEffect *imageEffect, OH_PictureNative *picture)
+{
+    std::unique_lock<std::mutex> lock(effectMutex_);
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetInputPicture: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetInputPicture: input parameter picture is null!");
+
+    ErrorCode errorCode =
+        imageEffect->imageEffect_->SetInputPicture(NativeCommonUtils::GetPictureFromNativePicture(picture));
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
+        "SetInputPicture: set input picture fail! errorCode=%{public}d", errorCode);
+
+    EventInfo eventInfo = {
+        .dataType = EventDataType::PICTURE,
+    };
+    EventReport::ReportHiSysEvent(INPUT_DATA_TYPE_STATISTIC, eventInfo);
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+}
+
+EFFECT_EXPORT
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputPicture(OH_ImageEffect *imageEffect, OH_PictureNative *picture)
+{
+    std::unique_lock<std::mutex> lock(effectMutex_);
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetOutputPicture: input parameter imageEffect is null!");
+
+    ErrorCode errorCode =
+        imageEffect->imageEffect_->SetOutputPicture(NativeCommonUtils::GetPictureFromNativePicture(picture));
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
+        "SetOutputPicture: set output picture fail! errorCode=%{public}d", errorCode);
+
+    EventInfo eventInfo = {
+        .dataType = EventDataType::PICTURE,
+    };
+    EventReport::ReportHiSysEvent(OUTPUT_DATA_TYPE_STATISTIC, eventInfo);
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+}
+
+EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_Start(OH_ImageEffect *imageEffect)
 {
     std::unique_lock<std::mutex> lock(effectMutex_);

@@ -33,7 +33,8 @@
         "bounds_checking_function",
         "cJSON",
         "drivers_interface_display",
-        "hisysevent"
+        "hisysevent",
+        "libexif"
       ],
       "third_party": [
         "egl",
