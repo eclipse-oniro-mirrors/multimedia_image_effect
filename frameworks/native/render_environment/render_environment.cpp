@@ -579,6 +579,7 @@ void RenderEnvironment::Release()
         delete screenSurface_;
         screenSurface_ = nullptr;
     }
+    eglTerminate(eglGetDisplay(EGL_DEFAULT_DISPLAY));
 }
 
 void RenderEnvironment::ReleaseParam()
