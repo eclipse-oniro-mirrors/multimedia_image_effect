@@ -27,6 +27,7 @@
 #include "pixel_map.h"
 #include "render_thread.h"
 #include "image_effect_marco_define.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace Media {
@@ -42,6 +43,7 @@ struct DataInfo {
     SurfaceBufferInfo surfaceBufferInfo_;
     std::string uri_;
     std::string path_;
+    Picture *picture_ = nullptr;
 };
 
 class ImageEffect : public Effect {
@@ -90,6 +92,10 @@ public:
     IMAGE_EFFECT_EXPORT ErrorCode SetOutputPath(const std::string &path);
 
     IMAGE_EFFECT_EXPORT ErrorCode SetExtraInfo(EffectJsonPtr res);
+
+    IMAGE_EFFECT_EXPORT ErrorCode SetInputPicture(Picture *picture);
+
+    IMAGE_EFFECT_EXPORT ErrorCode SetOutputPicture(Picture *picture);
 
 protected:
     IMAGE_EFFECT_EXPORT virtual ErrorCode Render();

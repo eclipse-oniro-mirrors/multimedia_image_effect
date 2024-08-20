@@ -44,6 +44,7 @@ extern "C" {
 
 typedef struct OH_NativeBuffer OH_NativeBuffer;
 typedef struct NativeWindow OHNativeWindow;
+typedef struct OH_PictureNative OH_PictureNative;
 
 /**
  * @brief Define the new type name OH_ImageEffect for struct OH_ImageEffect
@@ -303,6 +304,31 @@ ImageEffect_ErrorCode OH_ImageEffect_SetInputUri(OH_ImageEffect *imageEffect, co
  * @since 12
  */
 ImageEffect_ErrorCode OH_ImageEffect_SetOutputUri(OH_ImageEffect *imageEffect, const char *uri);
+
+/**
+ * @brief Set input picture that contains the image information. It should be noted that the input picture will be
+ * directly rendered and modified if the output is not set
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
+ * @param picture Indicates the OH_PictureNative that contains the image information
+ * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
+ * {@link ImageEffect_ErrorCode}
+ * @since 12
+ */
+ImageEffect_ErrorCode OH_ImageEffect_SetInputPicture(OH_ImageEffect *imageEffect, OH_PictureNative *picture);
+
+/**
+ * @brief Set output picture that contains the image information
+ *
+ * @syscap SystemCapability.Multimedia.ImageEffect.Core
+ * @param imageEffect Encapsulate OH_ImageEffect structure instance pointer
+ * @param picture Indicates the OH_PictureNative that contains the image information
+ * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
+ * {@link ImageEffect_ErrorCode}
+ * @since 12
+ */
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputPicture(OH_ImageEffect *imageEffect, OH_PictureNative *picture);
 
 /**
  * @brief Render the filter effects that can be a single filter or a chain of filters
