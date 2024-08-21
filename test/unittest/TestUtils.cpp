@@ -16,7 +16,7 @@
 #include "gtest/gtest.h"
 
 #include "native_common_utils.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 #include "common_utils.h"
 #include "string_helper.h"
 #include "format_helper.h"
@@ -172,13 +172,13 @@ HWTEST_F(TestUtils, NativeCommonUtilsSwitchToOHAny001, TestSize.Level1) {
 }
 
 HWTEST_F(TestUtils, JsonHelper001, TestSize.Level1) {
-    EffectJsonPtr root = JsonHelper::CreateObject();
+    EffectJsonPtr root = EFFECTJsonHelper::CreateObject();
     ASSERT_NE(root, nullptr);
     ASSERT_TRUE(root->IsObject());
     ASSERT_TRUE(root->Put("stringKey", "testString"));
     ASSERT_TRUE(root->Put("floatKey", 1.23f));
     ASSERT_TRUE(root->Put("intKey", 123));
-    EffectJsonPtr intRoot = JsonHelper::CreateArray();
+    EffectJsonPtr intRoot = EFFECTJsonHelper::CreateArray();
     ASSERT_TRUE(intRoot->Add(1));
     ASSERT_TRUE(intRoot->Add(2));
     ASSERT_TRUE(intRoot->Add(3));

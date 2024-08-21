@@ -17,7 +17,7 @@
 
 #include "common_utils.h"
 #include "effect_log.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 #include "efilter_factory.h"
 #include "memcpy_helper.h"
 #include "format_helper.h"
@@ -64,7 +64,7 @@ ErrorCode EFilter::GetValue(const std::string &key, Plugin::Any &value)
 ErrorCode EFilter::Save(EffectJsonPtr &res)
 {
     res->Put("name", name_);
-    EffectJsonPtr jsonValues = JsonHelper::CreateObject();
+    EffectJsonPtr jsonValues = EFFECTJsonHelper::CreateObject();
     for (auto value : values_) {
         if (CommonUtils::ParseAnyAndAddToJson(value.first, value.second, jsonValues) !=
             ErrorCode::SUCCESS) {

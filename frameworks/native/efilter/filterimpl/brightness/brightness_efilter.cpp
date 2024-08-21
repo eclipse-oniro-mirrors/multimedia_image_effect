@@ -18,7 +18,7 @@
 #include <unordered_map>
 
 #include "effect_log.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 #include "common_utils.h"
 #include "cpu_brightness_algo.h"
 #include "efilter_factory.h"

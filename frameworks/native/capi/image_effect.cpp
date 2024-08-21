@@ -19,7 +19,7 @@
 #include "efilter_factory.h"
 #include "external_loader.h"
 #include "image_effect_inner.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 #include "native_effect_base.h"
 #include "native_common_utils.h"
 #include "native_window.h"
@@ -572,7 +572,7 @@ ImageEffect_ErrorCode OH_ImageEffect_Save(OH_ImageEffect *imageEffect, char **in
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Save: input parameter info is null!");
 
-    EffectJsonPtr effectInfo = JsonHelper::CreateObject();
+    EffectJsonPtr effectInfo = EFFECTJsonHelper::CreateObject();
     imageEffect->imageEffect_->Save(effectInfo);
     std::string infoStr = effectInfo->ToString();
 
@@ -595,7 +595,7 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, nullptr, "Restore: input parameter info is null!");
     std::string infoStr = info;
-    const EffectJsonPtr root = JsonHelper::ParseJsonData(infoStr);
+    const EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(infoStr);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "OH_ImageEffect_Restore no imageEffect");
     EffectJsonPtr imageInfo = root->GetElement("imageEffect");
     CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("name"), nullptr, "OH_ImageEffect_Restore no name");

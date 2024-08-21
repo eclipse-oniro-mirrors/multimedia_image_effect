@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef IMAGE_EFFECT_JSON_HELPER_H
-#define IMAGE_EFFECT_JSON_HELPER_H
+#ifndef IMAGE_EFFECT_EFFECT_JSON_HELPER_H
+#define IMAGE_EFFECT_EFFECT_JSON_HELPER_H
 
 #include <memory>
 #include <string>
@@ -100,7 +100,7 @@ private:
     bool isRoot_ = false;
 };
 
-class JsonHelper final {
+class EFFECTJsonHelper final {
 public:
     IMAGE_EFFECT_EXPORT static EffectJsonPtr ParseJsonData(const std::string &data);
     IMAGE_EFFECT_EXPORT static EffectJsonPtr CreateObject(bool isRoot = true);
@@ -110,4 +110,4 @@ public:
 } // namespace Media
 } // namespace OHOS
 
-#endif // IMAGE_EFFECT_JSON_HELPER_H
+#endif // IMAGE_EFFECT_EFFECT_JSON_HELPER_H

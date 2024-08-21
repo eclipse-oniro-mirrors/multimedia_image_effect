@@ -13,7 +13,7 @@
 * limitations under the License.
 */
 
-#include "json_helper.h"
+#include "effect_json_helper.h"
 
 #include "cJSON.h"
 #include "effect_log.h"
@@ -456,19 +456,19 @@ std::string EffectJson::ToString() const
     return ret;
 }
 
-EffectJsonPtr JsonHelper::ParseJsonData(const std::string &data)
+EffectJsonPtr EFFECTJsonHelper::ParseJsonData(const std::string &data)
 {
     cJSON *json = cJSON_Parse(data.c_str());
     return std::make_shared<EffectJson>(json);
 }
 
-EffectJsonPtr JsonHelper::CreateObject(bool isRoot)
+EffectJsonPtr EFFECTJsonHelper::CreateObject(bool isRoot)
 {
     cJSON *json = cJSON_CreateObject();
     return std::make_shared<EffectJson>(json, isRoot);
 }
 
-EffectJsonPtr JsonHelper::CreateArray(bool isRoot)
+EffectJsonPtr EFFECTJsonHelper::CreateArray(bool isRoot)
 {
     cJSON *json = cJSON_CreateArray();
     return std::make_shared<EffectJson>(json, isRoot);

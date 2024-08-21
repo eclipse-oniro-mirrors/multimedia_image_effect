@@ -107,7 +107,7 @@ ohos_shared_library("image_effect_impl") {
     "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_surface.cpp",
     "$image_effect_root_dir/frameworks/native/render_environment/render_environment.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/common_utils.cpp",
-    "$image_effect_root_dir/frameworks/native/utils/common/json_helper.cpp",
+    "$image_effect_root_dir/frameworks/native/utils/common/effect_json_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/memcpy_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/string_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/vpe_helper.cpp",

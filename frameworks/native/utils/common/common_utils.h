@@ -29,7 +29,7 @@
 #include "effect_memory_manager.h"
 #include "effect_context.h"
 #include "image_effect_marco_define.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 #include "picture.h"
 
 namespace OHOS {

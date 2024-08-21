@@ -27,7 +27,7 @@
 #include "image_source_filter.h"
 #include "effect_surface_adapter.h"
 #include "pipeline_core.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 #include "efilter_factory.h"
 #include "external_loader.h"
 #include "effect_context.h"
@@ -643,15 +643,15 @@ ErrorCode ImageEffect::Render()
 
 ErrorCode ImageEffect::Save(EffectJsonPtr &res)
 {
-    EffectJsonPtr effect = JsonHelper::CreateArray();
+    EffectJsonPtr effect = EFFECTJsonHelper::CreateArray();
     for (auto it = efilters_.begin(); it != efilters_.end(); it++) {
-        EffectJsonPtr data = JsonHelper::CreateObject();
+        EffectJsonPtr data = EFFECTJsonHelper::CreateObject();
         std::shared_ptr<EFilter> efilter = *it;
         efilter->Save(data);
         effect->Add(data);
     }
 
-    EffectJsonPtr info  = JsonHelper::CreateObject();
+    EffectJsonPtr info  = EFFECTJsonHelper::CreateObject();
     info->Put("filters", effect);
     info->Put("name", name_);
     if (extraInfo_ != nullptr) {
@@ -665,7 +665,7 @@ ErrorCode ImageEffect::Save(EffectJsonPtr &res)
 
 std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
 {
-    const EffectJsonPtr root = JsonHelper::ParseJsonData(info);
+    const EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(info);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "Restore: no imageEffect");
     const EffectJsonPtr &imageInfo = root->GetElement("imageEffect");
     CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("name"), nullptr, "Restore: imageEffect no name");

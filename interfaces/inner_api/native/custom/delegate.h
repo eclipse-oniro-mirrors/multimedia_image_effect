@@ -23,7 +23,7 @@
 #include "effect_info.h"
 #include "effect_context.h"
 #include "image_effect_marco_define.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 
 namespace OHOS {
 namespace Media {

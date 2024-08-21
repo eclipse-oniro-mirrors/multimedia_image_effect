@@ -17,7 +17,7 @@
 
 #include "effect_log.h"
 #include "efilter_factory.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 #include "common_utils.h"
 #include "cpu_contrast_algo.h"
 #include "gpu_contrast_algo.h"
