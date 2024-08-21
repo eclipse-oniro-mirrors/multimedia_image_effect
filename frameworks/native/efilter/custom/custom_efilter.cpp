@@ -16,7 +16,7 @@
 #include "custom_efilter.h"
 
 #include "efilter_factory.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 
 namespace OHOS {
 namespace Media {

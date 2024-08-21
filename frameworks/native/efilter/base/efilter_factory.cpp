@@ -18,7 +18,7 @@
 #include "custom_efilter.h"
 #include "effect_log.h"
 #include "external_loader.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 
 namespace OHOS {
 namespace Media {

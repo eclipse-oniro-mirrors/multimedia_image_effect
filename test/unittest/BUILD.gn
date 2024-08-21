@@ -36,7 +36,7 @@ base_sources = [
   "$image_effect_root_dir/frameworks/native/effect/pipeline/core/port.cpp",
   "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop/crop_efilter.cpp",
   "$image_effect_root_dir/frameworks/native/utils/common/common_utils.cpp",
-  "$image_effect_root_dir/frameworks/native/utils/common/json_helper.cpp",
+  "$image_effect_root_dir/frameworks/native/utils/common/effect_json_helper.cpp",
   "$image_effect_root_dir/frameworks/native/utils/dfx/error_code.cpp",
 ]
 

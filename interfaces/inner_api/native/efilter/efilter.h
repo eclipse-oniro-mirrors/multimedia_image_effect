@@ -24,7 +24,7 @@
 #include "effect_type.h"
 #include "efilter_base.h"
 #include "error_code.h"
-#include "json_helper.h"
+#include "effect_json_helper.h"
 #include "image_effect_marco_define.h"
 
 namespace OHOS {
