@@ -182,11 +182,14 @@ public:
     DataType GetOutputType() const;
     void SetOutputType(DataType type);
     void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
+    void DrawBufferToTexture(RenderTexturePtr renderTex, const EffectBuffer *source);
+    IMAGE_EFFECT_EXPORT GLuint GenTextureWithPixels(void *data, int width, int height, int stride);
     IMAGE_EFFECT_EXPORT void DrawFlipSurfaceBufferFromTex(RenderTexturePtr tex,
         SurfaceBuffer *buffer, IEffectFormat format);
     IMAGE_EFFECT_EXPORT void DrawSurfaceBufferFromTex(RenderTexturePtr tex,
         SurfaceBuffer *buffer, IEffectFormat format);
-    IMAGE_EFFECT_EXPORT void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer);
+    IMAGE_EFFECT_EXPORT void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer,
+        IEffectFormat format = IEffectFormat::RGBA8888);
     IMAGE_EFFECT_EXPORT void DrawFlipTex(RenderTexturePtr input, RenderTexturePtr output);
     std::shared_ptr<EffectBuffer> GenTexEffectBuffer(std::shared_ptr<EffectBuffer> input);
     IMAGE_EFFECT_EXPORT GLuint GenTexFromEffectBuffer(const EffectBuffer *source);
@@ -205,7 +208,6 @@ private:
     int canvasHeight = 0;
     EGLStatus isEGLReady = EGLStatus::UNREADY;
     DataType outType_ = DataType::UNKNOWN;
-    void DrawImageToFBO(RenderTexturePtr renderTex, const EffectBuffer *source);
     void InitDefaultMeshMT(RenderParam *param);
     void InitDefaultShaderMT(RenderParam *param);
     RenderMesh *CreateMeshMT(RenderParam *param, bool isBackGround, RenderGeneralProgram *shader);

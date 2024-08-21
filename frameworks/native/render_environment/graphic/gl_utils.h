@@ -54,6 +54,8 @@ public:
     static GLuint CreateTextureFromImage(EGLImageKHR img);
 
     static GLuint CreateTextureFromSurfaceBuffer(SurfaceBuffer *buffer);
+
+    static void DestroyImage(EGLImageKHR img);
 };
 } // namespace Effect
 } // namespace Media

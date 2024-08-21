@@ -498,11 +498,14 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
     }
 
     if (output->extraInfo_->dataType == DataType::NATIVE_WINDOW && buffer->extraInfo_->surfaceBuffer != nullptr) {
-        int tex = static_cast<int>(GLUtils::CreateTextureFromSurfaceBuffer(buffer->extraInfo_->surfaceBuffer));
+        EGLImageKHR img = GLUtils::CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY),
+            buffer->extraInfo_->surfaceBuffer);
+        GLuint tex = GLUtils::CreateTextureFromImage(img);
         buffer->extraInfo_->surfaceBuffer->FlushCache();
         context->renderEnvironment_->UpdateCanvas();
         GraphicTransformType transformType = buffer->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
         context->renderEnvironment_->DrawFrame(tex, transformType);
+        GLUtils::DestroyImage(img);
         return ErrorCode::SUCCESS;
     }
     ErrorCode result = SaveData(buffer, sinkBuffer_, context);

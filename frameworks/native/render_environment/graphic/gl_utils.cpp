@@ -213,6 +213,7 @@ EGLImageKHR GLUtils::CreateEGLImage(EGLDisplay display, SurfaceBuffer *buffer)
         eglTerminate(display);
     }
     CheckError(__FILE__, __LINE__);
+    DestroyNativeWindowBuffer(nBuffer);
     return img;
 }
 
@@ -226,6 +227,7 @@ GLuint GLUtils::CreateTextureFromImage(EGLImageKHR img)
     CheckError(__FILE__, __LINE__);
     return textureId;
 }
+
 GLuint GLUtils::CreateTextureFromSurfaceBuffer(SurfaceBuffer *buffer)
 {
     if (buffer == nullptr) {
@@ -234,6 +236,11 @@ GLuint GLUtils::CreateTextureFromSurfaceBuffer(SurfaceBuffer *buffer)
     EGLImageKHR img = CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY), buffer);
     GLuint tex = CreateTextureFromImage(img);
     return tex;
+}
+
+void GLUtils::DestroyImage(EGLImageKHR img)
+{
+    eglDestroyImageKHR(eglGetDisplay(EGL_DEFAULT_DISPLAY), img);
 }
 } // namespace Effect
 } // namespace Media

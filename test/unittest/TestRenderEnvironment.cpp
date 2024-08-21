@@ -30,6 +30,7 @@ constexpr uint32_t HEIGHT = 1280;
 constexpr IEffectFormat FORMATE_TYPE = IEffectFormat::RGBA8888;
 constexpr uint32_t ROW_STRIDE = WIDTH * 4;
 constexpr uint32_t LEN = ROW_STRIDE * HEIGHT;
+constexpr uint32_t EXTRA_LEN = 10;
 
 class TestRenderEnvironment : public testing::Test {
 public:
@@ -89,9 +90,6 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment001, TestSize.Level1)
     RenderTexturePtr texptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
     EXPECT_NE(texptr, nullptr);
     renderEnvironment->ConvertTextureToBuffer(texptr, effectBuffer.get());
-
-    GLuint tex = renderEnvironment->GenTexFromEffectBuffer(effectBuffer.get());
-    EXPECT_NE(tex, 0);
 
     GLenum internalFormat = GL_RG8;
     size_t ret = GLUtils::GetInternalFormatPixelByteSize(internalFormat);
@@ -231,9 +229,6 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment006, TestSize.Level1)
     renderEnvironment->ConvertYUV2RGBA(effectBuffer, input);
     renderEnvironment->DrawTexFromSurfaceBuffer(texptr, buffer);
 
-    GLuint tex = renderEnvironment->GenTexFromEffectBuffer(effectBuffer.get());
-    EXPECT_NE(tex, 0);
-
     IEffectFormat format = IEffectFormat::RGBA8888;
     renderEnvironment->DrawFlipSurfaceBufferFromTex(texptr, buffer, format);
 
@@ -260,6 +255,16 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment007, TestSize.Level1) {
 
     RenderSurface::SurfaceType type = renderSurface->GetSurfaceType();
     EXPECT_EQ(type, RenderSurface::SurfaceType::SURFACE_TYPE_OFF_SCREEN);
+}
+HWTEST_F(TestRenderEnvironment, TestRenderEnvironment008, TestSize.Level1) {
+    unsigned char *bitmap = new unsigned char[LEN];
+
+    int temp = renderEnvironment->GenTextureWithPixels(bitmap, WIDTH, HEIGHT, WIDTH);
+    EXPECT_NE(temp, 0);
+
+    temp = renderEnvironment->GenTextureWithPixels(bitmap, WIDTH - EXTRA_LEN, HEIGHT, WIDTH);
+    EXPECT_NE(temp, 0);
+    delete[] bitmap;
 }
 }
 }
