@@ -175,6 +175,9 @@ protected:
         CHECK_AND_RETURN_LOG(src->buffer_ != nullptr,
             "FilterDelegatePushData: buffer of src is null! src=%{public}p", src);
 
+        CHECK_AND_RETURN_LOG(src->bufferInfo_ != nullptr,
+            "FilterDelegatePushData: bufferInfo of src is null! src=%{public}p", src);
+
         if (dst->addr == src->buffer_) {
             std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(src->bufferInfo_,
                 dst->addr, src->extraInfo_);

@@ -381,6 +381,8 @@ void RenderEnvironment::DrawFrame(GLuint texId, GraphicTransformType type)
         glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
         if (screenSurface_ == nullptr) {
             EFFECT_LOGE("RenderEnvironment screenSurface_ is nullptr");
+            delete(mesh);
+            mesh = nullptr;
             return;
         }
         param_->context_->SwapBuffers(screenSurface_);

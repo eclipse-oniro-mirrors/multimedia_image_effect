@@ -668,6 +668,7 @@ std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
     const EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(info);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "Restore: no imageEffect");
     const EffectJsonPtr &imageInfo = root->GetElement("imageEffect");
+    CHECK_AND_RETURN_RET_LOG(imageInfo != nullptr, nullptr, "Restore: imageInfo is null!");
     CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("name"), nullptr, "Restore: imageEffect no name");
     std::string effectName = imageInfo->GetString("name");
     CHECK_AND_RETURN_RET_LOG(!effectName.empty(), nullptr, "Restore: imageEffect get name failed");
