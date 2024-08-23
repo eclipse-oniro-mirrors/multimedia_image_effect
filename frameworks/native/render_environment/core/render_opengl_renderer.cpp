@@ -16,6 +16,7 @@
 #include "core/render_opengl_renderer.h"
 
 #include "base/math/math_utils.h"
+#include "effect_log.h"
 
 namespace OHOS {
 namespace Media {
@@ -27,28 +28,18 @@ RenderOpenglRenderer::~RenderOpenglRenderer() {}
 void RenderOpenglRenderer::Draw(GLuint texId, RenderMesh *mesh, RenderGeneralProgram *shader,
     RenderFrameBuffer *frameBuffer, RenderViewport *viewport)
 {
-    if (frameBuffer) {
-        frameBuffer->Bind();
-    }
-
-    if (viewport) {
-        glViewport(viewport->leftBottomX_, viewport->leftBottomY_, viewport->width_, viewport->height_);
-    }
-
-    if (shader) {
-        shader->Bind();
-    }
-
-    if (mesh) {
-        mesh->Bind(shader);
-    }
+    CHECK_AND_RETURN_LOG(frameBuffer != nullptr, "RenderOpenglRenderer Draw failed! Framebuffer is null");
+    CHECK_AND_RETURN_LOG(viewport != nullptr, "RenderOpenglRenderer Draw failed! Viewport is null");
+    CHECK_AND_RETURN_LOG(shader != nullptr, "RenderOpenglRenderer Draw failed! Shader is null");
+    CHECK_AND_RETURN_LOG(mesh != nullptr, "RenderOpenglRenderer Draw failed! Mesh is null");
+    frameBuffer->Bind();
+    glViewport(viewport->leftBottomX_, viewport->leftBottomY_, viewport->width_, viewport->height_);
+    shader->Bind();
+    mesh->Bind(shader);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texId);
     glDrawArrays(mesh->primitiveType_, mesh->startVertex_, mesh->vertexNum_);
-
-    if (shader) {
-        shader->Unbind();
-    }
+    shader->Unbind();
     frameBuffer->UnBind();
     GLUtils::CheckError(__FILE_NAME__, __LINE__);
 }
@@ -56,23 +47,17 @@ void RenderOpenglRenderer::Draw(GLuint texId, RenderMesh *mesh, RenderGeneralPro
 void RenderOpenglRenderer::Draw(GLuint texId, GLuint fbo, RenderMesh *mesh, RenderGeneralProgram *shader,
     RenderViewport *viewport, GLenum target)
 {
+    CHECK_AND_RETURN_LOG(viewport != nullptr, "RenderOpenglRenderer Draw failed! Viewport is null");
+    CHECK_AND_RETURN_LOG(shader != nullptr, "RenderOpenglRenderer Draw failed! Shader is null");
+    CHECK_AND_RETURN_LOG(mesh != nullptr, "RenderOpenglRenderer Draw failed! Mesh is null");
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    if (viewport) {
-        glViewport(viewport->leftBottomX_, viewport->leftBottomY_, viewport->width_, viewport->height_);
-    }
-    if (shader) {
-        shader->Bind();
-    }
-    if (mesh) {
-        mesh->Bind(shader);
-    }
+    glViewport(viewport->leftBottomX_, viewport->leftBottomY_, viewport->width_, viewport->height_);
+    shader->Bind();
+    mesh->Bind(shader);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(target, texId);
     glDrawArrays(mesh->primitiveType_, mesh->startVertex_, mesh->vertexNum_);
-
-    if (shader) {
-        shader->Unbind();
-    }
+    shader->Unbind();
     glBindFramebuffer(GL_FRAMEBUFFER, GL_NONE);
     GLUtils::CheckError(__FILE_NAME__, __LINE__);
 }
