@@ -205,6 +205,7 @@ private:
     int canvasHeight = 0;
     EGLStatus isEGLReady = EGLStatus::UNREADY;
     DataType outType_ = DataType::UNKNOWN;
+    bool needTerminate_ = false;
     void DrawImageToFBO(RenderTexturePtr renderTex, const EffectBuffer *source);
     void InitDefaultMeshMT(RenderParam *param);
     void InitDefaultShaderMT(RenderParam *param);

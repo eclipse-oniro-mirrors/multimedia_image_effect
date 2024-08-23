@@ -49,7 +49,9 @@ void RenderEnvironment::Init()
 {
     EFFECT_LOGI("RenderEnvironment start init");
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    needTerminate_ = true;
     if (eglInitialize(display, nullptr, nullptr) == EGL_FALSE) {
+        needTerminate_ = false;
         EFFECT_LOGE("EGL Initialize failed");
     }
     param_ = new RenderParam();
@@ -578,6 +580,10 @@ void RenderEnvironment::Release()
         screenSurface_->Release();
         delete screenSurface_;
         screenSurface_ = nullptr;
+    }
+    if (needTerminate_) {
+        eglTerminate(eglGetDisplay(EGL_DEFAULT_DISPLAY));
+        needTerminate_ = false;
     }
 }
 
