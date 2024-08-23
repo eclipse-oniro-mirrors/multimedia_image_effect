@@ -61,6 +61,9 @@ public:
         extraInfo->pixelMap = nullptr;
         extraInfo->surfaceBuffer = nullptr;
         effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, addr, extraInfo);
+
+        free(addr);
+        addr = nullptr;
     }
 
     void TearDown() override
