@@ -123,10 +123,12 @@ void EffectSurfaceAdapter::OnBufferAvailable()
     int64_t timestamp = 0;
     Rect damages{};
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
-    auto ret = receiverConsumerSurface_->AcquireBuffer(inBuffer, syncFence, timestamp, damages);
-    if (ret != 0) {
-        EFFECT_LOGE("AcquireBuffer failed. %{public}d", ret);
-        return;
+    if (receiverConsumerSurface_) {
+        auto ret = receiverConsumerSurface_->AcquireBuffer(inBuffer, syncFence, timestamp, damages);
+        if (ret != 0) {
+            EFFECT_LOGE("AcquireBuffer failed. %{public}d", ret);
+            return;
+        }
     }
 
     constexpr uint32_t waitForEver = -1;
@@ -138,7 +140,9 @@ void EffectSurfaceAdapter::OnBufferAvailable()
         EFFECT_LOGE("not register handle buffer.");
     }
 
-    (void)receiverConsumerSurface_->ReleaseBuffer(inBuffer, IE_INVALID_FENCE);
+    if (receiverConsumerSurface_) {
+        (void)receiverConsumerSurface_->ReleaseBuffer(inBuffer, IE_INVALID_FENCE);
+    }
 }
 
 void EffectSurfaceAdapter::OnTunnelHandleChange() {}
