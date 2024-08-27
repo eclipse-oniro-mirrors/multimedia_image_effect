@@ -150,7 +150,7 @@ private:
 
     class Impl;
     std::shared_ptr<Impl> impl_;
-    std::mutex bufferAvailableMutex_;
+    std::mutex innerEffectMutex_;
     RenderThread<> *m_renderThread{ nullptr };
     std::atomic_ullong m_currentTaskId{0};
 };

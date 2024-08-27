@@ -185,6 +185,7 @@ ImageEffect::~ImageEffect()
 
 void ImageEffect::AddEFilter(const std::shared_ptr<EFilter> &efilter)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     auto priorityEFilter = std::find_if(priorityEFilter_.begin(), priorityEFilter_.end(),
         [&efilter](const std::string &name) { return name.compare(efilter->GetName()) == 0; });
     if (priorityEFilter == priorityEFilter_.end()) {
@@ -230,7 +231,7 @@ ErrorCode ImageEffect::RemoveEFilter(uint32_t index)
 
 ErrorCode ImageEffect::ReplaceEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index)
 {
-    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     ErrorCode res = Effect::ReplaceEFilter(efilter, index);
     if (res == ErrorCode::SUCCESS) {
         impl_->CreatePipeline(efilters_);
@@ -245,6 +246,7 @@ unsigned long int ImageEffect::RequestTaskId()
 
 ErrorCode ImageEffect::SetInputPixelMap(PixelMap* pixelMap)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     EFFECT_LOGD("ImageEffect::SetInputPixelMap");
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INVALID_SRC_PIXELMAP, "invalid source pixelMap");
     impl_->effectContext_->renderEnvironment_->NotifyInputChanged();
@@ -428,7 +430,7 @@ ErrorCode ImageEffect::Start()
 
 void ImageEffect::Stop()
 {
-    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     impl_->effectState_ = EffectState::IDLE;
     if (impl_->surfaceAdapter_) {
         impl_->surfaceAdapter_->ConsumerRequestCpuAccess(false);
@@ -689,6 +691,7 @@ std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
 
 ErrorCode ImageEffect::SetOutputPixelMap(PixelMap* pixelMap)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     EFFECT_LOGD("ImageEffect::SetOutputPixelMap");
     ClearDataInfo(outDateInfo_);
     if (pixelMap == nullptr) {
@@ -704,6 +707,7 @@ ErrorCode ImageEffect::SetOutputPixelMap(PixelMap* pixelMap)
 
 ErrorCode ImageEffect::SetOutputSurface(sptr<Surface>& surface)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     if (surface == nullptr) {
         EFFECT_LOGE("surface is null.");
         return ErrorCode::ERR_INPUT_NULL;
@@ -907,7 +911,7 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
 
 void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
-    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     OnBufferAvailableWithCPU(buffer, damages, timestamp);
 }
 
