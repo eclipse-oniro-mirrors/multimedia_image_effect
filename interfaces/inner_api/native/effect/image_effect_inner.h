@@ -147,7 +147,7 @@ private:
     RenderThread<> *m_renderThread{ nullptr };
     std::atomic_ullong m_currentTaskId{0};
 
-    std::mutex bufferAvailableMutex_;
+    std::mutex innerEffectMutex;
 };
 } // namespace Effect
 } // namespace Media

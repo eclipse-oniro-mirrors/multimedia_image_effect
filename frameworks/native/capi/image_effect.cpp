@@ -209,6 +209,12 @@ ImageEffect_ErrorCode OH_ImageEffect_RemoveFilterByIndex(OH_ImageEffect *imageEf
 
     auto &filter = imageEffect->filters_.at(index);
     auto ohEFilter = filter.first;
+
+    CHECK_AND_RETURN_RET_LOG(ohEFilter != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "RemoveFilterByIndex: ohEFilter is null!");
+    CHECK_AND_RETURN_RET_LOG(ohEFilter->filter_ != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "RemoveFilterByIndex: filter of ohEFilter is null!");
+
     std::string filterName = ohEFilter->filter_->GetName();
     if (ohEFilter != nullptr && ohEFilter->isCreatedBySystem_) {
         OH_EffectFilter_Release(ohEFilter);
@@ -552,6 +558,7 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
     const EffectJsonPtr root = JsonHelper::ParseJsonData(infoStr);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "OH_ImageEffect_Restore no imageEffect");
     EffectJsonPtr imageInfo = root->GetElement("imageEffect");
+    CHECK_AND_RETURN_RET_LOG(imageInfo != nullptr, nullptr, "OH_ImageEffect_Restore imageInfo is nullptr");
     CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("name"), nullptr, "OH_ImageEffect_Restore no name");
 
     std::string effectName = imageInfo->GetString("name");
@@ -560,6 +567,7 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
     CHECK_AND_RETURN_RET_LOG(ohImageEffect != nullptr, nullptr, "ohImageEffect create failed");
     CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("filters"), nullptr, "OH_ImageEffect_Restore no filters");
     EffectJsonPtr filters = imageInfo->GetElement("filters");
+    CHECK_AND_RETURN_RET_LOG(filters != nullptr, nullptr, "OH_ImageEffect_Restore filters is null");
     CHECK_AND_RETURN_RET_LOG(filters->IsArray(), nullptr, "OH_ImageEffect_Restore filters not array");
     std::vector<EffectJsonPtr> effects = filters->GetArray();
 

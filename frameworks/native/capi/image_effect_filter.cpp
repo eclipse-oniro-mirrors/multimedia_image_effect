@@ -169,8 +169,11 @@ protected:
         CHECK_AND_RETURN_LOG(res == ErrorCode::SUCCESS && src != nullptr,
             "FilterDelegatePushData: parse EffectBuffer ptr fail! res=%{public}d, src=%{public}p", res, src);
 
-        CHECK_AND_RETURN_LOG(src->extraInfo_ != nullptr,
-            "FilterDelegatePushData: extraInfo of src is null! src=%{public}p", src);
+        CHECK_AND_RETURN_LOG(src->buffer_ != nullptr,
+            "FilterDelegatePushData: buffer of src is null! src=%{public}p", src);
+
+        CHECK_AND_RETURN_LOG(src->bufferInfo_ != nullptr && src->extraInfo_ != nullptr,
+            "FilterDelegatePushData: bufferInfo of src is null or extraInfo of src is null!");
 
         if (dst->addr == src->buffer_) {
             std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(src->bufferInfo_,
