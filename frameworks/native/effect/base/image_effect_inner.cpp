@@ -185,6 +185,7 @@ ImageEffect::~ImageEffect()
 
 void ImageEffect::AddEFilter(const std::shared_ptr<EFilter> &efilter)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex);
     auto priorityEFilter = std::find_if(priorityEFilter_.begin(), priorityEFilter_.end(),
         [&efilter](const std::string &name) { return name.compare(efilter->GetName()) == 0; });
     if (priorityEFilter == priorityEFilter_.end()) {
@@ -230,7 +231,7 @@ ErrorCode ImageEffect::RemoveEFilter(uint32_t index)
 
 ErrorCode ImageEffect::ReplaceEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index)
 {
-    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
+    std::unique_lock<std::mutex> lock(innerEffectMutex);
     ErrorCode res = Effect::ReplaceEFilter(efilter, index);
     if (res == ErrorCode::SUCCESS) {
         impl_->CreatePipeline(efilters_);
@@ -245,6 +246,8 @@ unsigned long int ImageEffect::RequestTaskId()
 
 ErrorCode ImageEffect::SetInputPixelMap(PixelMap* pixelMap)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex);
+    EFFECT_LOGD("ImageEffect::SetInputPixelMap");
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INVALID_SRC_PIXELMAP, "invalid source pixelMap");
     impl_->effectContext_->renderEnvironment_->NotifyInputChanged();
 
@@ -426,7 +429,7 @@ ErrorCode ImageEffect::Start()
 
 void ImageEffect::Stop()
 {
-    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
+    std::unique_lock<std::mutex> lock(innerEffectMutex);
     impl_->effectState_ = EffectState::IDLE;
     if (impl_->surfaceAdapter_) {
         impl_->surfaceAdapter_->ConsumerRequestCpuAccess(false);
@@ -651,6 +654,7 @@ std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
     const EffectJsonPtr root = JsonHelper::ParseJsonData(info);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "Restore: no imageEffect");
     const EffectJsonPtr &imageInfo = root->GetElement("imageEffect");
+    CHECK_AND_RETURN_RET_LOG(imageInfo != nullptr, nullptr, "Restore: imageInfo is null!");
     CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("name"), nullptr, "Restore: imageEffect no name");
     std::string effectName = imageInfo->GetString("name");
     CHECK_AND_RETURN_RET_LOG(!effectName.empty(), nullptr, "Restore: imageEffect get name failed");
@@ -671,6 +675,8 @@ std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
 
 ErrorCode ImageEffect::SetOutputPixelMap(PixelMap* pixelMap)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex);
+    EFFECT_LOGD("ImageEffect::SetOutputPixelMap");
     ClearDataInfo(outDateInfo_);
     if (pixelMap == nullptr) {
         EFFECT_LOGI("SetOutputPixelMap: pixelMap set to null!");
@@ -685,6 +691,7 @@ ErrorCode ImageEffect::SetOutputPixelMap(PixelMap* pixelMap)
 
 ErrorCode ImageEffect::SetOutputSurface(sptr<Surface>& surface)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex);
     if (surface == nullptr) {
         EFFECT_LOGE("surface is null.");
         return ErrorCode::ERR_INPUT_NULL;
@@ -888,7 +895,7 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
 
 void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
-    std::unique_lock<std::mutex> lock(bufferAvailableMutex_);
+    std::unique_lock<std::mutex> lock(innerEffectMutex);
     OnBufferAvailableWithCPU(buffer, damages, timestamp);
 }
 

@@ -225,6 +225,7 @@ void RenderEnvironment::UpdateCanvas()
 
 void RenderEnvironment::DrawImageToFBO(RenderTexturePtr renderTex, const EffectBuffer *source)
 {
+    CHECK_AND_RETURN_LOG(renderTex != nullptr, "DrawImageToFBO: renderTex is nullptr!");
     GLuint tempFbo = GLUtils::CreateFramebuffer(renderTex->GetName());
     GLuint tex = GenTexFromEffectBuffer(source);
     GLenum target = source->extraInfo_->surfaceBuffer != nullptr ? GL_TEXTURE_EXTERNAL_OES : GL_TEXTURE_2D;
@@ -421,6 +422,8 @@ void RenderEnvironment::DrawFrame(GLuint texId, GraphicTransformType type)
         glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
         if (screenSurface_ == nullptr) {
             EFFECT_LOGE("RenderEnvironment screenSurface_ is nullptr");
+            delete(mesh);
+            mesh = nullptr;
             return;
         }
         param_->context_->SwapBuffers(screenSurface_);
