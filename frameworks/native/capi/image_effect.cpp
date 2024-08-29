@@ -598,6 +598,7 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
     const EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(infoStr);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "OH_ImageEffect_Restore no imageEffect");
     EffectJsonPtr imageInfo = root->GetElement("imageEffect");
+    CHECK_AND_RETURN_RET_LOG(imageInfo != nullptr, nullptr, "OH_ImageEffect_Restore imageInfo is nullptr");
     CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("name"), nullptr, "OH_ImageEffect_Restore no name");
 
     std::string effectName = imageInfo->GetString("name");

@@ -829,6 +829,7 @@ void ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<S
     SetSurfaceBufferHebcAccessType(outBuffer,
         isSrcHebcData ? V1_1::HebcAccessType::HEBC_ACCESS_HW_ONLY : V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
 
+    CHECK_AND_RETURN_LOG(impl_ != nullptr, "OnBufferAvailableToProcess: impl is nullptr.");
     bool isNeedRender = !isSrcHebcData && impl_->effectState_ == EffectState::RUNNING;
     bool isNeedCpy = true;
     if (isNeedRender) {
@@ -879,6 +880,7 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
         .transform = buffer->GetSurfaceBufferTransform(),
     };
 
+    CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr, "OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     auto ret = toProducerSurface_->RequestBuffer(outBuffer, syncFence, requestConfig);
     CHECK_AND_RETURN_LOG(ret == 0 && outBuffer != nullptr, "RequestBuffer failed. %{public}d", ret);
 
@@ -905,6 +907,7 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
         },
         .timestamp = timestamp,
     };
+    CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr, "OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     constexpr int32_t invalidFence = -1;
     (void)toProducerSurface_->FlushBuffer(outBuffer, invalidFence, flushConfig);
 }
