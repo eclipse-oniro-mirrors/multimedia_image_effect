@@ -181,6 +181,7 @@ ImageEffect::~ImageEffect()
         toProducerSurface_ = nullptr;
     }
     fromProducerSurface_ = nullptr;
+    impl_ = nullptr;
 }
 
 void ImageEffect::AddEFilter(const std::shared_ptr<EFilter> &efilter)
