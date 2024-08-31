@@ -574,7 +574,7 @@ ImageEffect_ErrorCode OH_EffectFilter_SetValue(OH_EffectFilter *filter, const ch
         "FilterSetValue: input parameter key is null!");
     CHECK_AND_RETURN_RET_LOG(value != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "FilterSetValue: input parameter value is null!");
-    EFFECT_LOGI("Effect filter set value. key=%{public}s", key);
+    EFFECT_LOGD("Effect filter set value. key=%{public}s", key);
 
     Plugin::Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(value, any);
