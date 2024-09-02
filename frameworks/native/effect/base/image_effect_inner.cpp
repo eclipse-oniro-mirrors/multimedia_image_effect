@@ -860,7 +860,7 @@ void ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<S
 
 void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
-    CHECK_AND_RETURN_LOG(bufer != nullptr, "OnBufferAvailableWithCPU: buffer is nullptr.");
+    CHECK_AND_RETURN_LOG(buffer != nullptr, "OnBufferAvailableWithCPU: buffer is nullptr.");
     outDateInfo_.dataType_ = DataType::SURFACE;
     UpdateProducerSurfaceInfo();
 
