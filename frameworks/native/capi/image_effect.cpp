@@ -277,6 +277,8 @@ ImageEffect_ErrorCode OH_ImageEffect_ReplaceFilterByFilter(OH_ImageEffect *image
     }
 
     auto &originFilter = imageEffect->filters_.at(index);
+    CHECK_AND_RETURN_RET_LOG(originFilter.first != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "ReplaceFilter:originFilter is null!");
     if (originFilter.first->isCreatedBySystem_) {
         OH_EffectFilter_Release(originFilter.first);
     }
