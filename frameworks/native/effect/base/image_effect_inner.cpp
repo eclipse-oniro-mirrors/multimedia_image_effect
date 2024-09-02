@@ -164,6 +164,7 @@ ImageEffect::ImageEffect(const char *name)
 ImageEffect::~ImageEffect()
 {
     EFFECT_LOGI("ImageEffect destruct!");
+    impl_->surfaceAdapter_ = nullptr;
     auto task = std::make_shared<RenderTask<>>([this]() { this->DestroyEGLEnv(); }, COMMON_TASK_TAG,
         RequestTaskId());
     m_renderThread->AddTask(task);
@@ -172,7 +173,6 @@ ImageEffect::~ImageEffect()
     m_renderThread->Stop();
     delete m_renderThread;
 
-    impl_->surfaceAdapter_ = nullptr;
     impl_->effectContext_->renderEnvironment_ = nullptr;
     if (toProducerSurface_) {
         auto res = toProducerSurface_->Disconnect();
@@ -860,6 +860,7 @@ void ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<S
 
 void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
+    CHECK_AND_RETURN_LOG(buffer != nullptr, "OnBufferAvailableWithCPU: buffer is nullptr.");
     outDateInfo_.dataType_ = DataType::SURFACE;
     UpdateProducerSurfaceInfo();
 
