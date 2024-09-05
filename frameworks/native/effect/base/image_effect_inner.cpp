@@ -146,7 +146,7 @@ const std::unordered_map<int32_t, std::vector<IPType>> runningTypeTab_{
 
 ImageEffect::ImageEffect(const char *name)
 {
-    imageEffctFlag_ = STRUCT_IMAGE_EFFECT_CONSTANT;
+    imageEffectFlag_ = STRUCT_IMAGE_EFFECT_CONSTANT;
     impl_ = std::make_shared<Impl>();
     if (name != nullptr) {
         name_ = name;
@@ -167,7 +167,7 @@ ImageEffect::ImageEffect(const char *name)
 
 ImageEffect::~ImageEffect()
 {
-    imageEffctFlag_ = DESTRUCTOR_IMAGE_EFFECT_CONSTANT;
+    imageEffectFlag_ = DESTRUCTOR_IMAGE_EFFECT_CONSTANT;
     EFFECT_LOGI("ImageEffect destruct!");
     impl_->surfaceAdapter_ = nullptr;
     auto task = std::make_shared<RenderTask<>>([this]() { this->DestroyEGLEnv(); }, COMMON_TASK_TAG,
