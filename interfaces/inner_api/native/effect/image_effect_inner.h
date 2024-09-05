@@ -128,6 +128,7 @@ private:
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
+    volatile int32_t imageEffectFlag_ = 0;
 
     GraphicTransformType toProducerTransform_ = GRAPHIC_ROTATE_BUTT;
 
