@@ -32,11 +32,11 @@ static const std::map<ErrorCode, const char*> g_ErrorTypeMap = {
     {ErrorCode::ERR_PERMISSION_DENIED, "ERROR_PERMISSION_DENIED"}
 };
 
-const char *GetErrorName(ErrorCode code)
+std::string GetErrorName(ErrorCode code)
 {
     auto it = g_ErrorTypeMap.find(code);
     if (it != g_ErrorTypeMap.end()) {
-        return it->second;
+        return std::string(it->second);
     }
     return "Unknow error type";
 }
