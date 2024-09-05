@@ -23,23 +23,39 @@ RenderProgram::RenderProgram(RenderContext *context) : program_(0), context_(con
 
 void RenderProgram::SetUniform(const std::string &name, float value)
 {
-    glUniform1f(glGetUniformLocation(program_, name.c_str()), value);
+    CHECK_AND_RETURN_LOG(program_ != 0, "RenderProgram SetUniform failed!, name=%{public}s, program=%{public}d",
+        name.c_str(), program_);
+    GLint location = glGetUniformLocation(program_, name.c_str());
+    CHECK_AND_RETURN_LOG(location != -1, "glGetUniformLocation failed!, name=%{public}s", name.c_str());
+    glUniform1f(location, value);
 }
 
 void RenderProgram::SetUniform(const std::string &name, int value)
 {
-    glUniform1i(glGetUniformLocation(program_, name.c_str()), value);
+    CHECK_AND_RETURN_LOG(program_ != 0, "RenderProgram SetUniform failed!, name=%{public}s, program=%{public}d",
+        name.c_str(), program_);
+    GLint location = glGetUniformLocation(program_, name.c_str());
+    CHECK_AND_RETURN_LOG(location != -1, "glGetUniformLocation failed!, name=%{public}s", name.c_str());
+    glUniform1i(location, value);
 }
 
 void RenderProgram::SetUniform(const std::string &name, unsigned int value)
 {
-    glUniform1ui(glGetUniformLocation(program_, name.c_str()), value);
+    CHECK_AND_RETURN_LOG(program_ != 0, "RenderProgram SetUniform failed!, name=%{public}s, program=%{public}d",
+        name.c_str(), program_);
+    GLint location = glGetUniformLocation(program_, name.c_str());
+    CHECK_AND_RETURN_LOG(location != -1, "glGetUniformLocation failed!, name=%{public}s", name.c_str());
+    glUniform1ui(location, value);
 }
 
 void RenderProgram::SetUniform(const std::string &name, const void *value)
 {
-    glUniformMatrix4fv(glGetUniformLocation(program_, name.c_str()), 1, GL_FALSE,
+    CHECK_AND_RETURN_LOG(program_ != 0, "RenderProgram SetUniform failed!, name=%{public}s, program=%{public}d",
         reinterpret_cast<const GLfloat *>(value));
+        name.c_str(), program_);
+    GLint location = glGetUniformLocation(program_, name.c_str());
+    CHECK_AND_RETURN_LOG(location != -1, "glGetUniformLocation failed!, name=%{public}s", name.c_str());
+    glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat *>(value));
 }
 
 void RenderProgram::Bind()
