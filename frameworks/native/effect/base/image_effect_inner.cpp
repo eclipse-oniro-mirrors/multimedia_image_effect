@@ -53,7 +53,7 @@ enum class EffectState {
 };
 
 const int STRUCT_IMAGE_EFFECT_CONSTANT = 1;
-const int DESTRUCTOR_IMAGE_EFFECT_CONSTANT = 2;g149
+const int DESTRUCTOR_IMAGE_EFFECT_CONSTANT = 2;
 
 class ImageEffect::Impl {
 public:
@@ -914,7 +914,8 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
         },
         .timestamp = timestamp,
     };
-    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT, "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
+    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
+        "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
     CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr, "OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     constexpr int32_t invalidFence = -1;
     (void)toProducerSurface_->FlushBuffer(outBuffer, invalidFence, flushConfig);
@@ -922,7 +923,8 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
 
 void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
-    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT, "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
+    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
+        "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
     std::unique_lock<std::mutex> lock(innerEffectMutex_);
     OnBufferAvailableWithCPU(buffer, damages, timestamp);
 }

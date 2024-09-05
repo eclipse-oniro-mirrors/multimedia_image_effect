@@ -31,7 +31,8 @@ EffectSurfaceAdapter::~EffectSurfaceAdapter()
 {
     if (receiverConsumerSurface_) {
         GSError result = receiverConsumerSurface_->UnregisterConsumerListener();
-        EFFECT_LOGI("EffectSurfaceAdapter::~EffectSurfaceAdapter UnregisterConsumerListener. result=%{public}d", result);
+        EFFECT_LOGI("EffectSurfaceAdapter::~EffectSurfaceAdapter UnregisterConsumerListener. result=%{public}d",
+            result);
         receiverConsumerSurface_ = nullptr;
     }
 }
