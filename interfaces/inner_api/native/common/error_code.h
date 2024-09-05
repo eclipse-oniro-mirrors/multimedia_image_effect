@@ -17,7 +17,7 @@
 #define IMAGE_EFFECT_ERROR_CODE_H
 
 #include <stdint.h>
-#include <string.h>
+#include <string>
 
 namespace OHOS {
 namespace Media {
