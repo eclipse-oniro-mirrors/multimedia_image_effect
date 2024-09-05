@@ -56,6 +56,7 @@ void RenderProgram::SetUniform(const std::string &name, const void *value)
     GLint location = glGetUniformLocation(program_, name.c_str());
     CHECK_AND_RETURN_LOG(location != -1, "glGetUniformLocation failed!, name=%{public}s", name.c_str());
     glUniformMatrix4fv(location, 1, GL_FALSE, reinterpret_cast<const GLfloat *>(value));
+}
 
 void RenderProgram::Bind()
 {
