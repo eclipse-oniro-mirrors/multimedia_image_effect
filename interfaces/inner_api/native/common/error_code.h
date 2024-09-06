@@ -155,13 +155,13 @@ std::string GetErrorName(ErrorCode code);
 #endif
 
 #ifndef FAIL_RETURN
-#define FAIL_RETURN(exec)                                                                    \
-    do {                                                                                     \
-        ErrorCode returnValue = (exec);                                                      \
-        if (returnValue != ErrorCode::SUCCESS) {                                             \
+#define FAIL_RETURN(exec)                                                                            \
+    do {                                                                                             \
+        ErrorCode returnValue = (exec);                                                              \
+        if (returnValue != ErrorCode::SUCCESS) {                                                     \
             EFFECT_LOGE("FAIL_RETURN on ErrorCode(%{public}s).", GetErrorName(returnValue).c_str()); \
-            return returnValue;                                                              \
-        }                                                                                    \
+            return returnValue;                                                                      \
+        }                                                                                            \
     } while (0)
 #endif
 } // namespace Effect
