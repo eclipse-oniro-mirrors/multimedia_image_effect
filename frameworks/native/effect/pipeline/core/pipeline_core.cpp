@@ -31,6 +31,7 @@ void PipelineCore::Init(EventReceiver *receiver)
 
 ErrorCode PipelineCore::Prepare()
 {
+    CHECK_AND_RETURN_RET_LOG(!filters_.empty(), ErrorCode::ERR_PARAM_INVALID, "PipelineCore Prepare filters is null!");
     state_ = FilterState::PREPARING;
 
     // Set source buffer to source filter
@@ -44,6 +45,7 @@ ErrorCode PipelineCore::Prepare()
 
 ErrorCode PipelineCore::Start()
 {
+    CHECK_AND_RETURN_RET_LOG(!filters_.empty(), ErrorCode::ERR_PARAM_INVALID, "PipelineCore Start filters is null!");
     state_ = FilterState::RUNNING;
     auto sourceEffect = filters_[0];
     if (sourceEffect) {

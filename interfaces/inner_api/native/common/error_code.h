@@ -17,6 +17,7 @@
 #define IMAGE_EFFECT_ERROR_CODE_H
 
 #include <stdint.h>
+#include <string>
 
 namespace OHOS {
 namespace Media {
@@ -118,7 +119,7 @@ enum struct ErrorCode : int32_t {
     ERR_GL_COPY_PIXELS_FAILED = ERR_UNKNOWN + 206,
 };
 
-const char *GetErrorName(ErrorCode code);
+std::string GetErrorName(ErrorCode code);
 
 #ifndef FALSE_RETURN_MSG_W
 #define FALSE_RETURN_MSG_W(exec, ret, fmt, args...) \
@@ -154,13 +155,13 @@ const char *GetErrorName(ErrorCode code);
 #endif
 
 #ifndef FAIL_RETURN
-#define FAIL_RETURN(exec)                                                                    \
-    do {                                                                                     \
-        ErrorCode returnValue = (exec);                                                      \
-        if (returnValue != ErrorCode::SUCCESS) {                                             \
-            EFFECT_LOGE("FAIL_RETURN on ErrorCode(%{public}s).", GetErrorName(returnValue)); \
-            return returnValue;                                                              \
-        }                                                                                    \
+#define FAIL_RETURN(exec)                                                                            \
+    do {                                                                                             \
+        ErrorCode returnValue = (exec);                                                              \
+        if (returnValue != ErrorCode::SUCCESS) {                                                     \
+            EFFECT_LOGE("FAIL_RETURN on ErrorCode(%{public}s).", GetErrorName(returnValue).c_str()); \
+            return returnValue;                                                                      \
+        }                                                                                            \
     } while (0)
 #endif
 } // namespace Effect

@@ -40,6 +40,7 @@ RenderAttribute RenderSurface::GetAttrib()
 
 bool RenderSurface::Create(void *window)
 {
+    CHECK_AND_RETURN_RET_LOG(window != nullptr, false, "RenderSurface Create window is null!");
     EGLint retNum = 0;
     display_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     std::vector<int> attributeList = attribute_.ToEGLAttribList();

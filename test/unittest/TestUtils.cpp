@@ -347,8 +347,8 @@ HWTEST_F(TestUtils, NativeCommonUtils001, TestSize.Level1) {
 
 HWTEST_F(TestUtils, ErrorCode001, TestSize.Level1) {
     ErrorCode code = ErrorCode::ERR_PERMISSION_DENIED;
-    const char *expected = "ERROR_PERMISSION_DENIED";
-    const char *actual = GetErrorName(code);
+    std::string expected = "ERROR_PERMISSION_DENIED";
+    std::string actual = GetErrorName(code);
     ASSERT_EQ(expected, actual);
 
     code = ErrorCode::ERR_INPUT_NULL;
