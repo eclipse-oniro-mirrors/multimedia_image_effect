@@ -52,6 +52,9 @@ enum class EffectState {
     RUNNING,
 };
 
+const int STRUCT_IMAGE_EFFECT_CONSTANT = 1;
+const int DESTRUCTOR_IMAGE_EFFECT_CONSTANT = 2;
+
 class ImageEffect::Impl {
 public:
     Impl()
@@ -143,6 +146,7 @@ const std::unordered_map<int32_t, std::vector<IPType>> runningTypeTab_{
 
 ImageEffect::ImageEffect(const char *name)
 {
+    imageEffectFlag_ = STRUCT_IMAGE_EFFECT_CONSTANT;
     impl_ = std::make_shared<Impl>();
     if (name != nullptr) {
         name_ = name;
@@ -163,6 +167,7 @@ ImageEffect::ImageEffect(const char *name)
 
 ImageEffect::~ImageEffect()
 {
+    imageEffectFlag_ = DESTRUCTOR_IMAGE_EFFECT_CONSTANT;
     EFFECT_LOGI("ImageEffect destruct!");
     impl_->surfaceAdapter_ = nullptr;
     auto task = std::make_shared<RenderTask<>>([this]() { this->DestroyEGLEnv(); }, COMMON_TASK_TAG,
@@ -909,6 +914,8 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
         },
         .timestamp = timestamp,
     };
+    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
+        "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
     CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr, "OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     constexpr int32_t invalidFence = -1;
     (void)toProducerSurface_->FlushBuffer(outBuffer, invalidFence, flushConfig);
@@ -916,6 +923,8 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
 
 void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
+    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
+        "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
     std::unique_lock<std::mutex> lock(innerEffectMutex_);
     OnBufferAvailableWithCPU(buffer, damages, timestamp);
 }
