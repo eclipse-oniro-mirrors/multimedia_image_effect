@@ -15,6 +15,7 @@
 
 #include "graphic/render_program.h"
 #include <GLES3/gl3.h>
+#include "effect_log.h"
 
 namespace OHOS {
 namespace Media {
@@ -51,7 +52,6 @@ void RenderProgram::SetUniform(const std::string &name, unsigned int value)
 void RenderProgram::SetUniform(const std::string &name, const void *value)
 {
     CHECK_AND_RETURN_LOG(program_ != 0, "RenderProgram SetUniform failed!, name=%{public}s, program=%{public}d",
-        reinterpret_cast<const GLfloat *>(value));
         name.c_str(), program_);
     GLint location = glGetUniformLocation(program_, name.c_str());
     CHECK_AND_RETURN_LOG(location != -1, "glGetUniformLocation failed!, name=%{public}s", name.c_str());
