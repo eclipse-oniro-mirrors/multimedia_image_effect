@@ -334,8 +334,7 @@ ErrorCode EFilter::PushData(EffectBuffer *buffer, std::shared_ptr<EffectContext>
         return OnPushDataPortsEmpty(effectBuffer, context, name_);
     }
 
-    outPorts_[0]->PushData(effectBuffer, context);
-    return ErrorCode::SUCCESS;
+    return outPorts_[0]->PushData(effectBuffer, context);
 }
 
 std::shared_ptr<MemNegotiatedCap> EFilter::Negotiate(const std::shared_ptr<MemNegotiatedCap> &input)

@@ -70,7 +70,8 @@ public:
 
     virtual void Negotiate(const std::shared_ptr<Capability> &capability, std::shared_ptr<EffectContext> &context) = 0;
 
-    virtual void PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context) = 0;
+    virtual ErrorCode PushData(const std::shared_ptr<EffectBuffer> &buffer,
+        std::shared_ptr<EffectContext> &context) = 0;
 
     virtual ErrorCode PullData(std::shared_ptr<EffectBuffer> &data) = 0;
 
@@ -98,7 +99,7 @@ public:
 
     void Negotiate(const std::shared_ptr<Capability> &capability, std::shared_ptr<EffectContext> &context) override;
 
-    void PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context) override;
+    ErrorCode PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context) override;
 
     ErrorCode PullData(std::shared_ptr<EffectBuffer> &data) override;
 
@@ -122,7 +123,7 @@ public:
 
     void Negotiate(const std::shared_ptr<Capability> &capability, std::shared_ptr<EffectContext> &context) override;
 
-    void PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context) override;
+    ErrorCode PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context) override;
 
     ErrorCode PullData(std::shared_ptr<EffectBuffer> &data) override;
 
@@ -149,7 +150,7 @@ public:
 
     void Negotiate(const std::shared_ptr<Capability> &capability, std::shared_ptr<EffectContext> &context) override;
 
-    void PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context) override;
+    ErrorCode PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context) override;
 
     ErrorCode PullData(std::shared_ptr<EffectBuffer> &data) override;
 
@@ -174,7 +175,7 @@ public:
 
     void Negotiate(const std::shared_ptr<Capability> &capability, std::shared_ptr<EffectContext> &context) override;
 
-    void PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context) override;
+    ErrorCode PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context) override;
 
     ErrorCode PullData(std::shared_ptr<EffectBuffer> &data) override;
 

@@ -73,12 +73,13 @@ void InPort::Negotiate(const std::shared_ptr<Capability> &capability, std::share
     }
 }
 
-void InPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
+ErrorCode InPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
 {
     if (filter_) {
-        filter_->PushData(name_, buffer, context);
+        return filter_->PushData(name_, buffer, context);
     } else {
         EFFECT_LOGE("InPort::PushData filter is invalid! name=%{public}s", name_.c_str());
+        return ErrorCode::ERR_PIPELINE_INVALID_FILTER_PORT;
     }
 }
 
@@ -154,9 +155,9 @@ void OutPort::Negotiate(const std::shared_ptr<Capability> &capability, std::shar
     nextPort_->Negotiate(capability, context);
 }
 
-void OutPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
+ErrorCode OutPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
 {
-    nextPort_->PushData(buffer, context);
+    return nextPort_->PushData(buffer, context);
 }
 
 ErrorCode OutPort::PullData(std::shared_ptr<EffectBuffer> &data)
@@ -186,9 +187,10 @@ void EmptyInPort::Negotiate(const std::shared_ptr<Capability> &capability, std::
     EFFECT_LOGE("Negotiate in EmptyInPort");
 }
 
-void EmptyInPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
+ErrorCode EmptyInPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGE("PushData in EmptyInPort");
+    return ErrorCode::SUCCESS;
 }
 ErrorCode EmptyInPort::PullData(std::shared_ptr<EffectBuffer> &data)
 {
@@ -213,9 +215,10 @@ void EmptyOutPort::Negotiate(const std::shared_ptr<Capability> &capability, std:
     EFFECT_LOGE("Negotiate in EmptyOutPort");
 }
 
-void EmptyOutPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
+ErrorCode EmptyOutPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGE("PushData in EmptyOutPort");
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode EmptyOutPort::PullData(std::shared_ptr<EffectBuffer> &data)
