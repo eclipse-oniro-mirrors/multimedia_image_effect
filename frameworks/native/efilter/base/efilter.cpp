@@ -332,6 +332,7 @@ ErrorCode EFilter::PushData(EffectBuffer *buffer, std::shared_ptr<EffectContext>
     std::shared_ptr<EffectBuffer> effectBuffer =
         std::make_shared<EffectBuffer>(buffer->bufferInfo_, buffer->buffer_, buffer->extraInfo_);
     effectBuffer->tex = buffer->tex;
+    effectBuffer->auxiliaryBufferInfos = buffer->auxiliaryBufferInfos;
     if (outPorts_.empty()) {
         return OnPushDataPortsEmpty(effectBuffer, context, name_);
     }

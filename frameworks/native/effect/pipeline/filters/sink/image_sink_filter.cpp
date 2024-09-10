@@ -221,7 +221,7 @@ ErrorCode ModifyPicture(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &
     if (it == buffer->auxiliaryBufferInfos->end()) {
         return ErrorCode::SUCCESS;
     }
-    auto gainMap = picture->GetMainPixel();
+    auto gainMap = picture->GetGainmapPixelMap();
     CHECK_AND_RETURN_RET_LOG(gainMap != nullptr, ErrorCode::ERR_INPUT_NULL, "ModifyPicture: gainMap is null!");
 
     auto gainMapBufferInfo = it->second;
