@@ -38,7 +38,7 @@ EffectSurfaceAdapter::~EffectSurfaceAdapter()
         GSError result = receiverConsumerSurface_->UnregisterConsumerListener();
         EFFECT_LOGI("EffectSurfaceAdapter::~EffectSurfaceAdapter UnregisterConsumerListener. result=%{public}d",
             result);
-        effectSurfaceFlag_ =DESTRUCTOR_EFFECT_SURFACE_CONSTANT;
+        effectSurfaceFlag_ = DESTRUCTOR_EFFECT_SURFACE_CONSTANT;
         receiverConsumerSurface_ = nullptr;
     }
 }
