@@ -24,8 +24,13 @@ namespace OHOS {
 namespace Media {
 namespace Effect {
 constexpr int32_t IE_INVALID_FENCE = -1;
+const int32_t STRUCT_EFFECT_SURFACE_CONSTANT = 1;
+const int32_t DESTRUCTOR_EFFECT_SURFACE_CONSTANT = 2;
 
-EffectSurfaceAdapter::EffectSurfaceAdapter() {}
+EffectSurfaceAdapter::EffectSurfaceAdapter()
+{
+    effectSurfaceFlag_ = STRUCT_EFFECT_SURFACE_CONSTANT;
+}
 
 EffectSurfaceAdapter::~EffectSurfaceAdapter()
 {
@@ -33,6 +38,7 @@ EffectSurfaceAdapter::~EffectSurfaceAdapter()
         GSError result = receiverConsumerSurface_->UnregisterConsumerListener();
         EFFECT_LOGE("EffectSurfaceAdapter::~EffectSurfaceAdapter UnregisterConsumerListener. result=%{public}d",
             result);
+        effectSurfaceFlag_ = DESTRUCTOR_EFFECT_SURFACE_CONSTANT;
         receiverConsumerSurface_ = nullptr;
     }
 }
@@ -125,6 +131,8 @@ void EffectSurfaceAdapter::OnBufferAvailable()
     int64_t timestamp = 0;
     Rect damages{};
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
+    CHECK_AND_RETURN_LOG(effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT,
+        "EffectSurfaceAdapter::OnBufferAvailable AcquireBuffer surface not exist.");
     auto ret = receiverConsumerSurface_->AcquireBuffer(inBuffer, syncFence, timestamp, damages);
     if (ret != 0) {
         EFFECT_LOGE("AcquireBuffer failed. %{public}d", ret);
@@ -139,8 +147,11 @@ void EffectSurfaceAdapter::OnBufferAvailable()
     } else {
         EFFECT_LOGE("not register handle buffer.");
     }
-
-    (void)receiverConsumerSurface_->ReleaseBuffer(inBuffer, IE_INVALID_FENCE);
+    CHECK_AND_RETURN_LOG(effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT,
+        "EffectSurfaceAdapter::OnBufferAvailable ReleaseBuffer surface not exist.");
+    if (receiverConsumerSurface_) {
+        (void)receiverConsumerSurface_->ReleaseBuffer(inBuffer, IE_INVALID_FENCE);
+    }
 }
 
 void EffectSurfaceAdapter::OnTunnelHandleChange() {}
