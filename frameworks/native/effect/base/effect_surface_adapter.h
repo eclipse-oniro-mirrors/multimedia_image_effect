@@ -55,6 +55,7 @@ private:
     OHOS::sptr<Surface> fromProducerSurface_ = nullptr;
     ConsumerBufferAvailable consumerBufferAvailable_;
     uint64_t outputSurfaceDefaultUsage_ = 0;
+    volatile int32_t effectSurfaceFlag_ = 0;
 };
 }
 }

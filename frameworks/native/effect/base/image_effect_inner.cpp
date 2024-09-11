@@ -169,13 +169,15 @@ ImageEffect::~ImageEffect()
 {
     imageEffectFlag_ = DESTRUCTOR_IMAGE_EFFECT_CONSTANT;
     EFFECT_LOGI("ImageEffect destruct!");
+    impl_->surfaceAdapter_ = nullptr;
     auto task = std::make_shared<RenderTask<>>([this]() { this->DestroyEGLEnv(); }, COMMON_TASK_TAG,
         RequestTaskId());
     m_renderThread->AddTask(task);
     task->Wait();
     ExtDeinitModule();
+    m_renderThread->Stop();
+    delete m_renderThread;
 
-    impl_->surfaceAdapter_ = nullptr;
     impl_->effectContext_->renderEnvironment_ = nullptr;
     if (toProducerSurface_) {
         auto res = toProducerSurface_->Disconnect();
@@ -184,8 +186,7 @@ ImageEffect::~ImageEffect()
         toProducerSurface_ = nullptr;
     }
     fromProducerSurface_ = nullptr;
-    m_renderThread->Stop();
-    delete m_renderThread;
+    impl_ = nullptr;
 }
 
 void ImageEffect::AddEFilter(const std::shared_ptr<EFilter> &efilter)
@@ -818,6 +819,7 @@ void ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<S
     SetSurfaceBufferHebcAccessType(outBuffer,
         isSrcHebcData ? V1_1::HebcAccessType::HEBC_ACCESS_HW_ONLY : V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
 
+    CHECK_AND_RETURN_LOG(impl_ != nullptr, "OnBufferAvailableToProcess: impl is nullptr.");
     bool isNeedRender = !isSrcHebcData && impl_->effectState_ == EffectState::RUNNING;
     bool isNeedCpy = true;
     if (isNeedRender) {
@@ -847,6 +849,7 @@ void ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<S
 
 void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
+    CHECK_AND_RETURN_LOG(buffer != nullptr, "OnBufferAvailableWithCPU: buffer is nullptr.");
     outDateInfo_.dataType_ = DataType::SURFACE;
     UpdateProducerSurfaceInfo();
 
@@ -868,6 +871,7 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
         .transform = buffer->GetSurfaceBufferTransform(),
     };
 
+    CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr, "OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     auto ret = toProducerSurface_->RequestBuffer(outBuffer, syncFence, requestConfig);
     CHECK_AND_RETURN_LOG(ret == 0 && outBuffer != nullptr, "RequestBuffer failed. %{public}d", ret);
 
@@ -896,6 +900,7 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
     };
     CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
         "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
+    CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr, "OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     constexpr int32_t invalidFence = -1;
     (void)toProducerSurface_->FlushBuffer(outBuffer, invalidFence, flushConfig);
 }
