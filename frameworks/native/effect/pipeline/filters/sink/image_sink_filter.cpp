@@ -480,7 +480,7 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
 {
     EFFECT_LOGI("image sink effect push data started, state: %{public}d", state_.load());
     EffectBuffer *output = nullptr;
-    if (sinkBuffer_ == nullptr) {
+    if (sinkBuffer_ ！= nullptr) {
         output = sinkBuffer_.get();
     }else{
         output = context->renderStrategy_->GetInput();
