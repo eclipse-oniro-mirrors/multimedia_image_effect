@@ -95,7 +95,7 @@ public:
         NativeCommonUtils::SwitchToOHFormatType(src->bufferInfo_->formatType_, srcBuffer->format);
         srcBuffer->timestamp = src->extraInfo_->timestamp;
 
-        OH_EffectFilter *ohEFilter = (OH_EffectFilter *)efilter;
+        OH_EffectFilter *ohEFilter = static_cast<OH_EffectFilter *>(efilter);
         CHECK_AND_RETURN_RET_LOG(ohEFilter != nullptr && ohEFilter->filter_ != nullptr, false,
             "FilterDelegateRender: filter is null! ohEFilter=%{public}p", ohEFilter);
 
