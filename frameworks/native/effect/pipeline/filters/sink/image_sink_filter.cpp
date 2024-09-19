@@ -482,7 +482,7 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
     EffectBuffer *output = nullptr;
     if (sinkBuffer_ != nullptr) {
         output = sinkBuffer_.get();
-    }else{
+    } else {
         output = context->renderStrategy_->GetInput();
     }
 
