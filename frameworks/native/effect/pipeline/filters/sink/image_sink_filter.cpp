@@ -479,8 +479,10 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
     std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("image sink effect push data started, state: %{public}d", state_.load());
-    EffectBuffer *output = sinkBuffer_.get();
+    EffectBuffer *output = nullptr;
     if (sinkBuffer_ == nullptr) {
+        output = sinkBuffer_.get();
+    }else{
         output = context->renderStrategy_->GetInput();
     }
 

@@ -48,6 +48,7 @@ ErrorCode ImageSourceFilter::Prepare()
 ErrorCode UpdateInputBufferIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
+    CHECK_AND_RETURN_RET_LOG(context != nullptr, ErrorCode::ERR_INPUT_NULL, "UpdateInputBufferIfNeed context is null!");
     if (context->ipType_ != IPType::GPU && context->renderEnvironment_->GetOutputType() == DataType::NATIVE_WINDOW) {
         MemoryInfo memInfo = {
             .bufferInfo = {
