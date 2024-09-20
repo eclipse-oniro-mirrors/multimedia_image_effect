@@ -32,6 +32,9 @@ using namespace OHOS::Media::Effect;
 
 namespace {
     std::mutex effectMutex_;
+
+    constexpr int const MAX_CHAR_LEN = 1024;
+    constexpr int const MAX_INFO_LEN = 5 * 1024 * 1024;
 }
 
 #ifdef __cplusplus
@@ -41,6 +44,9 @@ extern "C" {
 EFFECT_EXPORT
 OH_ImageEffect *OH_ImageEffect_Create(const char *name)
 {
+    CHECK_AND_RETURN_RET_LOG(name != nullptr, nullptr, "Create: input parameter name is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(name) < MAX_CHAR_LEN, nullptr,
+        "Create: the length of input parameter name is too long! len = %{public}zu", strlen(name));
     if (!ExternLoader::Instance()->IsExtLoad()) {
         ExternLoader::Instance()->LoadExtSo();
     }
@@ -68,6 +74,8 @@ OH_EffectFilter *OH_ImageEffect_AddFilter(OH_ImageEffect *imageEffect, const cha
     CHECK_AND_RETURN_RET_LOG(imageEffect->filters_.size() < MAX_EFILTER_NUMS, nullptr,
         "AddFilter: filter nums is out of range!");
     CHECK_AND_RETURN_RET_LOG(filterName != nullptr, nullptr, "AddFilter: input parameter filterName is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(filterName) < MAX_CHAR_LEN, nullptr,
+        "AddFilter: the length of input parameter filterName is too long! len = %{public}zu", strlen(filterName));
 
     OH_EffectFilter *filter = OH_EffectFilter_Create(filterName);
     CHECK_AND_RETURN_RET_LOG(filter != nullptr, nullptr, "AddFilter: create filter fail! name=%{public}s", filterName);
@@ -111,6 +119,8 @@ OH_EffectFilter *OH_ImageEffect_InsertFilter(OH_ImageEffect *imageEffect, uint32
     CHECK_AND_RETURN_RET_LOG(imageEffect->filters_.size() < MAX_EFILTER_NUMS, nullptr,
         "InsertFilter: filter nums is out of range!");
     CHECK_AND_RETURN_RET_LOG(filterName != nullptr, nullptr, "InsertFilter: input parameter filterName is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(filterName) < MAX_CHAR_LEN, nullptr,
+        "InsertFilter: the length of input parameter filterName is too long! len = %{public}zu", strlen(filterName));
 
     OH_EffectFilter *filter = OH_EffectFilter_Create(filterName);
     CHECK_AND_RETURN_RET_LOG(filter != nullptr, nullptr, "InsertFilter: create filter fail! filterName=%{public}s",
@@ -165,6 +175,8 @@ int32_t OH_ImageEffect_RemoveFilter(OH_ImageEffect *imageEffect, const char *fil
     std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, 0, "RemoveFilter: input parameter imageEffect is null!");
     CHECK_AND_RETURN_RET_LOG(filterName != nullptr, 0, "RemoveFilter: input parameter nativeEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(filterName) < MAX_CHAR_LEN, 0,
+        "RemoveFilter: the length of input parameter filterName is too long! len = %{public}zu", strlen(filterName));
 
     int32_t count = 0;
     for (auto it = imageEffect->filters_.begin(); it != imageEffect->filters_.end();) {
@@ -240,6 +252,8 @@ OH_EffectFilter *OH_ImageEffect_ReplaceFilter(OH_ImageEffect *imageEffect, uint3
         index, imageEffect->filters_.size());
 
     CHECK_AND_RETURN_RET_LOG(filterName != nullptr, nullptr, "ReplaceFilter: input parameter filterName is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(filterName) < MAX_CHAR_LEN, nullptr,
+        "ReplaceFilter: the length of input parameter filterName is too long! len = %{public}zu", strlen(filterName));
 
     OH_EffectFilter *filter = OH_EffectFilter_Create(filterName);
     CHECK_AND_RETURN_RET_LOG(filter != nullptr, nullptr,
@@ -295,6 +309,8 @@ ImageEffect_ErrorCode OH_ImageEffect_Configure(OH_ImageEffect *imageEffect, cons
         "Configure: input parameter imageEffect is null!");
     CHECK_AND_RETURN_RET_LOG(key != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Configure: input parameter key is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(key) < MAX_CHAR_LEN, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "Configure: the length of input parameter key is too long! len = %{public}zu", strlen(key));
     CHECK_AND_RETURN_RET_LOG(value != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Configure: input parameter value is null!");
 
@@ -446,6 +462,8 @@ ImageEffect_ErrorCode OH_ImageEffect_SetInputUri(OH_ImageEffect *imageEffect, co
         "SetInputUri: input parameter imageEffect is null!");
     CHECK_AND_RETURN_RET_LOG(uri != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetInputUri: input parameter input uri is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(uri) < MAX_CHAR_LEN, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetInputUri: the length of input parameter uri is too long! len = %{public}zu", strlen(uri));
 
     ErrorCode errorCode = imageEffect->imageEffect_->SetInputUri(uri);
     if (errorCode != ErrorCode::SUCCESS) {
@@ -467,6 +485,10 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputUri(OH_ImageEffect *imageEffect, c
     EFFECT_LOGD("Set output uri.");
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputUri: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(uri != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetOutputUri: input parameter uri is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(uri) < MAX_CHAR_LEN, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetOutputUri: the length of input parameter uri is too long! len = %{public}zu", strlen(uri));
 
     std::string strUri;
     if (uri != nullptr) {
@@ -596,6 +618,8 @@ EFFECT_EXPORT
 OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
 {
     CHECK_AND_RETURN_RET_LOG(info != nullptr, nullptr, "Restore: input parameter info is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(info) < MAX_INFO_LEN, nullptr,
+        "Restore: the length of input parameter info is too long! len = %{public}zu", strlen(info));
     std::string infoStr = info;
     const EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(infoStr);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "OH_ImageEffect_Restore no imageEffect");
