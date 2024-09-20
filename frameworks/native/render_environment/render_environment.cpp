@@ -292,7 +292,7 @@ GLuint RenderEnvironment::ConvertFromYUVToRGB(const EffectBuffer *source, IEffec
     uint32_t height = source->bufferInfo_->height_;
     auto *srcNV12 = static_cast<unsigned char *>(source->buffer_);
     uint8_t *srcNV12UV = srcNV12 + width * height;
-    unsigned char *data = new unsigned char[width * height * RGBA_SIZE_PER_PIXEL];
+    auto data = std::make_unique<unsigned char[]>(width * height * RGBA_SIZE_PER_PIXEL);
     for (uint32_t i = 0; i < height; i++) {
         for (uint32_t j = 0; j < width; j++) {
             uint32_t nv_index = i / UV_PLANE_SIZE * width + j - j % UV_PLANE_SIZE; // 2 mean u/v split factor
@@ -320,7 +320,6 @@ GLuint RenderEnvironment::ConvertFromYUVToRGB(const EffectBuffer *source, IEffec
         }
     }
     GLuint tex = GLUtils::CreateTexWithStorage(GL_TEXTURE_2D, 1, GL_RGB, width, height);
-    delete[] data;
     return tex;
 }
 
@@ -328,8 +327,8 @@ void RenderEnvironment::ConvertFromRGBToYUV(RenderTexturePtr input, IEffectForma
 {
     uint32_t width = input->Width();
     uint32_t height = input->Height();
-    unsigned char *rgbData = new unsigned char[width * height * RGBA_SIZE_PER_PIXEL];
-    ReadPixelsFromTex(input, rgbData, width, height, width);
+    auto rgbData = std::make_unique<unsigned char[]>(width * height * RGBA_SIZE_PER_PIXEL);
+    ReadPixelsFromTex(input, rgbData.get(), width, height, width);
     auto *srcNV12 = static_cast<unsigned char *>(data);
     uint8_t *srcNV12UV = srcNV12 + width * height;
     for (uint32_t i = 0; i < height; i++) {
@@ -350,7 +349,6 @@ void RenderEnvironment::ConvertFromRGBToYUV(RenderTexturePtr input, IEffectForma
             }
         }
     }
-    delete[] rgbData;
 }
 
 RenderContext *RenderEnvironment::GetContext()
