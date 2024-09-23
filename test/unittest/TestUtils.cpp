@@ -368,8 +368,8 @@ HWTEST_F(TestUtils, ErrorCode001, TestSize.Level1) {
 
 HWTEST_F(TestUtils, MemcpyHelperCopyData001, TestSize.Level1)
 {
-    MemcpyData *src = new MemcpyData();
-    MemcpyData *dst = src;
+    MemoryData *src = new MemoryData();
+    MemoryData *dst = src;
     MemcpyHelper::CopyData(src, dst);
     EXPECT_EQ(src, dst);
 
