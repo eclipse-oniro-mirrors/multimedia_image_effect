@@ -815,6 +815,21 @@ void SetSurfaceBufferHebcAccessType(sptr<SurfaceBuffer> &buffer, V1_1::HebcAcces
 void ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<SurfaceBuffer> &outBuffer,
     int64_t timestamp)
 {
+    std::vector<uint32_t> keys = {};
+    auto res = buffer->ListMetadataKeys(keys);
+    for (uint32_t key : keys) {
+        std::vector<uint8_t> values;
+        res = buffer->GetMetadata(key, values);
+        if (res != 0) {
+            EFFECT_LOGE("GetMetadata fail! key = %{public}d res = %{public}d", key, res);
+            continue;
+        }
+        res = outBuffer->SetMetadata(key, values);
+        if (res != 0) {
+            EFFECT_LOGE("SetMetadata fail! key = %{public}d res = %{public}d", key, res);
+            continue;
+        }
+    }
     bool isSrcHebcData = IsSurfaceBufferHebc(buffer);
     SetSurfaceBufferHebcAccessType(outBuffer,
         isSrcHebcData ? V1_1::HebcAccessType::HEBC_ACCESS_HW_ONLY : V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
