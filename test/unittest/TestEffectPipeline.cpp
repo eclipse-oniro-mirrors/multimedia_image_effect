@@ -146,35 +146,35 @@ HWTEST_F(TestEffectPipeline, FilterBaseGetPreFilters001, TestSize.Level1)
 
 HWTEST_F(TestEffectPipeline, InPortPullData001, TestSize.Level1)
 {
-   std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
-   void *add = nullptr;
-   std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
-   std::shared_ptr<EffectBuffer> data = std::make_shared<EffectBuffer>(bufferInfo, add, extraInfo);
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    void *add = nullptr;
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> data = std::make_shared<EffectBuffer>(bufferInfo, add, extraInfo);
 
-   InfoTransfer *filterPtr = nullptr;
-   InPort port(filterPtr);
-   auto inPort = std::make_shared<InPort>(port);
+    InfoTransfer *filterPtr = nullptr;
+    InPort port(filterPtr);
+    auto inPort = std::make_shared<InPort>(port);
 
-   std::shared_ptr<InPort> prevPort = std::make_shared<InPort>(nullptr);
-   inPort->prevPort_ = prevPort;
+    std::shared_ptr<InPort> prevPort = std::make_shared<InPort>(nullptr);
+    inPort->prevPort_ = prevPort;
 
-   ErrorCode result = inPort->PullData(data);
-   ASSERT_EQ(result, ErrorCode::ERR_PIPELINE_INVALID_FILTER_PORT);
+    ErrorCode result = inPort->PullData(data);
+    ASSERT_EQ(result, ErrorCode::ERR_PIPELINE_INVALID_FILTER_PORT);
 }
 
 HWTEST_F(TestEffectPipeline, InPortActivate001, TestSize.Level1)
 {
-   std::shared_ptr<EFilter> eFilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
-   InPort port(eFilter.get());
-   auto inPort = std::make_shared<InPort>(port);
+    std::shared_ptr<EFilter> eFilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
+    InPort port(eFilter.get());
+    auto inPort = std::make_shared<InPort>(port);
 
-   std::shared_ptr<InPort> prevPort = std::make_shared<InPort>(port);
-   inPort->prevPort_ = prevPort;
+    std::shared_ptr<InPort> prevPort = std::make_shared<InPort>(port);
+    inPort->prevPort_ = prevPort;
 
-   std::vector<WorkMode> modes;
-   WorkMode outMode;
-   ErrorCode result = inPort->Activate(modes, outMode);
-   ASSERT_EQ(result, ErrorCode::ERR_INVALID_PAPAMETER_VALUE);
+    std::vector<WorkMode> modes;
+    WorkMode outMode;
+    ErrorCode result = inPort->Activate(modes, outMode);
+    ASSERT_EQ(result, ErrorCode::ERR_INVALID_PAPAMETER_VALUE);
 }
 }
 }

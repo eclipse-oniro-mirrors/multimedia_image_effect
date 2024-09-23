@@ -383,14 +383,14 @@ HWTEST_F(TestUtils, MemcpyHelperCopyData001, TestSize.Level1)
 
 HWTEST_F(TestUtils, MemcpyHelperCopyData002, TestSize.Level1)
 {
-   std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
-   void *add = nullptr;
-   std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
-   std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferInfo, add, extraInfo);
-   std::shared_ptr<EffectBuffer> dst;
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    void *add = nullptr;
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferInfo, add, extraInfo);
+    std::shared_ptr<EffectBuffer> dst;
    
-   MemcpyHelper::CopyData(src.get(), dst.get());
-   EXPECT_EQ(src.get(), dst.get());
+    MemcpyHelper::CopyData(src.get(), dst.get());
+    EXPECT_EQ(src.get(), dst.get());
 }
 }
 }
