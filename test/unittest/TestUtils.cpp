@@ -373,7 +373,7 @@ HWTEST_F(TestUtils, MemcpyHelperCopyData001, TestSize.Level1)
     MemcpyHelper::CopyData(src, dst);
     EXPECT_EQ(src, dst);
 
-    dst = new MemcpyData();
+    dst = new MemoryData();
     MemcpyHelper::CopyData(src, dst);
     EXPECT_NE(src, dst);
 
