@@ -21,10 +21,13 @@
 #include "string_helper.h"
 #include "format_helper.h"
 #include "native_common_utils.h"
+#include "native_effect_base.h"
+#include "memcpy_helper.h"
 
 using namespace testing::ext;
 namespace {
     const float YUV_BYTES_PER_PIXEL = 1.5f;
+    const int32_t P10_BYTES_PER_LUMA = 2;
     const u_int32_t RGBA_BYTES_PER_PIXEL = 4;
     constexpr uint32_t WIDTH = 1920;
     constexpr uint32_t HEIGHT = 1080;
@@ -265,6 +268,12 @@ HWTEST_F(TestUtils, FormatHelper001, TestSize.Level1) {
     uint32_t result = formatHelper->CalculateDataRowCount(height, IEffectFormat::YUVNV12);
     ASSERT_EQ(result, height * YUV_BYTES_PER_PIXEL);
 
+    result = formatHelper->CalculateDataRowCount(height, IEffectFormat::DEFAULT);
+    ASSERT_EQ(result, height);
+
+    result = formatHelper->CalculateRowStride(width, IEffectFormat::YCRCB_P010);
+    ASSERT_EQ(result, width * P10_BYTES_PER_LUMA);
+
     result = formatHelper->CalculateRowStride(width, IEffectFormat::DEFAULT);
     ASSERT_EQ(result, width);
 }
@@ -355,6 +364,33 @@ HWTEST_F(TestUtils, ErrorCode001, TestSize.Level1) {
     expected = "Unknow error type";
     actual = GetErrorName(code);
     ASSERT_EQ(expected, actual);
+}
+
+HWTEST_F(TestUtils, MemcpyHelperCopyData001, TestSize.Level1)
+{
+    MemoryData *src = new MemoryData();
+    MemoryData *dst = src;
+    MemcpyHelper::CopyData(src, dst);
+    EXPECT_EQ(src, dst);
+
+    dst = new MemoryData();
+    MemcpyHelper::CopyData(src, dst);
+    EXPECT_NE(src, dst);
+
+    delete src;
+    delete dst;
+}
+
+HWTEST_F(TestUtils, MemcpyHelperCopyData002, TestSize.Level1)
+{
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    void *add = nullptr;
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferInfo, add, extraInfo);
+    std::shared_ptr<EffectBuffer> dst;
+   
+    MemcpyHelper::CopyData(src.get(), dst.get());
+    EXPECT_EQ(src.get(), dst.get());
 }
 }
 }
