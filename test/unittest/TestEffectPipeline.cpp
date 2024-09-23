@@ -174,7 +174,7 @@ HWTEST_F(TestEffectPipeline, InPortActivate001, TestSize.Level1)
     std::vector<WorkMode> modes;
     WorkMode outMode;
     ErrorCode result = inPort->Activate(modes, outMode);
-    ASSERT_EQ(result, ErrorCode::ERR_INVALID_PAPAMETER_VALUE);
+    ASSERT_EQ(result, ErrorCode::ERR_INVALID_PARAMETER_VALUE);
 }
 }
 }
