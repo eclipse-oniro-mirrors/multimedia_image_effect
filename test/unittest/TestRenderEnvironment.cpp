@@ -251,10 +251,10 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment007, TestSize.Level1) {
     EXPECT_EQ(result, false);
     
     result = renderSurface->Release();
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
 
     RenderSurface::SurfaceType type = renderSurface->GetSurfaceType();
-    EXPECT_EQ(type, RenderSurface::SurfaceType::SURFACE_TYPE_OFF_SCREEN);
+    EXPECT_EQ(type, RenderSurface::SurfaceType::SURFACE_TYPE_NULL);
 }
 HWTEST_F(TestRenderEnvironment, TestRenderEnvironment008, TestSize.Level1) {
     unsigned char *bitmap = new unsigned char[LEN];

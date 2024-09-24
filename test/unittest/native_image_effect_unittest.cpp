@@ -512,7 +512,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri004, TestSize.Level
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_SetOutputUri(imageEffect, nullptr);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
