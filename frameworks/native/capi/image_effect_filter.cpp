@@ -25,6 +25,7 @@
 #include "memcpy_helper.h"
 #include "format_helper.h"
 #include "event_report.h"
+#include <cstring>
 
 using namespace OHOS::Media;
 using namespace OHOS::Media::Effect;
@@ -33,6 +34,8 @@ namespace {
     constexpr char const *PARA_SRC_EFFECT_BUFFER = "PARA_SRC_EFFECT_BUFFER";
     constexpr char const *PARA_RENDER_WITH_SRC_AND_DST = "PARA_RENDER_WITH_SRC_AND_DST";
     constexpr char const *PARA_RENDER_INFO = "PARA_RENDER_INFO";
+
+    constexpr int const MAX_CHAR_LEN = 1024;
 }
 
 static std::vector<std::shared_ptr<ImageEffect_FilterNames>> sOHFilterNames;
@@ -243,6 +246,8 @@ ImageEffect_ErrorCode OH_EffectFilterInfo_SetFilterName(OH_EffectFilterInfo *inf
         "InfoSetFilterName: input parameter info is null!");
     CHECK_AND_RETURN_RET_LOG(name != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "InfoSetFilterName: input parameter name is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(name) < MAX_CHAR_LEN, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "InfoSetFilterName: the length of input parameter name is too long! len = %{public}zu", strlen(name));
     EFFECT_LOGD("Set filter name. name=%{public}s", name);
     info->filterName = name;
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
@@ -554,6 +559,8 @@ EFFECT_EXPORT
 OH_EffectFilter *OH_EffectFilter_Create(const char *name)
 {
     CHECK_AND_RETURN_RET_LOG(name != nullptr, nullptr, "FilterCreate: input parameter name is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(name) < MAX_CHAR_LEN, nullptr,
+        "FilterCreate: the length of input parameter name is too long! len = %{public}zu", strlen(name));
     EFFECT_LOGI("Filter create. name=%{public}s", name);
     std::unique_ptr<OH_EffectFilter> nativeEFilter = std::make_unique<OH_EffectFilter>();
     std::shared_ptr<EFilter> filter = EFilterFactory::Instance()->Create(name, nativeEFilter.get());
@@ -572,6 +579,8 @@ ImageEffect_ErrorCode OH_EffectFilter_SetValue(OH_EffectFilter *filter, const ch
         "FilterSetValue: input parameter filter is null!");
     CHECK_AND_RETURN_RET_LOG(key != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "FilterSetValue: input parameter key is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(key) < MAX_CHAR_LEN, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "FilterSetValue: the length of input parameter key is too long! len = %{public}zu", strlen(key));
     CHECK_AND_RETURN_RET_LOG(value != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "FilterSetValue: input parameter value is null!");
     EFFECT_LOGI("Effect filter set value. key=%{public}s", key);
@@ -600,6 +609,8 @@ ImageEffect_ErrorCode OH_EffectFilter_GetValue(OH_EffectFilter *nativeEFilter, c
         "FilterGetValue: input parameter nativeEFilter is null!");
     CHECK_AND_RETURN_RET_LOG(key != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "FilterGetValue: input parameter key is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(key) < MAX_CHAR_LEN, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "FilterGetValue: the length of input parameter key is too long! len = %{public}zu", strlen(key));
     CHECK_AND_RETURN_RET_LOG(value != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "FilterGetValue: input parameter value is null!");
     EFFECT_LOGD("Effect filter get value. key=%{public}s", key);
@@ -653,6 +664,8 @@ EFFECT_EXPORT
 ImageEffect_FilterNames *OH_EffectFilter_LookupFilters(const char *key)
 {
     CHECK_AND_RETURN_RET_LOG(key != nullptr, nullptr, "LookupFilters: input parameter key is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(key) < MAX_CHAR_LEN, nullptr,
+        "LookupFilters: the length of input parameter key is too long! len = %{public}zu", strlen(key));
     EFFECT_LOGD("Lookup filters. key=%{public}s", key);
 
     std::string lookupKey = key;
@@ -693,6 +706,8 @@ ImageEffect_ErrorCode OH_EffectFilter_LookupFilterInfo(const char *name, OH_Effe
 {
     CHECK_AND_RETURN_RET_LOG(name != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "LookupFilterInfo: input parameter name is null!");
+    CHECK_AND_RETURN_RET_LOG(strlen(name) < MAX_CHAR_LEN, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "LookupFilterInfo: the length of input parameter name is too long! len = %{public}zu", strlen(name));
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "LookupFilterInfo: input parameter info is null!");
     EFFECT_LOGD("Lookup filter info. name=%{public}s", name);

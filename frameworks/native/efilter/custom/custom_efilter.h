@@ -17,6 +17,7 @@
 #define IMAGE_EFFECT_CUSTOM_EFILTER_H
 
 #include <string>
+#include <mutex>
 
 #include "any.h"
 #include "effect_log.h"
@@ -59,6 +60,7 @@ private:
     std::shared_ptr<IFilterDelegate> delegate_;
     void *handler_ = nullptr;
     static std::map<std::string, std::shared_ptr<EffectInfo>> effectInfos_;
+    static std::mutex effectInfosMutex_;
 };
 } // namespace Effect
 } // namespace Media
