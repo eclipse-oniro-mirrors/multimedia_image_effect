@@ -16,19 +16,31 @@
 #ifndef IMAGE_EFFECT_FORMAT_HELPER_H
 #define IMAGE_EFFECT_FORMAT_HELPER_H
 
+#include <unordered_set>
+
 #include "effect_info.h"
 #include "image_effect_marco_define.h"
+#include "effect_buffer.h"
+#include "error_code.h"
 
 #define UNSIGHED_CHAR_MAX 255
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
+struct FormatConverterInfo {
+    BufferInfo bufferInfo;
+    void *buffer = nullptr;
+};
+
 class FormatHelper {
 public:
     IMAGE_EFFECT_EXPORT static uint32_t CalculateDataRowCount(uint32_t height, IEffectFormat format);
     IMAGE_EFFECT_EXPORT static uint32_t CalculateRowStride(uint32_t width, IEffectFormat format);
     IMAGE_EFFECT_EXPORT static uint32_t CalculateSize(uint32_t width, uint32_t height, IEffectFormat format);
+    IMAGE_EFFECT_EXPORT static std::unordered_set<IEffectFormat> GetAllSupportedFormats();
+    IMAGE_EFFECT_EXPORT static bool IsSupportConvert(IEffectFormat srcFormat, IEffectFormat dstFormat);
+    IMAGE_EFFECT_EXPORT static ErrorCode ConvertFormat(FormatConverterInfo &src, FormatConverterInfo &dst);
 
     static inline int Clip(int a, int aMin, int aMax)
     {
