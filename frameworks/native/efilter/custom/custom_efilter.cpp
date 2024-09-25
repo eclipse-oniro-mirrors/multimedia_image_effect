@@ -22,6 +22,7 @@ namespace OHOS {
 namespace Media {
 namespace Effect {
 std::map<std::string, std::shared_ptr<EffectInfo>> CustomEFilter::effectInfos_;
+std::mutex CustomEFilter::effectInfosMutex_;
 
 ErrorCode CustomEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context)
 {
@@ -83,11 +84,13 @@ ErrorCode CustomEFilter::Restore(const EffectJsonPtr &value)
 
 void CustomEFilter::SetEffectInfo(const std::string &name, const std::shared_ptr<EffectInfo> &effectInfo)
 {
+    std::unique_lock<std::mutex> lock(effectInfosMutex_);
     effectInfos_[name] = effectInfo;
 }
 
 std::shared_ptr<EffectInfo> CustomEFilter::GetEffectInfo(const std::string &name)
 {
+    std::unique_lock<std::mutex> lock(effectInfosMutex_);
     auto it = effectInfos_.find(name);
     if (it == effectInfos_.end()) {
         EFFECT_LOGE("effect info not find! name=%{public}s", name.c_str());
