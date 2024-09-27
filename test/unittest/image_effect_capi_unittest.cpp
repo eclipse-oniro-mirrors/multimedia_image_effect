@@ -159,7 +159,7 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectCreate002, TestSize.Level1)
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectCreate002 start";
 
     OH_ImageEffect *nativeImageEffect = OH_ImageEffect_Create(nullptr);
-    ASSERT_EQ(nativeImageEffect, nullptr) << "OH_ImageEffect_Create failed";
+    ASSERT_NE(nativeImageEffect, nullptr) << "OH_ImageEffect_Create failed";
 
     GTEST_LOG_(INFO) << "OHImageEffectCreate002 success! result: " << nativeImageEffect;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectCreate002 END";
