@@ -35,6 +35,7 @@ namespace {
 
     constexpr int const MAX_CHAR_LEN = 1024;
     constexpr int const MAX_INFO_LEN = 5 * 1024 * 1024;
+    constexpr const char *EMPTY_NAME = "";
 }
 
 #ifdef __cplusplus
@@ -44,9 +45,9 @@ extern "C" {
 EFFECT_EXPORT
 OH_ImageEffect *OH_ImageEffect_Create(const char *name)
 {
-    CHECK_AND_RETURN_RET_LOG(name != nullptr, nullptr, "Create: input parameter name is null!");
-    CHECK_AND_RETURN_RET_LOG(strlen(name) < MAX_CHAR_LEN, nullptr,
-        "Create: the length of input parameter name is too long! len = %{public}zu", strlen(name));
+    if (name != nullptr && strlen(name) > MAX_CHAR_LEN) {
+        name = EMPTY_NAME;
+    }
     if (!ExternLoader::Instance()->IsExtLoad()) {
         ExternLoader::Instance()->LoadExtSo();
     }
