@@ -154,6 +154,7 @@ private:
     std::mutex innerEffectMutex_;
     RenderThread<> *m_renderThread{ nullptr };
     std::atomic_ullong m_currentTaskId{0};
+    bool needPreFlush_ = false;
 };
 } // namespace Effect
 } // namespace Media

@@ -54,6 +54,7 @@ enum class EffectState {
 
 const int STRUCT_IMAGE_EFFECT_CONSTANT = 1;
 const int DESTRUCTOR_IMAGE_EFFECT_CONSTANT = 2;
+const std::string FUNCTION_FLUSH_SURFACE_BUFFER = "flushSurfaceBuffer";
 
 class ImageEffect::Impl {
 public:
@@ -448,6 +449,9 @@ ErrorCode ImageEffect::SetInputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer)
 {
     CHECK_AND_RETURN_RET_LOG(surfaceBuffer != nullptr, ErrorCode::ERR_INVALID_SRC_SURFACEBUFFER,
         "invalid source surface buffer");
+    if (needPreFlush_) {
+        surfaceBuffer->FlushCache();
+    }
 
     ClearDataInfo(inDateInfo_);
     inDateInfo_.dataType_ = DataType::SURFACE_BUFFER;
@@ -989,6 +993,11 @@ ErrorCode ImageEffect::SetOutNativeWindow(OHNativeWindow *nativeWindow)
 
 ErrorCode ImageEffect::Configure(const std::string &key, const Plugin::Any &value)
 {
+    if (FUNCTION_FLUSH_SURFACE_BUFFER.compare(key) == 0) {
+        EFFECT_LOGI("ImageEffect Configure FlushCache");
+        needPreFlush_ = true;
+        return ErrorCode::SUCCESS;
+    }
     auto configTypeIt = std::find_if(configTypeTab_.begin(), configTypeTab_.end(),
         [&key](const std::pair<std::string, ConfigType> &item) { return item.first.compare(key) == 0; });
 
