@@ -47,6 +47,7 @@ public:
     IMAGE_EFFECT_EXPORT static void UnlockPixelMap(const PixelMap *pixelMap);
     static ErrorCode ParseAnyAndAddToJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &result);
     static bool EndsWithJPG(const std::string &input);
+    static bool EndsWithHEIF(const std::string &input);
     static ErrorCode ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
         const std::shared_ptr<EffectMemoryManager> &memoryManager, bool isUpdateExif = true);
     static ErrorCode ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,

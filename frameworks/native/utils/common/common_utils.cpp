@@ -338,6 +338,11 @@ bool CommonUtils::EndsWithJPG(const std::string &input)
     return StringHelp::EndsWithIgnoreCase(input, "jpg") || StringHelp::EndsWithIgnoreCase(input, "jpeg");
 }
 
+bool CommonUtils::EndsWithHEIF(const std::string &input)
+{
+    return StringHelp::EndsWithIgnoreCase(input, "heic");
+}
+
 ErrorCode GetPixelsContext(std::shared_ptr<MemoryData> &memoryData, BufferType bufferType, void **context)
 {
     switch (bufferType) {
