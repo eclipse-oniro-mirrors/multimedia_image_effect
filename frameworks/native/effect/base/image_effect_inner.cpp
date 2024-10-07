@@ -477,8 +477,8 @@ ErrorCode ImageEffect::SetOutputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer
 ErrorCode ImageEffect::SetInputUri(const std::string &uri)
 {
     EFFECT_LOGD("ImageEffect::SetInputUri");
-    if (!CommonUtils::EndsWithJPG(uri)) {
-        EFFECT_LOGE("SetInputUri: file type is not support! only support jpg/jpeg.");
+    if (!CommonUtils::EndsWithJPG(uri) && !CommonUtils::EndsWithHEIF(uri)) {
+        EFFECT_LOGE("SetInputUri: file type is not support! only support jpg/jpeg and heif.");
         return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
     }
     ClearDataInfo(inDateInfo_);
@@ -497,8 +497,8 @@ ErrorCode ImageEffect::SetOutputUri(const std::string &uri)
         return ErrorCode::SUCCESS;
     }
 
-    if (!CommonUtils::EndsWithJPG(uri)) {
-        EFFECT_LOGE("SetOutputUri: file type is not support! only support jpg/jpeg.");
+    if (!CommonUtils::EndsWithJPG(uri) && !CommonUtils::EndsWithHEIF(uri)) {
+        EFFECT_LOGE("SetOutputUri: file type is not support! only support jpg/jpeg and heif.");
         return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
     }
     ClearDataInfo(outDateInfo_);
@@ -511,8 +511,8 @@ ErrorCode ImageEffect::SetOutputUri(const std::string &uri)
 ErrorCode ImageEffect::SetInputPath(const std::string &path)
 {
     EFFECT_LOGD("ImageEffect::SetInputPath");
-    if (!CommonUtils::EndsWithJPG(path)) {
-        EFFECT_LOGE("SetInputPath: file type is not support! only support jpg/jpeg.");
+    if (!CommonUtils::EndsWithJPG(path) && !CommonUtils::EndsWithHEIF(path)) {
+        EFFECT_LOGE("SetInputPath: file type is not support! only support jpg/jpeg and heif.");
         return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
     }
     ClearDataInfo(inDateInfo_);
@@ -531,8 +531,8 @@ ErrorCode ImageEffect::SetOutputPath(const std::string &path)
         return ErrorCode::SUCCESS;
     }
 
-    if (!CommonUtils::EndsWithJPG(path)) {
-        EFFECT_LOGE("SetOutputPath: file type is not support! only support jpg/jpeg.");
+    if (!CommonUtils::EndsWithJPG(path) && !CommonUtils::EndsWithHEIF(path)) {
+        EFFECT_LOGE("SetOutputPath: file type is not support! only support jpg/jpeg and heif.");
         return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
     }
     ClearDataInfo(outDateInfo_);

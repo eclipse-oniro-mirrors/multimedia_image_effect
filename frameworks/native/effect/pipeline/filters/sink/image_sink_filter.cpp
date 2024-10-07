@@ -335,8 +335,15 @@ ErrorCode FillPictureOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer
 ErrorCode PackToFile(const std::string &path, const std::shared_ptr<PixelMap> &pixelMap)
 {
     std::shared_ptr<ImagePacker> imagePacker = std::make_shared<ImagePacker>();
+    std::string format = "";
+    if (CommonUtils::EndsWithHEIF(path)) {
+        format = "image/heif";
+    }
+    if (CommonUtils::EndsWithJPG(path)) {
+        format = "image/jpeg";
+    }
     PackOption option = {
-        .format = "image/jpeg",
+        .format = format,
         .desiredDynamicRange = EncodeDynamicRange::AUTO,
         .needsPackProperties = true,
     };
