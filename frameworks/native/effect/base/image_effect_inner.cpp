@@ -943,9 +943,9 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
 
 void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
         "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
-    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     OnBufferAvailableWithCPU(buffer, damages, timestamp);
 }
 
