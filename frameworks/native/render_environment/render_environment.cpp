@@ -526,6 +526,7 @@ void RenderEnvironment::DrawFlipSurfaceBufferFromTex(RenderTexturePtr tex, Surfa
 
 void RenderEnvironment::DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer, IEffectFormat format)
 {
+    CHECK_AND_RETURN_LOG(tex != nullptr, "DrawTexFromSurfaceBuffer: tex is null!");
     GLuint tempFbo = GLUtils::CreateFramebuffer(tex->GetName());
     EGLImageKHR img = GLUtils::CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY), buffer);
     GLuint input = GLUtils::CreateTextureFromImage(img);
