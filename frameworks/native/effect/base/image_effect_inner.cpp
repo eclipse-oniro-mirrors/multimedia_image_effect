@@ -214,6 +214,7 @@ void ImageEffect::AddEFilter(const std::shared_ptr<EFilter> &efilter)
 
 ErrorCode ImageEffect::InsertEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     ErrorCode res = Effect::InsertEFilter(efilter, index);
     if (res == ErrorCode::SUCCESS) {
         impl_->CreatePipeline(efilters_);
@@ -942,9 +943,9 @@ void ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& buffer, const OH
 
 void ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& buffer, const OHOS::Rect& damages, int64_t timestamp)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
         "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
-    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     OnBufferAvailableWithCPU(buffer, damages, timestamp);
 }
 
@@ -976,6 +977,7 @@ sptr<Surface> ImageEffect::GetInputSurface()
 
 ErrorCode ImageEffect::SetOutNativeWindow(OHNativeWindow *nativeWindow)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     CHECK_AND_RETURN_RET_LOG(nativeWindow != nullptr, ErrorCode::ERR_INPUT_NULL, "nativeWindow is nullptr");
     OHOS::sptr<OHOS::Surface> surface = nativeWindow->surface;
     CHECK_AND_RETURN_RET_LOG(surface != nullptr, ErrorCode::ERR_INPUT_NULL, "surface is nullptr");
@@ -1062,6 +1064,7 @@ bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
 ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     std::shared_ptr<EffectBuffer> &dstEffectBuffer)
 {
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, false);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("ParseDataInfo inData fail! res=%{public}d", res);
