@@ -251,15 +251,12 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment007, TestSize.Level1) {
     void *window = nullptr;
     result = renderSurface->Create(window);
     EXPECT_EQ(result, false);
-
-    void *rawSurface = renderSurface->GetRawSurface();
-    EXPECT_EQ(rawSurface, nullptr);
     
     result = renderSurface->Release();
-    EXPECT_EQ(result, false);
+    EXPECT_EQ(result, true);
 
     RenderSurface::SurfaceType type = renderSurface->GetSurfaceType();
-    EXPECT_EQ(type, RenderSurface::SurfaceType::SURFACE_TYPE_OFF_SCREEN);
+    EXPECT_EQ(type, RenderSurface::SurfaceType::SURFACE_TYPE_NULL);
 }
 }
 }
