@@ -539,6 +539,7 @@ void RenderEnvironment::DrawFlipSurfaceBufferFromTex(RenderTexturePtr tex, Surfa
 
 void RenderEnvironment::DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer)
 {
+    CHECK_AND_RETURN_LOG(tex != nullptr, "DrawTexFromSurfaceBuffer: tex is null!");
     GLuint tempFbo = GLUtils::CreateFramebuffer(tex->GetName());
     GLuint input = GLUtils::CreateTextureFromSurfaceBuffer(buffer);
     RenderViewport vp(0, 0, tex->Width(), tex->Height());
