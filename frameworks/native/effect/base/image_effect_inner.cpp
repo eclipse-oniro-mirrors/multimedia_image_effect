@@ -171,6 +171,7 @@ ImageEffect::~ImageEffect()
     imageEffectFlag_ = DESTRUCTOR_IMAGE_EFFECT_CONSTANT;
     EFFECT_LOGI("ImageEffect destruct!");
     impl_->surfaceAdapter_ = nullptr;
+    m_renderThread->ClearTask();
     auto task = std::make_shared<RenderTask<>>([this]() { this->DestroyEGLEnv(); }, COMMON_TASK_TAG,
         RequestTaskId());
     m_renderThread->AddTask(task);
