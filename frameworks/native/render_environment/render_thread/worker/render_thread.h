@@ -38,6 +38,7 @@ public:
         size_t, std::function<void()> idleTask = []() {});
     virtual ~RenderThread();
     virtual void AddTask(const LocalTaskType &, bool overwrite = false) override;
+    virtual void ClearTask() override;
     virtual void Start() override;
     virtual void Stop() override;
 
@@ -84,6 +85,15 @@ template <typename QUEUE> void RenderThread<QUEUE>::AddTask(const LocalTaskType 
         lk.unlock();
         cvEmpty.notify_one();
     }
+}
+
+template <typename QUEUE> void RenderThread<QUEUE>::ClearTask()
+{
+    std::unique_lock<std::mutex> lk(cvMutex);
+    while (m_localMsgQueue->GetSize() > 0) {
+        m_localMsgQueue->RemoveAll();
+    }
+    lk.unlock();
 }
 
 template <typename QUEUE> void RenderThread<QUEUE>::Start()
