@@ -1065,7 +1065,6 @@ bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
 ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     std::shared_ptr<EffectBuffer> &dstEffectBuffer)
 {
-    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, false);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("ParseDataInfo inData fail! res=%{public}d", res);
