@@ -396,11 +396,11 @@ HWTEST_F(TestUtils, NativeCommonUtilsSwitchToOHEffectInfo001, TestSize.Level1)
 {
     EffectInfo effectInfo;
     std::shared_ptr<OH_EffectFilterInfo> ohFilterInfo = std::make_shared<OH_EffectFilterInfo>();
-    std::vector<IPtype> ipType;
+    std::vector<IPType> ipType;
     ipType.emplace_back(IPType::DEFAULT);
     effectInfo.formats_.emplace(IEffectFormat::DEFAULT, ipType);
 
-    NativeCommonUtils::SwitchToEffectInfo(&effectInfo, ohFilterInfo.get());
+    NativeCommonUtils::SwitchToOHEffectInfo(&effectInfo, ohFilterInfo.get());
     ASSERT_NE(ohFilterInfo->supportedBufferTypes.size(), 1);
     ASSERT_EQ(ohFilterInfo->supportedFormats.size(), 1);
     ASSERT_EQ(*(ohFilterInfo->supportedFormats.begin()), ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN);
