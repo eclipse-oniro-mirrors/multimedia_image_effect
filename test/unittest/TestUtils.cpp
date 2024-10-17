@@ -20,7 +20,6 @@
 #include "common_utils.h"
 #include "string_helper.h"
 #include "format_helper.h"
-#include "native_common_utils.h"
 #include "native_effect_base.h"
 #include "memcpy_helper.h"
 
@@ -391,6 +390,40 @@ HWTEST_F(TestUtils, MemcpyHelperCopyData002, TestSize.Level1)
    
     MemcpyHelper::CopyData(src.get(), dst.get());
     EXPECT_EQ(src.get(), dst.get());
+}
+
+HWTEST_F(TestUtils, NativeCommonUtilsSwitchToOHEffectInfo001, TestSize.Level1)
+{
+    EffectInfo effectInfo;
+    std::shared_ptr<OH_EffectFilterInfo> ohFilterInfo = std::make_shared<OH_EffectFilterInfo>();
+    std::vector<IPtype> ipType;
+    ipType.emplace_back(IPType::DEFAULT);
+    effectInfo.formats_.emplace(IEffectFormat::DEFAULT, ipType);
+
+    NativeCommonUtils::SwitchToEffectInfo(&effectInfo, ohFilterInfo.get());
+    ASSERT_NE(ohFilterInfo->supportedBufferTypes.size(), 1);
+    ASSERT_EQ(ohFilterInfo->supportedFormats.size(), 1);
+    ASSERT_EQ(*(ohFilterInfo->supportedFormats.begin()), ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN);
+}
+
+HWTEST_F(TestUtils, NativeCommonUtilsGetSupportedFormats001, TestSize.Level1)
+{
+    std::shared_ptr<OH_EffectFilterInfo> ohFilterInfo = nullptr;
+    uint32_t result = NativeCommonUtils::GetSupportedFormats(ohFilterInfo.get());
+    ASSERT_EQ(result, 0);
+
+    ohFilterInfo = std::make_shared<OH_EffectFilterInfo>();
+    ohFilterInfo->supportedFormats.emplace(ImageEffect_Format::EFFECT_PIXEL_FORMAT_YCRCB_P010);
+    result = NativeCommonUtils::GetSupportedFormats(ohFilterInfo.get());
+    ASSERT_EQ(result, 0);
+}
+
+
+HWTEST_F(TestUtils, NativeCommonUtilsConverStartResult001, TestSize.Level1)
+{
+    ErrorCode errorCode = ErrorCode::ERR_ALLOC_MEMORY_FAIL;
+    ImageEffect_ErrorCode result = NativeCommonUtils::ConvertStartResult(errorCode);
+    ASSERT_EQ(result, ImageEffect_ErrorCode::EFFECT_ALLOCATE_MEMORY_FAILED);
 }
 }
 }

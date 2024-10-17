@@ -19,7 +19,7 @@
 #include <memory>
 #include <utility>
 #include <unordered_set>
-
+#include "image_effect_marco_define.h"
 #include "efilter.h"
 #include "image_effect_inner.h"
 #include "image_effect_filter.h"
@@ -57,7 +57,7 @@ struct OH_ImageEffect {
 
 struct OH_EffectFilterInfo {
     OH_EffectFilterInfo() = default;
-    ~OH_EffectFilterInfo();
+    IMAGE_EFFECT_EXPORT ~OH_EffectFilterInfo();
     std::string filterName = "";
     std::unordered_set<ImageEffect_BufferType> supportedBufferTypes;
     std::unordered_set<ImageEffect_Format> supportedFormats;
