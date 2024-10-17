@@ -612,6 +612,10 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
             .bufferInfo = *buffer->bufferInfo_,
             .extra = pixelMap->GetFd()
         };
+        if (bufferType != BufferType::DMA_BUFFER) {
+            memoryInfo.bufferInfo.len_ = FormatHelper::CalculateSize(buffer->bufferInfo_->width_,
+                buffer->bufferInfo_->height_, buffer->bufferInfo_->formatType_);
+        }
         memoryData = memory->Alloc(memoryInfo);
         CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc fail!");
         MemcpyHelper::CopyData(buffer.get(), memoryData.get());
