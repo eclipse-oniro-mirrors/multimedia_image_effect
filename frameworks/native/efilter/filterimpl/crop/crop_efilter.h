@@ -40,7 +40,8 @@ public:
 
     ErrorCode Restore(const EffectJsonPtr &values) override;
 
-    std::shared_ptr<MemNegotiatedCap> Negotiate(const std::shared_ptr<MemNegotiatedCap> &input) override;
+    std::shared_ptr<MemNegotiatedCap> Negotiate(const std::shared_ptr<MemNegotiatedCap> &input,
+        std::shared_ptr<EffectContext> &context) override;
 
 private:
     ErrorCode CropToOutputBuffer(EffectBuffer *src, std::shared_ptr<EffectContext> &context,

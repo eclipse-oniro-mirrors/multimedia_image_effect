@@ -25,6 +25,7 @@ namespace Effect {
 class MockPixelMap : public PixelMap {
 public:
     MockPixelMap();
+    MockPixelMap(int32_t width, int32_t height);
     ~MockPixelMap();
     MOCK_METHOD0(GetWidth, int32_t());
     MOCK_METHOD0(GetHeight, int32_t());

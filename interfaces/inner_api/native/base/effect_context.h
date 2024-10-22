@@ -23,6 +23,7 @@
 #include "render_strategy.h"
 #include "capability_negotiate.h"
 #include "colorspace_manager.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -37,6 +38,8 @@ public:
     std::shared_ptr<ColorSpaceManager> colorSpaceManager_;
     IPType ipType_ = IPType::DEFAULT;
     std::unordered_set<EffectColorSpace> filtersSupportedColorSpace_;
+
+    IMAGE_EFFECT_EXPORT std::shared_ptr<ExifMetadata> GetExifMetadata();
 };
 } // namespace Effect
 } // namespace Media

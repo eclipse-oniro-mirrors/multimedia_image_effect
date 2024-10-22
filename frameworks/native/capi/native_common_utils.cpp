@@ -194,6 +194,16 @@ PixelMap *NativeCommonUtils::GetPixelMapFromOHPixelmap(OH_PixelmapNative *pixelm
     return pixelMap.get();
 }
 
+Picture *NativeCommonUtils::GetPictureFromNativePicture(OH_PictureNative *pictureNative)
+{
+    CHECK_AND_RETURN_RET_LOG(pictureNative != nullptr, nullptr, "input pictureNative is null!");
+
+    std::shared_ptr<OHOS::Media::Picture> picture = pictureNative->GetInnerPicture();
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, nullptr, "GetPictureFromNativePicture: picture is null!");
+
+    return picture.get();
+}
+
 bool IsMatchLookupCondition(std::shared_ptr<EffectInfo> &effectInfo, std::string &type, uint32_t enumValue)
 {
     if (type.compare("Format") == 0) {

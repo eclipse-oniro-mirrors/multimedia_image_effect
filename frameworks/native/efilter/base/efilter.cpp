@@ -125,7 +125,7 @@ void EFilter::Negotiate(const std::string &inPort, const std::shared_ptr<Capabil
 {
     std::shared_ptr<Capability> outputCap = std::make_shared<Capability>(name_);
     outputCap->pixelFormatCap_ = GetPixelFormatCap(name_);
-    outputCap->memNegotiatedCap_ = Negotiate(capability->memNegotiatedCap_);
+    outputCap->memNegotiatedCap_ = Negotiate(capability->memNegotiatedCap_, context);
     outputCap->colorSpaceCap_ = GetColorSpaceCap(name_);
     context->capNegotiate_->AddCapability(outputCap);
     NegotiateColorSpace(outputCap->colorSpaceCap_->colorSpaces, context->filtersSupportedColorSpace_);
@@ -337,7 +337,8 @@ ErrorCode EFilter::PushData(EffectBuffer *buffer, std::shared_ptr<EffectContext>
     return outPorts_[0]->PushData(effectBuffer, context);
 }
 
-std::shared_ptr<MemNegotiatedCap> EFilter::Negotiate(const std::shared_ptr<MemNegotiatedCap> &input)
+std::shared_ptr<MemNegotiatedCap> EFilter::Negotiate(const std::shared_ptr<MemNegotiatedCap> &input,
+    std::shared_ptr<EffectContext> &context)
 {
     std::shared_ptr<MemNegotiatedCap> output = input;
     return output;

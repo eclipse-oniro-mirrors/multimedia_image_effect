@@ -74,7 +74,8 @@ public:
     }
 
     IMAGE_EFFECT_EXPORT
-    virtual std::shared_ptr<MemNegotiatedCap> Negotiate(const std::shared_ptr<MemNegotiatedCap> &input);
+    virtual std::shared_ptr<MemNegotiatedCap> Negotiate(const std::shared_ptr<MemNegotiatedCap> &input,
+        std::shared_ptr<EffectContext> &context);
 protected:
     ErrorCode CalculateEFilterIPType(IEffectFormat &formatType, IPType &ipType);
 

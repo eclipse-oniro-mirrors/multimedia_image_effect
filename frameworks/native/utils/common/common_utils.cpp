@@ -15,6 +15,8 @@
 
 #include "common_utils.h"
 
+#include <charconv>
+
 #include "effect_log.h"
 #include "effect_buffer.h"
 #include "image_source.h"
@@ -24,6 +26,7 @@
 #include "colorspace_helper.h"
 #include "render_environment.h"
 #include "format_helper.h"
+#include "exif_metadata.h"
 
 namespace OHOS {
 namespace Media {
@@ -94,7 +97,7 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     bufferInfo->width_ = static_cast<uint32_t>(pixelMap->GetWidth());
     bufferInfo->height_ = static_cast<uint32_t>(pixelMap->GetHeight());
     bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
-    bufferInfo->len_ = bufferInfo->height_ * bufferInfo->rowStride_;
+    bufferInfo->len_ = FormatHelper::CalculateSize(bufferInfo->width_, bufferInfo->height_, formatType);
     bufferInfo->formatType_ = formatType;
     bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceName);
 
@@ -363,35 +366,49 @@ ErrorCode GetPixelsContext(std::shared_ptr<MemoryData> &memoryData, BufferType b
     return ErrorCode::SUCCESS;
 }
 
-void PrintImageExifInfo(PixelMap *pixelMap, const std::string &tag)
+int32_t  GetImagePropertyInt(const std::shared_ptr<ExifMetadata> &exifMetadata, const std::string &key, int32_t &value)
 {
-    if (pixelMap == nullptr) {
+    std::string strValue;
+    int ret = exifMetadata->GetValue(key, strValue);
+    if (ret != 0) {
+        return ret;
+    }
+
+    std::from_chars_result res = std::from_chars(strValue.data(), strValue.data() + strValue.size(), value);
+    if (res.ec != std::errc()) {
+        return static_cast<int32_t>(ErrorCode::ERR_IMAGE_DATA);
+    }
+
+    return 0;
+}
+
+void PrintImageExifInfo(const std::shared_ptr<ExifMetadata> &exifMetadata, const std::string &tag)
+{
+    if (exifMetadata == nullptr) {
         return;
     }
 
     int32_t width = 0;
-    pixelMap->GetImagePropertyInt(IMAGE_WIDTH, width);
+    GetImagePropertyInt(exifMetadata, IMAGE_WIDTH, width);
     int32_t length = 0;
-    pixelMap->GetImagePropertyInt(IMAGE_LENGTH, length);
+    GetImagePropertyInt(exifMetadata, IMAGE_LENGTH, length);
     std::string dateTime;
-    pixelMap->GetImagePropertyString(DATE_TIME, dateTime);
+    exifMetadata->GetValue(DATE_TIME, dateTime);
     int32_t xDimension = 0;
-    pixelMap->GetImagePropertyInt(PIXEL_X_DIMENSION, xDimension);
+    GetImagePropertyInt(exifMetadata, PIXEL_X_DIMENSION, xDimension);
     int32_t yDimension = 0;
-    pixelMap->GetImagePropertyInt(PIXEL_Y_DIMENSION, yDimension);
+    GetImagePropertyInt(exifMetadata, PIXEL_Y_DIMENSION, yDimension);
 
     EFFECT_LOGD("%{public}s: width=%{public}d, length=%{public}d, dateTime=%{public}s, xDimension=%{public}d, "
         "yDimension=%{public}d", tag.c_str(), width, length, dateTime.c_str(), xDimension, yDimension);
 }
 
-void CommonUtils::UpdateImageExifDateTime(PixelMap *pixelMap)
+void UpdateExifDataTime(const std::shared_ptr<ExifMetadata> &exifMetadata)
 {
-    if (pixelMap == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_LOG(exifMetadata != nullptr, "UpdateExifDataTime: exifMetadata is null!");
 
     std::string dateTime;
-    if (pixelMap->GetImagePropertyString(DATE_TIME, dateTime) != 0 || dateTime.empty()) {
+    if (exifMetadata->GetValue(DATE_TIME, dateTime) != 0 || dateTime.empty()) {
         return;
     }
 
@@ -406,48 +423,120 @@ void CommonUtils::UpdateImageExifDateTime(PixelMap *pixelMap)
     CHECK_AND_RETURN_LOG(size > 0, "UpdateExifDateTime: strftime fail!");
 
     std::string currentTime = std::string(tempTime, size);
-    pixelMap->ModifyImageProperty(DATE_TIME, currentTime);
+    bool res = exifMetadata->SetValue(DATE_TIME, currentTime);
+    CHECK_AND_RETURN_LOG(res, "UpdateExifDataTime: setValue fail!");
 }
 
-void CommonUtils::UpdateImageExifInfo(PixelMap *pixelMap)
+void CommonUtils::UpdateImageExifDateTime(PixelMap *pixelMap)
 {
-    if (pixelMap == nullptr) {
+    CHECK_AND_RETURN_LOG(pixelMap != nullptr, "UpdateImageExifDateTime: pixelMap is null!");
+
+    UpdateExifDataTime(pixelMap->GetExifMetadata());
+}
+
+void CommonUtils::UpdateImageExifDateTime(Picture *picture)
+{
+    CHECK_AND_RETURN_LOG(picture != nullptr, "UpdateImageExifDateTime: picture is null!");
+
+    UpdateExifDataTime(picture->GetExifMetadata());
+}
+
+void UpdateExifMetadata(const std::shared_ptr<ExifMetadata> &exifMetadata, PixelMap *pixelMap)
+{
+    if (exifMetadata == nullptr) {
+        EFFECT_LOGI("UpdateExifMetadata: no exif info.");
         return;
     }
-    PrintImageExifInfo(pixelMap, "UpdateImageExifInfo::update before");
+
+    CHECK_AND_RETURN_LOG(pixelMap != nullptr, "UpdateExifMetadata: pixelMap is null");
+    PrintImageExifInfo(exifMetadata, "UpdateImageExifInfo::update before");
 
     // Set Width
     int32_t width = 0;
-    if (pixelMap->GetImagePropertyInt(IMAGE_WIDTH, width) == 0 && pixelMap->GetWidth() != width) {
-        pixelMap->ModifyImageProperty(IMAGE_WIDTH, std::to_string(pixelMap->GetWidth()));
+    if (GetImagePropertyInt(exifMetadata, IMAGE_WIDTH, width) == 0 && pixelMap->GetWidth() != width) {
+        exifMetadata->SetValue(IMAGE_WIDTH, std::to_string(pixelMap->GetWidth()));
     }
 
     // Set Length
     int32_t length = 0;
-    if (pixelMap->GetImagePropertyInt(IMAGE_LENGTH, width) == 0 && pixelMap->GetHeight() != length) {
-        pixelMap->ModifyImageProperty(IMAGE_LENGTH, std::to_string(pixelMap->GetHeight()));
+    if (GetImagePropertyInt(exifMetadata, IMAGE_LENGTH, width) == 0 && pixelMap->GetHeight() != length) {
+        exifMetadata->SetValue(IMAGE_LENGTH, std::to_string(pixelMap->GetHeight()));
     }
 
     // Set DateTime
-    CommonUtils::UpdateImageExifDateTime(pixelMap);
+    UpdateExifDataTime(exifMetadata);
 
     // Set PixelXDimension
     int32_t xDimension = 0;
-    if (pixelMap->GetImagePropertyInt(PIXEL_X_DIMENSION, xDimension) == 0 && pixelMap->GetWidth() != xDimension) {
-        pixelMap->ModifyImageProperty(PIXEL_X_DIMENSION, std::to_string(pixelMap->GetWidth()));
+    if (GetImagePropertyInt(exifMetadata, PIXEL_X_DIMENSION, xDimension) == 0 && pixelMap->GetWidth() != xDimension) {
+        exifMetadata->SetValue(PIXEL_X_DIMENSION, std::to_string(pixelMap->GetWidth()));
     }
 
     // Set PixelYDimension
     int32_t yDimension = 0;
-    if (pixelMap->GetImagePropertyInt(PIXEL_Y_DIMENSION, xDimension) == 0 && pixelMap->GetHeight() != yDimension) {
-        pixelMap->ModifyImageProperty(PIXEL_Y_DIMENSION, std::to_string(pixelMap->GetHeight()));
+    if (GetImagePropertyInt(exifMetadata, PIXEL_Y_DIMENSION, xDimension) == 0 && pixelMap->GetHeight() != yDimension) {
+        exifMetadata->SetValue(PIXEL_Y_DIMENSION, std::to_string(pixelMap->GetHeight()));
     }
 
-    PrintImageExifInfo(pixelMap, "UpdateImageExifInfo::update after");
+    PrintImageExifInfo(exifMetadata, "UpdateImageExifInfo::update after");
+}
+
+void CommonUtils::UpdateImageExifInfo(PixelMap *pixelMap)
+{
+    CHECK_AND_RETURN_LOG(pixelMap != nullptr, "UpdateImageExifInfo: pixelMap is null!");
+
+    UpdateExifMetadata(pixelMap->GetExifMetadata(), pixelMap);
+}
+
+void CommonUtils::UpdateImageExifInfo(Picture *picture)
+{
+    CHECK_AND_RETURN_LOG(picture != nullptr, "UpdateImageExifInfo: picture is null!");
+
+    UpdateExifMetadata(picture->GetExifMetadata(), picture->GetMainPixel().get());
+}
+
+ErrorCode CommonUtils::ParsePicture(Picture *picture, std::shared_ptr<EffectBuffer> &effectBuffer)
+{
+    EFFECT_LOGI("CommonUtils::ParsePicture enter.");
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "ParsePicture: picture is null!");
+
+    std::shared_ptr<PixelMap> pixelMap = picture->GetMainPixel();
+    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "ParsePicture: main pixel is null!");
+    ErrorCode errorCode = CommonUtils::LockPixelMap(pixelMap.get(), effectBuffer);
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode,
+        "ParsePicture: parse main pixel fail! errorCode=%{public}d", errorCode);
+
+    effectBuffer->bufferInfo_->pixelmapType_ = EffectPixelmapType::PRIMARY;
+    effectBuffer->bufferInfo_->bufferType_ = effectBuffer->extraInfo_->bufferType;
+    effectBuffer->bufferInfo_->addr_ = effectBuffer->buffer_;
+    effectBuffer->extraInfo_->dataType = DataType::PICTURE;
+    effectBuffer->extraInfo_->picture = picture;
+
+    std::shared_ptr<PixelMap> gainMap = picture->GetGainmapPixelMap();
+    if (gainMap == nullptr) {
+        EFFECT_LOGD("CommonUtils::ParsePicture not contain gainmap!");
+        return ErrorCode::SUCCESS;
+    }
+
+    EFFECT_LOGD("CommonUtils::ParsePicture contain gainmap!");
+    std::shared_ptr<EffectBuffer> gainMapEffectBuffer;
+    errorCode = CommonUtils::LockPixelMap(gainMap.get(), gainMapEffectBuffer);
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode,
+        "ParsePicture: parse gainmap fail! errorCode=%{public}d", errorCode);
+
+    gainMapEffectBuffer->bufferInfo_->pixelmapType_ = EffectPixelmapType::GAINMAP;
+    gainMapEffectBuffer->bufferInfo_->bufferType_ = gainMapEffectBuffer->extraInfo_->bufferType;
+    gainMapEffectBuffer->bufferInfo_->addr_ = gainMapEffectBuffer->buffer_;
+
+    effectBuffer->auxiliaryBufferInfos =
+        std::make_shared<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
+    effectBuffer->auxiliaryBufferInfos->emplace(EffectPixelmapType::GAINMAP, gainMapEffectBuffer->bufferInfo_);
+
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, PixelMap *pixelMap,
-    AllocatorType &allocatorType)
+    AllocatorType &allocatorType, bool isUpdateExif)
 {
     void *context = nullptr;
     const MemoryInfo &memoryInfo = memoryData->memoryInfo;
@@ -471,8 +560,10 @@ ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, P
     // update rowStride
     pixelMap->SetRowStride(memoryInfo.bufferInfo.rowStride_);
 
-    // update exif
-    CommonUtils::UpdateImageExifInfo(pixelMap);
+    if (isUpdateExif) {
+        // update exif
+        CommonUtils::UpdateImageExifInfo(pixelMap);
+    }
 
     EffectColorSpace colorSpace = memoryInfo.bufferInfo.colorSpace_;
     if (colorSpace != EffectColorSpace::DEFAULT) {
@@ -492,7 +583,7 @@ ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, P
 }
 
 ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
-    const std::shared_ptr<EffectMemoryManager> &memoryManager)
+    const std::shared_ptr<EffectMemoryManager> &memoryManager, bool isUpdateExif)
 {
     EFFECT_LOGI("ModifyPixelMapProperty enter!");
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixel map is null");
@@ -525,11 +616,11 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
         MemcpyHelper::CopyData(buffer.get(), memoryData.get());
     }
 
-    return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType);
+    return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType, isUpdateExif);
 }
 
 ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
-    const std::shared_ptr<EffectContext> &context)
+    const std::shared_ptr<EffectContext> &context, bool isUpdateExif)
 {
     EFFECT_LOGI("ModifyPixelMapPropertyForTexture enter!");
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixel map is null");
@@ -550,7 +641,7 @@ ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, cons
     context->renderEnvironment_->ReadPixelsFromTex(buffer->tex, memoryData->data, buffer->bufferInfo_->width_,
         buffer->bufferInfo_->height_, memoryData->memoryInfo.bufferInfo.rowStride_ / RGBA_BYTES_PER_PIXEL);
 
-    return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType);
+    return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType, isUpdateExif);
 }
 } // namespace Effect
 } // namespace Media
