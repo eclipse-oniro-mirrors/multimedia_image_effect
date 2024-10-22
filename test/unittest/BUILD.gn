@@ -69,6 +69,7 @@ ohos_unittest("image_effect_unittest") {
     "$image_effect_root_dir/test/unittest/TestUtils.cpp",
     "$image_effect_root_dir/test/unittest/image_effect_capi_unittest.cpp",
     "$image_effect_root_dir/test/unittest/image_effect_inner_unittest.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_picture.cpp",
     "$image_effect_root_dir/test/unittest/mock/src/mock_pixel_map.cpp",
     "$image_effect_root_dir/test/unittest/mock/src/mock_producer_surface.cpp",
     "$image_effect_root_dir/test/unittest/native_image_effect_unittest.cpp",
@@ -94,8 +95,10 @@ ohos_unittest("image_effect_unittest") {
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "image_framework:image_native",
+    "image_framework:picture",
     "image_framework:pixelmap",
     "ipc:ipc_single",
+    "libexif:libexif",
     "napi:ace_napi",
   ]
 

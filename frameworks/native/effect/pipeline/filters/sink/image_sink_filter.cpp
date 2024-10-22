@@ -164,6 +164,77 @@ ErrorCode ModifyInnerPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuf
     return CommonUtils::ModifyPixelMapProperty(pixelMap.get(), buffer, context->memoryManager_);
 }
 
+ErrorCode ModifyPictureForInnerPixelMap(PixelMap *pixelMap, EffectBuffer *src,
+    const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
+{
+    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "ModifyPictureForInnerPixelMap: pixelMap is null!");
+
+    uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
+    if (pixels == buffer->bufferInfo_->addr_) {
+        EFFECT_LOGD("ModifyPicture: not need modify picture!");
+        return ErrorCode::SUCCESS;
+    }
+
+    if (buffer->extraInfo_->dataType == DataType::TEX) {
+        if (pixelMap->GetWidth() == static_cast<int32_t>(buffer->bufferInfo_->width_) &&
+            pixelMap->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_) && pixels == src->buffer_) {
+            context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
+            return ErrorCode::SUCCESS;
+        } else {
+            return CommonUtils::ModifyPixelMapPropertyForTexture(pixelMap, buffer, context, false);
+        }
+    }
+
+    if (static_cast<uint32_t>(pixelMap->GetRowStride()) == buffer->bufferInfo_->rowStride_ &&
+        static_cast<uint32_t>(pixelMap->GetHeight()) == buffer->bufferInfo_->height_ &&
+        CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat()) == buffer->bufferInfo_->formatType_) {
+        EFFECT_LOGD("ModifyPicture: Copy data to pixel map.");
+        CopyDataToPixelMap(pixelMap, buffer);
+        return ErrorCode::SUCCESS;
+    }
+
+    return CommonUtils::ModifyPixelMapProperty(pixelMap, buffer, context->memoryManager_, false);
+}
+
+ErrorCode ModifyPicture(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
+    std::shared_ptr<EffectContext> &context)
+{
+    Picture *picture = src->extraInfo_->picture;
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "ModifyPicture: picture is null!");
+    auto primary = picture->GetMainPixel();
+    CHECK_AND_RETURN_RET_LOG(primary != nullptr, ErrorCode::ERR_INPUT_NULL, "ModifyPicture: main pixelmap is null!");
+
+    std::shared_ptr<EffectBuffer> primaryBuffer = std::make_shared<EffectBuffer>(buffer->bufferInfo_, buffer->buffer_,
+        buffer->extraInfo_);
+    primaryBuffer->tex = buffer->tex;
+    ErrorCode res = ModifyPictureForInnerPixelMap(primary.get(), src, primaryBuffer, context);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ModifyPicture: modify main pixelMap fail!");
+
+    CommonUtils::UpdateImageExifInfo(picture);
+
+    if (buffer->auxiliaryBufferInfos == nullptr) {
+        return ErrorCode::SUCCESS;
+    }
+
+    auto it = buffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP);
+    if (it == buffer->auxiliaryBufferInfos->end()) {
+        return ErrorCode::SUCCESS;
+    }
+    auto gainMap = picture->GetMainPixel();
+    CHECK_AND_RETURN_RET_LOG(gainMap != nullptr, ErrorCode::ERR_INPUT_NULL, "ModifyPicture: gainMap is null!");
+
+    auto gainMapBufferInfo = it->second;
+    std::shared_ptr<ExtraInfo> defaultExtraInfo = std::make_shared<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> gainMapEffectBuffer = std::make_shared<EffectBuffer>(gainMapBufferInfo,
+        gainMapBufferInfo->addr_, defaultExtraInfo);
+
+    res = ModifyPictureForInnerPixelMap(gainMap.get(), src, gainMapEffectBuffer, context);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ModifyPicture: modify gainmap pixelMap fail!");
+
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ModifyDataInfo(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
@@ -176,6 +247,8 @@ ErrorCode ModifyDataInfo(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
         case DataType::PATH:
         case DataType::URI:
             return ModifyInnerPixelMap(src, buffer, context);
+        case DataType::PICTURE:
+            return ModifyPicture(src, buffer, context);
         default:
             return ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
     }
@@ -213,6 +286,50 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
 
     // update metadata
     return ColorSpaceHelper::UpdateMetadata(outputBuffer.get());
+}
+
+ErrorCode FillPictureOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer,
+    std::shared_ptr<EffectBuffer> &outputBuffer, const std::shared_ptr<EffectContext> &context)
+{
+    // update output exif info
+    CommonUtils::UpdateImageExifDateTime(outputBuffer->extraInfo_->picture);
+
+    // update nativePixelMap
+    if (inputBuffer->extraInfo_->dataType == DataType::TEX) {
+        context->renderEnvironment_->ConvertTextureToBuffer(inputBuffer->tex, outputBuffer.get());
+        return ErrorCode::SUCCESS;
+    }
+
+    if (inputBuffer->buffer_ == outputBuffer->buffer_) {
+        EFFECT_LOGI("ImageSinkFilter: not need copy!");
+    } else {
+        // memcpy primary
+        MemcpyHelper::CopyData(inputBuffer.get(), outputBuffer.get());
+    }
+
+    auto inputAuxiliary = inputBuffer->auxiliaryBufferInfos;
+    auto outputAuxiliary = outputBuffer->auxiliaryBufferInfos;
+    if (inputAuxiliary == nullptr || outputAuxiliary == nullptr) {
+        return ErrorCode::SUCCESS;
+    }
+
+    for (const auto &it : *inputAuxiliary) {
+        const auto &outputBufferInfoIt = outputAuxiliary->find(it.first);
+        if (outputBufferInfoIt == outputAuxiliary->end()) {
+            continue;
+        }
+
+        auto srcBufferInfo = it.second;
+        std::shared_ptr<ExtraInfo> defaultExtraInfo = std::make_shared<ExtraInfo>();
+        std::shared_ptr<EffectBuffer> srcEffectBuffer = std::make_shared<EffectBuffer>(srcBufferInfo,
+            srcBufferInfo->addr_, defaultExtraInfo);
+        auto dstBufferInfo = outputBufferInfoIt->second;
+        std::shared_ptr<EffectBuffer> dstEffectBuffer = std::make_shared<EffectBuffer>(dstBufferInfo,
+            dstBufferInfo->addr_, defaultExtraInfo);
+
+        MemcpyHelper::CopyData(srcEffectBuffer.get(), dstEffectBuffer.get());
+    }
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode PackToFile(const std::string &path, const std::shared_ptr<PixelMap> &pixelMap)
@@ -310,6 +427,8 @@ ErrorCode SavaOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
         case DataType::SURFACE:
         case DataType::SURFACE_BUFFER:
             return FillOutputData(inputBuffer, outputBuffer, context);
+        case DataType::PICTURE:
+            return FillPictureOutputData(inputBuffer, outputBuffer, context);
         default:
             return ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
     }

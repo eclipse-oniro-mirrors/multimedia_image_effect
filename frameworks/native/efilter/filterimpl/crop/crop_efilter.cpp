@@ -211,7 +211,8 @@ ErrorCode CropEFilter::Render(EffectBuffer *buffer, std::shared_ptr<EffectContex
     return PushData(output.get(), context);
 }
 
-std::shared_ptr<MemNegotiatedCap> CropEFilter::Negotiate(const std::shared_ptr<MemNegotiatedCap> &input)
+std::shared_ptr<MemNegotiatedCap> CropEFilter::Negotiate(const std::shared_ptr<MemNegotiatedCap> &input,
+    std::shared_ptr<EffectContext> &context)
 {
     Region region = { 0, 0, 0, 0 };
     CalculateCropRegion(static_cast<int32_t>(input->width), static_cast<int32_t>(input->height), values_, &region);

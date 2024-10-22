@@ -30,6 +30,7 @@
 #include "effect_context.h"
 #include "image_effect_marco_define.h"
 #include "json_helper.h"
+#include "picture.h"
 
 namespace OHOS {
 namespace Media {
@@ -47,12 +48,15 @@ public:
     static ErrorCode ParseAnyAndAddToJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &result);
     static bool EndsWithJPG(const std::string &input);
     static ErrorCode ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
-        const std::shared_ptr<EffectMemoryManager> &memoryManager);
+        const std::shared_ptr<EffectMemoryManager> &memoryManager, bool isUpdateExif = true);
     static ErrorCode ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
-        const std::shared_ptr<EffectContext> &context);
+        const std::shared_ptr<EffectContext> &context, bool isUpdateExif = true);
     static ErrorCode ParseNativeWindowData(std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType);
     static void UpdateImageExifDateTime(PixelMap *pixelMap);
+    static void UpdateImageExifDateTime(Picture *picture);
     static void UpdateImageExifInfo(PixelMap *pixelMap);
+    static void UpdateImageExifInfo(Picture *picture);
+    static ErrorCode ParsePicture(Picture *picture, std::shared_ptr<EffectBuffer> &effectBuffer);
 
     template <class ValueType> static ErrorCode ParseAny(Plugin::Any any, ValueType &value)
     {
