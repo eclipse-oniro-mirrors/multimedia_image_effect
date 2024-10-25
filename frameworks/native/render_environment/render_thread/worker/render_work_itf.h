@@ -26,6 +26,7 @@ public:
     RenderWorkerItf(const RenderWorkerItf &) = delete;
     virtual RenderWorkerItf &operator = (const RenderWorkerItf &) = delete;
     virtual void AddTask(const TASK &, bool overwrite = false) = 0;
+    virtual void ClearTask() = 0;
     virtual void Start() = 0;
     virtual void Stop() = 0;
 
