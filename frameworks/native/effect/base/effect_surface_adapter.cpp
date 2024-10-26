@@ -63,7 +63,7 @@ ErrorCode EffectSurfaceAdapter::Initialize()
         EFFECT_LOGE("Surface::CreateSurfaceAsProducer failed");
         return ErrorCode::ERR_IMAGE_EFFECT_RECEIVER_INIT_FAILED;
     }
-
+    surfaceBufferManager_ = SurfaceBufferManager::Create();
     // register consumer listener
     receiverConsumerSurface_->RegisterConsumerListener(this);
 
@@ -90,6 +90,19 @@ sptr<Surface> EffectSurfaceAdapter::GetProducerSurface()
     }
 
     return fromProducerSurface_;
+}
+
+sptr<SurfaceBufferManager> EffectSurfaceAdapter::GetSurfaceBufferManager()
+{
+    if (surfaceBufferManager_) {
+        return surfaceBufferManager_;
+    }
+
+    if (Initialize() != ErrorCode::SUCCESS) {
+        return nullptr;
+    }
+
+    return surfaceBufferManager_;
 }
 
 ErrorCode EffectSurfaceAdapter::SetConsumerListener(ConsumerBufferAvailable &&consumerBufferAvailable)
@@ -128,24 +141,23 @@ void EffectSurfaceAdapter::ConsumerRequestCpuAccess(bool isCpuAccess)
 void EffectSurfaceAdapter::OnBufferAvailable()
 {
     OHOS::sptr<SurfaceBuffer> inBuffer;
+    OHOS::sptr<SurfaceBuffer> outBuffer;
     int64_t timestamp = 0;
     Rect damages{};
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
     CHECK_AND_RETURN_LOG(effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT,
         "EffectSurfaceAdapter::OnBufferAvailable AcquireBuffer surface not exist.");
     if (receiverConsumerSurface_) {
+        surfaceBufferManager_->SetConsumerSurface(receiverConsumerSurface_);
         auto ret = receiverConsumerSurface_->AcquireBuffer(inBuffer, syncFence, timestamp, damages);
-        if (ret != 0) {
-            EFFECT_LOGE("AcquireBuffer failed. %{public}d", ret);
-            return;
-        }
+        CHECK_AND_RETURN_LOG(ret == 0, "EffectSurfaceAdapter::OnBufferAvailable AcquireBuffer failed.");
     }
 
     constexpr uint32_t waitForEver = -1;
     (void)syncFence->Wait(waitForEver);
 
     if (consumerBufferAvailable_) {
-        consumerBufferAvailable_(inBuffer, damages, timestamp);
+        consumerBufferAvailable_(inBuffer, outBuffer, damages, timestamp);
     } else {
         EFFECT_LOGE("not register handle buffer.");
     }
@@ -153,7 +165,11 @@ void EffectSurfaceAdapter::OnBufferAvailable()
     CHECK_AND_RETURN_LOG(effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT,
         "EffectSurfaceAdapter::OnBufferAvailable ReleaseBuffer surface not exist.");
     if (receiverConsumerSurface_) {
-        (void)receiverConsumerSurface_->ReleaseBuffer(inBuffer, IE_INVALID_FENCE);
+        if (surfaceBufferManager_->IsNeedSwap()) {
+            (void)receiverConsumerSurface_->ReleaseBuffer(outBuffer, IE_INVALID_FENCE);
+        } else {
+            (void)receiverConsumerSurface_->ReleaseBuffer(inBuffer, IE_INVALID_FENCE);
+        }
     }
 }
 

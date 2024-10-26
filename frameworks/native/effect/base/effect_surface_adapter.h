@@ -22,12 +22,13 @@
 #include <refbase.h>
 
 #include "error_code.h"
+#include "surface_buffer_manager.h"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
-using ConsumerBufferAvailable = std::function<void(sptr<SurfaceBuffer> &buffer, const OHOS::Rect &damages,
-    int64_t timeStamp)>;
+using ConsumerBufferAvailable = std::function<void(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
+        const OHOS::Rect &damages, int64_t timeStamp)>;
 
 class EffectSurfaceAdapter : public IBufferConsumerListenerClazz {
 public:
@@ -35,6 +36,7 @@ public:
     ~EffectSurfaceAdapter();
 
     sptr<Surface> GetProducerSurface();
+    sptr<SurfaceBufferManager> GetSurfaceBufferManager();
     ErrorCode SetConsumerListener(ConsumerBufferAvailable &&consumerBufferAvailable);
     GraphicTransformType GetTransform() const;
     void SetOutputSurfaceDefaultUsage(uint64_t usage);
@@ -53,6 +55,7 @@ private:
 
     OHOS::sptr<IConsumerSurface> receiverConsumerSurface_ = nullptr;
     OHOS::sptr<Surface> fromProducerSurface_ = nullptr;
+    OHOS::sptr<SurfaceBufferManager> surfaceBufferManager_ = nullptr;
     ConsumerBufferAvailable consumerBufferAvailable_;
     uint64_t outputSurfaceDefaultUsage_ = 0;
     volatile int32_t effectSurfaceFlag_ = 0;

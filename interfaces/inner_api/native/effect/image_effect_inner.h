@@ -28,6 +28,7 @@
 #include "render_thread.h"
 #include "image_effect_marco_define.h"
 #include "picture.h"
+#include "surface_buffer_manager.h"
 
 namespace OHOS {
 namespace Media {
@@ -120,7 +121,8 @@ private:
     void DestroyEGLEnv();
 
     IMAGE_EFFECT_EXPORT
-    void ConsumerBufferAvailable(sptr<SurfaceBuffer> &buffer, const OHOS::Rect &damages, int64_t timestamp);
+    void ConsumerBufferAvailable(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
+        const OHOS::Rect &damages, int64_t timestamp);
     void UpdateProducerSurfaceInfo();
 
     void ExtInitModule();
@@ -129,11 +131,13 @@ private:
     unsigned long int RequestTaskId();
 
     void ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer);
-    void OnBufferAvailableWithCPU(sptr<SurfaceBuffer> &buffer, const OHOS::Rect &damages, int64_t timestamp);
-    void OnBufferAvailableToProcess(sptr<SurfaceBuffer> &buffer, sptr<SurfaceBuffer> &outBuffer, int64_t timestamp);
+    void OnBufferAvailableWithCPU(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
+        const OHOS::Rect &damages, int64_t timestamp);
+    void OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer, int64_t timestamp);
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
+    sptr<SurfaceBufferManager> surfaceBufferManager_;
     volatile int32_t imageEffectFlag_ = 0;
     
     GraphicTransformType toProducerTransform_ = GRAPHIC_ROTATE_BUTT;
