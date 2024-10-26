@@ -1132,6 +1132,7 @@ void ImageEffect::UnLockData(DataInfo &dataInfo)
 
 void ImageEffect::InitEGLEnv()
 {
+    EFFECT_TRACE_NAME("ImageEffect::InitEGLEnv");
     impl_->effectContext_->renderEnvironment_->Init();
     impl_->effectContext_->renderEnvironment_->Prepare();
 }
