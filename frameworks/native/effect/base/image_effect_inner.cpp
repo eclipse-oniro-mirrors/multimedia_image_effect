@@ -859,10 +859,13 @@ bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
 
     auto detRet = GSError::GSERROR_OK;
     if (isNeedSwap) {
+        EFFECT_TRACE_NAME("OnBufferAvailableToProcess::SwapBuffers");
         detRet = toProducerSurface_->DetachBufferFromQueue(outBuffer);
-        CHECK_AND_RETURN_RET_LOG(detRet == GSError::GSERROR_OK, true, "SwapBuffers: detach buffer from producerSurface_ failed");
+        CHECK_AND_RETURN_RET_LOG(detRet == GSError::GSERROR_OK, true,
+            "SwapBuffers: detach buffer from producerSurface_ failed");
         detRet = toProducerSurface_->AttachBufferToQueue(inBuffer);
-        CHECK_AND_RETURN_RET_LOG(detRet == GSError::GSERROR_OK, true, "SwapBuffers: attach buffer from producerSurface_ failed");
+        CHECK_AND_RETURN_RET_LOG(detRet == GSError::GSERROR_OK, true,
+            "SwapBuffers: attach buffer from producerSurface_ failed");
     }
     return isNeedSwap;
 }
@@ -906,9 +909,7 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
         outBuffer->GetWidth(), outBuffer->GetHeight(), outBuffer->GetStride(), outBuffer->GetSize(),
         static_cast<unsigned long long>(outBuffer->GetUsage()));
 
-    EFFECT_TRACE_BEGIN("OnBufferAvailableToProcess");
     bool isNeedSwap = OnBufferAvailableToProcess(inBuffer, outBuffer, timestamp);
-    EFFECT_TRACE_END();
 
     EFFECT_TRACE_BEGIN("outBuffer::FlushCache");
     (void)outBuffer->FlushCache();
