@@ -63,6 +63,7 @@ ErrorCode EffectSurfaceAdapter::Initialize()
         EFFECT_LOGE("Surface::CreateSurfaceAsProducer failed");
         return ErrorCode::ERR_IMAGE_EFFECT_RECEIVER_INIT_FAILED;
     }
+
     // register consumer listener
     receiverConsumerSurface_->RegisterConsumerListener(this);
 
