@@ -69,7 +69,6 @@ ohos_shared_library("image_effect_impl") {
     "$image_effect_root_dir/frameworks/native/effect/base/effect_surface_adapter.cpp",
     "$image_effect_root_dir/frameworks/native/effect/base/external_loader.cpp",
     "$image_effect_root_dir/frameworks/native/effect/base/image_effect_inner.cpp",
-    "$image_effect_root_dir/frameworks/native/effect/base/surface_buffer_manager.cpp",
     "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_converter.cpp",
     "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_helper.cpp",
     "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_manager.cpp",
