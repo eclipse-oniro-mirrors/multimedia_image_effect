@@ -433,12 +433,13 @@ HWTEST_F(TestImageEffect, Surface001, TestSize.Level1)
     ASSERT_NE(inputSurface, nullptr);
 
     sptr<SurfaceBuffer> surfaceBuffer;
+    sptr<SurfaceBuffer> outBuffer;
     MockProducerSurface::AllocDmaMemory(surfaceBuffer);
     OHOS::Rect damages;
     int64_t timeStamp = 0;
 
     // running without filter
-    imageEffect_->ConsumerBufferAvailable(surfaceBuffer, damages, timeStamp);
+    imageEffect_->ConsumerBufferAvailable(surfaceBuffer, outBuffer, damages, timeStamp);
 
     std::shared_ptr<EFilter> contrastEFilter = EFilterFactory::Instance()->Create(CONTRAST_EFILTER);
     Plugin::Any value = 50.f;
@@ -450,7 +451,7 @@ HWTEST_F(TestImageEffect, Surface001, TestSize.Level1)
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 
     // contrast filter
-    imageEffect_->ConsumerBufferAvailable(surfaceBuffer, damages, timeStamp);
+    imageEffect_->ConsumerBufferAvailable(surfaceBuffer, outBuffer, damages, timeStamp);
     MockProducerSurface::ReleaseDmaBuffer(surfaceBuffer);
 }
 } // namespace Test
