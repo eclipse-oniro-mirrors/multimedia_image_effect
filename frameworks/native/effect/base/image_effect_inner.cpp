@@ -862,10 +862,11 @@ bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
         EFFECT_TRACE_NAME("OnBufferAvailableToProcess::SwapBuffers");
         detRet = toProducerSurface_->DetachBufferFromQueue(outBuffer);
         CHECK_AND_RETURN_RET_LOG(detRet == GSError::GSERROR_OK, true,
-            "SwapBuffers: detach buffer from producerSurface_ failed");
+            "OnBufferAvailableToProcess: detach buffer from producerSurface_ failed");
         detRet = toProducerSurface_->AttachBufferToQueue(inBuffer);
         CHECK_AND_RETURN_RET_LOG(detRet == GSError::GSERROR_OK, true,
-            "SwapBuffers: attach buffer from producerSurface_ failed");
+            "OnBufferAvailableToProcess: attach buffer from producerSurface_ failed");
+        EFFECT_TRACE_END();
     }
     return isNeedSwap;
 }
@@ -873,7 +874,7 @@ bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
 bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer,
     const OHOS::Rect& damages, int64_t timestamp)
 {
-    CHECK_AND_RETURN_RET_LOG(inBuffer != nullptr, true, "OnBufferAvailableWithCPU: inBuffer is nullptr.");
+    CHECK_AND_RETURN_RET_LOG(inBuffer != nullptr, true, "ImageEffect::OnBufferAvailableWithCPU: inBuffer is nullptr.");
     outDateInfo_.dataType_ = DataType::SURFACE;
     UpdateProducerSurfaceInfo();
 
@@ -925,7 +926,7 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
     CHECK_AND_RETURN_RET_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT, true,
         "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
     CHECK_AND_RETURN_RET_LOG(toProducerSurface_ != nullptr, true,
-                             "OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
+        "ImageEffect::OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     constexpr int32_t invalidFence = -1;
     if (isNeedSwap) {
         (void)toProducerSurface_->FlushBuffer(inBuffer, invalidFence, flushConfig);

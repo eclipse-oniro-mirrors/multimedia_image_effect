@@ -151,9 +151,11 @@ void EffectSurfaceAdapter::OnBufferAvailable()
     if (receiverConsumerSurface_) {
         if (isNeedSwap) {
             auto detRet = receiverConsumerSurface_->DetachBufferFromQueue(inBuffer);
-            CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK, "SwapBuffers: detach buffer from consumerSurface_ failed");
+            CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
+                "EffectSurfaceAdapter::OnBufferAvailable: detach buffer from consumerSurface_ failed");
             detRet = receiverConsumerSurface_->AttachBufferToQueue(outBuffer);
-            CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK, "SwapBuffers: attach buffer from consumerSurface_ failed");
+            CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
+                "EffectSurfaceAdapter::OnBufferAvailable: attach buffer from consumerSurface_ failed");
             (void)receiverConsumerSurface_->ReleaseBuffer(outBuffer, IE_INVALID_FENCE);
         } else {
             (void)receiverConsumerSurface_->ReleaseBuffer(inBuffer, IE_INVALID_FENCE);
