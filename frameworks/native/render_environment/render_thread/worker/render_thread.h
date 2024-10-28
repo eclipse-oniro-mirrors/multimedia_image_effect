@@ -23,6 +23,7 @@
 #include "render_queue_itf.h"
 #include "render_fifo_queue.h"
 #include "render_task_itf.h"
+#include "effect_log.h"
 
 constexpr const static int TIME_FOR_STOP = 1000;
 constexpr const static int TIME_FOR_WAITING_TASK = 2500;
