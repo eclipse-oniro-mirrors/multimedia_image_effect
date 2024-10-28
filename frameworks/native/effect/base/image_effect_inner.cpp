@@ -169,7 +169,7 @@ ImageEffect::ImageEffect(const char *name)
 ImageEffect::~ImageEffect()
 {
     imageEffectFlag_ = DESTRUCTOR_IMAGE_EFFECT_CONSTANT;
-    EFFECT_LOGI("ImageEffect destruct!");
+    EFFECT_LOGI("ImageEffect destruct enter!");
     impl_->surfaceAdapter_ = nullptr;
     m_renderThread->ClearTask();
     auto task = std::make_shared<RenderTask<>>([this]() { this->DestroyEGLEnv(); }, COMMON_TASK_TAG,
@@ -189,6 +189,7 @@ ImageEffect::~ImageEffect()
     }
     fromProducerSurface_ = nullptr;
     impl_ = nullptr;
+    EFFECT_LOGI("ImageEffect destruct end!");
 }
 
 void ImageEffect::AddEFilter(const std::shared_ptr<EFilter> &efilter)
@@ -1139,11 +1140,13 @@ void ImageEffect::InitEGLEnv()
 
 void ImageEffect::DestroyEGLEnv()
 {
+    EFFECT_LOGI("ImageEffect DestroyEGLEnv enter!");
     if (impl_->effectContext_->renderEnvironment_ == nullptr) {
         return;
     }
     impl_->effectContext_->renderEnvironment_->ReleaseParam();
     impl_->effectContext_->renderEnvironment_->Release();
+    EFFECT_LOGI("ImageEffect DestroyEGLEnv end!");
 }
 
 ErrorCode ImageEffect::SetExtraInfo(EffectJsonPtr res)

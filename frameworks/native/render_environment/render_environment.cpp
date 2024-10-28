@@ -48,7 +48,7 @@ EGLStatus RenderEnvironment::GetEGLStatus() const
 void RenderEnvironment::Init()
 {
     EFFECT_TRACE_NAME("RenderEnvironment::Init()");
-    EFFECT_LOGI("RenderEnvironment start init");
+    EFFECT_LOGI("RenderEnvironment init enter!");
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (eglInitialize(display, nullptr, nullptr) == EGL_FALSE) {
         EFFECT_LOGE("EGL Initialize failed");
@@ -59,6 +59,7 @@ void RenderEnvironment::Init()
     if (param_->context_->Init()) {
         isEGLReady = EGLStatus::READY;
     }
+    EFFECT_LOGI("RenderEnvironment init end!");
 }
 
 void RenderEnvironment::Prepare()

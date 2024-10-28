@@ -67,10 +67,12 @@ RenderThread<QUEUE>::RenderThread(size_t queueSize, std::function<void()> idleTa
 
 template <typename QUEUE> RenderThread<QUEUE>::~RenderThread()
 {
+    EFFECT_LOGI("RenderThread<QUEUE> destruct enter!");
     Stop();
     t->join();
     delete t;
     delete m_localMsgQueue;
+    EFFECT_LOGI("RenderThread<QUEUE> destruct end!");
 }
 
 template <typename QUEUE> void RenderThread<QUEUE>::AddTask(const LocalTaskType &task, bool overwrite)
