@@ -871,6 +871,20 @@ bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
     return isNeedSwap;
 }
 
+BufferRequestConfig ImageEffect::GetBufferRequestConfig(const sptr<SurfaceBuffer>& buffer)
+{
+    return {
+        .width = buffer->GetWidth(),
+        .height = buffer->GetHeight(),
+        .strideAlignment = 0x8,
+        .format = buffer->GetFormat(),
+        .usage = buffer->GetUsage(),
+        .timeout = 0,
+        .colorGamut = buffer->GetSurfaceBufferColorGamut(),
+        .transform = buffer->GetSurfaceBufferTransform(),
+    };
+}
+
 bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer,
     const OHOS::Rect& damages, int64_t timestamp)
 {
@@ -884,16 +898,7 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
     (void)inBuffer->InvalidateCache();
     EFFECT_TRACE_END();
 
-    BufferRequestConfig requestConfig = {
-        .width = inBuffer->GetWidth(),
-        .height = inBuffer->GetHeight(),
-        .strideAlignment = 0x8, // default stride is 8 Bytes.
-        .format = inBuffer->GetFormat(),
-        .usage = inBuffer->GetUsage(),
-        .timeout = 0,
-        .colorGamut = inBuffer->GetSurfaceBufferColorGamut(),
-        .transform = inBuffer->GetSurfaceBufferTransform(),
-    };
+    auto requestConfig = GetBufferRequestConfig(inBuffer);
 
     CHECK_AND_RETURN_RET_LOG(toProducerSurface_ != nullptr, true,
                              "OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
@@ -925,11 +930,8 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
     CHECK_AND_RETURN_RET_LOG(toProducerSurface_ != nullptr, true,
         "ImageEffect::OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     constexpr int32_t invalidFence = -1;
-    if (isNeedSwap) {
-        (void)toProducerSurface_->FlushBuffer(inBuffer, invalidFence, flushConfig);
-    } else {
-        (void)toProducerSurface_->FlushBuffer(outBuffer, invalidFence, flushConfig);
-    }
+    auto flushBuffer = (isNeedSwap ? inBuffer : outBuffer);
+    toProducerSurface_->FlushBuffer(flushBuffer, invalidFence, flushConfig);
     return isNeedSwap;
 }
 

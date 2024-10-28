@@ -133,6 +133,7 @@ private:
     bool OnBufferAvailableWithCPU(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
         const OHOS::Rect &damages, int64_t timestamp);
     bool OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer, int64_t timestamp);
+    BufferRequestConfig GetBufferRequestConfig(const sptr<SurfaceBuffer>& buffer);
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal

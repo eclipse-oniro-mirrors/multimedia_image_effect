@@ -135,10 +135,11 @@ void EffectSurfaceAdapter::OnBufferAvailable()
 
     CHECK_AND_RETURN_LOG(effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT,
         "EffectSurfaceAdapter::OnBufferAvailable AcquireBuffer surface not exist.");
-    if (receiverConsumerSurface_) {
-        auto ret = receiverConsumerSurface_->AcquireBuffer(inBuffer, syncFence, timestamp, damages);
-        CHECK_AND_RETURN_LOG(ret == 0, "EffectSurfaceAdapter::OnBufferAvailable AcquireBuffer failed.");
-    }
+    CHECK_AND_RETURN_LOG(receiverConsumerSurface_,
+        "EffectSurfaceAdapter::OnBufferAvailable receiverConsumerSurface_ is nullptr.");
+    auto ret = receiverConsumerSurface_->AcquireBuffer(inBuffer, syncFence, timestamp, damages);
+    CHECK_AND_RETURN_LOG(ret == 0, "AcquireBuffer failed. %{public}d", ret);
+
 
     bool isNeedSwap = true;
     if (consumerBufferAvailable_) {
@@ -149,19 +150,18 @@ void EffectSurfaceAdapter::OnBufferAvailable()
 
     CHECK_AND_RETURN_LOG(effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT,
         "EffectSurfaceAdapter::OnBufferAvailable ReleaseBuffer surface not exist.");
-    if (receiverConsumerSurface_) {
-        if (isNeedSwap) {
-            auto detRet = receiverConsumerSurface_->DetachBufferFromQueue(inBuffer);
-            CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
-                "EffectSurfaceAdapter::OnBufferAvailable: detach buffer from consumerSurface_ failed");
-            detRet = receiverConsumerSurface_->AttachBufferToQueue(outBuffer);
-            CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
-                "EffectSurfaceAdapter::OnBufferAvailable: attach buffer from consumerSurface_ failed");
-            (void)receiverConsumerSurface_->ReleaseBuffer(outBuffer, IE_INVALID_FENCE);
-        } else {
-            (void)receiverConsumerSurface_->ReleaseBuffer(inBuffer, IE_INVALID_FENCE);
-        }
+    CHECK_AND_RETURN_LOG(receiverConsumerSurface_,
+        "EffectSurfaceAdapter::OnBufferAvailable receiverConsumerSurface_ is nullptr.");
+    auto releaseBuffer = (isNeedSwap) ? outBuffer : inBuffer;
+    if (isNeedSwap) {
+        auto detRet = receiverConsumerSurface_->DetachBufferFromQueue(inBuffer);
+        CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
+            "EffectSurfaceAdapter::OnBufferAvailable: detach buffer from consumerSurface_ failed");
+        detRet = receiverConsumerSurface_->AttachBufferToQueue(outBuffer);
+        CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
+            "EffectSurfaceAdapter::OnBufferAvailable: attach buffer from consumerSurface_ failed");
     }
+    (void)receiverConsumerSurface_->ReleaseBuffer(releaseBuffer, IE_INVALID_FENCE);
 }
 
 void EffectSurfaceAdapter::OnTunnelHandleChange() {}
