@@ -47,6 +47,7 @@ EGLStatus RenderEnvironment::GetEGLStatus() const
 
 void RenderEnvironment::Init()
 {
+    EFFECT_TRACE_NAME("RenderEnvironment::Init()");
     EFFECT_LOGI("RenderEnvironment start init");
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     needTerminate_ = true;
@@ -64,6 +65,7 @@ void RenderEnvironment::Init()
 
 void RenderEnvironment::Prepare()
 {
+    EFFECT_TRACE_NAME("RenderEnvironment::Prepare()");
     if (param_->context_->MakeCurrent(screenSurface_)) {
         param_->renderer_ = new RenderOpenglRenderer();
         InitDefaultShaderMT(param_);

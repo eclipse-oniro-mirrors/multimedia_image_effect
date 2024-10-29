@@ -16,6 +16,7 @@
 #include "render_context.h"
 #include "render_environment.h"
 #include "effect_log.h"
+#include "effect_trace.h"
 
 namespace OHOS {
 namespace Media {
@@ -26,6 +27,7 @@ RenderContext::~RenderContext() {}
 
 bool RenderContext::Create(RenderContext *sharedContext)
 {
+    EFFECT_TRACE_NAME("RenderContext::Create()");
     display_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (display_ == EGL_NO_DISPLAY) {
         EFFECT_LOGE("RenderContext: unable to get EGL display.");
