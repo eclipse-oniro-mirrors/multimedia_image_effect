@@ -906,16 +906,16 @@ void ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, int64_t timestam
     EFFECT_TRACE_END();
 
     BufferFlushConfig flushConfig = {
-            .damage = {
-                    .w = flushBuffer->GetWidth(),
-                    .h = flushBuffer->GetHeight(),
-            },
-            .timestamp = timestamp,
+        .damage = {
+            .w = flushBuffer->GetWidth(),
+            .h = flushBuffer->GetHeight(),
+        },
+        .timestamp = timestamp,
     };
     CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
-                             "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
+        "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
     CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr,
-                             "ImageEffect::OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
+        "ImageEffect::OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     constexpr int32_t invalidFence = -1;
     toProducerSurface_->FlushBuffer(flushBuffer, invalidFence, flushConfig);
 }
