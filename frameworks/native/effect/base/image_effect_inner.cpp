@@ -837,6 +837,21 @@ void SetSurfaceBufferHebcAccessType(sptr<SurfaceBuffer> &buffer, V1_1::HebcAcces
 bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
     int64_t timestamp)
 {
+    std::vector<uint32_t> keys = {};
+    auto res = inBuffer->ListMetadataKeys(keys);
+    for (uint32_t key : keys) {
+        std::vector<uint8_t> values;
+        res = inBuffer->GetMetadata(key, values);
+        if (res != 0) {
+            EFFECT_LOGE("GetMetadata fail! key = %{public}d res = %{public}d", key, res);
+            continue;
+        }
+        res = outBuffer->SetMetadata(key, values);
+        if (res != 0) {
+            EFFECT_LOGE("SetMetadata fail! key = %{public}d res = %{public}d", key, res);
+            continue;
+        }
+    }
     bool isSrcHebcData = IsSurfaceBufferHebc(inBuffer);
     SetSurfaceBufferHebcAccessType(outBuffer,
         isSrcHebcData ? V1_1::HebcAccessType::HEBC_ACCESS_HW_ONLY : V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
@@ -885,6 +900,26 @@ BufferRequestConfig ImageEffect::GetBufferRequestConfig(const sptr<SurfaceBuffer
     };
 }
 
+void ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, int64_t timestamp) {
+    EFFECT_TRACE_BEGIN("FlushBuffer::FlushCache");
+    (void)flushBuffer->FlushCache();
+    EFFECT_TRACE_END();
+
+    BufferFlushConfig flushConfig = {
+            .damage = {
+                    .w = flushBuffer->GetWidth(),
+                    .h = flushBuffer->GetHeight(),
+            },
+            .timestamp = timestamp,
+    };
+    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
+                             "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
+    CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr,
+                             "ImageEffect::OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
+    constexpr int32_t invalidFence = -1;
+    toProducerSurface_->FlushBuffer(flushBuffer, invalidFence, flushConfig);
+}
+
 bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer,
     const OHOS::Rect& damages, int64_t timestamp)
 {
@@ -914,24 +949,9 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
 
     bool isNeedSwap = OnBufferAvailableToProcess(inBuffer, outBuffer, timestamp);
 
-    EFFECT_TRACE_BEGIN("outBuffer::FlushCache");
-    (void)outBuffer->FlushCache();
-    EFFECT_TRACE_END();
-
-    BufferFlushConfig flushConfig = {
-        .damage = {
-            .w = requestConfig.width,
-            .h = requestConfig.height,
-        },
-        .timestamp = timestamp,
-    };
-    CHECK_AND_RETURN_RET_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT, true,
-        "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
-    CHECK_AND_RETURN_RET_LOG(toProducerSurface_ != nullptr, true,
-        "ImageEffect::OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
-    constexpr int32_t invalidFence = -1;
     auto flushBuffer = (isNeedSwap ? inBuffer : outBuffer);
-    toProducerSurface_->FlushBuffer(flushBuffer, invalidFence, flushConfig);
+    FlushBuffer(flushBuffer, timestamp);
+
     return isNeedSwap;
 }
 

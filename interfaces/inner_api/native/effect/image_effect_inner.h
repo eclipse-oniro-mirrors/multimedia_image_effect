@@ -112,6 +112,7 @@ private:
     ErrorCode LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer, std::shared_ptr<EffectBuffer> &dstEffectBuffer);
 
     static void UnLockData(DataInfo &dataInfo);
+    static BufferRequestConfig GetBufferRequestConfig(const sptr<SurfaceBuffer>& buffer);
 
     void UnLockAll();
 
@@ -133,7 +134,7 @@ private:
     bool OnBufferAvailableWithCPU(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
         const OHOS::Rect &damages, int64_t timestamp);
     bool OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer, int64_t timestamp);
-    BufferRequestConfig GetBufferRequestConfig(const sptr<SurfaceBuffer>& buffer);
+    void FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, int64_t timestamp);
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
