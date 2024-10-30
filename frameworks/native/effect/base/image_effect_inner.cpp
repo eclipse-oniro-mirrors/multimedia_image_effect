@@ -1169,6 +1169,7 @@ ErrorCode ImageEffect::SetInputPicture(Picture *picture)
     CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL,
         "ImageEffect::SetInputPicture: picture is null!");
 
+    impl_->effectContext_->renderEnvironment_->NotifyInputChanged();
     ClearDataInfo(inDateInfo_);
     inDateInfo_.dataType_ = DataType::PICTURE;
     inDateInfo_.picture_ = picture;
