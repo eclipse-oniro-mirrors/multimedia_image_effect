@@ -1181,10 +1181,13 @@ ErrorCode ImageEffect::SetInputPicture(Picture *picture)
 ErrorCode ImageEffect::SetOutputPicture(Picture *picture)
 {
     EFFECT_LOGD("ImageEffect::SetOutputPicture");
-    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL,
-        "ImageEffect::SetOutputPicture picture is null!");
-
     ClearDataInfo(outDateInfo_);
+
+    if (picture == nullptr) {
+        EFFECT_LOGI("SetOutputPicture:picture set to null!");
+        return ErrorCode::SUCCESS;
+    }
+    
     outDateInfo_.dataType_ = DataType::PICTURE;
     outDateInfo_.picture_ = picture;
 
