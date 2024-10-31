@@ -940,8 +940,8 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
     auto ret = toProducerSurface_->RequestBuffer(outBuffer, syncFence, requestConfig);
     CHECK_AND_RETURN_RET_LOG(ret == 0 && outBuffer != nullptr, true, "RequestBuffer failed. %{public}d", ret);
 
-		constexpr uint32_t waitForEver = -1;
-		(void)syncFence->Wait(waitForEver);
+    constexpr uint32_t waitForEver = -1;
+    (void)syncFence->Wait(waitForEver);
 
     EFFECT_LOGD("inBuffer: w=%{public}d h=%{public}d stride=%{public}d len=%{public}d usage=%{public}lld",
         inBuffer->GetWidth(), inBuffer->GetHeight(), inBuffer->GetStride(), inBuffer->GetSize(),
