@@ -142,7 +142,6 @@ void EffectSurfaceAdapter::OnBufferAvailable()
 
 		constexpr uint32_t waitForEver = -1;
 		(void)syncFence->Wait(waitForEver);
-
     bool isNeedSwap = true;
     if (consumerBufferAvailable_) {
         isNeedSwap = consumerBufferAvailable_(inBuffer, outBuffer, damages, timestamp);
