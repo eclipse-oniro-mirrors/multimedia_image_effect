@@ -140,6 +140,9 @@ void EffectSurfaceAdapter::OnBufferAvailable()
     auto ret = receiverConsumerSurface_->AcquireBuffer(inBuffer, syncFence, timestamp, damages);
     CHECK_AND_RETURN_LOG(ret == 0, "AcquireBuffer failed. %{public}d", ret);
 
+		constexpr uint32_t waitForEver = -1;
+		(void)syncFence->Wait(waitForEver);
+
     bool isNeedSwap = true;
     if (consumerBufferAvailable_) {
         isNeedSwap = consumerBufferAvailable_(inBuffer, outBuffer, damages, timestamp);

@@ -874,7 +874,7 @@ bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
 
     auto detRet = GSError::GSERROR_OK;
     if (isNeedSwap) {
-        EFFECT_TRACE_NAME("OnBufferAvailableToProcess::SwapBuffers");
+        EFFECT_TRACE_BEGIN("OnBufferAvailableToProcess::SwapBuffers");
         detRet = toProducerSurface_->DetachBufferFromQueue(outBuffer);
         CHECK_AND_RETURN_RET_LOG(detRet == GSError::GSERROR_OK, true,
             "OnBufferAvailableToProcess: detach buffer from producerSurface_ failed");
