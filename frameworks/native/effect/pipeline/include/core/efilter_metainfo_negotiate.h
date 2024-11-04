@@ -28,6 +28,7 @@ namespace Effect {
         {
             return isNeedUpdate_;
         }
+
         void SetNeedUpdate(bool isNeedUpdate)
         {
             isNeedUpdate_ = isNeedUpdate;

@@ -850,11 +850,9 @@ bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
             EFFECT_LOGE("GetMetadata fail! key = %{public}d res = %{public}d", key, res);
             continue;
         }
-        if (key == VIDEO_SINK_FILTER_STATUS && !values.empty() && values[0] == VIDEO_SINK_FILTER_STATUS) {
-            impl_->effectContext_->metaInfoNegotiate_->SetNeedUpdate(false);
-        } else {
-            impl_->effectContext_->metaInfoNegotiate_->SetNeedUpdate(true);
-        }
+        auto isNeedUpdate = !(key == VIDEO_SINK_FILTER_STATUS && values[0] == VIDEO_SINK_FILTER_STATUS);
+        impl_->effectContext_->metaInfoNegotiate_->SetNeedUpdate(isNeedUpdate);
+
         res = outBuffer->SetMetadata(key, values);
         if (res != 0) {
             EFFECT_LOGE("SetMetadata fail! key = %{public}d res = %{public}d", key, res);
