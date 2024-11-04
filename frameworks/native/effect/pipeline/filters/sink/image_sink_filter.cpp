@@ -69,7 +69,7 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
     if (pixels == buffer->buffer_) {
         EFFECT_LOGD("ModifyPixelMap: not need modify pixelmap!");
         CommonUtils::UpdateImageExifDateTime(pixelMap);
-		CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
+        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
         return ColorSpaceHelper::UpdateMetadata(src);
     }
 
@@ -78,7 +78,7 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
             pixelMap->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_) && pixels == src->buffer_) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
             CommonUtils::UpdateImageExifDateTime(pixelMap);
-			CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
+            CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
             return ColorSpaceHelper::UpdateMetadata(src);
         } else {
             ErrorCode result = CommonUtils::ModifyPixelMapPropertyForTexture(pixelMap, buffer, context);
@@ -91,7 +91,7 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
         CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat()) == buffer->bufferInfo_->formatType_) {
         EFFECT_LOGD("Copy data to pixel map.");
         CopyDataToPixelMap(pixelMap, buffer);
-		CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
+        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
         return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
 
@@ -123,7 +123,7 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
     EFFECT_LOGD("ModifySurfaceBuffer: virAddr=%{public}p, inputBufAddr=%{public}p",
         surfaceBuffer->GetVirAddr(), buffer->buffer_);
     if (surfaceBuffer->GetVirAddr() == buffer->buffer_) {
-		CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
+        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
         return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
 
@@ -131,7 +131,7 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
         if (surfaceBuffer->GetWidth() == static_cast<int32_t>(buffer->bufferInfo_->width_) &&
             surfaceBuffer->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_)) {
             context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
-			CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
+            CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
             return ColorSpaceHelper::UpdateMetadata(src);
         }
         return ErrorCode::ERR_BUFFER_NOT_ALLOW_CHANGE;
@@ -143,7 +143,7 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
         buffer->bufferInfo_->formatType_) {
         EFFECT_LOGD("Copy data to surface buffer.");
         CopyDataToSurfaceBuffer(surfaceBuffer, buffer);
-		CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
+        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
         return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
 
@@ -162,7 +162,7 @@ ErrorCode ModifyInnerPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuf
         CommonUtils::UpdateImageExifDateTime(pixelMap.get());
 
         // update metadata
-		CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
+        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
         return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
     if (buffer->extraInfo_->dataType == DataType::TEX) {
@@ -271,7 +271,7 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
         CommonUtils::UpdateImageExifDateTime(outputBuffer->extraInfo_->pixelMap);
 
         // update metadata
-		CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
+        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
         return ColorSpaceHelper::UpdateMetadata(outputBuffer.get());
     }
 
@@ -293,7 +293,7 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
     CommonUtils::UpdateImageExifDateTime(outputBuffer->extraInfo_->pixelMap);
 
     // update metadata
-	CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
+    CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
     return ColorSpaceHelper::UpdateMetadata(outputBuffer.get());
 }
 
