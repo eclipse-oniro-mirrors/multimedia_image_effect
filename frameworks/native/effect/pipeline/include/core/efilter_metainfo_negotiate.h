@@ -37,8 +37,8 @@ namespace Effect {
     private:
         bool isNeedUpdate_ = true;
     };
-}
-}
-}
+} // namespace Effect
+} // namespace Media
+} // namespace OHOS
 
 #endif //IM_EFILTER_METAINFO_NEGOTIATE_H
