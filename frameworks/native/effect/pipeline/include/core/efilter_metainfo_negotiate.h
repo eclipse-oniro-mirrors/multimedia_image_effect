@@ -24,10 +24,12 @@ namespace Effect {
         EfilterMetaInfoNegotiate() = default;
         ~EfilterMetaInfoNegotiate() = default;
 
-        bool IsNeedUpdate() const {
+        bool IsNeedUpdate() const
+        {
             return isNeedUpdate_;
         }
-        void SetNeedUpdate(bool isNeedUpdate) {
+        void SetNeedUpdate(bool isNeedUpdate)
+        {
             isNeedUpdate_ = isNeedUpdate;
         }
     private:

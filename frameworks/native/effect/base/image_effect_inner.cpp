@@ -54,6 +54,7 @@ enum class EffectState {
 
 const int STRUCT_IMAGE_EFFECT_CONSTANT = 1;
 const int DESTRUCTOR_IMAGE_EFFECT_CONSTANT = 2;
+const int VIDEO_SINK_FILTER_STATUS = 3;
 const std::string FUNCTION_FLUSH_SURFACE_BUFFER = "flushSurfaceBuffer";
 
 class ImageEffect::Impl {
@@ -849,7 +850,11 @@ bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
             EFFECT_LOGE("GetMetadata fail! key = %{public}d res = %{public}d", key, res);
             continue;
         }
-        impl_->effectContext_->metaInfoNegotiate_->SetNeedUpdate(!(key == 3 && values[0] == 3));
+        if (key == VIDEO_SINK_FILTER_STATUS && !values.empty() && values[0] == VIDEO_SINK_FILTER_STATUS) {
+            impl_->effectContext_->metaInfoNegotiate_->SetNeedUpdate(false);
+        } else {
+            impl_->effectContext_->metaInfoNegotiate_->SetNeedUpdate(true);
+        }
         res = outBuffer->SetMetadata(key, values);
         if (res != 0) {
             EFFECT_LOGE("SetMetadata fail! key = %{public}d res = %{public}d", key, res);
