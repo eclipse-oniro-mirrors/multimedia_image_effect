@@ -8,10 +8,10 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-	class EFilterMetaInfoNegotiate {
+	class EfilterMetaInfoNegotiate {
 	public:
-		EFilterMetaInfoNegotiate() = default;
-		~EFilterMetaInfoNegotiate() = default;
+		EfilterMetaInfoNegotiate() = default;
+		~EfilterMetaInfoNegotiate() = default;
 
 		bool IsNeedUpdate() const
 		{
