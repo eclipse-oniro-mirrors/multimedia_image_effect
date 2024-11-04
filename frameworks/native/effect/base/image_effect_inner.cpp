@@ -838,8 +838,7 @@ void SetSurfaceBufferHebcAccessType(sptr<SurfaceBuffer> &buffer, V1_1::HebcAcces
     CHECK_AND_RETURN_LOG(res == 0, "SetSurfaceBufferHebcAccessType: SetMetadata fail! res=%{public}d", res);
 }
 
-bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
-    int64_t timestamp)
+void ImageEffect::CopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer)
 {
     std::vector<uint32_t> keys = {};
     auto res = inBuffer->ListMetadataKeys(keys);
@@ -852,13 +851,18 @@ bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
         }
         auto isNeedUpdate = !(key == VIDEO_SINK_FILTER_STATUS && values[0] == VIDEO_SINK_FILTER_STATUS);
         impl_->effectContext_->metaInfoNegotiate_->SetNeedUpdate(isNeedUpdate);
-
         res = outBuffer->SetMetadata(key, values);
         if (res != 0) {
             EFFECT_LOGE("SetMetadata fail! key = %{public}d res = %{public}d", key, res);
             continue;
         }
     }
+}
+
+bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
+    int64_t timestamp)
+{
+    CopyMetaData(inBuffer, outBuffer);
     bool isSrcHebcData = IsSurfaceBufferHebc(inBuffer);
     SetSurfaceBufferHebcAccessType(outBuffer,
         isSrcHebcData ? V1_1::HebcAccessType::HEBC_ACCESS_HW_ONLY : V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
