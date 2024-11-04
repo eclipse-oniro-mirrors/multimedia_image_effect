@@ -94,6 +94,7 @@ void ImageEffect::Impl::InitEffectContext()
     effectContext_->capNegotiate_ = std::make_shared<CapabilityNegotiate>();
     effectContext_->renderEnvironment_ = std::make_shared<RenderEnvironment>();
     effectContext_->colorSpaceManager_ = std::make_shared<ColorSpaceManager>();
+	effectContext_->metaInfoNegotiate_ = std::make_shared<EfilterMetaInfoNegotiate>();
 }
 
 void ImageEffect::Impl::CreatePipeline(std::vector<std::shared_ptr<EFilter>> &efilters)
@@ -848,6 +849,7 @@ bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
             EFFECT_LOGE("GetMetadata fail! key = %{public}d res = %{public}d", key, res);
             continue;
         }
+		impl_->effectContext_->metaInfoNegotiate_->SetNeedUpdate(!(key == 3 && values[0] == 3));
         res = outBuffer->SetMetadata(key, values);
         if (res != 0) {
             EFFECT_LOGE("SetMetadata fail! key = %{public}d res = %{public}d", key, res);
