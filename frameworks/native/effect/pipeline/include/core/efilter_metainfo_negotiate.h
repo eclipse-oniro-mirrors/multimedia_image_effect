@@ -8,25 +8,24 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-	class EfilterMetaInfoNegotiate {
-	public:
-		EfilterMetaInfoNegotiate() = default;
-		~EfilterMetaInfoNegotiate() = default;
+    class EfilterMetaInfoNegotiate {
+    public:
+        EfilterMetaInfoNegotiate() = default;
 
-		bool IsNeedUpdate() const
-		{
-			return isNeedUpdate_;
-		}
+        ~EfilterMetaInfoNegotiate() = default;
 
-		void SetNeedUpdate(bool isNeedUpdate)
-		{
-			isNeedUpdate_ = isNeedUpdate;
-		}
+        bool IsNeedUpdate() const {
+            return isNeedUpdate_;
+        }
+
+        void SetNeedUpdate(bool isNeedUpdate) {
+            isNeedUpdate_ = isNeedUpdate;
+        }
 
 
-	private:
-		bool isNeedUpdate_ = true;
-	};
+    private:
+        bool isNeedUpdate_ = true;
+    };
 }
 }
 }
