@@ -233,6 +233,7 @@ void RenderEnvironment::DrawBufferToTexture(RenderTexturePtr renderTex, const Ef
         DrawTexFromSurfaceBuffer(renderTex, source->extraInfo_->surfaceBuffer);
     } else {
         GLuint tex;
+        CHECK_AND_RETURN_LOG(renderTex != nullptr, "DrawBufferToTexture: renderTex is null!");
         GLuint tempFbo = GLUtils::CreateFramebuffer(renderTex->GetName());
         if (source->bufferInfo_->formatType_ == IEffectFormat::RGBA8888) {
             int stride = static_cast<int>(source->bufferInfo_->rowStride_) / 4;
