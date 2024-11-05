@@ -61,6 +61,11 @@ ErrorCode EFilter::GetValue(const std::string &key, Plugin::Any &value)
     return ErrorCode::SUCCESS;
 }
 
+bool EFilter::IsTextureInput()
+{
+    return false;
+}
+
 ErrorCode EFilter::Save(EffectJsonPtr &res)
 {
     res->Put("name", name_);
@@ -475,8 +480,20 @@ ErrorCode CheckAndUpdateEffectBufferIfNeed(std::shared_ptr<EffectBuffer> &src, s
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode EFilter::UseTextureInput()
+{
+    std::shared_ptr<EffectContext> tempContext = std::make_shared<EffectContext>();
+    tempContext->ipType_ = IPType::GPU;
+    ErrorCode result = Render(nullptr, nullptr, tempContext);
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, result, "Render: render with input and output fail!");
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
 {
+    if (IsTextureInput()) {
+        return UseTextureInput();
+    }
     EffectBuffer *srcBuf = src.get();
     EffectBuffer *dstBuf = dst.get();
     CHECK_AND_RETURN_RET_LOG(srcBuf != nullptr && dstBuf != nullptr, ErrorCode::ERR_INPUT_NULL,
@@ -490,19 +507,11 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
     CHECK_AND_RETURN_RET(res == ErrorCode::SUCCESS, res);
     bool needMotifySource = (src->buffer_ != originBuffer) && (src->buffer_ == dst->buffer_);
 
-    PreRender(src->bufferInfo_->formatType_);
-
     IPType runningType = IPType::DEFAULT;
     res = CalculateEFilterIPType(src->bufferInfo_->formatType_, runningType);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
         "Render CalculateEFilterIPType fail! name=%{public}s", name_.c_str());
-    context->ipType_ = runningType;
-    context->memoryManager_->SetIPType(runningType);
-
-    context->renderEnvironment_ = std::make_shared<RenderEnvironment>();
-    context->renderEnvironment_->Init();
-    context->renderEnvironment_->Prepare();
-
+    InitContext(context, runningType);
     std::shared_ptr<EffectBuffer> input = nullptr;
     res = CreateDmaEffectBufferIfNeed(runningType, srcBuf, srcBuf, context, input);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
@@ -535,6 +544,16 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
     return ErrorCode::SUCCESS;
 }
 
+void EFilter::InitContext(std::shared_ptr<EffectContext> &context, IPType &runningType)
+{
+    context->ipType_ = runningType;
+    context->memoryManager_->SetIPType(runningType);
+
+    context->renderEnvironment_ = std::make_shared<RenderEnvironment>();
+    context->renderEnvironment_->Init();
+    context->renderEnvironment_->Prepare();
+}
+
 ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
 {
     ErrorCode res = RenderInner(src, dst);
@@ -543,7 +562,9 @@ ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<Ef
     }
 
     // update exif info
-    CommonUtils::UpdateImageExifDateTime(dst->extraInfo_->pixelMap);
+    if (!IsTextureInput()) {
+        CommonUtils::UpdateImageExifDateTime(dst->extraInfo_->pixelMap);
+    }
     return ErrorCode::SUCCESS;
 }
 } // namespace Effect
