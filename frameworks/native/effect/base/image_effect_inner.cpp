@@ -988,7 +988,7 @@ sptr<Surface> ImageEffect::GetInputSurface()
     auto consumerListener = [this](sptr<SurfaceBuffer>& inBuffer,
         sptr<SurfaceBuffer>& outBuffer, const OHOS::Rect& damages, int64_t timestamp) {
         return ConsumerBufferAvailable(inBuffer, outBuffer, damages, timestamp);
-    }
+    };
 
     if (impl_->surfaceAdapter_) {
         impl_->surfaceAdapter_->SetConsumerListener(std::move(consumerListener));
