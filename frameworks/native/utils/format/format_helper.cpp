@@ -125,7 +125,7 @@ FormatConverterFunc GetFormatConverterFunc(IEffectFormat srcFormat, IEffectForma
 ErrorCode CheckConverterInfo(FormatConverterInfo &src, FormatConverterInfo &dst)
 {
     CHECK_AND_RETURN_RET_LOG(src.buffer != nullptr && dst.buffer != nullptr, ErrorCode::ERR_PARAM_INVALID,
-        "CheckConverterInfo: invalid buffer! srcBuf=%{public}p, dstBuf=%{public}p", src.buffer, dst.buffer);
+        "CheckConverterInfo: invalid buffer!");
 
     BufferInfo &srcBuffInfo = src.bufferInfo;
     BufferInfo &dstBuffInfo = dst.bufferInfo;

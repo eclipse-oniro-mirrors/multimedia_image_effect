@@ -153,7 +153,7 @@ std::shared_ptr<Memory> EffectMemoryManager::GetAllocMemoryByAddr(void *addr)
             return memory;
         }
     }
-    EFFECT_LOGI("addr is not find! addr=%{public}p", addr);
+    EFFECT_LOGI("addr is not find!");
     return nullptr;
 }
 

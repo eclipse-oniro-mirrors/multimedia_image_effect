@@ -39,8 +39,7 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("CpuContrastAlgo::OnApplyRGBA8888 enter!");
-    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL,
-        "input para is null! src=%{public}p, dst=%{public}p", src, dst);
+    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL, "input para is null!");
     float contrast = ParseContrast(value);
     auto *srcRgb = static_cast<unsigned char *>(src->buffer_);
     auto *dstRgb = static_cast<unsigned char *>(dst->buffer_);
@@ -87,8 +86,7 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst,
     std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("CpuContrastAlgo::OnApplyYUVNV21 enter!");
-    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL,
-        "input para is null! src=%{public}p, dst=%{public}p", src, dst);
+    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL, "input para is null!");
     float contrast = ParseContrast(value);
     auto *srcNV21 = static_cast<unsigned char *>(src->buffer_);
     auto *dstNV21 = static_cast<unsigned char *>(dst->buffer_);
@@ -145,8 +143,7 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst,
 {
     EFFECT_TRACE_NAME("CpuContrastAlgo::OnApplyYUVNV12");
     EFFECT_LOGI("CpuContrastAlgo::OnApplyYUVNV12 enter!");
-    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL,
-        "input para is null! src=%{public}p, dst=%{public}p", src, dst);
+    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL, "input para is null!");
     float contrast = ParseContrast(value);
     auto *srcNV12 = static_cast<unsigned char *>(src->buffer_);
     auto *dstNV12 = static_cast<unsigned char *>(dst->buffer_);

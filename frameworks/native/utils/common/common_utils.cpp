@@ -121,8 +121,8 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     if (extraInfo->bufferType == BufferType::SHARED_MEMORY && pixelMap->GetFd() != nullptr) {
         extraInfo->fd = reinterpret_cast<int *>(pixelMap->GetFd());
     }
-    EFFECT_LOGI("pixelMap extraInfos: dataType=%{public}d, bufferType=%{public}d, pixelMap=%{public}p, sb=%{public}p",
-        extraInfo->dataType, extraInfo->bufferType, extraInfo->pixelMap, extraInfo->surfaceBuffer);
+    EFFECT_LOGI("pixelMap extraInfos: dataType=%{public}d, bufferType=%{public}d",
+        extraInfo->dataType, extraInfo->bufferType);
 
     if (extraInfo->surfaceBuffer != nullptr) {
         SurfaceBuffer *sb = extraInfo->surfaceBuffer;
@@ -317,7 +317,7 @@ BufferType CommonUtils::SwitchToEffectBuffType(AllocatorType allocatorType)
 
 void CommonUtils::UnlockPixelMap(const PixelMap *pixelMap)
 {
-    EFFECT_LOGI("UnlockPixelMap! pixelMap=%{public}p", pixelMap);
+    EFFECT_LOGI("UnlockPixelMap!");
 }
 
 ErrorCode CommonUtils::ParseAnyAndAddToJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &result)

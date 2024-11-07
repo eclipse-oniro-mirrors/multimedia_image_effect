@@ -74,7 +74,7 @@ public:
         EFFECT_LOGI("FilterDelegate Render with src and dst.");
         OH_EffectFilter *ohEFilter = (OH_EffectFilter *)efilter;
         CHECK_AND_RETURN_RET_LOG(ohEFilter != nullptr && ohEFilter->filter_ != nullptr, false,
-            "FilterDelegateRender: filter is null! ohEFilter=%{public}p", ohEFilter);
+            "FilterDelegateRender: filter is null!");
         Plugin::Any param = true;
         ohEFilter->SetParameter(PARA_RENDER_WITH_SRC_AND_DST, param);
         Plugin::Any any = context;
@@ -100,7 +100,7 @@ public:
 
         OH_EffectFilter *ohEFilter = static_cast<OH_EffectFilter *>(efilter);
         CHECK_AND_RETURN_RET_LOG(ohEFilter != nullptr && ohEFilter->filter_ != nullptr, false,
-            "FilterDelegateRender: filter is null! ohEFilter=%{public}p", ohEFilter);
+            "FilterDelegateRender: filter is null!");
 
         Plugin::Any any = src;
         ohEFilter->SetParameter(PARA_SRC_EFFECT_BUFFER, any);
@@ -156,7 +156,7 @@ protected:
     static void PushData(OH_EffectFilter *filter, OH_EffectBufferInfo *dst)
     {
         CHECK_AND_RETURN_LOG(dst != nullptr && filter != nullptr && filter->filter_ != nullptr,
-            "FilterDelegatePushData: filter is null! ohEFilter=%{public}p, dst=%{public}p", filter, dst);
+            "FilterDelegatePushData: filter is null!");
         Plugin::Any param;
         if (filter->GetParameter(PARA_RENDER_WITH_SRC_AND_DST, param) == ErrorCode::SUCCESS) {
             return;
@@ -170,10 +170,9 @@ protected:
         EffectBuffer *src = nullptr;
         res = CommonUtils::ParseAny(value, src);
         CHECK_AND_RETURN_LOG(res == ErrorCode::SUCCESS && src != nullptr,
-            "FilterDelegatePushData: parse EffectBuffer ptr fail! res=%{public}d, src=%{public}p", res, src);
+            "FilterDelegatePushData: parse EffectBuffer ptr fail! res=%{public}d", res);
 
-        CHECK_AND_RETURN_LOG(src->buffer_ != nullptr,
-            "FilterDelegatePushData: buffer of src is null! src=%{public}p", src);
+        CHECK_AND_RETURN_LOG(src->buffer_ != nullptr, "FilterDelegatePushData: buffer of src is null!");
 
         CHECK_AND_RETURN_LOG(src->bufferInfo_ != nullptr && src->extraInfo_ != nullptr,
             "FilterDelegatePushData: bufferInfo of src is null or extraInfo of src is null!");

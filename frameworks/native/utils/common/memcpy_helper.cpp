@@ -26,8 +26,7 @@ void MemcpyHelper::CopyData(CopyInfo &src, CopyInfo &dst)
 {
     uint8_t *srcBuffet = src.data;
     uint8_t *dstBuffer = dst.data;
-    CHECK_AND_RETURN_LOG(srcBuffet != nullptr && dstBuffer != nullptr,
-        "Input addr is null! srcAddr=%{public}p, dstAddr=%{public}p", srcBuffet, dstBuffer);
+    CHECK_AND_RETURN_LOG(srcBuffet != nullptr && dstBuffer != nullptr, "Input addr is null!");
     if (srcBuffet == dstBuffer) {
         EFFECT_LOGD("Buffer is same, not need copy.");
         return;
@@ -48,8 +47,8 @@ void MemcpyHelper::CopyData(CopyInfo &src, CopyInfo &dst)
     if (srcRowStride == dstRowStride && srcBufferLen == dstBufferLen) {
         errno_t ret = memcpy_s(dstBuffer, dstBufferLen, srcBuffet, srcBufferLen);
         if (ret != 0) {
-            EFFECT_LOGE("CopyData memcpy_s failed. ret=%{public}d, dstBuf=%{public}p, dstBufLen=%{public}d,"
-                " srcBuf=%{public}p, srcBufLen=%{public}d", ret, dstBuffer, dstBufferLen, srcBuffet, srcBufferLen);
+            EFFECT_LOGE("CopyData memcpy_s failed. ret=%{public}d, dstBufLen=%{public}d,"
+                "srcBufLen=%{public}d", ret, dstBufferLen, srcBufferLen);
         }
         return;
     }
@@ -89,8 +88,7 @@ void CreateCopyInfoByEffectBuffer(EffectBuffer *buffer, CopyInfo &info)
 
 void MemcpyHelper::CopyData(EffectBuffer *src, EffectBuffer *dst)
 {
-    CHECK_AND_RETURN_LOG(src != nullptr && dst != nullptr,
-        "Input effect buffer is null! src=%{public}p, dst=%{public}p", src, dst);
+    CHECK_AND_RETURN_LOG(src != nullptr && dst != nullptr, "Input effect buffer is null!");
 
     if (src == dst) {
         EFFECT_LOGD("EffectBuffer is same, not need copy.");
@@ -108,7 +106,7 @@ void MemcpyHelper::CopyData(EffectBuffer *src, EffectBuffer *dst)
 
 void MemcpyHelper::CopyData(EffectBuffer *src, CopyInfo &dst)
 {
-    CHECK_AND_RETURN_LOG(src != nullptr, "Input src effect buffer is null! src=%{public}p", src);
+    CHECK_AND_RETURN_LOG(src != nullptr, "Input src effect buffer is null!");
     CopyInfo srcCopyInfo;
     CreateCopyInfoByEffectBuffer(src, srcCopyInfo);
 
@@ -117,7 +115,7 @@ void MemcpyHelper::CopyData(EffectBuffer *src, CopyInfo &dst)
 
 void MemcpyHelper::CopyData(CopyInfo &src, EffectBuffer *dst)
 {
-    CHECK_AND_RETURN_LOG(dst != nullptr, "Input dst effect buffer is null! dst=%{public}p", dst);
+    CHECK_AND_RETURN_LOG(dst != nullptr, "Input dst effect buffer is null!");
     CopyInfo dstCopyInfo;
     CreateCopyInfoByEffectBuffer(dst, dstCopyInfo);
 
@@ -134,8 +132,7 @@ void CreateCopyInfoByMemoryData(MemoryData *memoryData, CopyInfo &info)
 
 void MemcpyHelper::CopyData(EffectBuffer *buffer, MemoryData *memoryData)
 {
-    CHECK_AND_RETURN_LOG(buffer != nullptr && memoryData != nullptr,
-        "Input is null! buffer=%{public}p, memoryData=%{public}p", buffer, memoryData);
+    CHECK_AND_RETURN_LOG(buffer != nullptr && memoryData != nullptr, "Input is null!");
     CopyInfo dstCopyInfo;
     CreateCopyInfoByMemoryData(memoryData, dstCopyInfo);
 
@@ -144,8 +141,7 @@ void MemcpyHelper::CopyData(EffectBuffer *buffer, MemoryData *memoryData)
 
 void MemcpyHelper::CopyData(MemoryData *src, MemoryData *dst)
 {
-    CHECK_AND_RETURN_LOG(src != nullptr && dst != nullptr,
-        "Input memory data is null! src=%{public}p, dst=%{public}p", src, dst);
+    CHECK_AND_RETURN_LOG(src != nullptr && dst != nullptr, "Input memory data is null!");
     if (src == dst) {
         EFFECT_LOGD("MemoryData is same, not need copy.");
         return;

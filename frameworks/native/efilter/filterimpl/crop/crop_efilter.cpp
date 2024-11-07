@@ -113,8 +113,7 @@ void Crop(EffectBuffer *src, EffectBuffer *dst, Region *region)
 
 ErrorCode CropEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context)
 {
-    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL,
-        "input error! src=%{public}p, dst=%{public}p", src, dst);
+    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL, "input error!");
     CHECK_AND_RETURN_RET_LOG(src->bufferInfo_ != nullptr && dst->bufferInfo_ != nullptr, ErrorCode::ERR_INPUT_NULL,
         "input error! src->bufferInfo_=%{public}d, dst->bufferInfo_=%{public}d",
         src->bufferInfo_ == nullptr, dst->bufferInfo_ == nullptr);

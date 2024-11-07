@@ -113,8 +113,7 @@ ErrorCode GpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
     std::map<std::string, Plugin::Any> &value, const std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("GpuBrightnessFilterOperator::OnApplyRGBA8888 enter!");
-    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL,
-        "input para is null! src=%{public}p, dst=%{public}p", src, dst);
+    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL, "input para is null!");
     if (context->renderEnvironment_->GetEGLStatus() != EGLStatus::READY) {
         context->renderEnvironment_->Init();
     }
@@ -164,7 +163,7 @@ void GpuBrightnessAlgo::Render(GLenum target, RenderTexturePtr tex)
     glViewport(0, 0, renderEffectData_->outputWidth_, renderEffectData_->outputHeight_);
     shader_->Bind();
 
-    CHECK_AND_RETURN_LOG(renderMesh_ != nullptr, "Render: renderMesh is null! renderMesh=%{public}p", renderMesh_);
+    CHECK_AND_RETURN_LOG(renderMesh_ != nullptr, "Render: renderMesh is null!");
     renderMesh_->Bind(shader_->GetShader());
 
     PreDraw(target);
