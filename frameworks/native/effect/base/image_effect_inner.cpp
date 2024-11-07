@@ -895,7 +895,6 @@ BufferRequestConfig ImageEffect::GetBufferRequestConfig(const sptr<SurfaceBuffer
         .width = buffer->GetWidth(),
         .height = buffer->GetHeight(),
         .strideAlignment = 0x8, // default stride is 8 Bytes.
-        .strideAlignment = 0x8,
         .format = buffer->GetFormat(),
         .usage = buffer->GetUsage(),
         .timeout = 0,
@@ -942,7 +941,7 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
     CHECK_AND_RETURN_RET_LOG(toProducerSurface_ != nullptr, true,
         "OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     auto ret = toProducerSurface_->RequestBuffer(outBuffer, syncFence, requestConfig);
-    CHECK_AND_RETURN_LOG(ret == 0 && outBuffer != nullptr, "RequestBuffer failed. %{public}d", ret);
+    CHECK_AND_RETURN_RET_LOG(ret == 0 && outBuffer != nullptr, true, "RequestBuffer failed. %{public}d", ret);
 
     constexpr uint32_t waitForEver = -1;
     (void)syncFence->Wait(waitForEver);
@@ -989,6 +988,7 @@ sptr<Surface> ImageEffect::GetInputSurface()
     auto consumerListener = [this](sptr<SurfaceBuffer>& inBuffer,
         sptr<SurfaceBuffer>& outBuffer, const OHOS::Rect& damages, int64_t timestamp) {
         return ConsumerBufferAvailable(inBuffer, outBuffer, damages, timestamp);
+    }
 
     if (impl_->surfaceAdapter_) {
         impl_->surfaceAdapter_->SetConsumerListener(std::move(consumerListener));
