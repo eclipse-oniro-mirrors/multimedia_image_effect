@@ -134,6 +134,7 @@ private:
     void ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer);
     bool OnBufferAvailableWithCPU(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
         const OHOS::Rect &damages, int64_t timestamp);
+    void CopyMetaData(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer);
     bool OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer, int64_t timestamp);
     void FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, int64_t timestamp);
 
