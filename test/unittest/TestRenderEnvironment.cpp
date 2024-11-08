@@ -265,6 +265,7 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment008, TestSize.Level1) {
     temp = renderEnvironment->GenTextureWithPixels(bitmap, WIDTH - EXTRA_LEN, HEIGHT, WIDTH);
     EXPECT_NE(temp, 0);
     delete[] bitmap;
+    bitmap = nullptr;
 }
 }
 }
