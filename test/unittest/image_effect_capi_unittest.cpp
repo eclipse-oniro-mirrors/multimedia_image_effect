@@ -2127,6 +2127,8 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputSurface003, TestSize.Lev
     OHNativeWindow *nativeWindow = new OHNativeWindow();
     nativeWindow->surface = nullptr;
     ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputSurface(nullptr, nativeWindow);
+    delete nativeWindow;
+    nativeWindow = nullptr;
 
     ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputSurface failed";
 

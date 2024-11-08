@@ -377,7 +377,9 @@ HWTEST_F(TestUtils, MemcpyHelperCopyData001, TestSize.Level1)
     EXPECT_NE(src, dst);
 
     delete src;
+    src = nullptr;
     delete dst;
+    dst = nullptr;
 }
 
 HWTEST_F(TestUtils, MemcpyHelperCopyData002, TestSize.Level1)
