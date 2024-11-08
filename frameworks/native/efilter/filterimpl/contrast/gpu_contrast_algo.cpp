@@ -114,8 +114,7 @@ ErrorCode GpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     std::map<std::string, Plugin::Any> &value, const std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("GpuContrastFilter::OnApplyRGBA8888 enter!");
-    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL,
-        "input para is null! src=%{public}p, dst=%{public}p", src, dst);
+    CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL, "input para is null!");
     if (context->renderEnvironment_->GetEGLStatus() != EGLStatus::READY) {
         context->renderEnvironment_->Init();
     }

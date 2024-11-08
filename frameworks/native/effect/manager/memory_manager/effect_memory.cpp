@@ -41,7 +41,7 @@ HeapMemoryData::~HeapMemoryData()
     if (!memoryInfo.isAutoRelease) {
         return;
     }
-    EFFECT_LOGI("HeapMemoryData destructor! bufferAddr=%{public}p", heapData);
+    EFFECT_LOGI("HeapMemoryData destructor!");
     ReleaseHeapMemory(heapData);
 }
 
@@ -53,7 +53,7 @@ std::shared_ptr<MemoryData> HeapMemory::Alloc(MemoryInfo &memoryInfo)
 
     auto *buffer = malloc(size);
     CHECK_AND_RETURN_RET_LOG(buffer != nullptr, nullptr, "malloc fail!");
-    EFFECT_LOGI("HeapMemory::Alloc alloc addr=%{public}p", buffer);
+    EFFECT_LOGI("HeapMemory::Alloc alloc buffer success!");
 
     std::shared_ptr<HeapMemoryData> memoryData = std::make_unique<HeapMemoryData>();
     memoryData->data = buffer;
@@ -94,7 +94,7 @@ DmaMemoryData::~DmaMemoryData()
         return;
     }
 
-    EFFECT_LOGI("DmaMemoryData destructor! surfaceBuffer=%{public}p", surfaceBuffer);
+    EFFECT_LOGI("DmaMemoryData destructor!");
     ReleaseDmaMemory(surfaceBuffer);
 }
 
@@ -141,8 +141,8 @@ std::shared_ptr<MemoryData> DmaMemory::Alloc(MemoryInfo &memoryInfo)
     CHECK_AND_RETURN_RET_LOG(sb != nullptr, nullptr, "create surface buffer fail!");
 
     EFFECT_LOGI(
-        "DmaMemory::Alloc seqNum=%{public}d, stride=%{public}d, size=%{public}d, format=%{public}d, addr=%{public}p",
-        sb->GetSeqNum(), sb->GetStride(), sb->GetSize(), sb->GetFormat(), sb->GetVirAddr());
+        "DmaMemory::Alloc seqNum=%{public}d, stride=%{public}d, size=%{public}d, format=%{public}d",
+        sb->GetSeqNum(), sb->GetStride(), sb->GetSize(), sb->GetFormat());
     std::shared_ptr<DmaMemoryData> memoryData = std::make_unique<DmaMemoryData>();
     memoryData->data = sb->GetVirAddr();
     memoryData->memoryInfo.isAutoRelease = memoryInfo.isAutoRelease;
@@ -190,7 +190,7 @@ SharedMemoryData::~SharedMemoryData()
     if (!memoryInfo.isAutoRelease) {
         return;
     }
-    EFFECT_LOGI("SharedMemoryData destructor! data=%{public}p, fdPtr=%{public}p, len=%{public}zu", data, fdPtr, len);
+    EFFECT_LOGI("SharedMemoryData destructor! len=%{public}zu", len);
     ReleaseSharedMemory(data, fdPtr, len);
 }
 
