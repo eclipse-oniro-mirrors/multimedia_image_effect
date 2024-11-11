@@ -26,8 +26,8 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-using ConsumerBufferAvailable = std::function<void(sptr<SurfaceBuffer> &buffer, const OHOS::Rect &damages,
-    int64_t timeStamp)>;
+using ConsumerBufferAvailable = std::function<bool(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
+    const OHOS::Rect &damages, int64_t timeStamp)>;
 
 class EffectSurfaceAdapter : public IBufferConsumerListenerClazz {
 public:
