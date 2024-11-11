@@ -69,7 +69,7 @@ ErrorCode UpdateInputBufferIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std:
         extraInfo->bufferType = allocMemInfo.bufferType;
         extraInfo->surfaceBuffer = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
             static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
-        if (extraInfo->surfaceBuffer != nullptr) {
+        if (extraInfo->surfaceBuffer != nullptr && srcBuffer->extraInfo_->surfaceBuffer != nullptr) {
             GraphicTransformType transformType = srcBuffer->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
             extraInfo->surfaceBuffer->SetSurfaceBufferTransform(transformType);
         }
