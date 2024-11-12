@@ -376,7 +376,7 @@ void RenderEnvironment::DrawFrame(GLuint texId, GraphicTransformType type)
         glClearColor(1.0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        auto *mesh = std::make_shared<RenderMesh>(DEFAULT_FLIP_VERTEX_DATA);
+        auto mesh = std::make_shared<RenderMesh>(DEFAULT_FLIP_VERTEX_DATA);
         mesh->Bind(param_->shaderBaseDrawFrameYUV_);
         param_->renderer_->DrawOnScreenWithTransform(texId, mesh.get(),
             param_->shaderBaseDrawFrameYUV_, &param_->viewport_, type, GL_TEXTURE_EXTERNAL_OES);
