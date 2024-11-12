@@ -843,6 +843,7 @@ void ImageEffect::CopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer
 {
     std::vector<uint32_t> keys = {};
     auto res = inBuffer->ListMetadataKeys(keys);
+    CHECK_AND_RETURN_LOG(res == GSError::GSERROR_OK, "CopyMetaData: ListMetadataKeys fail! res=%{public}d", res);
     for (uint32_t key : keys) {
         std::vector<uint8_t> values;
         res = inBuffer->GetMetadata(key, values);
@@ -861,17 +862,11 @@ void ImageEffect::CopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer
 }
 
 bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
-    int64_t timestamp)
+    int64_t timestamp, bool isNeedRender)
 {
-    CopyMetaData(inBuffer, outBuffer);
-    bool isSrcHebcData = IsSurfaceBufferHebc(inBuffer);
-    SetSurfaceBufferHebcAccessType(outBuffer,
-        isSrcHebcData ? V1_1::HebcAccessType::HEBC_ACCESS_HW_ONLY : V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
-
-    CHECK_AND_RETURN_RET_LOG(impl_ != nullptr, true, "OnBufferAvailableToProcess: impl is nullptr.");
-    bool isNeedRender = !isSrcHebcData && impl_->effectState_ == EffectState::RUNNING;
     bool isNeedSwap = true;
     if (isNeedRender) {
+        CopyMetaData(inBuffer, outBuffer);
         inDateInfo_.surfaceBufferInfo_ = {
             .surfaceBuffer_ = inBuffer,
             .timestamp_ = timestamp,
@@ -912,10 +907,12 @@ BufferRequestConfig ImageEffect::GetBufferRequestConfig(const sptr<SurfaceBuffer
     };
 }
 
-void ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, int64_t timestamp) {
-    EFFECT_TRACE_BEGIN("FlushBuffer::FlushCache");
-    (void)flushBuffer->FlushCache();
-    EFFECT_TRACE_END();
+void ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, int64_t timestamp, bool isNeedRender) {
+    if (isNeedRender) {
+        EFFECT_TRACE_BEGIN("FlushBuffer::FlushCache");
+        (void)flushBuffer->FlushCache();
+        EFFECT_TRACE_END();
+    }
 
     BufferFlushConfig flushConfig = {
         .damage = {
@@ -941,12 +938,17 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
 
     sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
 
-    EFFECT_TRACE_BEGIN("inBuffer::InvalidateCache");
-    (void)inBuffer->InvalidateCache();
-    EFFECT_TRACE_END();
+    bool isSrcHebcData = IsSurfaceBufferHebc(inBuffer);
+    CHECK_AND_RETURN_RET_LOG(impl_ != nullptr, true, "OnBufferAvailableToProcess: impl is nullptr.");
+    bool isNeedRender = !isSrcHebcData && impl_->effectState_ == EffectState::RUNNING;
+
+    if (isNeedRender) {
+        EFFECT_TRACE_BEGIN("inBuffer::InvalidateCache");
+        (void)inBuffer->InvalidateCache();
+        EFFECT_TRACE_END();
+    }
 
     auto requestConfig = GetBufferRequestConfig(inBuffer);
-
     CHECK_AND_RETURN_RET_LOG(toProducerSurface_ != nullptr, true,
                              "OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     auto ret = toProducerSurface_->RequestBuffer(outBuffer, syncFence, requestConfig);
@@ -962,10 +964,12 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
         outBuffer->GetWidth(), outBuffer->GetHeight(), outBuffer->GetStride(), outBuffer->GetSize(),
         static_cast<unsigned long long>(outBuffer->GetUsage()));
 
-    bool isNeedSwap = OnBufferAvailableToProcess(inBuffer, outBuffer, timestamp);
+    SetSurfaceBufferHebcAccessType(outBuffer,
+        isSrcHebcData ? V1_1::HebcAccessType::HEBC_ACCESS_HW_ONLY : V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
+    bool isNeedSwap = OnBufferAvailableToProcess(inBuffer, outBuffer, timestamp, isNeedRender);
 
     auto flushBuffer = (isNeedSwap ? inBuffer : outBuffer);
-    FlushBuffer(flushBuffer, timestamp);
+    FlushBuffer(flushBuffer, timestamp, isNeedRender);
 
     return isNeedSwap;
 }
