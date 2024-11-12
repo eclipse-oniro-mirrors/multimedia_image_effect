@@ -16,6 +16,7 @@
 #include "render_frame_buffer.h"
 #include "base/render_base.h"
 #include "graphic/gl_utils.h"
+#include "effect_log.h"
 
 namespace OHOS {
 namespace Media {
@@ -23,6 +24,8 @@ namespace Effect {
 RenderFrameBuffer::RenderFrameBuffer(RenderContext *ctx, ResourceCache *cache, int width, int height,
     GLenum interFmt) : texture_(cache->RequestTexture(ctx, width, height, interFmt))
 {
+    CHECK_AND_RETURN_LOG(ctx != nullptr && cache != nullptr && texture_ != nullptr,
+        "RenderFrameBuffer struct fail, ctx or cache or texture_ is null.");
     context_ = ctx;
     cache_ = cache;
     fboId_ = GLUtils::CreateFramebuffer(texture_->GetName());

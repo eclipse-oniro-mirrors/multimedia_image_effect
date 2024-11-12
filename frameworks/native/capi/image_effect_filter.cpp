@@ -36,6 +36,8 @@ namespace {
     constexpr char const *PARA_RENDER_INFO = "PARA_RENDER_INFO";
 
     constexpr int const MAX_CHAR_LEN = 1024;
+
+    std::mutex filterMutex_;
 }
 
 static std::vector<std::shared_ptr<ImageEffect_FilterNames>> sOHFilterNames;
@@ -221,9 +223,11 @@ OH_EffectFilterInfo::~OH_EffectFilterInfo()
 {
     if (effectBufferType != nullptr) {
         delete[] effectBufferType;
+        effectBufferType = nullptr;
     }
     if (effectFormat != nullptr) {
         delete[] effectFormat;
+        effectFormat = nullptr;
     }
 }
 
@@ -662,6 +666,7 @@ ImageEffect_ErrorCode OH_EffectFilter_Register(const OH_EffectFilterInfo *info,
 EFFECT_EXPORT
 ImageEffect_FilterNames *OH_EffectFilter_LookupFilters(const char *key)
 {
+    std::unique_lock<std::mutex> lock(filterMutex_);
     CHECK_AND_RETURN_RET_LOG(key != nullptr, nullptr, "LookupFilters: input parameter key is null!");
     CHECK_AND_RETURN_RET_LOG(strlen(key) < MAX_CHAR_LEN, nullptr,
         "LookupFilters: the length of input parameter key is too long! len = %{public}zu", strlen(key));
@@ -690,6 +695,7 @@ ImageEffect_FilterNames *OH_EffectFilter_LookupFilters(const char *key)
 EFFECT_EXPORT
 void OH_EffectFilter_ReleaseFilterNames()
 {
+    std::unique_lock<std::mutex> lock(filterMutex_);
     EFFECT_LOGI("Release filter names.");
     for (const auto &filterNames : sOHFilterNames) {
         if (filterNames == nullptr) {
