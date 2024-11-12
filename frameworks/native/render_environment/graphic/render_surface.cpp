@@ -43,6 +43,7 @@ bool RenderSurface::Create(void *window)
     CHECK_AND_RETURN_RET_LOG(window != nullptr, false, "RenderSurface Create window is null!");
     EGLint retNum = 0;
     display_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    CHECK_AND_RETURN_RET_LOG(display_ != nullptr, false, "RenderSurface eglGetDisplay fail.");
     std::vector<int> attributeList = attribute_.ToEGLAttribList();
     EGLBoolean ret = eglChooseConfig(display_, attributeList.data(), &config_, 1, &retNum);
     if (ret != EGL_TRUE) {

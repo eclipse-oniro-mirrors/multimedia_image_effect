@@ -49,6 +49,8 @@ void ColorSpaceManager::Init(std::shared_ptr<EffectBuffer> &src, std::shared_ptr
 ErrorCode ColorSpaceManager::ApplyColorSpace(EffectBuffer *effectBuffer, const EffectColorSpace &colorSpace,
     EffectColorSpace &outputColorSpace)
 {
+    CHECK_AND_RETURN_RET_LOG(effectBuffer != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "ApplyColorSpace: effectBuffer is null!");
     if (!IsNeedConvertColorSpace(colorSpace)) {
         outputColorSpace = colorSpace;
         return ErrorCode::SUCCESS;
