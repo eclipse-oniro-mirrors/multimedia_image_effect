@@ -102,6 +102,7 @@ void ImageEffect::Impl::CreatePipeline(std::vector<std::shared_ptr<EFilter>> &ef
     pipeline_ = std::make_shared<PipelineCore>();
     pipeline_->Init(nullptr);
 
+    CHECK_AND_RETURN_LOG(srcFilter_ != nullptr, "srcFilter is null");
     std::vector<Filter *> filtersToPipeline; // Note: Filters must be inserted in sequence.
     filtersToPipeline.push_back(srcFilter_.get());
     for (const auto &eFilter : efilters) {
