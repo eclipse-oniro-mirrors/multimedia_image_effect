@@ -97,9 +97,11 @@ void ImageEffectInnerUnittest::SetUp()
 void ImageEffectInnerUnittest::TearDown()
 {
     delete(mockPixelMap_);
+    mockPixelMap_ = nullptr;
     Mock::AllowLeak(imageEffect_);
     Mock::AllowLeak(efilter_);
     delete(effectBuffer_);
+    effectBuffer_ = nullptr;
 }
 
 HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_001, TestSize.Level1)

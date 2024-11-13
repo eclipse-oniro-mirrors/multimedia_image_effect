@@ -99,10 +99,12 @@ HWTEST_F(TestEffectMemoryManager, TestEffectMemoryManager001, TestSize.Level1) {
     EffectMemory *effectMemory = new EffectMemory();
     BufferType bufferType = BufferType::SHARED_MEMORY;
     std::unique_ptr<AbsMemory> absMemory = effectMemory->CreateMemory(bufferType);
-    ASSERT_NE(absMemory, nullptr);
+    EXPECT_NE(absMemory, nullptr);
     bufferType = BufferType::DEFAULT;
     absMemory = effectMemory->CreateMemory(bufferType);
-    ASSERT_EQ(absMemory, nullptr);
+    EXPECT_EQ(absMemory, nullptr);
+    delete effectMemory;
+    effectMemory = nullptr;
 }
 }
 }
