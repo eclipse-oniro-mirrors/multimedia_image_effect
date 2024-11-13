@@ -419,6 +419,7 @@ ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::s
     std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
     extraInfo->dataType = DataType::TEX;
     std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
+    effectBuffer->tex = context->renderEnvironment_->RequestBuffer(bufferInfo->width_, bufferInfo->height_);
     ErrorCode res = Render(buffer.get(), effectBuffer.get(), context);
     if (needModifySource) {
         CommonUtils::ModifyPixelMapPropertyForTexture(dst->extraInfo_->pixelMap, effectBuffer, context);
