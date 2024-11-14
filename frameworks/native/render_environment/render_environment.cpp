@@ -418,7 +418,7 @@ void RenderEnvironment::DrawFrame(GLuint texId, GraphicTransformType type)
 
         auto mesh = std::make_shared<RenderMesh>(DEFAULT_FLIP_VERTEX_DATA);
         mesh->Bind(param_->shaderBaseDrawFrameYUV_);
-        param_->renderer_->DrawOnScreenWithTransform(texId, .get(),
+        param_->renderer_->DrawOnScreenWithTransform(texId, mesh.get(),
             param_->shaderBaseDrawFrameYUV_, &param_->viewport_, type, GL_TEXTURE_EXTERNAL_OES);
         glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
         if (screenSurface_ == nullptr) {
