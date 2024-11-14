@@ -42,7 +42,7 @@ EffectBuffer *ChooseBufOnSetInOutput(EffectBuffer *buffer, EffectBuffer *src, Ef
     std::shared_ptr<BufferInfo> &bufferInfo = buffer->bufferInfo_;
     std::shared_ptr<BufferInfo> &dstBufferInfo = dst->bufferInfo_;
     CHECK_AND_RETURN_RET_LOG(bufferInfo != nullptr && dstBufferInfo != nullptr, buffer,
-        "dst or input buffer info is null! src_=%{public}p, buffer=%{public}p", bufferInfo.get(), dstBufferInfo.get());
+        "dst or input buffer info is null!");
     CHECK_AND_RETURN_RET_LOG(memNegotiatedCap != nullptr, buffer, "memNegotiatedCap is null!");
     EFFECT_LOGD("ChooseBufOnSetInOutput: w=%{public}d, h=%{public}d, dstW=%{public}d, dstH=%{public}d, "
         "negoW=%{public}d, negoH=%{public}d", bufferInfo->width_, bufferInfo->height_,
@@ -64,7 +64,7 @@ EffectBuffer *RenderStrategy::ChooseBestOutput(EffectBuffer *buffer,
     std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap)
 {
     CHECK_AND_RETURN_RET_LOG(src_ != nullptr && buffer != nullptr, buffer,
-        "src or input buffer is null! src_=%{public}d, buffer=%{public}p", src_ == nullptr, buffer);
+        "src or input buffer is null! src_=%{public}d", src_ == nullptr);
     if (dst_ == nullptr || dst_->buffer_ == nullptr || src_->buffer_ == dst_->buffer_
         || dst_->extraInfo_->dataType == DataType::NATIVE_WINDOW) {
         return ChooseBufOnSetInput(buffer, src_.get(), memNegotiatedCap);

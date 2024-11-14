@@ -476,8 +476,7 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
 {
     EffectBuffer *srcBuf = src.get();
     EffectBuffer *dstBuf = dst.get();
-    CHECK_AND_RETURN_RET_LOG(srcBuf != nullptr && dstBuf != nullptr, ErrorCode::ERR_INPUT_NULL,
-        "src or dst is null! src=%{public}p, dst=%{public}p", srcBuf, dstBuf);
+    CHECK_AND_RETURN_RET_LOG(srcBuf != nullptr && dstBuf != nullptr, ErrorCode::ERR_INPUT_NULL, "src or dst is null!");
 
     outPorts_.clear();
     void *originBuffer = src->buffer_;
