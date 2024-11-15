@@ -163,6 +163,8 @@ void EffectSurfaceAdapter::OnBufferAvailable()
         CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
             "EffectSurfaceAdapter::OnBufferAvailable: attach buffer from consumerSurface_ failed");
     }
+    CHECK_AND_RETURN_LOG(receiverConsumerSurface_,
+        "EffectSurfaceAdapter::OnBufferAvailable receiverConsumerSurface_ is nullptr.");
     (void)receiverConsumerSurface_->ReleaseBuffer(releaseBuffer, IE_INVALID_FENCE);
 }
 
