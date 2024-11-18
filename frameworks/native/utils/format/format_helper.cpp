@@ -271,6 +271,8 @@ void ConvertNV21ToRGBA(FormatConverterInfo &src, FormatConverterInfo &dst)
     uint32_t srcRowStride = srcBuffInfo.rowStride_;
     uint32_t dstRowStride = dstBuffInfo.rowStride_;
 
+    CHECK_AND_RETURN_LOG(src.buffer != nullptr && dst.buffer != nullptr,
+        "ConvertNV21ToRGBA: src buffer or dst buffer is null!");
     uint8_t *srcNV21 = static_cast<uint8_t *>(src.buffer);
     uint8_t *srcNV21UV = srcNV21 + srcBuffInfo.height_ * srcRowStride;
     uint8_t *dstRGBA = static_cast<uint8_t *>(dst.buffer);
