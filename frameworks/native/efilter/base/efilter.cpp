@@ -144,6 +144,8 @@ std::shared_ptr<MemoryData> AllocMemory(BufferType allocBufferType, EffectBuffer
     CHECK_AND_RETURN_RET_LOG(absMemory != nullptr, nullptr,
         "memory create fail! allocatorType=%{public}d", allocBufferType);
 
+    CHECK_AND_RETURN_RET_LOG(buffer != nullptr && buffer->extraInfo_ != nullptr, nullptr,
+        "alloc memory fail, buffer or buffer extraInfo is null!");
     MemoryInfo allocMemInfo = {
         .bufferInfo = *buffer->bufferInfo_,
         .extra = static_cast<void *>(buffer->extraInfo_->surfaceBuffer),
@@ -198,6 +200,7 @@ std::shared_ptr<EffectBuffer> EFilter::IpTypeConvert(const std::shared_ptr<Effec
 std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source)
 {
+    CHECK_AND_RETURN_RET_LOG(buffer != nullptr, buffer, "ConvertFromGPU2CPU fail, buffer is null!");
     EFFECT_LOGE("ConvertFromGPU2CPU");
     context->ipType_ = IPType::CPU;
     MemoryInfo memInfo = {

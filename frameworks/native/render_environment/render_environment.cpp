@@ -233,6 +233,7 @@ void RenderEnvironment::UpdateCanvas()
 
 void RenderEnvironment::DrawBufferToTexture(RenderTexturePtr renderTex, const EffectBuffer *source)
 {
+    CHECK_AND_RETURN_LOG(source != nullptr, "DrawBufferToTexture: source is null!");
     int width = static_cast<int>(source->bufferInfo_->width_);
     int height = static_cast<int>(source->bufferInfo_->height_);
     if (source->extraInfo_->surfaceBuffer != nullptr) {
