@@ -135,6 +135,7 @@ ohos_shared_library("image_effect_impl") {
     "image_framework:image_native",
     "libexif:libexif",
     "napi:ace_napi",
+    "qos_manager:qos",
   ]
 
   cflags_cc = [

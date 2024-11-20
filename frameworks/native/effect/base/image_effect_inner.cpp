@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <sync_fence.h>
 
+#include "qos.h"
 #include "metadata_helper.h"
 #include "common_utils.h"
 #include "filter_factory.h"
@@ -977,10 +978,29 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
 bool ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer,
     const OHOS::Rect& damages, int64_t timestamp)
 {
-    std::unique_lock<std::mutex> lock(innerEffectMutex_);
-    CHECK_AND_RETURN_RET_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT, true,
-        "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
-    return OnBufferAvailableWithCPU(inBuffer, outBuffer, damages, timestamp);
+    auto taskId = m_currentTaskId.fetch_add(1);
+    auto prom = std::make_shared<std::promise<bool>>();
+    std::future<bool> fut = prom->get_future();
+    auto task = std::make_shared<RenderTask<>>([this, &inBuffer, &outBuffer, &damages, &prom, timestamp]) {
+        std::thread::id thisThreadId = std::this_thread::get_id();
+        {
+            std::unique_lock<std::mutex> lock(qosMutex_);
+            if (threadQosSet_.find(thisThreadId) == threadQosSet_.end()) {
+                OHOS::QOS::SetThreadQos(OHOS::QOSLevel::QOS_USER_INTERACTIVE);
+                threadQosSet_.insert(thisThreadId);
+            }
+        }
+        std::unique_lock<std::mutex> lock(innerEffectMutex_);
+        if (imageEffectFlag_ != STRUCT_IMAGE_EFFECT_CONSTANT) {
+            LOG_ERROR("ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
+            prom->set_value(true);
+            return;
+        }
+        prom->set_value(OnBufferAvailableWithCPU(inBuffer, outBuffer, damages, timestamp));
+    }
+    m_renderThread->AddTask(task);
+    task->Wait();
+    return fut.get();
 }
 
 sptr<Surface> ImageEffect::GetInputSurface()

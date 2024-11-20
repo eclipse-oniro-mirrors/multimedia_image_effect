@@ -34,7 +34,8 @@
         "cJSON",
         "drivers_interface_display",
         "hisysevent",
-        "libexif"
+        "libexif",
+        "qos_manager"
       ],
       "third_party": [
         "egl",
