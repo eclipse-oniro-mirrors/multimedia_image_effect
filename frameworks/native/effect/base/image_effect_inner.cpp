@@ -986,7 +986,7 @@ bool ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& inBuffer, sptr<Su
         {
             std::unique_lock<std::mutex> lock(qosMutex_);
             if (threadQosSet_.find(thisThreadId) == threadQosSet_.end()) {
-                OHOS::QOS::SetThreadQos(OHOS::QOS::QoSLevel::QOS_USER_INTERACTIVE);
+                OHOS::QOS::SetThreadQos(OHOS::QOS::QosLevel::QOS_USER_INTERACTIVE);
                 threadQosSet_.insert(thisThreadId);
             }
         }
