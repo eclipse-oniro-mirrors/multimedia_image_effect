@@ -981,23 +981,23 @@ bool ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& inBuffer, sptr<Su
     auto taskId = m_currentTaskId.fetch_add(1);
     auto prom = std::make_shared<std::promise<bool>>();
     std::future<bool> fut = prom->get_future();
-    auto task = std::make_shared<RenderTask<>>([this, &inBuffer, &outBuffer, &damages, &prom, timestamp]) {
+    auto task = std::make_shared<RenderTask<>>([this, &inBuffer, &outBuffer, &damages, &prom, timestamp] () {
         std::thread::id thisThreadId = std::this_thread::get_id();
         {
             std::unique_lock<std::mutex> lock(qosMutex_);
             if (threadQosSet_.find(thisThreadId) == threadQosSet_.end()) {
-                OHOS::QOS::SetThreadQos(OHOS::QOSLevel::QOS_USER_INTERACTIVE);
+                OHOS::QOS::SetThreadQos(OHOS::QOS::QoSLevel::QOS_USER_INTERACTIVE);
                 threadQosSet_.insert(thisThreadId);
             }
         }
         std::unique_lock<std::mutex> lock(innerEffectMutex_);
         if (imageEffectFlag_ != STRUCT_IMAGE_EFFECT_CONSTANT) {
-            LOG_ERROR("ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
+            EFFECT_LOGE("ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
             prom->set_value(true);
             return;
         }
         prom->set_value(OnBufferAvailableWithCPU(inBuffer, outBuffer, damages, timestamp));
-    }
+    }, 0, taskId);
     m_renderThread->AddTask(task);
     task->Wait();
     return fut.get();
