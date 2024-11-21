@@ -164,7 +164,7 @@ private:
     std::atomic_ullong m_currentTaskId{0};
     bool needPreFlush_ = false;
     std::mutex qosMutex_;
-    std::unordered_set<std::thread::id> threadQosSet_;
+    bool isQosEnabled_ = false;
 };
 } // namespace Effect
 } // namespace Media

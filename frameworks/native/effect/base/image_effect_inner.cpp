@@ -658,14 +658,8 @@ ErrorCode ImageEffect::Render()
     } else {
         impl_->effectContext_->renderEnvironment_->SetOutputType(srcEffectBuffer->extraInfo_->dataType);
     }
-    std::thread::id threadId = std::this_thread::get_id();
-    bool isNeedCreateThread;
-    {
-        std::unique_lock<std::mutex> lock(qosMutex_);
-        isNeedCreateThread = (threadQosSet_.find(threadId) == threadQosSet_.end());
-    }
     EffectParameters effectParameters(srcEffectBuffer, dstEffectBuffer, config_, impl_->effectContext_);
-    res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread, isNeedCreateThread);
+    res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread, !isQosEnabled_);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("StartPipeline fail! res=%{public}d", res);
         UnLockAll();
@@ -998,12 +992,9 @@ bool ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& inBuffer, sptr<Su
     std::future<bool> fut = prom->get_future();
     auto task = std::make_shared<RenderTask<>>([this, &inBuffer, &outBuffer, &damages, &prom, timestamp] () {
         std::thread::id thisThreadId = std::this_thread::get_id();
-        {
-            std::unique_lock<std::mutex> lock(qosMutex_);
-            if (threadQosSet_.find(thisThreadId) == threadQosSet_.end()) {
-                OHOS::QOS::SetThreadQos(OHOS::QOS::QosLevel::QOS_USER_INTERACTIVE);
-                threadQosSet_.insert(thisThreadId);
-            }
+        if (!isQosEnabled_) {
+            OHOS::QOS::SetThreadQos(OHOS::QOS::QosLevel::QOS_USER_INTERACTIVE);
+            isQosEnabled_ = true;
         }
         std::unique_lock<std::mutex> lock(innerEffectMutex_);
         if (imageEffectFlag_ != STRUCT_IMAGE_EFFECT_CONSTANT) {
