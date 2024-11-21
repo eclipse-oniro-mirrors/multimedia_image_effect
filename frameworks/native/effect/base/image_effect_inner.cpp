@@ -362,7 +362,7 @@ ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> pipeline, const Effe
 
     res = ColorSpaceHelper::ConvertColorSpace(effectParameters.srcEffectBuffer_, effectParameters.effectContext_);
     if (res != ErrorCode::SUCCESS) {
-        EFFECT_LOGE("StartPipelineInner:ConvertColorSpace fail! res=%{public}d", res);
+        EFFECT_LOGE("ProcessPipelineTask:ConvertColorSpace fail! res=%{public}d", res);
         return res;
     }
 
@@ -991,7 +991,6 @@ bool ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& inBuffer, sptr<Su
     auto prom = std::make_shared<std::promise<bool>>();
     std::future<bool> fut = prom->get_future();
     auto task = std::make_shared<RenderTask<>>([this, &inBuffer, &outBuffer, &damages, &prom, timestamp] () {
-        std::thread::id thisThreadId = std::this_thread::get_id();
         if (!isQosEnabled_) {
             OHOS::QOS::SetThreadQos(OHOS::QOS::QosLevel::QOS_USER_INTERACTIVE);
             isQosEnabled_ = true;
