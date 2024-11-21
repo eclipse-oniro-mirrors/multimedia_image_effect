@@ -352,7 +352,7 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters)
+ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> pipeline, const EffectParameters &effectParameters)
 {
     ErrorCode res = pipeline->Prepare();
     if (res != ErrorCode::SUCCESS) {
@@ -398,37 +398,9 @@ ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const Effe
         auto prom = std::make_shared<std::promise<ErrorCode>>();
         std::future<ErrorCode> fut = prom->get_future();
         auto task = std::make_shared<RenderTask<>>([pipeline, &effectParameters, &prom]() {
-            ErrorCode res = pipeline->Prepare();
-            if (res != ErrorCode::SUCCESS) {
-                EFFECT_LOGE("pipeline Prepare fail! res=%{public}d", res);
-                prom->set_value(res);
-                return;
-            }
-
-            res = ColorSpaceHelper::ConvertColorSpace(effectParameters.srcEffectBuffer_, effectParameters.effectContext_);
-            if (res != ErrorCode::SUCCESS) {
-                EFFECT_LOGE("StartPipelineInner:ConvertColorSpace fail! res=%{public}d", res);
-                prom->set_value(res);
-                return;
-            }
-
-            IPType runningIPType;
-            res = ChooseIPType(effectParameters.srcEffectBuffer_, effectParameters.effectContext_, effectParameters.config_,
-                runningIPType);
-            if (res != ErrorCode::SUCCESS) {
-                EFFECT_LOGE("choose running ip type fail! res=%{public}d", res);
-                prom->set_value(res);
-                return;
-            }
-            effectParameters.effectContext_->ipType_ = runningIPType;
-            effectParameters.effectContext_->memoryManager_->SetIPType(runningIPType);
-
-            res = pipeline->Start();
+            auto res = ProcessPipelineTask(pipeline, effectParameters);
             prom->set_value(res);
-            if (res != ErrorCode::SUCCESS) {
-                EFFECT_LOGE("pipeline start fail! res=%{public}d", res);
-                return;
-            }
+            return;
         }, 0, taskId);
         thread->AddTask(task);
         task->Wait();
