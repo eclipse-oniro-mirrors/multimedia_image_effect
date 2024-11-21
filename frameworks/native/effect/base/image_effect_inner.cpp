@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <sync_fence.h>
 
+#include "qos.h"
 #include "metadata_helper.h"
 #include "common_utils.h"
 #include "filter_factory.h"
@@ -351,56 +352,66 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> pipeline, const EffectParameters &effectParameters)
+{
+    ErrorCode res = pipeline->Prepare();
+    if (res != ErrorCode::SUCCESS) {
+        EFFECT_LOGE("pipeline Prepare fail! res=%{public}d", res);
+        return res;
+    }
+
+    res = ColorSpaceHelper::ConvertColorSpace(effectParameters.srcEffectBuffer_, effectParameters.effectContext_);
+    if (res != ErrorCode::SUCCESS) {
+        EFFECT_LOGE("ProcessPipelineTask:ConvertColorSpace fail! res=%{public}d", res);
+        return res;
+    }
+
+    IPType runningIPType;
+    res = ChooseIPType(effectParameters.srcEffectBuffer_, effectParameters.effectContext_, effectParameters.config_,
+                       runningIPType);
+    if (res != ErrorCode::SUCCESS) {
+        EFFECT_LOGE("choose running ip type fail! res=%{public}d", res);
+        return res;
+    }
+    effectParameters.effectContext_->ipType_ = runningIPType;
+    effectParameters.effectContext_->memoryManager_->SetIPType(runningIPType);
+
+    res = pipeline->Start();
+    if (res != ErrorCode::SUCCESS) {
+        EFFECT_LOGE("pipeline start fail! res=%{public}d", res);
+        return res;
+    }
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters,
-    unsigned long int taskId, RenderThread<> *thread)
+    unsigned long int taskId, RenderThread<> *thread, bool isNeedCreateThread = false)
 {
     if (thread == nullptr) {
         EFFECT_LOGE("pipeline Prepare fail! render thread is nullptr");
         return ErrorCode::ERR_INVALID_OPERATION;
     }
-    auto prom = std::make_shared<std::promise<ErrorCode>>();
-    std::future<ErrorCode> fut = prom->get_future();
-    auto task = std::make_shared<RenderTask<>>([pipeline, &effectParameters, &prom]() {
-        ErrorCode res = pipeline->Prepare();
-        if (res != ErrorCode::SUCCESS) {
-            EFFECT_LOGE("pipeline Prepare fail! res=%{public}d", res);
+
+    if (!isNeedCreateThread) {
+        return ProcessPipelineTask(pipeline, effectParameters);
+    } else {
+        auto prom = std::make_shared<std::promise<ErrorCode>>();
+        std::future<ErrorCode> fut = prom->get_future();
+        auto task = std::make_shared<RenderTask<>>([pipeline, &effectParameters, &prom]() {
+            auto res = ProcessPipelineTask(pipeline, effectParameters);
             prom->set_value(res);
             return;
-        }
-
-        res = ColorSpaceHelper::ConvertColorSpace(effectParameters.srcEffectBuffer_, effectParameters.effectContext_);
-        if (res != ErrorCode::SUCCESS) {
-            EFFECT_LOGE("StartPipelineInner:ConvertColorSpace fail! res=%{public}d", res);
-            prom->set_value(res);
-            return;
-        }
-
-        IPType runningIPType;
-        res = ChooseIPType(effectParameters.srcEffectBuffer_, effectParameters.effectContext_, effectParameters.config_,
-            runningIPType);
-        if (res != ErrorCode::SUCCESS) {
-            EFFECT_LOGE("choose running ip type fail! res=%{public}d", res);
-            prom->set_value(res);
-            return;
-        }
-        effectParameters.effectContext_->ipType_ = runningIPType;
-        effectParameters.effectContext_->memoryManager_->SetIPType(runningIPType);
-
-        res = pipeline->Start();
-        prom->set_value(res);
-        if (res != ErrorCode::SUCCESS) {
-            EFFECT_LOGE("pipeline start fail! res=%{public}d", res);
-            return;
-        }
-    }, 0, taskId);
-    thread->AddTask(task);
-    task->Wait();
-    ErrorCode res = fut.get();
-    return res;
+        }, 0, taskId);
+        thread->AddTask(task);
+        task->Wait();
+        ErrorCode res = fut.get();
+        return res;
+    }
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters,
-    unsigned long int taskId, RenderThread<> *thread)
+    unsigned long int taskId, RenderThread<> *thread, bool isNeedCreateThread = false)
 {
     effectParameters.effectContext_->renderStrategy_->Init(effectParameters.srcEffectBuffer_,
         effectParameters.dstEffectBuffer_);
@@ -408,7 +419,7 @@ ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, const EffectPar
         effectParameters.dstEffectBuffer_);
     effectParameters.effectContext_->memoryManager_->Init(effectParameters.srcEffectBuffer_,
         effectParameters.dstEffectBuffer_);
-    ErrorCode res = StartPipelineInner(pipeline, effectParameters, taskId, thread);
+    ErrorCode res = StartPipelineInner(pipeline, effectParameters, taskId, thread, isNeedCreateThread);
     effectParameters.effectContext_->memoryManager_->Deinit();
     effectParameters.effectContext_->colorSpaceManager_->Deinit();
     effectParameters.effectContext_->renderStrategy_->Deinit();
@@ -647,9 +658,8 @@ ErrorCode ImageEffect::Render()
     } else {
         impl_->effectContext_->renderEnvironment_->SetOutputType(srcEffectBuffer->extraInfo_->dataType);
     }
-
     EffectParameters effectParameters(srcEffectBuffer, dstEffectBuffer, config_, impl_->effectContext_);
-    res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread);
+    res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread, !isQosEnabled_);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("StartPipeline fail! res=%{public}d", res);
         UnLockAll();
@@ -977,10 +987,25 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
 bool ImageEffect::ConsumerBufferAvailable(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer,
     const OHOS::Rect& damages, int64_t timestamp)
 {
-    std::unique_lock<std::mutex> lock(innerEffectMutex_);
-    CHECK_AND_RETURN_RET_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT, true,
-        "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
-    return OnBufferAvailableWithCPU(inBuffer, outBuffer, damages, timestamp);
+    auto taskId = m_currentTaskId.fetch_add(1);
+    auto prom = std::make_shared<std::promise<bool>>();
+    std::future<bool> fut = prom->get_future();
+    auto task = std::make_shared<RenderTask<>>([this, &inBuffer, &outBuffer, &damages, &prom, timestamp] () {
+        if (!isQosEnabled_) {
+            OHOS::QOS::SetThreadQos(OHOS::QOS::QosLevel::QOS_USER_INTERACTIVE);
+            isQosEnabled_ = true;
+        }
+        std::unique_lock<std::mutex> lock(innerEffectMutex_);
+        if (imageEffectFlag_ != STRUCT_IMAGE_EFFECT_CONSTANT) {
+            EFFECT_LOGE("ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
+            prom->set_value(true);
+            return;
+        }
+        prom->set_value(OnBufferAvailableWithCPU(inBuffer, outBuffer, damages, timestamp));
+    }, 0, taskId);
+    m_renderThread->AddTask(task);
+    task->Wait();
+    return fut.get();
 }
 
 sptr<Surface> ImageEffect::GetInputSurface()

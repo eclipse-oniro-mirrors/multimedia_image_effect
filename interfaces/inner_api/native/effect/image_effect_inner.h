@@ -18,6 +18,8 @@
 
 #include <vector>
 #include <mutex>
+#include <thread>
+#include <unordered_set>
 
 #include "any.h"
 #include "effect.h"
@@ -161,6 +163,8 @@ private:
     RenderThread<> *m_renderThread{ nullptr };
     std::atomic_ullong m_currentTaskId{0};
     bool needPreFlush_ = false;
+    std::mutex qosMutex_;
+    bool isQosEnabled_ = false;
 };
 } // namespace Effect
 } // namespace Media
