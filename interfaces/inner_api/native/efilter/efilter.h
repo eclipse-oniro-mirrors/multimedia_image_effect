@@ -76,6 +76,9 @@ public:
     IMAGE_EFFECT_EXPORT
     virtual std::shared_ptr<MemNegotiatedCap> Negotiate(const std::shared_ptr<MemNegotiatedCap> &input,
         std::shared_ptr<EffectContext> &context);
+    
+    IMAGE_EFFECT_EXPORT
+    virtual bool IsTextureInput();
 protected:
     ErrorCode CalculateEFilterIPType(IEffectFormat &formatType, IPType &ipType);
 
@@ -100,6 +103,8 @@ private:
 
     std::shared_ptr<EffectBuffer> ConvertFromCPU2GPU(const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source);
+    ErrorCode UseTextureInput();
+    void InitContext(std::shared_ptr<EffectContext> &context, IPType &runningType);
 };
 } // namespace Effect
 } // namespace Media

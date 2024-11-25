@@ -742,6 +742,13 @@ ImageEffect_ErrorCode OH_EffectFilter_Render(OH_EffectFilter *filter, OH_Pixelma
     EFFECT_LOGI("Filter render.");
     CHECK_AND_RETURN_RET_LOG(filter != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "FilterRender: input parameter filter is null!");
+    if (filter->filter_->IsTextureInput()) {
+        std::shared_ptr<EffectBuffer> tempEffectBuffer = nullptr;
+        ErrorCode res = filter->filter_->Render(tempEffectBuffer, tempEffectBuffer);
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_UNKNOWN,
+            "FilterRender: filter render fail! errorCode:%{public}d", res);
+        return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+    }
     CHECK_AND_RETURN_RET_LOG(inputPixelmap != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "FilterRender: input parameter inputPixelmap is null!");
     CHECK_AND_RETURN_RET_LOG(outputPixelmap != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
