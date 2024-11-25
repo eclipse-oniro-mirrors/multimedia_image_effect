@@ -163,10 +163,6 @@ ImageEffect::ImageEffect(const char *name)
         auto func = [this]() {};
         m_renderThread = new RenderThread<>(RENDER_QUEUE_SIZE, func);
         m_renderThread->Start();
-        auto task = std::make_shared<RenderTask<>>([this]() { this->InitEGLEnv(); }, COMMON_TASK_TAG,
-            RequestTaskId());
-        m_renderThread->AddTask(task);
-        task->Wait();
     }
 }
 
@@ -372,6 +368,11 @@ ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> pipeline, const Effe
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("choose running ip type fail! res=%{public}d", res);
         return res;
+    }
+    if (effectParameters.effectContext_->renderEnvironment_->GetEGLStatus() != EGLStatus::READY
+        && runningIPType == IPType::GPU) {
+        effectParameters.effectContext_->renderEnvironment_->Init();
+        effectParameters.effectContext_->renderEnvironment_->Prepare();
     }
     effectParameters.effectContext_->ipType_ = runningIPType;
     effectParameters.effectContext_->memoryManager_->SetIPType(runningIPType);
