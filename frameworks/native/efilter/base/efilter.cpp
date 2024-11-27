@@ -231,6 +231,10 @@ std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<
 std::shared_ptr<EffectBuffer> EFilter::ConvertFromCPU2GPU(const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source)
 {
+    if (context->renderEnvironment_->GetEGLStatus() != EGLStatus::READY) {
+        context->renderEnvironment_->Init();
+        context->renderEnvironment_->Prepare();
+    }
     context->ipType_ = IPType::GPU;
     if (source->extraInfo_->surfaceBuffer != nullptr) {
         source->extraInfo_->surfaceBuffer->FlushCache();
