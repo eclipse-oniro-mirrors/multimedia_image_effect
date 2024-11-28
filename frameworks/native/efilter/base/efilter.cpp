@@ -270,7 +270,7 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
         ErrorCode res = Render(source.get(), context);
         return res;
     }
-
+    CHECK_AND_RETURN_RET_LOG(outputCap_ != nullptr, ErrorCode::ERR_INPUT_NULL, "get memNegotiatedCap fail, outputCap is null.");
     std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap = outputCap_->memNegotiatedCap_;
     EffectBuffer *output = preIPType != runningIPType ? source.get()
         : context->renderStrategy_->ChooseBestOutput(source.get(), memNegotiatedCap);

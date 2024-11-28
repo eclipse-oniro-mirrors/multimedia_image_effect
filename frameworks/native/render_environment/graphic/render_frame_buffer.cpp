@@ -41,6 +41,7 @@ RenderFrameBuffer::~RenderFrameBuffer()
 
 void RenderFrameBuffer::Resize(int width, int height)
 {
+    CHECK_AND_RETURN_LOG(texture_ != nullptr, "RenderFrameBuffer Resize fail, texture_ is null.");
     if ((width != (int)texture_->Width()) || (height != (int)texture_->Height())) {
         GLenum fmt = texture_->Format();
         texture_.reset();
