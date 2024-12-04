@@ -26,8 +26,7 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-using ConsumerBufferAvailable = std::function<bool(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
-        const OHOS::Rect &damages, int64_t timeStamp)>;
+using ConsumerBufferAvailable = std::function<void()>;
 
 class EffectSurfaceAdapter : public IBufferConsumerListenerClazz {
 public:
@@ -35,6 +34,8 @@ public:
     ~EffectSurfaceAdapter();
 
     sptr<Surface> GetProducerSurface();
+    sptr<Surface> GetConsumerSurface();
+    bool CheckEffectSurfaceFlag() const;
     ErrorCode SetConsumerListener(ConsumerBufferAvailable &&consumerBufferAvailable);
     GraphicTransformType GetTransform() const;
     void SetOutputSurfaceDefaultUsage(uint64_t usage);

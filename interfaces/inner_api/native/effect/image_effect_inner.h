@@ -18,7 +18,6 @@
 
 #include <vector>
 #include <mutex>
-#include <thread>
 #include <unordered_set>
 
 #include "any.h"
@@ -123,8 +122,7 @@ private:
     void DestroyEGLEnv();
 
     IMAGE_EFFECT_EXPORT
-    bool ConsumerBufferAvailable(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
-        const OHOS::Rect &damages, int64_t timestamp);
+    void ConsumerBufferAvailable();
     void UpdateProducerSurfaceInfo();
 
     void ExtInitModule();
@@ -133,12 +131,14 @@ private:
     unsigned long int RequestTaskId();
 
     void ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer);
-    bool OnBufferAvailableWithCPU(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
-        const OHOS::Rect &damages, int64_t timestamp);
+    GSError RequestBuffer(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer,
+        sptr<SyncFence>& syncFence);
+    void OnBufferAvailableWithCPU();
     void CopyMetaData(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer);
-    bool OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
+    void OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
         int64_t timestamp, bool isNeedRender);
-    void FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, int64_t timestamp, bool isNeedRender);
+    void ReleaseAndFlushBuffer(sptr<SurfaceBuffer>& releaseBuffer, sptr<SurfaceBuffer>& flushBuffer,
+        int64_t timestamp, bool isNeedRender);
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
@@ -163,8 +163,6 @@ private:
     RenderThread<> *m_renderThread{ nullptr };
     std::atomic_ullong m_currentTaskId{0};
     bool needPreFlush_ = false;
-    std::mutex qosMutex_;
-    bool isQosEnabled_ = false;
 };
 } // namespace Effect
 } // namespace Media

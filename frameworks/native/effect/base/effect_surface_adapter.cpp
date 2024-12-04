@@ -23,7 +23,6 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-constexpr int32_t IE_INVALID_FENCE = -1;
 const int32_t STRUCT_EFFECT_SURFACE_CONSTANT = 1;
 const int32_t DESTRUCTOR_EFFECT_SURFACE_CONSTANT = 2;
 
@@ -92,6 +91,24 @@ sptr<Surface> EffectSurfaceAdapter::GetProducerSurface()
     return fromProducerSurface_;
 }
 
+sptr<Surface> EffectSurfaceAdapter::GetConsumerSurface()
+{
+    if (receiverConsumerSurface_) {
+        return receiverConsumerSurface_;
+    }
+
+    if (Initialize() != ErrorCode::SUCCESS) {
+        return nullptr;
+    }
+
+    return receiverConsumerSurface_;
+}
+
+bool EffectSurfaceAdapter::CheckEffectSurfaceFlag() const
+{
+    return effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT;
+}
+
 ErrorCode EffectSurfaceAdapter::SetConsumerListener(ConsumerBufferAvailable &&consumerBufferAvailable)
 {
     if (!consumerBufferAvailable) {
@@ -127,45 +144,11 @@ void EffectSurfaceAdapter::ConsumerRequestCpuAccess(bool isCpuAccess)
 
 void EffectSurfaceAdapter::OnBufferAvailable()
 {
-    OHOS::sptr<SurfaceBuffer> inBuffer;
-    OHOS::sptr<SurfaceBuffer> outBuffer;
-    int64_t timestamp = 0;
-    Rect damages{};
-    sptr<SyncFence> syncFence = SyncFence::INVALID_FENCE;
-
-    CHECK_AND_RETURN_LOG(effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT,
-        "EffectSurfaceAdapter::OnBufferAvailable AcquireBuffer surface not exist.");
-    CHECK_AND_RETURN_LOG(receiverConsumerSurface_,
-        "EffectSurfaceAdapter::OnBufferAvailable receiverConsumerSurface_ is nullptr.");
-    auto ret = receiverConsumerSurface_->AcquireBuffer(inBuffer, syncFence, timestamp, damages);
-    CHECK_AND_RETURN_LOG(ret == 0, "AcquireBuffer failed. %{public}d", ret);
-
-    constexpr uint32_t waitForEver = -1;
-    (void)syncFence->Wait(waitForEver);
-
-    bool isNeedSwap = true;
     if (consumerBufferAvailable_) {
-        isNeedSwap = consumerBufferAvailable_(inBuffer, outBuffer, damages, timestamp);
+        consumerBufferAvailable_();
     } else {
         EFFECT_LOGE("not register handle buffer.");
     }
-
-    CHECK_AND_RETURN_LOG(effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT,
-        "EffectSurfaceAdapter::OnBufferAvailable ReleaseBuffer surface not exist.");
-    CHECK_AND_RETURN_LOG(receiverConsumerSurface_,
-        "EffectSurfaceAdapter::OnBufferAvailable receiverConsumerSurface_ is nullptr.");
-    auto releaseBuffer = (isNeedSwap) ? outBuffer : inBuffer;
-    if (isNeedSwap) {
-        auto detRet = receiverConsumerSurface_->DetachBufferFromQueue(inBuffer);
-        CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
-            "EffectSurfaceAdapter::OnBufferAvailable: detach buffer from consumerSurface_ failed");
-        detRet = receiverConsumerSurface_->AttachBufferToQueue(outBuffer);
-        CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
-            "EffectSurfaceAdapter::OnBufferAvailable: attach buffer from consumerSurface_ failed");
-    }
-    CHECK_AND_RETURN_LOG(receiverConsumerSurface_,
-        "EffectSurfaceAdapter::OnBufferAvailable receiverConsumerSurface_ is nullptr.");
-    (void)receiverConsumerSurface_->ReleaseBuffer(releaseBuffer, IE_INVALID_FENCE);
 }
 
 void EffectSurfaceAdapter::OnTunnelHandleChange() {}
