@@ -854,6 +854,12 @@ void SetSurfaceBufferHebcAccessType(sptr<SurfaceBuffer> &buffer, V1_1::HebcAcces
     CHECK_AND_RETURN_LOG(res == 0, "SetSurfaceBufferHebcAccessType: ConvertVecToMetadata fail! res=%{public}d", res);
 
     V1_1::BufferHandleAttrKey key = V1_1::BufferHandleAttrKey::ATTRKEY_ACCESS_TYPE;
+    std::vector<uint8_t> tmpValues;
+    res = buffer->GetMetadata(key, tmpValues);
+    if (res == 0) {
+        res = buffer->EraseMetadataKey(key);
+        CHECK_AND_RETURN_LOG(res == 0, "SetSurfaceBufferHebcAccessType: EraseMetadataKey fail! res=%{public}d", res);
+    }
     res = buffer->SetMetadata(key, values);
     CHECK_AND_RETURN_LOG(res == 0, "SetSurfaceBufferHebcAccessType: SetMetadata fail! res=%{public}d", res);
 }
@@ -881,14 +887,11 @@ void ImageEffect::CopyMetaData(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer
 }
 
 void ImageEffect::ReleaseAndFlushBuffer(sptr<SurfaceBuffer>& releaseBuffer, sptr<SurfaceBuffer>& flushBuffer,
-                                        int64_t timestamp, bool isNeedRender)
+    int64_t timestamp, bool isNeedRender)
 {
-    EFFECT_TRACE_BEGIN("ReleaseAndFlushBuffer::ReleaseBuffer seqId = " + std::to_string(releaseBuffer->GetSeqNum()));
     auto detRet = impl_->surfaceAdapter_->GetConsumerSurface()->ReleaseBuffer(releaseBuffer, -1);
-    EFFECT_LOGD("ReleaseAndFlushBuffer::ReleaseBuffer seqId = %{public}d", releaseBuffer->GetSeqNum());
-    EFFECT_TRACE_END();
     CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
-                         "ReleaseAndFlushBuffer: ReleaseBuffer failed! id = %{public}d", releaseBuffer->GetSeqNum());
+        "ReleaseAndFlushBuffer: ReleaseBuffer failed! id = %{public}d", releaseBuffer->GetSeqNum());
     if (isNeedRender) {
         EFFECT_TRACE_BEGIN("ReleaseAndFlushBuffer::FlushCache");
         (void)flushBuffer->FlushCache();
@@ -903,16 +906,13 @@ void ImageEffect::ReleaseAndFlushBuffer(sptr<SurfaceBuffer>& releaseBuffer, sptr
         .timestamp = timestamp,
     };
     CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
-                         "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
+        "ImageEffect::OnBufferAvailableWithCPU ImageEffect not exist.");
     CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr,
-                         "ImageEffect::OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
+        "ImageEffect::OnBufferAvailableWithCPU: toProducerSurface is nullptr.");
     constexpr int32_t invalidFence = -1;
-    EFFECT_TRACE_BEGIN("ReleaseAndFlushBuffer::FlushBuffer seqId = " + std::to_string(flushBuffer->GetSeqNum()));
     detRet = toProducerSurface_->FlushBuffer(flushBuffer, invalidFence, flushConfig);
-    EFFECT_LOGD("ReleaseAndFlushBuffer::FlushBuffer seqId = %{public}d", flushBuffer->GetSeqNum());
-    EFFECT_TRACE_END();
     CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
-                         "ReleaseAndFlushBuffer: FlushBuffer failed! id = %{public}d", flushBuffer->GetSeqNum());
+        "ReleaseAndFlushBuffer: FlushBuffer failed! id = %{public}d", flushBuffer->GetSeqNum());
 }
 
 void ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
@@ -935,25 +935,18 @@ void ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
 
     auto detRet = GSError::GSERROR_OK;
     if (isNeedSwap) {
-        EFFECT_TRACE_BEGIN("OnBufferAvailableToProcess::SwapBuffers inBuffer seqId = " +
-            std::to_string(inBuffer->GetSeqNum()) + " outBuffer seqId = " + std::to_string(outBuffer->GetSeqNum()));
         detRet = toProducerSurface_->DetachBufferFromQueue(outBuffer);
-        EFFECT_LOGD("OnBufferAvailableToProcess::Detach outBuffer, seqId = %{public}d", outBuffer->GetSeqNum());
         CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
             "OnBufferAvailableToProcess: detach buffer from producerSurface_ failed");
         detRet= impl_->surfaceAdapter_->GetConsumerSurface()->DetachBufferFromQueue(inBuffer);
-        EFFECT_LOGD("OnBufferAvailableToProcess::Detach inBuffer, seqId = %{public}d", inBuffer->GetSeqNum());
         CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
             "OnBufferAvailableToProcess: detach buffer from consumerSurface_ failed");
         detRet = toProducerSurface_->AttachBufferToQueue(inBuffer);
-        EFFECT_LOGD("OnBufferAvailableToProcess::Attach inBuffer, seqId = %{public}d", inBuffer->GetSeqNum());
         CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
             "OnBufferAvailableToProcess: attach buffer from producerSurface_ failed");
         detRet = impl_->surfaceAdapter_->GetConsumerSurface()->AttachBufferToQueue(outBuffer);
-        EFFECT_LOGD("OnBufferAvailableToProcess::Attach outBuffer, seqId = %{public}d", outBuffer->GetSeqNum());
         CHECK_AND_RETURN_LOG(detRet == GSError::GSERROR_OK,
             "OnBufferAvailableToProcess: attach buffer from consumerSurface_ failed");
-        EFFECT_TRACE_END();
     }
     CHECK_AND_RETURN_LOG(impl_->surfaceAdapter_->CheckEffectSurfaceFlag(),
         "OnBufferAvailableToProcess: onBufferAvailableToProcess consumerSurface_ not exist");
@@ -982,13 +975,10 @@ GSError ImageEffect::RequestBuffer(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBu
     sptr<SyncFence>& syncFence)
 {
     auto requestConfig = GetBufferRequestConfig(inBuffer);
-    EFFECT_TRACE_BEGIN("RequestBuffer");
     auto ret = toProducerSurface_->RequestBuffer(outBuffer, syncFence, requestConfig);
-    EFFECT_LOGD("OnBufferAvailableWithCPU::RequestBuffer seqId = %{public}d", inBuffer->GetSeqNum());
-    EFFECT_TRACE_END();
     if (ret != 0 || outBuffer == nullptr) {
         EFFECT_LOGE("OnBufferAvailableWithCPU::RequestBuffer failed. %{public}d", ret);
-        auto detRet = toProducerSurface_->ReleaseBuffer(inBuffer, -1);
+        auto detRet = impl_->surfaceAdapter_->GetConsumerSurface()->ReleaseBuffer(inBuffer, -1);
         if (detRet != GSError::GSERROR_OK) {
             EFFECT_LOGE("OnBufferAvailableWithCPU::ReleaseBuffer caused by RequestBuffer failed. %{public}d", detRet);
         }
@@ -1010,10 +1000,7 @@ void ImageEffect::OnBufferAvailableWithCPU()
     CHECK_AND_RETURN_LOG(impl_->surfaceAdapter_->GetConsumerSurface(),
         "OnBufferAvailableToProcess: receiverConsumerSurface_ is nullptr");
 
-    EFFECT_TRACE_BEGIN("AcquireBuffer");
     auto ret = impl_->surfaceAdapter_->GetConsumerSurface()->AcquireBuffer(inBuffer, syncFence, timestamp, damages);
-    EFFECT_LOGD("OnBufferAvailableWithCPU::AcquireBuffer seqId = %{public}d", inBuffer->GetSeqNum());
-    EFFECT_TRACE_END();
     CHECK_AND_RETURN_LOG(ret == 0 && inBuffer != nullptr, "AcquireBuffer failed. %{public}d", ret);
 
     constexpr uint32_t waitForEver = -1;
