@@ -161,6 +161,12 @@ ImageEffect::ImageEffect(const char *name)
         auto func = [this]() {};
         m_renderThread = new RenderThread<>(RENDER_QUEUE_SIZE, func);
         m_renderThread->Start();
+        if (name != nullptr && strcmp(name, "Photo") == 0) {
+            auto task = std::make_shared<RenderTask<>>([this]() { this->InitEGLEnv(); }, COMMON_TASK_TAG,
+                RequestTaskId());
+            m_renderThread->AddTask(task);
+            task->Wait();
+        }
     }
 }
 
