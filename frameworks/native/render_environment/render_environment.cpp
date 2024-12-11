@@ -177,6 +177,7 @@ void RenderEnvironment::GenMainTex(const std::shared_ptr<EffectBuffer> &source, 
 
     RenderTexturePtr tempTex = param_->resCache_->RequestTexture(param_->context_, width, height, GL_RGBA8);
     GLuint tempFbo = GLUtils::CreateFramebuffer(tempTex->GetName());
+    CHECK_AND_RETURN_LOG(renderTex != nullptr, "GenMainTex: renderTex is null!");
     RenderViewport vp(0, 0, renderTex->Width(), renderTex->Height());
     param_->renderer_->Draw(renderTex->GetName(), tempFbo, param_->meshBase_, param_->shaderBase_, &vp, GL_TEXTURE_2D);
     GLUtils::DeleteFboOnly(tempFbo);
