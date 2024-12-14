@@ -91,22 +91,43 @@ sptr<Surface> EffectSurfaceAdapter::GetProducerSurface()
     return fromProducerSurface_;
 }
 
-sptr<Surface> EffectSurfaceAdapter::GetConsumerSurface()
-{
-    if (receiverConsumerSurface_) {
-        return receiverConsumerSurface_;
-    }
-
-    if (Initialize() != ErrorCode::SUCCESS) {
-        return nullptr;
-    }
-
-    return receiverConsumerSurface_;
-}
-
-bool EffectSurfaceAdapter::CheckEffectSurfaceFlag() const
+bool EffectSurfaceAdapter::CheckEffectSurface() const
 {
     return effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT;
+}
+
+GSError EffectSurfaceAdapter::AcquireConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& syncFence,
+    int64_t& timestamp, OHOS::Rect& damages) const
+{
+    CHECK_AND_RETURN_RET_LOG(receiverConsumerSurface_!= nullptr, GSERROR_NOT_INIT,
+        "EffectSurfaceAdapter::AcquireEffectSurfaceBuffer receiverConsumerSurface_ is nullptr");
+
+    return receiverConsumerSurface_->AcquireBuffer(buffer, syncFence, timestamp, damages);
+}
+
+GSError EffectSurfaceAdapter::ReleaseConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer,
+    const sptr<SyncFence>& syncFence) const
+{
+    CHECK_AND_RETURN_RET_LOG(receiverConsumerSurface_!= nullptr, GSERROR_NOT_INIT,
+        "EffectSurfaceAdapter::ReleaseEffectSurfaceBuffer receiverConsumerSurface_ is nullptr");
+
+    return receiverConsumerSurface_->ReleaseBuffer(buffer, syncFence);
+}
+
+GSError EffectSurfaceAdapter::DetachConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer) const
+{
+    CHECK_AND_RETURN_RET_LOG(receiverConsumerSurface_!= nullptr, GSERROR_NOT_INIT,
+        "EffectSurfaceAdapter::DetachEffectSurfaceBuffer receiverConsumerSurface_ is nullptr");
+
+    return receiverConsumerSurface_->DetachBufferFromQueue(buffer);
+}
+
+GSError EffectSurfaceAdapter::AttachConsumerSurfaceBuffer(sptr<OHOS::SurfaceBuffer> &buffer) const
+{
+    CHECK_AND_RETURN_RET_LOG(receiverConsumerSurface_ != nullptr, GSERROR_NOT_INIT,
+        "EffectSurfaceAdapter::AttachEffectSurfaceBuffer receiverConsumerSurface_ is nullptr");
+
+    return receiverConsumerSurface_->AttachBufferToQueue(buffer);
 }
 
 ErrorCode EffectSurfaceAdapter::SetConsumerListener(ConsumerBufferAvailable &&consumerBufferAvailable)

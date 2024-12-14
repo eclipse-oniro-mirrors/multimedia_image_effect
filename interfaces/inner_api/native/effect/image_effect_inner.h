@@ -47,6 +47,14 @@ struct DataInfo {
     Picture *picture_ = nullptr;
 };
 
+struct BufferProcessInfo {
+    sptr<SurfaceBuffer> inBuffer_;
+    sptr<SurfaceBuffer> outBuffer_;
+    sptr<SyncFence> inBufferSyncFence_;
+    sptr<SyncFence> outBufferSyncFence_;
+    bool isSrcHebcData_ = false;
+};
+
 class ImageEffect : public Effect {
 public:
     IMAGE_EFFECT_EXPORT ImageEffect(const char *name = nullptr);
@@ -131,14 +139,11 @@ private:
     unsigned long int RequestTaskId();
 
     void ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer);
-    GSError RequestBuffer(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer,
-        sptr<SyncFence>& syncFence);
     void OnBufferAvailableWithCPU();
-    void CopyMetaData(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer);
-    void OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
-        int64_t timestamp, bool isNeedRender);
-    void ReleaseAndFlushBuffer(sptr<SurfaceBuffer>& releaseBuffer, sptr<SurfaceBuffer>& flushBuffer,
-        int64_t timestamp, bool isNeedRender);
+    bool RenderBuffer(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer, int64_t& timestamp);
+    GSError FlushBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& fence, bool sendFence, int64_t& timestamp);
+    void ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNeedSwap, int64_t& timestamp);
+    void ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64_t& timestamp);
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
