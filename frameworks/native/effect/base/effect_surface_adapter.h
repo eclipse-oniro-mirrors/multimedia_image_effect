@@ -34,8 +34,12 @@ public:
     ~EffectSurfaceAdapter();
 
     sptr<Surface> GetProducerSurface();
-    sptr<Surface> GetConsumerSurface();
-    bool CheckEffectSurfaceFlag() const;
+    bool CheckEffectSurface() const;
+    GSError AcquireConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& syncFence,
+        int64_t& timestamp, OHOS::Rect& damages) const;
+    GSError ReleaseConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer, const sptr<SyncFence>& syncFence) const;
+    GSError DetachConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer) const;
+    GSError AttachConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer) const;
     ErrorCode SetConsumerListener(ConsumerBufferAvailable &&consumerBufferAvailable);
     GraphicTransformType GetTransform() const;
     void SetOutputSurfaceDefaultUsage(uint64_t usage);
