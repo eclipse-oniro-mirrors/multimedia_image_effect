@@ -26,7 +26,6 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-using CreateImageEffectExtFunc = void* (*)(const char*);
 using InitFunc = void (*)();
 using DeinitFunc = void (*)();
 using InitModuleFunc = void (*)();
@@ -41,8 +40,6 @@ public:
 
     IMAGE_EFFECT_EXPORT void LoadExtSo();
 
-    IMAGE_EFFECT_EXPORT CreateImageEffectExtFunc GetCreateImageEffectExtFunc() const;
-
     InitFunc GetInitFunc() const;
     DeinitFunc GetDeinitFunc() const;
     InitModuleFunc GetInitModuleFunc() const;
@@ -51,8 +48,6 @@ public:
     void InitExt();
 private:
     ExternLoader() = default;
-
-    CreateImageEffectExtFunc createImageEffectExtFunc_ = nullptr;
 
     InitFunc initFunc_ = nullptr;
     DeinitFunc deinitFunc_ = nullptr;

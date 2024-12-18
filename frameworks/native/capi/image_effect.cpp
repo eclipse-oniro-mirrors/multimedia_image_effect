@@ -51,15 +51,6 @@ OH_ImageEffect *OH_ImageEffect_Create(const char *name)
     if (!ExternLoader::Instance()->IsExtLoad()) {
         ExternLoader::Instance()->LoadExtSo();
     }
-    auto func = ExternLoader::Instance()->GetCreateImageEffectExtFunc();
-    if (func) {
-        void* image = func(name);
-        if (image != nullptr) {
-            return static_cast<OH_ImageEffect *>(image);
-        }
-    } else {
-        EFFECT_LOGE("OH_ImageEffect_Create: shared lib so not find function!");
-    }
 
     EFFECT_LOGI("Creat image effect");
     std::shared_ptr<ImageEffect> imageEffect = std::make_unique<ImageEffect>(name);
