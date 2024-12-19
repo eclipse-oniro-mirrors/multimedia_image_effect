@@ -1060,27 +1060,27 @@ void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64
     EFFECT_LOGD("ProcessRender: inBuffer: %{public}d, outBuffer: %{public}d",
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
-    EFFECT_TRACE_BEGIN("ProcessSwapBuffers: SwapBuffers, inBuffer: " + std::to_string(inBuffer->GetSeqNum()) +
-        ", outBuffer: " + std::to_string(outBuffer->GetSeqNum()));
     ret = toProducerSurface_->DetachBufferFromQueue(outBuffer);
     CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
         "ProcessSwapBuffers: DetachBufferFromQueue failed. %{public}d", ret);
+
+    ret = toProducerSurface_->AttachBufferToQueue(inBuffer);
+    CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
+        "ProcessSwapBuffers: AttachBufferToQueue failed. %{public}d", ret);
 
     ret = impl_->DetachConsumerSurfaceBuffer(inBuffer);
     CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
         "ProcessSwapBuffers: DetachConsumerSurfaceBuffer failed. %{public}d", ret);
 
     ret = impl_->AttachConsumerSurfaceBuffer(outBuffer);
-    CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
-        "ProcessSwapBuffers: AttachConsumerSurfaceBuffer failed. %{public}d", ret);
-
-    ret = toProducerSurface_->AttachBufferToQueue(inBuffer);
-    CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
-        "ProcessSwapBuffers: AttachBufferToQueue failed. %{public}d", ret);
-    EFFECT_TRACE_END();
-
-    EFFECT_LOGD("ProcessSwapBuffers: FlushBuffer: %{public}d, ReleaseBuffer: %{public}d",
-        inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
+    if (ret != GSError::GSERROR_OK) {
+        EFFECT_LOGE("ProcessSwapBuffers: AttachConsumerSurfaceBuffer failed. %{public}d", ret);
+        ret = FlushBuffer(inBuffer, inBufferSyncFence, true, timestamp);
+        if (ret != GSError::GSERROR_OK) {
+            EFFECT_LOGE("ProcessSwapBuffers: FlushBuffer failed. %{public}d", ret);
+        }
+        return;
+    }
 
     ret = FlushBuffer(inBuffer, inBufferSyncFence, true, timestamp);
     CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK, "ProcessSwapBuffers: FlushBuffer failed. %{public}d", ret);
