@@ -166,7 +166,8 @@ HWTEST_F(TestEffectColorSpaceManager, ColorSpaceHelper_ConvertToCMColorSpace001,
 {
     EFFECT_LOGW("%{public}s ColorSpaceHelper_ConvertToCMColorSpace001 enter", TAG.c_str());
     EffectColorSpace colorSpace = EffectColorSpace::DEFAULT;
-    OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType type = ColorSpaceHelper::ConvertToCMColorSpace(colorSpace);
+    OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType type = 
+        ColorSpaceHelper::ConvertToCMColorSpace(colorSpace);
     EXPECT_EQ(type, OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType::CM_COLORSPACE_NONE);
 
     colorSpace = EffectColorSpace::SRGB;
@@ -252,7 +253,8 @@ HWTEST_F(TestEffectColorSpaceManager, ColorSpaceStrategy_ChooseColorSpace001, Te
     std::shared_ptr<ColorSpaceStrategy> colorSpaceStrategy = std::make_shared<ColorSpaceStrategy>();
     colorSpaceStrategy->src_ = CreateEffectBufferByPicture(g_picture.get());
     colorSpaceStrategy->dst_ = nullptr;
-    ErrorCode result = colorSpaceStrategy->ChooseColorSpace(filtersSupportedColorSpace, srcRealColorSpace, outputColorSpace);
+    ErrorCode result = colorSpaceStrategy->ChooseColorSpace(filtersSupportedColorSpace,
+        srcRealColorSpace, outputColorSpace);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
 
     colorSpaceStrategy->dst_ = CreateEffectBufferByPicture(g_picture.get());
