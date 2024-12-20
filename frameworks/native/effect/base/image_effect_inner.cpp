@@ -225,6 +225,9 @@ ImageEffect::ImageEffect(const char *name)
 ImageEffect::~ImageEffect()
 {
     EFFECT_LOGI("ImageEffect destruct enter!");
+    if (failureCount_ > 0) {
+        EFFECT_LOGE("ImageEffect::SwapBuffers attach fail %{public}d times", failureCount_);
+    }
     imageEffectFlag_ = DESTRUCTOR_IMAGE_EFFECT_CONSTANT;
     impl_->surfaceAdapter_ = nullptr;
     m_renderThread->ClearTask();
@@ -977,6 +980,18 @@ GSError ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, sptr<SyncFenc
         constexpr uint32_t invalidFence = -1;
         ret = toProducerSurface_->FlushBuffer(flushBuffer, invalidFence, flushConfig);
     }
+    if (ret != GSError::GSERROR_OK) {
+        EFFECT_LOGE("FlushBuffer: flush buffer failed. %{public}d", ret);
+    }
+    return ret;
+}
+
+GSError ImageEffect::ReleaseBuffer(sptr<OHOS::SurfaceBuffer> &buffer, sptr<OHOS::SyncFence> &fence)
+{
+    auto ret = impl_->ReleaseConsumerSurfaceBuffer(buffer, fence);
+    if (ret != GSError::GSERROR_OK) {
+        EFFECT_LOGE("ReleaseBuffer: ReleaseConsumerSurfaceBuffer failed. %{public}d", ret);
+    }
     return ret;
 }
 
@@ -1048,40 +1063,44 @@ void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64
     auto ret = toProducerSurface_->RequestBuffer(outBuffer, outBufferSyncFence, requestConfig);
     if (ret != 0 || outBuffer == nullptr) {
         EFFECT_LOGE("ProcessSwapBuffers::RequestBuffer failed. %{public}d", ret);
-        ret = impl_->ReleaseConsumerSurfaceBuffer(inBuffer, inBufferSyncFence);
-        if (ret != GSError::GSERROR_OK) {
-            EFFECT_LOGE("ProcessSwapBuffers::ReleaseBuffer caused by RequestBuffer failed. %{public}d", ret);
-        }
+        ReleaseBuffer(inBuffer, inBufferSyncFence);
         return;
     }
-
     CHECK_AND_RETURN_LOG(inBuffer != nullptr && outBuffer != nullptr,
         "ProcessRender: inBuffer or outBuffer is nullptr");
     EFFECT_LOGD("ProcessRender: inBuffer: %{public}d, outBuffer: %{public}d",
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
     ret = toProducerSurface_->DetachBufferFromQueue(outBuffer);
-    CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
-        "ProcessSwapBuffers: DetachBufferFromQueue failed. %{public}d", ret);
+    if (ret != GSError::GSERROR_OK) {
+        EFFECT_LOGE("ProcessSwapBuffers: DetachBufferFromQueue failed. %{public}d", ret);
+        FlushBuffer(outBuffer, outBufferSyncFence, true, timestamp);
+        ReleaseBuffer(inBuffer, inBufferSyncFence);
+        return;
+    }
 
     ret = toProducerSurface_->AttachBufferToQueue(inBuffer);
-    CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
-        "ProcessSwapBuffers: AttachBufferToQueue failed. %{public}d", ret);
+    if (ret != GSError::GSERROR_OK) {
+        EFFECT_LOGE("ProcessSwapBuffers: AttachBufferToQueue failed. %{public}d", ret);
+        ReleaseBuffer(inBuffer, inBufferSyncFence);
+        return;
+    }
 
     ret = impl_->DetachConsumerSurfaceBuffer(inBuffer);
-    CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
-        "ProcessSwapBuffers: DetachConsumerSurfaceBuffer failed. %{public}d", ret);
+    if (ret != GSError::GSERROR_OK) {
+        EFFECT_LOGE("ProcessSwapBuffers: DetachConsumerSurfaceBuffer failed. %{public}d", ret);
+        toProducerSurface_->DetachBufferFromQueue(inBuffer);
+        ReleaseBuffer(inBuffer, inBufferSyncFence);
+        return;
+    }
 
     ret = impl_->AttachConsumerSurfaceBuffer(outBuffer);
     if (ret != GSError::GSERROR_OK) {
         EFFECT_LOGE("ProcessSwapBuffers: AttachConsumerSurfaceBuffer failed. %{public}d", ret);
-        ret = FlushBuffer(inBuffer, inBufferSyncFence, true, timestamp);
-        if (ret != GSError::GSERROR_OK) {
-            EFFECT_LOGE("ProcessSwapBuffers: FlushBuffer failed. %{public}d", ret);
-        }
+        failureCount_++;
+        FlushBuffer(inBuffer, inBufferSyncFence, true, timestamp);
         return;
     }
-
     ret = FlushBuffer(inBuffer, inBufferSyncFence, true, timestamp);
     CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK, "ProcessSwapBuffers: FlushBuffer failed. %{public}d", ret);
 
