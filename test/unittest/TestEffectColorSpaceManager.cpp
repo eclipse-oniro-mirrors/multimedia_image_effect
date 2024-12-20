@@ -166,7 +166,7 @@ HWTEST_F(TestEffectColorSpaceManager, ColorSpaceHelper_ConvertToCMColorSpace001,
 {
     EFFECT_LOGW("%{public}s ColorSpaceHelper_ConvertToCMColorSpace001 enter", TAG.c_str());
     EffectColorSpace colorSpace = EffectColorSpace::DEFAULT;
-    OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType type = 
+    OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType type =
         ColorSpaceHelper::ConvertToCMColorSpace(colorSpace);
     EXPECT_EQ(type, OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType::CM_COLORSPACE_NONE);
 
