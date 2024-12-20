@@ -40,9 +40,6 @@ void ExternLoader::LoadExtSo()
         return;
     }
     EFFECT_LOGI("EFilterFactory: dlopen libimage_effect_ext.so success!");
-
-    createImageEffectExtFunc_ = reinterpret_cast<CreateImageEffectExtFunc>(dlsym(effectExtHandle,
-        "CreateImageEffectEXT"));
     initFunc_ = reinterpret_cast<InitModuleFunc>(dlsym(effectExtHandle, "Init"));
     deinitFunc_ = reinterpret_cast<InitModuleFunc>(dlsym(effectExtHandle, "Deinit"));
     initModuleFunc_ = reinterpret_cast<InitModuleFunc>(dlsym(effectExtHandle, "InitModule"));
@@ -53,11 +50,6 @@ void ExternLoader::LoadExtSo()
 bool ExternLoader::IsExtLoad() const
 {
     return isExtLoad_;
-}
-
-CreateImageEffectExtFunc ExternLoader::GetCreateImageEffectExtFunc() const
-{
-    return createImageEffectExtFunc_;
 }
 
 InitFunc ExternLoader::GetInitFunc() const
