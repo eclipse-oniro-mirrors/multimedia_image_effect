@@ -61,6 +61,7 @@ ohos_unittest("image_effect_unittest") {
   sources = base_sources
 
   sources += [
+    "$image_effect_root_dir/test/unittest/TestEffectColorSpaceManager.cpp",
     "$image_effect_root_dir/test/unittest/TestEffectMemoryManager.cpp",
     "$image_effect_root_dir/test/unittest/TestEffectPipeline.cpp",
     "$image_effect_root_dir/test/unittest/TestImageEffect.cpp",

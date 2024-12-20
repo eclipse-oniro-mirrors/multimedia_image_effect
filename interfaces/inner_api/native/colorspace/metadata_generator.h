@@ -28,11 +28,11 @@ namespace Effect {
 class MetadataGenerator {
 public:
     MetadataGenerator() = default;
-    ~MetadataGenerator();
+    IMAGE_EFFECT_EXPORT ~MetadataGenerator();
 
     IMAGE_EFFECT_EXPORT ErrorCode ProcessImage(SurfaceBuffer *inputImage);
 private:
-    int32_t GetVpeMetadataGeneratorInstance();
+    IMAGE_EFFECT_EXPORT int32_t GetVpeMetadataGeneratorInstance();
 
     int32_t vpeMetadataGeneratorInstance_ = VPE_INVALID_INSTANCE_ID;
 };

@@ -27,7 +27,7 @@ namespace Effect {
 class ColorSpaceConverter {
 public:
     ColorSpaceConverter() = default;
-    ~ColorSpaceConverter();
+    IMAGE_EFFECT_EXPORT ~ColorSpaceConverter();
     IMAGE_EFFECT_EXPORT
     ErrorCode ComposeHdrImage(const EffectBuffer *inputSdr, const SurfaceBuffer *inputGainmap, EffectBuffer *outputHdr);
 

@@ -20,6 +20,7 @@
 
 #include "effect_buffer.h"
 #include "error_code.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -30,17 +31,18 @@ public:
     ColorSpaceStrategy() = default;
     ~ColorSpaceStrategy() = default;
 
-    static bool IsSupportedColorSpace(EffectColorSpace colorSpace);
+    IMAGE_EFFECT_EXPORT static bool IsSupportedColorSpace(EffectColorSpace colorSpace);
     static bool IsNeedConvertColorSpace(EffectColorSpace colorSpace);
     static EffectColorSpace GetTargetColorSpace(EffectColorSpace src);
     static std::unordered_set<EffectColorSpace> GetAllSupportedColorSpaces();
 
     void Init(const std::shared_ptr<EffectBuffer> &src, const std::shared_ptr<EffectBuffer> &dst);
-
+    
+    IMAGE_EFFECT_EXPORT
     ErrorCode ChooseColorSpace(const std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace,
         const EffectColorSpace &srcRealColorSpace, EffectColorSpace &outputColorSpace);
 
-    ErrorCode CheckConverterColorSpace(const EffectColorSpace &targetColorSpace);
+    IMAGE_EFFECT_EXPORT ErrorCode CheckConverterColorSpace(const EffectColorSpace &targetColorSpace);
 
     void Deinit();
 private:

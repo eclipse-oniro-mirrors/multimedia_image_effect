@@ -26,7 +26,7 @@ namespace Media {
 namespace Effect {
 class ColorSpaceManager {
 public:
-    ColorSpaceManager();
+    IMAGE_EFFECT_EXPORT ColorSpaceManager();
     ~ColorSpaceManager() = default;
 
     IMAGE_EFFECT_EXPORT static bool IsNeedConvertColorSpace(EffectColorSpace colorSpace);
