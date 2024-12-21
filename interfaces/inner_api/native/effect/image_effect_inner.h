@@ -142,6 +142,7 @@ private:
     void OnBufferAvailableWithCPU();
     bool RenderBuffer(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer, int64_t& timestamp);
     GSError FlushBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& fence, bool sendFence, int64_t& timestamp);
+    GSError ReleaseBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& fence);
     void ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNeedSwap, int64_t& timestamp);
     void ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64_t& timestamp);
 
@@ -168,6 +169,7 @@ private:
     RenderThread<> *m_renderThread{ nullptr };
     std::atomic_ullong m_currentTaskId{0};
     bool needPreFlush_ = false;
+    uint32_t failureCount_ = 0;
 };
 } // namespace Effect
 } // namespace Media
