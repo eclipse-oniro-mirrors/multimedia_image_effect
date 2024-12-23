@@ -957,8 +957,8 @@ BufferRequestConfig ImageEffect::GetBufferRequestConfig(const sptr<SurfaceBuffer
     };
 }
 
-GSError ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, sptr<SyncFence>& syncFence, bool isSendFence,
-    int64_t& timestamp)
+GSError ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, sptr<SyncFence>& syncFence, bool isNeedAttach,
+    bool isSendFence, int64_t& timestamp)
 {
     BufferFlushConfig flushConfig = {
         .damage = {
@@ -974,15 +974,20 @@ GSError ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, sptr<SyncFenc
         "ProcessRender: toProducerSurface is nullptr.");
 
     auto ret = GSError::GSERROR_OK;
-    if (isSendFence) {
-        ret = toProducerSurface_->FlushBuffer(flushBuffer, syncFence, flushConfig);
+    const sptr<SyncFence> invalidFence = SyncFence::InvalidFence();
+    if (isNeedAttach) {
+        ret = toProducerSurface_->AttachAndFlushBuffer(flushBuffer, isSendFence ? syncFence : invalidFence,
+            flushConfig, false);
+        if (ret != GSError::GSERROR_OK) {
+            EFFECT_LOGE("AttachAndFlushBuffer: attach and flush buffer failed. %{public}d", ret);
+        }
     } else {
-        constexpr uint32_t invalidFence = -1;
-        ret = toProducerSurface_->FlushBuffer(flushBuffer, invalidFence, flushConfig);
+        ret = toProducerSurface_->FlushBuffer(flushBuffer, isSendFence ? syncFence : invalidFence, flushConfig);
+        if (ret != GSError::GSERROR_OK) {
+            EFFECT_LOGE("FlushBuffer: flush buffer failed. %{public}d", ret);
+        }
     }
-    if (ret != GSError::GSERROR_OK) {
-        EFFECT_LOGE("FlushBuffer: flush buffer failed. %{public}d", ret);
-    }
+
     return ret;
 }
 
@@ -1048,7 +1053,7 @@ void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNe
     CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
         "ProcessRender: ReleaseConsumerSurfaceBuffer failed. %{public}d", ret);
 
-    ret = FlushBuffer(outBuffer, outBufferSyncFence, false, timestamp);
+    ret = FlushBuffer(outBuffer, outBufferSyncFence, false, false, timestamp);
     CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK, "ProcessRender: FlushBuffer failed. %{public}d", ret);
 }
 
@@ -1060,9 +1065,9 @@ void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64
     sptr<SyncFence> outBufferSyncFence = bufferProcessInfo.outBufferSyncFence_;
 
     auto requestConfig = GetBufferRequestConfig(inBuffer);
-    auto ret = toProducerSurface_->RequestBuffer(outBuffer, outBufferSyncFence, requestConfig);
+    auto ret = toProducerSurface_->RequestAndDetachBuffer(outBuffer, outBufferSyncFence, requestConfig);
     if (ret != 0 || outBuffer == nullptr) {
-        EFFECT_LOGE("ProcessSwapBuffers::RequestBuffer failed. %{public}d", ret);
+        EFFECT_LOGE("ProcessSwapBuffers::RequestAndDetachBuffer failed. %{public}d", ret);
         ReleaseBuffer(inBuffer, inBufferSyncFence);
         return;
     }
@@ -1071,25 +1076,9 @@ void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64
     EFFECT_LOGD("ProcessRender: inBuffer: %{public}d, outBuffer: %{public}d",
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
-    ret = toProducerSurface_->DetachBufferFromQueue(outBuffer);
-    if (ret != GSError::GSERROR_OK) {
-        EFFECT_LOGE("ProcessSwapBuffers: DetachBufferFromQueue failed. %{public}d", ret);
-        FlushBuffer(outBuffer, outBufferSyncFence, true, timestamp);
-        ReleaseBuffer(inBuffer, inBufferSyncFence);
-        return;
-    }
-
-    ret = toProducerSurface_->AttachBufferToQueue(inBuffer);
-    if (ret != GSError::GSERROR_OK) {
-        EFFECT_LOGE("ProcessSwapBuffers: AttachBufferToQueue failed. %{public}d", ret);
-        ReleaseBuffer(inBuffer, inBufferSyncFence);
-        return;
-    }
-
     ret = impl_->DetachConsumerSurfaceBuffer(inBuffer);
     if (ret != GSError::GSERROR_OK) {
         EFFECT_LOGE("ProcessSwapBuffers: DetachConsumerSurfaceBuffer failed. %{public}d", ret);
-        toProducerSurface_->DetachBufferFromQueue(inBuffer);
         ReleaseBuffer(inBuffer, inBufferSyncFence);
         return;
     }
@@ -1098,11 +1087,16 @@ void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64
     if (ret != GSError::GSERROR_OK) {
         EFFECT_LOGE("ProcessSwapBuffers: AttachConsumerSurfaceBuffer failed. %{public}d", ret);
         failureCount_++;
-        FlushBuffer(inBuffer, inBufferSyncFence, true, timestamp);
+        FlushBuffer(inBuffer, inBufferSyncFence, true, true, timestamp);
         return;
     }
-    ret = FlushBuffer(inBuffer, inBufferSyncFence, true, timestamp);
-    CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK, "ProcessSwapBuffers: FlushBuffer failed. %{public}d", ret);
+
+    ret = FlushBuffer(inBuffer, inBufferSyncFence, true, true, timestamp);
+    if (ret != GSError::GSERROR_OK) {
+        EFFECT_LOGE("ProcessSwapBuffers: FlushBuffer failed. %{public}d", ret);
+        ReleaseBuffer(outBuffer, outBufferSyncFence);
+        return;
+    }
 
     ret = impl_->ReleaseConsumerSurfaceBuffer(outBuffer, outBufferSyncFence);
     CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,

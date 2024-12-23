@@ -141,7 +141,8 @@ private:
     void ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer);
     void OnBufferAvailableWithCPU();
     bool RenderBuffer(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer, int64_t& timestamp);
-    GSError FlushBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& fence, bool sendFence, int64_t& timestamp);
+    GSError FlushBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& fence, bool isNeedAttach, bool sendFence,
+        int64_t& timestamp);
     GSError ReleaseBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& fence);
     void ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNeedSwap, int64_t& timestamp);
     void ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64_t& timestamp);
