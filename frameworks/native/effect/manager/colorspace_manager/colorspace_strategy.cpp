@@ -170,6 +170,11 @@ ErrorCode ColorSpaceStrategy::CheckConverterColorSpace(const EffectColorSpace &t
         return ErrorCode::SUCCESS;
     }
 
+    DataType dataType = dst_->extraInfo_->dataType;
+    if (dataType == DataType::NATIVE_WINDOW) {
+        return ErrorCode::SUCCESS;
+    }
+
     // check color space is match or not.
     const std::shared_ptr<BufferInfo> &srcBufferInfo = src_->bufferInfo_;
     const std::shared_ptr<BufferInfo> &dstBufferInfo = dst_->bufferInfo_;
