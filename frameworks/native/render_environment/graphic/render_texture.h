@@ -20,6 +20,8 @@
 #include "graphic/gl_utils.h"
 #include "graphic/render_object.h"
 #include "effect_buffer.h"
+#include "effect_log.h"
+
 namespace OHOS {
 namespace Media {
 namespace Effect {
@@ -94,6 +96,13 @@ public:
     {
         size_t width = static_cast<size_t>(tex->Width());
         size_t height = static_cast<size_t>(tex->Height());
+        CHECK_AND_RETURN_RET_LOG(width <= std::numeric_limits<size_t>::max() / height, 0,
+            "TextureSizeMeasurer: Integer overflow! width=%{public}zu, height=%{public}zu", width, height);
+        CHECK_AND_RETURN_RET_LOG(GLUtils::GetInternalFormatPixelByteSize(tex->Format()) <=
+            std::numeric_limits<size_t>::max() / (width * height), 0,
+            "TextureSizeMeasurer: Integer overflow! width=%{public}zu, height=%{public}zu, format=%{public}zu",
+            width, height, GLUtils::GetInternalFormatPixelByteSize(tex->Format()));
+
         return (width * height * GLUtils::GetInternalFormatPixelByteSize(tex->Format()));
     }
 };
