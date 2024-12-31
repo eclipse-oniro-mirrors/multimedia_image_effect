@@ -939,6 +939,7 @@ bool ImageEffect::RenderBuffer(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer
         .surfaceBuffer_ = outBuffer,
         .timestamp_ = timestamp,
     };
+    impl_->effectContext_->renderEnvironment_->NotifyInputChanged();
     ErrorCode res = this->Render();
     return res != ErrorCode::SUCCESS;
 }
