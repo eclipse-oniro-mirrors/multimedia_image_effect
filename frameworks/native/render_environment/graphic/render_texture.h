@@ -96,6 +96,8 @@ public:
     {
         size_t width = static_cast<size_t>(tex->Width());
         size_t height = static_cast<size_t>(tex->Height());
+        CHECK_AND_RETURN_RET_LOG(width != 0 && height !=0, 0,
+            "TextureSizeMeasurer: width or height is null! width=%{public}zu, height=%{public}zu", width, height);
         CHECK_AND_RETURN_RET_LOG(width <= std::numeric_limits<size_t>::max() / height, 0,
             "TextureSizeMeasurer: Integer overflow! width=%{public}zu, height=%{public}zu", width, height);
         CHECK_AND_RETURN_RET_LOG(GLUtils::GetInternalFormatPixelByteSize(tex->Format()) <=
