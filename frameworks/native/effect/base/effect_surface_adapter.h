@@ -50,7 +50,7 @@ public:
     void OnBufferAvailable() override;
     void OnTunnelHandleChange() override;
     void OnGoBackground() override;
-    void OnCleanCache() override;
+    void OnCleanCache(uint32_t* bufSeqNum) override;
     // IBufferConsumerListener 接口的实现 end
 
 private:
