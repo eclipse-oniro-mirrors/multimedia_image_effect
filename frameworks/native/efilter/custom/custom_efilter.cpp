@@ -85,6 +85,21 @@ ErrorCode CustomEFilter::Restore(const EffectJsonPtr &value)
 void CustomEFilter::SetEffectInfo(const std::string &name, const std::shared_ptr<EffectInfo> &effectInfo)
 {
     std::unique_lock<std::mutex> lock(effectInfosMutex_);
+    effectInfo->formats_ = {
+        { IEffectFormat::YUVNV12, { IPType::CPU } },
+        { IEffectFormat::YUVNV21, { IPType::CPU } },
+        { IEffectFormat::RGBA8888, { IPType::CPU } },
+        { IEffectFormat::RGBA_1010102, { IPType::CPU } },
+        { IEffectFormat::YCBCR_P010, { IPType::CPU } },
+        { IEffectFormat::YCRCB_P010, { IPType::CPU } },
+    },
+    effectInfo->category_ = Category::COLOR_ADJUST;
+    
+    effectInfo->colorSpaces_.clear();
+    std::unordered_set<EffectColorSpace> allSupportedColorSpaces = ColorSpaceManager::GetAllSupportedColorSpaces();
+    std::for_each(allSupportedColorSpaces.begin(), allSupportedColorSpaces.end(), [&](const auto &item) {
+        effectInfo->colorSpaces_.emplace_back(item);
+    });
     effectInfos_[name] = effectInfo;
 }
 
