@@ -113,7 +113,9 @@ template <typename QUEUE> void RenderThread<QUEUE>::Start()
 
 template <typename QUEUE> void RenderThread<QUEUE>::Stop()
 {
+    std::unique_lock<std::mutex> lk(cvMutex);
     m_isWorking = false;
+    lk.unlock();
     cvEmpty.notify_all();
     while (!m_isStopped) {
         std::this_thread::sleep_for(std::chrono::microseconds(TIME_FOR_STOP));
