@@ -870,6 +870,7 @@ bool ImageEffect::OnBufferAvailableToProcess(sptr<SurfaceBuffer> &inBuffer, sptr
             .surfaceBuffer_ = outBuffer,
             .timestamp_ = timestamp,
         };
+        impl_->effectContext_->renderEnvironment_->NotifyInputChanged();
         ErrorCode res = this->Render();
         isNeedSwap  = (res != ErrorCode::SUCCESS);
     }
