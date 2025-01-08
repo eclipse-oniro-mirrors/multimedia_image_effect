@@ -210,7 +210,9 @@ ImageEffect::ImageEffect(const char *name)
     ExtInitModule();
 
     if (m_renderThread == nullptr) {
-        auto func = [this]() {};
+        auto func = [this]() {
+            EFFECT_LOGW("ImageEffect has no render work to do!");
+        };
         m_renderThread = new RenderThread<>(RENDER_QUEUE_SIZE, func);
         m_renderThread->Start();
         if (name != nullptr && strcmp(name, "Photo") == 0) {
