@@ -174,7 +174,10 @@ void EffectSurfaceAdapter::OnBufferAvailable()
 
 void EffectSurfaceAdapter::OnTunnelHandleChange() {}
 void EffectSurfaceAdapter::OnGoBackground() {}
-void EffectSurfaceAdapter::OnCleanCache() {}
+void EffectSurfaceAdapter::OnCleanCache(uint32_t* bufSeqNum)
+{
+    (void)bufSeqNum;
+}
 }
 }
 }
