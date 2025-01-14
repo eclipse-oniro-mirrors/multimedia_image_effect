@@ -509,6 +509,7 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
             if (input->extraInfo_->surfaceBuffer != nullptr) {
                 transformType = input->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
             }
+            context->renderEnvironment_->SetNativeWindowColorSpace(buffer->bufferInfo_->colorSpace_);
             context->renderEnvironment_->DrawFrameWithTransform(const_cast<std::shared_ptr<EffectBuffer> &>(buffer),
                 transformType);
             return ErrorCode::SUCCESS;
