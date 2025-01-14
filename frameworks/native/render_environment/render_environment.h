@@ -194,6 +194,7 @@ public:
     IMAGE_EFFECT_EXPORT void ConvertFromRGBToYUV(RenderTexturePtr input, IEffectFormat format, void *data);
     IMAGE_EFFECT_EXPORT void ReleaseParam();
     IMAGE_EFFECT_EXPORT void Release();
+    void SetNativeWindowColorSpace(EffectColorSpace colorSpace);
 
 private:
     RenderParam *param_{ nullptr };

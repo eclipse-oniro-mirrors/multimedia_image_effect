@@ -52,6 +52,18 @@ static const std::unordered_map<EffectColorSpace, CM_ColorSpaceType> EFFECT_TO_G
     { EffectColorSpace::ADOBE_RGB, CM_ColorSpaceType::CM_ADOBERGB_FULL },
 };
 
+static const std::unordered_map<EffectColorSpace, OH_NativeBuffer_ColorSpace> EFFECT_TO_NATIVE_BUFFER_COLORSPACE_MAP = {
+    { EffectColorSpace::SRGB, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_SRGB_FULL },
+    { EffectColorSpace::SRGB_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_SRGB_LIMIT },
+    { EffectColorSpace::DISPLAY_P3,  OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_FULL },
+    { EffectColorSpace::DISPLAY_P3_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_LIMIT },
+    { EffectColorSpace::BT2020_HLG, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_HLG_FULL },
+    { EffectColorSpace::BT2020_HLG_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_HLG_LIMIT },
+    { EffectColorSpace::BT2020_PQ, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_PQ_FULL },
+    { EffectColorSpace::BT2020_PQ_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_PQ_LIMIT },
+    { EffectColorSpace::ADOBE_RGB, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_ADOBERGB_FULL },
+};
+
 bool ColorSpaceHelper::IsHdrColorSpace(EffectColorSpace colorSpace)
 {
     return colorSpace == EffectColorSpace::BT2020_HLG || colorSpace == EffectColorSpace::BT2020_HLG_LIMIT ||
@@ -72,6 +84,19 @@ EffectColorSpace ColorSpaceHelper::ConvertToEffectColorSpace(ColorSpaceName colo
     EFFECT_LOGD("ConvertToEffectColorSpace: colorSpaceName=%{public}d, effectColorSpaceType=%{public}d",
         colorSpaceName, colorSpaceType);
     return colorSpaceType;
+}
+
+OH_NativeBuffer_ColorSpace ColorSpaceHelper::ConvertToNativeBufferColorSpace(EffectColorSpace effectColorSpace)
+{
+    OH_NativeBuffer_ColorSpace nativeBufferColorSpace = OH_NativeBuffer_ColorSpace::OH_COLORSPACE_NONE;
+    auto it = EFFECT_TO_NATIVE_BUFFER_COLORSPACE_MAP.find(effectColorSpace);
+    if (it != EFFECT_TO_NATIVE_BUFFER_COLORSPACE_MAP.end()) {
+        nativeBufferColorSpace = it->second;
+    }
+
+    EFFECT_LOGD("ConvertToEffectColorSpace: colorSpaceType=%{public}d, effectColorSpaceType=%{public}d",
+        effectColorSpace, nativeBufferColorSpace);
+    return nativeBufferColorSpace;
 }
 
 ColorSpaceName ColorSpaceHelper::ConvertToColorSpaceName(EffectColorSpace colorSpace)
