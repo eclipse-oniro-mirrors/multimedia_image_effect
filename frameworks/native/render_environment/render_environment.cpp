@@ -23,6 +23,9 @@
 #include "format_helper.h"
 #include "base/math/math_utils.h"
 
+#include "native_window.h"
+#include "colorspace_helper.h"
+
 namespace OHOS {
 namespace Media {
 namespace Effect {
@@ -129,6 +132,16 @@ void RenderEnvironment::InitEngine(OHNativeWindow *window)
     screenSurface_ = new RenderSurface(std::string());
     screenSurface_->SetAttrib(attribute_);
     screenSurface_->Create(window);
+}
+
+void RenderEnvironment::SetNativeWindowColorSpace(EffectColorSpace colorSpace)
+{
+    OH_NativeBuffer_ColorSpace bufferColorSpace = ColorSpaceHelper::ConvertToNativeBufferColorSpace(colorSpace);
+    OH_NativeBuffer_ColorSpace currentColorSpace;
+    OH_NativeWindow_GetColorSpace(window_, &currentColorSpace);
+    if (bufferColorSpace != currentColorSpace) {
+        OH_NativeWindow_SetColorSpace(window_, bufferColorSpace);
+    }
 }
 
 bool RenderEnvironment::BeginFrame()
@@ -567,6 +580,7 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::GenTexEffectBuffer(std::shared_
     bufferInfo->rowStride_ = info->rowStride_;
     bufferInfo->len_ = info->len_;
     bufferInfo->formatType_ = info->formatType_;
+    bufferInfo->colorSpace_ = info->colorSpace_;
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = DataType::TEX;
     std::shared_ptr<EffectBuffer> out = std::make_unique<EffectBuffer>(bufferInfo, nullptr, extraInfo);
