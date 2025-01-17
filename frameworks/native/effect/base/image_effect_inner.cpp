@@ -1154,6 +1154,8 @@ void ImageEffect::OnBufferAvailableWithCPU()
 
 void ImageEffect::ConsumerBufferAvailable()
 {
+    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
+        "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
     auto taskId = m_currentTaskId.fetch_add(1);
     auto task = std::make_shared<RenderTask<>>([this] () {
         if (!impl_->isQosEnabled_) {
