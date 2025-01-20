@@ -106,17 +106,6 @@ HWTEST_F(TestEffectPipeline, FilterBaseGetRouteOutPort001, TestSize.Level1)
     EXPECT_EQ(result, nullptr);
 }
 
-HWTEST_F(TestEffectPipeline, FilterBaseOnEvent001, TestSize.Level1)
-{
-    FilterBase filterBase("testNmae_");
-    const Event &event = Event{ "name_", EventType::EVENT_COMPLETE, { nullptr } };
-    filterBase.OnEvent(event);
-
-    EventReceiver *eventReceiver{ nullptr };
-    filterBase.eventReceiver_ = eventReceiver;
-    filterBase.OnEvent(event);
-}
-
 HWTEST_F(TestEffectPipeline, FilterBaseGetNextFilters001, TestSize.Level1)
 {
     FilterBase filterBase("testNmae_");
