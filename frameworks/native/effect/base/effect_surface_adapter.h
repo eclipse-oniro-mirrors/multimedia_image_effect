@@ -22,6 +22,7 @@
 #include <refbase.h>
 
 #include "error_code.h"
+#include "image_effect_marco_define.h"
 
 namespace OHOS {
 namespace Media {
@@ -30,18 +31,19 @@ using ConsumerBufferAvailable = std::function<void()>;
 
 class EffectSurfaceAdapter : public IBufferConsumerListenerClazz {
 public:
-    EffectSurfaceAdapter();
-    ~EffectSurfaceAdapter();
+    IMAGE_EFFECT_EXPORT EffectSurfaceAdapter();
+    IMAGE_EFFECT_EXPORT ~EffectSurfaceAdapter();
 
-    sptr<Surface> GetProducerSurface();
+    IMAGE_EFFECT_EXPORT sptr<Surface> GetProducerSurface();
     bool CheckEffectSurface() const;
     GSError AcquireConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& syncFence,
         int64_t& timestamp, OHOS::Rect& damages) const;
-    GSError ReleaseConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer, const sptr<SyncFence>& syncFence) const;
-    GSError DetachConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer) const;
-    GSError AttachConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer) const;
-    ErrorCode SetConsumerListener(ConsumerBufferAvailable &&consumerBufferAvailable);
-    GraphicTransformType GetTransform() const;
+    IMAGE_EFFECT_EXPORT GSError ReleaseConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer,
+        const sptr<SyncFence>& syncFence) const;
+    IMAGE_EFFECT_EXPORT GSError DetachConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer) const;
+    IMAGE_EFFECT_EXPORT GSError AttachConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer) const;
+    IMAGE_EFFECT_EXPORT ErrorCode SetConsumerListener(ConsumerBufferAvailable &&consumerBufferAvailable);
+    IMAGE_EFFECT_EXPORT GraphicTransformType GetTransform() const;
     void SetOutputSurfaceDefaultUsage(uint64_t usage);
 
     void ConsumerRequestCpuAccess(bool isCpuAccess);

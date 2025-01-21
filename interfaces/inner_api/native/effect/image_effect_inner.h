@@ -121,7 +121,7 @@ private:
     ErrorCode LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer, std::shared_ptr<EffectBuffer> &dstEffectBuffer);
 
     static void UnLockData(DataInfo &dataInfo);
-    static BufferRequestConfig GetBufferRequestConfig(const sptr<SurfaceBuffer>& buffer);
+    IMAGE_EFFECT_EXPORT static BufferRequestConfig GetBufferRequestConfig(const sptr<SurfaceBuffer>& buffer);
 
     void UnLockAll();
 
@@ -131,7 +131,7 @@ private:
 
     IMAGE_EFFECT_EXPORT
     void ConsumerBufferAvailable();
-    void UpdateProducerSurfaceInfo();
+    IMAGE_EFFECT_EXPORT void UpdateProducerSurfaceInfo();
 
     void ExtInitModule();
     void ExtDeinitModule();
@@ -140,12 +140,13 @@ private:
 
     void ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer);
     void OnBufferAvailableWithCPU();
-    bool RenderBuffer(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer, int64_t& timestamp);
-    GSError FlushBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& fence, bool isNeedAttach, bool sendFence,
-        int64_t& timestamp);
-    GSError ReleaseBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& fence);
-    void ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNeedSwap, int64_t& timestamp);
-    void ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64_t& timestamp);
+    IMAGE_EFFECT_EXPORT bool RenderBuffer(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer,
+        int64_t &timestamp);
+    IMAGE_EFFECT_EXPORT GSError FlushBuffer(sptr<SurfaceBuffer> &buffer, sptr<SyncFence> &fence, bool isNeedAttach,
+        bool sendFence, int64_t &timestamp);
+    IMAGE_EFFECT_EXPORT GSError ReleaseBuffer(sptr<SurfaceBuffer> &buffer, sptr<SyncFence> &fence);
+    IMAGE_EFFECT_EXPORT void ProcessRender(BufferProcessInfo &bufferProcessInfo, bool &isNeedSwap, int64_t &timestamp);
+    IMAGE_EFFECT_EXPORT void ProcessSwapBuffers(BufferProcessInfo &bufferProcessInfo, int64_t &timestamp);
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
@@ -172,6 +173,10 @@ private:
     bool needPreFlush_ = false;
     uint32_t failureCount_ = 0;
 };
+
+IMAGE_EFFECT_EXPORT void MemoryCopyForSurfaceBuffer(sptr<SurfaceBuffer> &buffer, OHOS::sptr<SurfaceBuffer> &outBuffer);
+IMAGE_EFFECT_EXPORT bool IsSurfaceBufferHebc(sptr<SurfaceBuffer> &buffer);
+
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
