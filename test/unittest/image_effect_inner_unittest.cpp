@@ -186,16 +186,17 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_006, TestSize.Level1)
 
     dataInfo.dataType_ = DataType::PATH;
     dataInfo.path_ = "path";
-    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, true), ErrorCode::SUCCESS);
+    IEffectFormat format = IEffectFormat::RGBA8888;
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, true, format), ErrorCode::SUCCESS);
 
     dataInfo.dataType_ = DataType::NATIVE_WINDOW;
-    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false), ErrorCode::SUCCESS);
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::SUCCESS);
 
     dataInfo.dataType_ = DataType::UNKNOWN;
-    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false), ErrorCode::ERR_NO_DATA);
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::ERR_NO_DATA);
 
     dataInfo.dataType_ = static_cast<DataType>(100);
-    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false), ErrorCode::ERR_UNSUPPORTED_DATA_TYPE);
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::ERR_UNSUPPORTED_DATA_TYPE);
 }
 } // namespace Effect
 } // namespace Media

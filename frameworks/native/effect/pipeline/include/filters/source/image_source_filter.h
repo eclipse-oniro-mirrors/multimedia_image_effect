@@ -48,6 +48,9 @@ public:
 
     ErrorCode Start() override;
 
+    void SetNegotiateParameter(uint32_t width, uint32_t height, IEffectFormat format,
+        std::shared_ptr<EffectContext> &context);
+
 private:
     void OnEvent(const Event &event) override {}
     ErrorCode DoNegotiate();
@@ -55,6 +58,9 @@ private:
     std::shared_ptr<EffectBuffer> srcBuffer_;
 
     std::shared_ptr<EffectContext> context_;
+    uint32_t width_;
+    uint32_t height_;
+    IEffectFormat format_;
 };
 } // namespace Effect
 } // namespace Media
