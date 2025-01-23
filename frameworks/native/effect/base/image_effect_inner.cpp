@@ -39,6 +39,8 @@
 #include "effect_log.h"
 #include "effect_trace.h"
 #include "native_window.h"
+#include "image_source.h"
+#include "capability_negotiate.h"
 
 #define RENDER_QUEUE_SIZE 8
 #define COMMON_TASK_TAG 0
@@ -345,6 +347,38 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> pipeline, const EffectParameters &effectParameters)
+{
+    ErrorCode res = ColorSpaceHelper::ConvertColorSpace(effectParameters.srcEffectBuffer_,
+        effectParameters.effectContext_);
+    if (res != ErrorCode::SUCCESS) {
+        EFFECT_LOGE("ProcessPipelineTask:ConvertColorSpace fail! res=%{public}d", res);
+        return res;
+    }
+
+    IPType runningIPType;
+    res = ChooseIPType(effectParameters.srcEffectBuffer_, effectParameters.effectContext_, effectParameters.config_,
+                       runningIPType);
+    if (res != ErrorCode::SUCCESS) {
+        EFFECT_LOGE("choose running ip type fail! res=%{public}d", res);
+        return res;
+    }
+    if (effectParameters.effectContext_->renderEnvironment_->GetEGLStatus() != EGLStatus::READY
+        && runningIPType == IPType::GPU) {
+        effectParameters.effectContext_->renderEnvironment_->Init();
+        effectParameters.effectContext_->renderEnvironment_->Prepare();
+    }
+    effectParameters.effectContext_->ipType_ = runningIPType;
+    effectParameters.effectContext_->memoryManager_->SetIPType(runningIPType);
+
+    res = pipeline->Start();
+    if (res != ErrorCode::SUCCESS) {
+        EFFECT_LOGE("pipeline start fail! res=%{public}d", res);
+        return res;
+    }
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters,
     unsigned long int taskId, RenderThread<> *thread)
 {
@@ -604,29 +638,74 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode ImageEffect::Render()
-{
-    if (efilters_.empty()) {
-        EFFECT_LOGW("efilters is empty!");
-        return ErrorCode::ERR_NOT_FILTERS_WITH_RENDER;
-    }
+ImageInfo CreateImageSourceInfo(std::string path) {
+    ImageInfo info;
+    std::unique_ptr<ImageSource> imageSource;
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    imageSource = ImageSource::CreateImageSource(path, opts, errorCode);
+    CHECK_AND_RETURN_RET_LOG(imageSource != nullptr, info,
+        "ImageSource::CreateImageSource fail! path=%{public}s errorCode=%{public}d", path.c_str(), errorCode);
+    imageSource->GetImageInfo(info);
+    return info;
+}
 
-    std::shared_ptr<EffectBuffer> srcEffectBuffer = nullptr;
-    std::shared_ptr<EffectBuffer> dstEffectBuffer = nullptr;
-    ErrorCode res = LockAll(srcEffectBuffer, dstEffectBuffer);
-    if (res != ErrorCode::SUCCESS) {
-        UnLockAll();
-        return res;
+ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat pixelFormat) {
+    switch (inDateInfo_.dataType_) {
+        case DataType::PIXEL_MAP: {
+            width = inDateInfo_.pixelMap_->GetWidth();
+            height = inDateInfo_.pixelMap_->GetHeight();
+            pixelFormat = inDateInfo_.pixelMap_->GetPixelFormat();
+            break;
+        }
+        case DataType::SURFACE:
+        case DataType::SURFACE_BUFFER: {
+            width = inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetWidth();
+            height = inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetHeight();
+            pixelFormat = static_cast<PixelFormat>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetFormat());
+            break;
+        }
+        case DataType::URI: {
+            auto path = CommonUtils::UrlToPath(inDateInfo_.uri_);
+            ImageInfo info = CreateImageSourceInfo(path);
+            width = info.size.width;
+            height = info.size.height;
+            pixelFormat = info.pixelFormat;
+            break;
+        }
+        case DataType::PATH: {
+            auto path = inDateInfo_.path_;
+            ImageInfo info = CreateImageSourceInfo(path);
+            width = info.size.width;
+            height = info.size.height;
+            pixelFormat = info.pixelFormat;
+            break;
+        }
+        case DataType::NATIVE_WINDOW:
+            width = 0;
+            height = 0;
+            break;
+        case DataType::PICTURE: {
+            std::shared_ptr<PixelMap> pixelMap = inDateInfo_.picture_->GetMainPixel();
+            width = pixelMap->GetWidth();
+            height = pixelMap->GetHeight();
+            pixelFormat = pixelMap->GetPixelFormat();
+            break;
+        }
+        case DataType::UNKNOWN:
+            EFFECT_LOGE("dataType is unknown! DataType is not set!");
+            return  ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
+        default:
+            EFFECT_LOGE("dataType is not support! dataType=%{public}d", static_cast<int>(inDateInfo_.dataType_));
+            return ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
     }
+    return ErrorCode::SUCCESS;
+}
 
-    res = CheckToRenderPara(srcEffectBuffer, dstEffectBuffer);
-    if (res != ErrorCode::SUCCESS) {
-        UnLockAll();
-        return res;
-    }
-
+ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
+    std::shared_ptr<EffectBuffer> dstEffectBuffer) {
     std::shared_ptr<ImageSourceFilter> &sourceFilter = impl_->srcFilter_;
-    res = ConfigSourceFilter(sourceFilter, srcEffectBuffer, impl_->effectContext_);
+    ErrorCode res = ConfigSourceFilter(sourceFilter, srcEffectBuffer, impl_->effectContext_);
     if (res != ErrorCode::SUCCESS) {
         UnLockAll();
         return res;
@@ -638,6 +717,52 @@ ErrorCode ImageEffect::Render()
         UnLockAll();
         return res;
     }
+
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode ImageEffect::Render()
+{
+    CHECK_AND_RETURN_RET_LOG(!efilters_.empty(), ErrorCode::ERR_NOT_FILTERS_WITH_RENDER, "efilters is empty");
+
+    uint32_t width = 0;
+    uint32_t height = 0;
+    PixelFormat pixelFormat = PixelFormat::RGBA_8888;
+
+    ErrorCode res = GetImageInfo(width, height, pixelFormat);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "set image info fail! res = %{public}d", res);
+    IEffectFormat format = CommonUtils::SwitchToEffectFormat(pixelFormat);
+
+    std::shared_ptr<ImageSourceFilter> &sourceFilter = impl_->srcFilter_;
+    sourceFilter->SetNegotiateParameter(width, height, format, impl_->effectContext_);
+
+    res = impl_->pipeline_->Prepare();
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "pipeline prepare fail! res=%{public}d", res);
+
+    if (inDateInfo_.dataType_ == DataType::URI || inDateInfo_.dataType_ == DataType::PATH) {
+        const std::vector<std::shared_ptr<Capability>> &capabilities =
+            impl_->effectContext_->capNegotiate_->GetCapabilityList();
+        format = CapabilityNegotiate::NegotiateFormat(capabilities);
+    }
+    EFFECT_LOGD("image effect render, negotiate format=%{public}d", format);
+
+    std::shared_ptr<EffectBuffer> srcEffectBuffer = nullptr;
+    std::shared_ptr<EffectBuffer> dstEffectBuffer = nullptr;
+    res = LockAll(srcEffectBuffer, dstEffectBuffer, format);
+    if (res != ErrorCode::SUCCESS) {
+        UnLockAll();
+        return res;
+    }
+
+    res = CheckToRenderPara(srcEffectBuffer, dstEffectBuffer);
+    if (res != ErrorCode::SUCCESS) {
+        UnLockAll();
+        return res;
+    }
+
+    res = ConfigureFilters(srcEffectBuffer, dstEffectBuffer);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "configure filters fail! res=%{puiblic}d", res);
+
     if (dstEffectBuffer != nullptr) {
         impl_->effectContext_->renderEnvironment_->SetOutputType(dstEffectBuffer->extraInfo_->dataType);
     } else {
@@ -1088,9 +1213,9 @@ bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
 }
 
 ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
-    std::shared_ptr<EffectBuffer> &dstEffectBuffer)
+    std::shared_ptr<EffectBuffer> &dstEffectBuffer, IEffectFormat format)
 {
-    ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, false);
+    ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, false, format);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("ParseDataInfo inData fail! res=%{public}d", res);
         return res;
@@ -1099,7 +1224,7 @@ ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
 
     if (outDateInfo_.dataType_ != DataType::UNKNOWN && !IsSameInOutputData(inDateInfo_, outDateInfo_)) {
         EFFECT_LOGI("output data set, start parse data info. dataType=%{public}d", outDateInfo_.dataType_);
-        res = ParseDataInfo(outDateInfo_, dstEffectBuffer, true);
+        res = ParseDataInfo(outDateInfo_, dstEffectBuffer, true, format);
         if (res != ErrorCode::SUCCESS) {
             EFFECT_LOGE("ParseDataInfo outData fail! res=%{public}d", res);
             return res;
@@ -1111,7 +1236,7 @@ ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
 }
 
 ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectBuffer> &effectBuffer,
-    bool isOutputData)
+    bool isOutputData, IEffectFormat format)
 {
     switch (dataInfo.dataType_) {
         case DataType::PIXEL_MAP:
@@ -1121,9 +1246,9 @@ ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectB
             return CommonUtils::ParseSurfaceData(dataInfo.surfaceBufferInfo_.surfaceBuffer_, effectBuffer,
                 dataInfo.dataType_, dataInfo.surfaceBufferInfo_.timestamp_);
         case DataType::URI:
-            return CommonUtils::ParseUri(dataInfo.uri_, effectBuffer, isOutputData);
+            return CommonUtils::ParseUri(dataInfo.uri_, effectBuffer, isOutputData, format);
         case DataType::PATH:
-            return CommonUtils::ParsePath(dataInfo.path_, effectBuffer, isOutputData);
+            return CommonUtils::ParsePath(dataInfo.path_, effectBuffer, isOutputData, format);
         case DataType::NATIVE_WINDOW:
             return CommonUtils::ParseNativeWindowData(effectBuffer, dataInfo.dataType_);
         case DataType::PICTURE:

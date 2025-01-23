@@ -117,12 +117,13 @@ ErrorCode ImageSourceFilter::Start()
 ErrorCode ImageSourceFilter::DoNegotiate()
 {
     std::shared_ptr<MemNegotiatedCap> memNegotiatedCap = std::make_shared<MemNegotiatedCap>();
-    memNegotiatedCap->width = srcBuffer_->bufferInfo_->width_;
-    memNegotiatedCap->height = srcBuffer_->bufferInfo_->height_;
-    memNegotiatedCap->format = srcBuffer_->bufferInfo_->formatType_;
+    memNegotiatedCap->width = width_;
+    memNegotiatedCap->height = height_;
+    memNegotiatedCap->format = format_;
     std::shared_ptr<Capability> capability = std::make_shared<Capability>(name_);
     capability->memNegotiatedCap_ = memNegotiatedCap;
     context_->capNegotiate_->AddCapability(capability);
+    
     std::unordered_set<EffectColorSpace> allSupportedColorSpaces = ColorSpaceManager::GetAllSupportedColorSpaces();
     std::for_each(allSupportedColorSpaces.begin(), allSupportedColorSpaces.end(), [&](const auto &item) {
         context_->filtersSupportedColorSpace_.emplace(item);
@@ -138,6 +139,15 @@ ErrorCode ImageSourceFilter::DoNegotiate()
         context_->renderEnvironment_->Prepare();
     }
     return ErrorCode::SUCCESS;
+}
+
+void ImageSourceFilter::SetNegotiateParameter(uint32_t width, uint32_t height, IEffectFormat format,
+    std::shared_ptr<EffectContext> &context)
+{
+    context_ = context;
+    width_ = width;
+    height_ = height;
+    format_ = format;
 }
 } // namespace Effect
 } // namespace Media
