@@ -175,6 +175,29 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_005, TestSize.Level1)
     result = imageEffect_->Start();
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
+
+HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_006, TestSize.Level1)
+{
+    DataInfo dataInfo;
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, nullptr, extraInfo);
+    std::shared_ptr<ImageEffect> imageEffect = std::make_unique<ImageEffect>();
+
+    dataInfo.dataType_ = DataType::PATH;
+    dataInfo.path_ = "path";
+    IEffectFormat format = IEffectFormat::RGBA8888;
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, true, format), ErrorCode::SUCCESS);
+
+    dataInfo.dataType_ = DataType::NATIVE_WINDOW;
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::SUCCESS);
+
+    dataInfo.dataType_ = DataType::UNKNOWN;
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::ERR_NO_DATA);
+
+    dataInfo.dataType_ = static_cast<DataType>(100);
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::ERR_UNSUPPORTED_DATA_TYPE);
+}
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
