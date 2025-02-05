@@ -69,6 +69,8 @@ public:
 
     virtual std::shared_future<RETURNTYPE> GetFuture() = 0;
 
+    virtual void SetDefaultReturn() = 0;
+
 protected:
     uint64_t m_id;
     uint64_t m_tag;
