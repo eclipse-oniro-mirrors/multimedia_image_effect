@@ -112,13 +112,14 @@ protected:
     IMAGE_EFFECT_EXPORT static void ClearDataInfo(DataInfo &dataInfo);
 
     IMAGE_EFFECT_EXPORT static ErrorCode ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectBuffer> &effectBuffer,
-        bool isOutputData);
+        bool isOutputData, IEffectFormat format);
 
     DataInfo inDateInfo_;
     DataInfo outDateInfo_;
 
 private:
-    ErrorCode LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer, std::shared_ptr<EffectBuffer> &dstEffectBuffer);
+    ErrorCode LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer, std::shared_ptr<EffectBuffer> &dstEffectBuffer,
+        IEffectFormat format);
 
     static void UnLockData(DataInfo &dataInfo);
     IMAGE_EFFECT_EXPORT static BufferRequestConfig GetBufferRequestConfig(const sptr<SurfaceBuffer>& buffer);
@@ -147,6 +148,10 @@ private:
     IMAGE_EFFECT_EXPORT GSError ReleaseBuffer(sptr<SurfaceBuffer> &buffer, sptr<SyncFence> &fence);
     IMAGE_EFFECT_EXPORT void ProcessRender(BufferProcessInfo &bufferProcessInfo, bool &isNeedSwap, int64_t &timestamp);
     IMAGE_EFFECT_EXPORT void ProcessSwapBuffers(BufferProcessInfo &bufferProcessInfo, int64_t &timestamp);
+
+    ErrorCode GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat pixelFormat);
+    ErrorCode ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
+        std::shared_ptr<EffectBuffer> dstEffectBuffer);
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal

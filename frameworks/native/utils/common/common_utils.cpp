@@ -27,6 +27,7 @@
 #include "render_environment.h"
 #include "format_helper.h"
 #include "exif_metadata.h"
+#include "v1_1/buffer_handle_meta_key_type.h"
 
 namespace OHOS {
 namespace Media {
@@ -38,6 +39,8 @@ namespace {
     const std::string PIXEL_X_DIMENSION = "PixelXDimension";
     const std::string PIXEL_Y_DIMENSION = "PixelYDimension";
     const int32_t TIME_MAX = 64;
+    const int32_t YUV_PLANE_COUNT = 2;
+    const int32_t YUV_HALF_HEIGHT = 2;
 }
 
 using namespace OHOS::ColorManager;
@@ -77,6 +80,31 @@ ErrorCode ParseJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &jso
     return ErrorCode::SUCCESS;
 }
 
+static bool isYuvFormat(PixelFormat format)
+{
+    return format == PixelFormat::NV21 || format == PixelFormat::NV12 ||
+        format == PixelFormat::YCRCB_P010 || format == PixelFormat::YCBCR_P010;
+}
+
+std::shared_ptr<ExtraInfo> CreateExtraInfo(PixelMap * pixelMap)
+{
+    BufferType bufferType = CommonUtils::SwitchToEffectBuffType(pixelMap->GetAllocatorType());
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
+    extraInfo->dataType = DataType::PIXEL_MAP;
+    extraInfo->bufferType = bufferType;
+    extraInfo->pixelMap = pixelMap;
+    extraInfo->surfaceBuffer = nullptr;
+    if (extraInfo->bufferType == BufferType::DMA_BUFFER && pixelMap->GetFd() != nullptr) {
+        extraInfo->surfaceBuffer = reinterpret_cast<SurfaceBuffer*>(pixelMap->GetFd());
+    }
+    if (extraInfo->bufferType == BufferType::SHARED_MEMORY && pixelMap->GetFd() != nullptr) {
+        extraInfo->fd = reinterpret_cast<int *>(pixelMap->GetFd());
+    }
+    EFFECT_LOGI("pixelMap extraInfos: dataType=%{public}d, bufferType=%{public}d",
+        extraInfo->dataType, extraInfo->bufferType);
+    return extraInfo;
+}
+
 ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer)
 {
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
@@ -96,7 +124,13 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
     bufferInfo->width_ = static_cast<uint32_t>(pixelMap->GetWidth());
     bufferInfo->height_ = static_cast<uint32_t>(pixelMap->GetHeight());
-    bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
+    if (isYuvFormat(pixelMap->GetPixelFormat())) {
+        YUVDataInfo info;
+        pixelMap->GetImageYUVInfo(info);
+        bufferInfo->rowStride_ = info.yStride;
+    } else {
+        bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
+    }
     bufferInfo->len_ = FormatHelper::CalculateSize(bufferInfo->width_, bufferInfo->height_, formatType);
     bufferInfo->formatType_ = formatType;
     bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceName);
@@ -110,19 +144,7 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
         bufferInfo->width_, bufferInfo->height_, bufferInfo->formatType_, bufferInfo->rowStride_,
         bufferInfo->len_, bufferInfo->colorSpace_, pixels);
 
-    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
-    extraInfo->dataType = DataType::PIXEL_MAP;
-    extraInfo->bufferType = SwitchToEffectBuffType(pixelMap->GetAllocatorType());
-    extraInfo->pixelMap = pixelMap;
-    extraInfo->surfaceBuffer = nullptr;
-    if (extraInfo->bufferType == BufferType::DMA_BUFFER && pixelMap->GetFd() != nullptr) {
-        extraInfo->surfaceBuffer = reinterpret_cast<SurfaceBuffer*> (pixelMap->GetFd());
-    }
-    if (extraInfo->bufferType == BufferType::SHARED_MEMORY && pixelMap->GetFd() != nullptr) {
-        extraInfo->fd = reinterpret_cast<int *>(pixelMap->GetFd());
-    }
-    EFFECT_LOGI("pixelMap extraInfos: dataType=%{public}d, bufferType=%{public}d",
-        extraInfo->dataType, extraInfo->bufferType);
+    std::shared_ptr<ExtraInfo> extraInfo = CreateExtraInfo(pixelMap);
 
     if (extraInfo->surfaceBuffer != nullptr) {
         SurfaceBuffer *sb = extraInfo->surfaceBuffer;
@@ -189,7 +211,8 @@ std::string CommonUtils::UrlToPath(const std::string &url)
     return uri.GetPath();
 }
 
-ErrorCode CommonUtils::ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData)
+ErrorCode CommonUtils::ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData,
+    IEffectFormat format)
 {
     if (isOutputData) {
         std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
@@ -201,7 +224,7 @@ ErrorCode CommonUtils::ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> 
     }
 
     auto path = UrlToPath(uri);
-    ErrorCode res = ParsePath(path, effectBuffer, isOutputData);
+    ErrorCode res = ParsePath(path, effectBuffer, isOutputData, format);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
         "ParseUri: path name fail! uri=%{public}s, res=%{public}d", uri.c_str(), res);
 
@@ -214,7 +237,7 @@ ErrorCode CommonUtils::ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> 
 }
 
 ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer> &effectBuffer,
-    bool isOutputData)
+    bool isOutputData, IEffectFormat format)
 {
     if (isOutputData) {
         std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
@@ -232,6 +255,8 @@ ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer
         "ImageSource::CreateImageSource fail! path=%{public}s, errorCode=%{public}d", path.c_str(), errorCode);
 
     DecodeOptions options;
+    options.desiredPixelFormat = CommonUtils::SwitchToPixelFormat(format);
+    EFFECT_LOGD("CommonUtils::ParsePath. PixelFormat=%{public}d", options.desiredPixelFormat);
     options.desiredDynamicRange = DecodeDynamicRange::AUTO;
     std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(options, errorCode);
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_CREATE_PIXELMAP_FAIL,
@@ -540,11 +565,136 @@ ErrorCode CommonUtils::ParsePicture(Picture *picture, std::shared_ptr<EffectBuff
     return ErrorCode::SUCCESS;
 }
 
+void ProcessYUVInfo(PixelMap *pixelMap, const SurfaceBuffer *sBuffer, const OH_NativeBuffer_Planes *planes)
+{
+    int32_t width = sBuffer->GetWidth();
+    int32_t height = sBuffer->GetHeight();
+    YUVDataInfo info;
+    info.imageSize = {width, height};
+    info.yWidth = static_cast<uint32_t>(width);
+    info.uvWidth = static_cast<uint32_t>(width);
+    info.yHeight = static_cast<uint32_t>(height);
+    info.uvHeight = static_cast<uint32_t>(height);
+    if (planes->planeCount >= YUV_PLANE_COUNT) {
+        int32_t pixelFmt = sBuffer->GetFormat();
+        int uvPlaneOffset = (pixelFmt == GRAPHIC_PIXEL_FMT_YCBCR_420_SP ||
+            pixelFmt == GRAPHIC_PIXEL_FMT_YCBCR_P010) ? 1 : 2;
+        info.yStride = planes->planes[0].columnStride;
+        info.uvStride = planes->planes[uvPlaneOffset].columnStride;
+        info.yOffset = planes->planes[0].offset;
+        info.uvOffset = planes->planes[uvPlaneOffset].offset;
+        pixelMap->SetImageYUVInfo(info);
+    }
+}
+
+bool SetSbDynamicMetadata(sptr<SurfaceBuffer> &buffer, const std::vector<uint8_t> &dynamicMetadata)
+{
+    return buffer->SetMetadata(ATTRKEY_HDR_DYNAMIC_METADATA, dynamicMetadata) == 0;
+}
+
+bool GetSbDynamicMetadata(const sptr<SurfaceBuffer> &buffer, std::vector<uint8_t> &dynamicMetadata)
+{
+    return buffer->GetMetadata(ATTRKEY_HDR_DYNAMIC_METADATA, dynamicMetadata) == 0;
+}
+
+bool SetSbStaticMetadata(sptr<SurfaceBuffer> &buffer, const std::vector<uint8_t> &staticMetadata)
+{
+    return buffer->SetMetadata(ATTRKEY_HDR_STATIC_METADATA, staticMetadata) == 0;
+}
+
+bool GetSbStaticMetadata(const sptr<SurfaceBuffer> &buffer, std::vector<uint8_t> &staticMetadata)
+{
+    return buffer->GetMetadata(ATTRKEY_HDR_STATIC_METADATA, staticMetadata) == 0;
+}
+
+void CopySurfaceBufferInfo(sptr<SurfaceBuffer> &source, sptr<SurfaceBuffer> &dst)
+{
+    if (source == nullptr || dst == nullptr) {
+        EFFECT_LOGI("VpeUtils CopySurfaceBufferInfo failed, source or dst is nullptr");
+        return;
+    }
+    std::vector<uint8_t> hdrMetadataTypeVec;
+    std::vector<uint8_t> colorSpaceInfoVec;
+    std::vector<uint8_t> staticData;
+    std::vector<uint8_t> dynamicData;
+
+    if (source->GetMetadata(ATTRKEY_HDR_METADATA_TYPE, hdrMetadataTypeVec) == 0) {
+        std::string str(hdrMetadataTypeVec.begin(), hdrMetadataTypeVec.end());
+        EFFECT_LOGI("ATTRKEY_HDR_METADATA_TYPE: length :%{public}zu, %{public}s",
+            hdrMetadataTypeVec.size(), str.c_str());
+        dst->SetMetadata(ATTRKEY_HDR_METADATA_TYPE, hdrMetadataTypeVec);
+    } else {
+        EFFECT_LOGE("get attrkey hdr metadata type failed");
+    }
+    if (source->GetMetadata(ATTRKEY_COLORSPACE_INFO, colorSpaceInfoVec) == 0) {
+        std::string str(colorSpaceInfoVec.begin(), colorSpaceInfoVec.end());
+        EFFECT_LOGI("ATTRKEY_COLORSPACE_INFO: length :%{public}zu, %{public}s", colorSpaceInfoVec.size(), str.c_str());
+        dst->SetMetadata(ATTRKEY_COLORSPACE_INFO, colorSpaceInfoVec);
+    } else {
+        EFFECT_LOGE("get attrkey colorspace info failed");
+    }
+    if (GetSbStaticMetadata(source, staticData) && (staticData.size() > 0)) {
+        std::string str(staticData.begin(), staticData.end());
+        EFFECT_LOGI("GetSbStaticMetadata val: length:%{public}zu, %{public}s", staticData.size(), str.c_str());
+        SetSbStaticMetadata(dst, staticData);
+    } else {
+        EFFECT_LOGE("get sb static metadata failed");
+    }
+    if (GetSbDynamicMetadata(source, dynamicData) && (dynamicData.size()) > 0) {
+        std::string str(dynamicData.begin(), dynamicData.end());
+        EFFECT_LOGI("GetSbDynamicMetadata val: length:%{public}zu, %{public}s", dynamicData.size(), str.c_str());
+        SetSbDynamicMetadata(dst, dynamicData);
+    } else {
+        EFFECT_LOGE("get sb dynamic metadata failed");
+    }
+}
+
+ErrorCode ModifyYUVInfo(PixelMap *pixelMap, void *context, const MemoryInfo &memoryInfo)
+{
+    CHECK_AND_RETURN_RET_LOG(context != nullptr, ErrorCode::ERR_INPUT_NULL, "handle yuv info, context is null.");
+    SurfaceBuffer *sBuffer = reinterpret_cast<SurfaceBuffer *>(context);
+    if (memoryInfo.bufferType == BufferType::SHARED_MEMORY) {
+        int32_t width = memoryInfo.bufferInfo.width_;
+        int32_t height = memoryInfo.bufferInfo.height_;
+        YUVDataInfo info;
+        info.imageSize = { width, height};
+        info.yWidth = static_cast<uint32_t>(width);
+        info.uvWidth = static_cast<uint32_t>(width);
+        info.yHeight = static_cast<uint32_t>(height);
+        info.uvHeight = static_cast<uint32_t>(height / YUV_HALF_HEIGHT);
+
+        info.yStride = info.yWidth;
+        info.uvStride = info.uvWidth;
+        info.yOffset = 0;
+        info.uvOffset = info.yStride * info.yHeight;
+        pixelMap->SetImageYUVInfo(info);
+    } else {
+        if (sBuffer == nullptr) {
+            return ErrorCode::SUCCESS;
+        }
+        OH_NativeBuffer_Planes *planes = nullptr;
+        GSError retVal = sBuffer->GetPlanesInfo(reinterpret_cast<void **>(&planes));
+        if (retVal != OHOS::GSERROR_OK || planes == nullptr || planes->planeCount <= 1) {
+            return ErrorCode::SUCCESS;
+        }
+        ProcessYUVInfo(pixelMap, sBuffer, planes);
+    }
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, PixelMap *pixelMap,
     AllocatorType &allocatorType, bool isUpdateExif)
 {
     void *context = nullptr;
     const MemoryInfo &memoryInfo = memoryData->memoryInfo;
+
+    if (memoryInfo.bufferType == BufferType::DMA_BUFFER) {
+        sptr<SurfaceBuffer> baseSptr(reinterpret_cast<SurfaceBuffer*>(pixelMap->GetFd()));
+        void *extra = memoryData->memoryInfo.extra;
+        sptr<SurfaceBuffer> dstBuffer(reinterpret_cast<SurfaceBuffer*>(extra));
+        CopySurfaceBufferInfo(baseSptr, dstBuffer);
+    }
+
     ErrorCode res = GetPixelsContext(memoryData, memoryInfo.bufferType, &context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "get pixels context fail! res=%{public}d", res);
 
