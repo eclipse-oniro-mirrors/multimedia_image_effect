@@ -57,6 +57,15 @@ public:
         return m_barrierFuture;
     };
 
+    void SetDefaultReturn() override
+    {
+        if constexpr (std::is_void_v<RETURNTYPE>) {
+            m_barrier.set_value();
+        } else {
+            m_barrier.set_value(RETURNTYPE{});
+        }
+    };
+
 private:
     template <typename THISPTYTPE, typename RUNRETURNTYPE, typename... RUNARGSTYPE> class RunImpl {
     public:
