@@ -91,7 +91,11 @@ template <typename QUEUE> void RenderThread<QUEUE>::ClearTask()
 {
     std::unique_lock<std::mutex> lk(cvMutex);
     while (m_localMsgQueue->GetSize() > 0) {
-        m_localMsgQueue->RemoveAll();
+        LocalTaskType task;
+        bool ret = m_localMsgQueue->Pop(task);
+        if (ret) {
+            task->SetDefaultReturn();
+        }
     }
     lk.unlock();
 }
