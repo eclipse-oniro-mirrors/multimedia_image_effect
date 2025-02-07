@@ -41,6 +41,8 @@ public:
         OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType type);
     IMAGE_EFFECT_EXPORT static OHOS::HDI::Display::Graphic::Common::V1_0::CM_ColorSpaceType ConvertToCMColorSpace(
         EffectColorSpace colorSpace);
+    IMAGE_EFFECT_EXPORT static OH_NativeBuffer_ColorSpace ConvertToNativeBufferColorSpace(
+        EffectColorSpace effectColorSpace);
     IMAGE_EFFECT_EXPORT static ErrorCode SetSurfaceBufferMetadataType(SurfaceBuffer *sb,
         const OHOS::HDI::Display::Graphic::Common::V1_0::CM_HDR_Metadata_Type &type);
     IMAGE_EFFECT_EXPORT static ErrorCode GetSurfaceBufferMetadataType(SurfaceBuffer *sb,
