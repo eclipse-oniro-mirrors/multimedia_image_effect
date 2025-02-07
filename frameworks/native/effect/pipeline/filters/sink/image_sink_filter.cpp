@@ -268,7 +268,11 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
         EFFECT_LOGI("ImageSinkFilter: not need copy!");
 
         // update output exif info
-        CommonUtils::UpdateImageExifDateTime(outputBuffer->extraInfo_->pixelMap);
+        if (outputBuffer->extraInfo_->pixelMap != nullptr) {
+            CommonUtils::UpdateImageExifDateTime(outputBuffer->extraInfo_->pixelMap);
+        } else {
+            EFFECT_LOGW("Before UpdateImageExifDateTime: pixelMap is null!");
+        }
 
         // update metadata
         CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
