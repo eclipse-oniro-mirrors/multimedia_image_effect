@@ -138,7 +138,7 @@ public:
             return true;
         }
         std::string content = result;
-        res = EFFECTJsonHelper::ParseJsonData(content);
+        res = EffectJsonHelper::ParseJsonData(content);
         return true;
     }
 

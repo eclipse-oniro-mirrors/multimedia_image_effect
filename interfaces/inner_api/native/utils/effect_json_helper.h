@@ -100,7 +100,7 @@ private:
     bool isRoot_ = false;
 };
 
-class EFFECTJsonHelper final {
+class EffectJsonHelper final {
 public:
     IMAGE_EFFECT_EXPORT static EffectJsonPtr ParseJsonData(const std::string &data);
     IMAGE_EFFECT_EXPORT static EffectJsonPtr CreateObject(bool isRoot = true);

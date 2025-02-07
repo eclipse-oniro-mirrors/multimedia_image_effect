@@ -174,13 +174,13 @@ HWTEST_F(TestUtils, NativeCommonUtilsSwitchToOHAny001, TestSize.Level1) {
 }
 
 HWTEST_F(TestUtils, JsonHelper001, TestSize.Level1) {
-    EffectJsonPtr root = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr root = EffectJsonHelper::CreateObject();
     ASSERT_NE(root, nullptr);
     ASSERT_TRUE(root->IsObject());
     ASSERT_TRUE(root->Put("stringKey", "testString"));
     ASSERT_TRUE(root->Put("floatKey", 1.23f));
     ASSERT_TRUE(root->Put("intKey", 123));
-    EffectJsonPtr intRoot = EFFECTJsonHelper::CreateArray();
+    EffectJsonPtr intRoot = EffectJsonHelper::CreateArray();
     ASSERT_TRUE(intRoot->Add(1));
     ASSERT_TRUE(intRoot->Add(2));
     ASSERT_TRUE(intRoot->Add(3));

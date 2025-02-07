@@ -69,7 +69,7 @@ bool EFilter::IsTextureInput()
 ErrorCode EFilter::Save(EffectJsonPtr &res)
 {
     res->Put("name", name_);
-    EffectJsonPtr jsonValues = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr jsonValues = EffectJsonHelper::CreateObject();
     for (auto value : values_) {
         if (CommonUtils::ParseAnyAndAddToJson(value.first, value.second, jsonValues) !=
             ErrorCode::SUCCESS) {

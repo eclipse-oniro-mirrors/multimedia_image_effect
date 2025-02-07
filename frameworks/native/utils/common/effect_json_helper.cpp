@@ -456,19 +456,19 @@ std::string EffectJson::ToString() const
     return ret;
 }
 
-EffectJsonPtr EFFECTJsonHelper::ParseJsonData(const std::string &data)
+EffectJsonPtr EffectJsonHelper::ParseJsonData(const std::string &data)
 {
     cJSON *json = cJSON_Parse(data.c_str());
     return std::make_shared<EffectJson>(json);
 }
 
-EffectJsonPtr EFFECTJsonHelper::CreateObject(bool isRoot)
+EffectJsonPtr EffectJsonHelper::CreateObject(bool isRoot)
 {
     cJSON *json = cJSON_CreateObject();
     return std::make_shared<EffectJson>(json, isRoot);
 }
 
-EffectJsonPtr EFFECTJsonHelper::CreateArray(bool isRoot)
+EffectJsonPtr EffectJsonHelper::CreateArray(bool isRoot)
 {
     cJSON *json = cJSON_CreateArray();
     return std::make_shared<EffectJson>(json, isRoot);

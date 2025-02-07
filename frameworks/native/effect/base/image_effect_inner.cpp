@@ -822,15 +822,15 @@ ErrorCode ImageEffect::Render()
 
 ErrorCode ImageEffect::Save(EffectJsonPtr &res)
 {
-    EffectJsonPtr effect = EFFECTJsonHelper::CreateArray();
+    EffectJsonPtr effect = EffectJsonHelper::CreateArray();
     for (auto it = efilters_.begin(); it != efilters_.end(); it++) {
-        EffectJsonPtr data = EFFECTJsonHelper::CreateObject();
+        EffectJsonPtr data = EffectJsonHelper::CreateObject();
         std::shared_ptr<EFilter> efilter = *it;
         efilter->Save(data);
         effect->Add(data);
     }
 
-    EffectJsonPtr info  = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr info  = EffectJsonHelper::CreateObject();
     info->Put("filters", effect);
     info->Put("name", name_);
     if (extraInfo_ != nullptr) {
@@ -844,7 +844,7 @@ ErrorCode ImageEffect::Save(EffectJsonPtr &res)
 
 std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
 {
-    const EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(info);
+    const EffectJsonPtr root = EffectJsonHelper::ParseJsonData(info);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "Restore: no imageEffect");
     const EffectJsonPtr &imageInfo = root->GetElement("imageEffect");
     CHECK_AND_RETURN_RET_LOG(imageInfo != nullptr, nullptr, "Restore: imageInfo is null!");

@@ -588,7 +588,7 @@ ImageEffect_ErrorCode OH_ImageEffect_Save(OH_ImageEffect *imageEffect, char **in
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Save: input parameter info is null!");
 
-    EffectJsonPtr effectInfo = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr effectInfo = EffectJsonHelper::CreateObject();
     imageEffect->imageEffect_->Save(effectInfo);
     std::string infoStr = effectInfo->ToString();
 
@@ -613,7 +613,7 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
     CHECK_AND_RETURN_RET_LOG(strlen(info) < MAX_INFO_LEN, nullptr,
         "Restore: the length of input parameter info is too long! len = %{public}zu", strlen(info));
     std::string infoStr = info;
-    const EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(infoStr);
+    const EffectJsonPtr root = EffectJsonHelper::ParseJsonData(infoStr);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "OH_ImageEffect_Restore no imageEffect");
     EffectJsonPtr imageInfo = root->GetElement("imageEffect");
     CHECK_AND_RETURN_RET_LOG(imageInfo != nullptr, nullptr, "OH_ImageEffect_Restore imageInfo is nullptr");
