@@ -54,7 +54,7 @@ public:
 
     void SetUp() override
     {
-        root_ = EFFECTJsonHelper::CreateObject();
+        root_ = EffectJsonHelper::CreateObject();
     }
 
     void TearDown() override
@@ -70,7 +70,7 @@ HWTEST_F(TestJsonHelper, Parse001, TestSize.Level0)
     std::string info = "{\"imageEffect\":{\"filters\":[{\"name\":\"Brightness\",\"values\":{\"FilterIntensity\":"
         "100.0}},{\"name\":\"Contrast\",\"values\":{\"FilterIntensity\":50.0}}],\"name\":\"imageEdit\"}}";
 
-    EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(info);
+    EffectJsonPtr root = EffectJsonHelper::ParseJsonData(info);
     ASSERT_NE(root, nullptr);
     ASSERT_TRUE(root->HasElement(IMAGE_EFFECT));
 
@@ -112,7 +112,7 @@ HWTEST_F(TestJsonHelper, Parse002, TestSize.Level0)
         "100.0,\"IntTest\":-10,\"UintTest\":20,\"DoubleTest\":30.5,\"BoolTest\":true,\"StringTest\":\"testStr\"}},"
         "{\"name\":\"Contrast\",\"values\":{\"FilterIntensity\":50.0}}],\"name\":\"imageEdit\"}}";
 
-    EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(info);
+    EffectJsonPtr root = EffectJsonHelper::ParseJsonData(info);
     ASSERT_NE(root, nullptr);
     EffectJsonPtr imageEffect = root->GetElement(IMAGE_EFFECT);
     ASSERT_NE(imageEffect, nullptr);
@@ -130,7 +130,7 @@ HWTEST_F(TestJsonHelper, Parse002, TestSize.Level0)
 
     EffectJsonPtr filtersObject = imageEffect->GetElement(FILTERS);
     ASSERT_NE(filtersObject, nullptr);
-    EffectJsonPtr replaceFilters = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr replaceFilters = EffectJsonHelper::CreateObject();
     ASSERT_TRUE(replaceFilters->Put(NAME, TEST_STR));
     ASSERT_TRUE(imageEffect->Replace(FILTERS, replaceFilters));
     ASSERT_STREQ(replaceFilters->GetString(NAME).c_str(), TEST_STR);
@@ -139,40 +139,40 @@ HWTEST_F(TestJsonHelper, Parse002, TestSize.Level0)
 HWTEST_F(TestJsonHelper, Create001, TestSize.Level0)
 {
     // brightness
-    EffectJsonPtr brightnessValue = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr brightnessValue = EffectJsonHelper::CreateObject();
     ASSERT_NE(brightnessValue, nullptr);
     float brightnessFilterIntensity = -100.0f;
     ASSERT_TRUE(brightnessValue->Put(FILTER_INTENSITY, brightnessFilterIntensity));
 
-    EffectJsonPtr brightness = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr brightness = EffectJsonHelper::CreateObject();
     ASSERT_NE(brightness, nullptr);
     ASSERT_TRUE(brightness->Put(NAME, BRIGHTNESS));
     ASSERT_TRUE(brightness->Put(VALUES, brightnessValue));
 
     // contrast
-    EffectJsonPtr contrastValue = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr contrastValue = EffectJsonHelper::CreateObject();
     ASSERT_NE(contrastValue, nullptr);
     float contrastFilterIntensity = -50.0f;
     ASSERT_TRUE(contrastValue->Put(FILTER_INTENSITY, contrastFilterIntensity));
 
-    EffectJsonPtr contrast = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr contrast = EffectJsonHelper::CreateObject();
     ASSERT_NE(contrast, nullptr);
     ASSERT_TRUE(contrast->Put(NAME, CONTRAST));
     ASSERT_TRUE(contrast->Put(VALUES, contrastValue));
 
     // array filters
-    EffectJsonPtr filters = EFFECTJsonHelper::CreateArray();
+    EffectJsonPtr filters = EffectJsonHelper::CreateArray();
     ASSERT_NE(filters, nullptr);
     ASSERT_TRUE(filters->Add(brightness));
     ASSERT_TRUE(filters->Add(contrast));
 
     // imageEffect
-    EffectJsonPtr imageEffect = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr imageEffect = EffectJsonHelper::CreateObject();
     ASSERT_NE(imageEffect, nullptr);
     ASSERT_TRUE(imageEffect->Put(FILTERS, filters));
     ASSERT_TRUE(imageEffect->Put(NAME, IMAGE_EDIT));
 
-    EffectJsonPtr root = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr root = EffectJsonHelper::CreateObject();
     ASSERT_NE(root, nullptr);
     ASSERT_TRUE(root->Put(IMAGE_EFFECT, imageEffect));
 
@@ -183,7 +183,7 @@ HWTEST_F(TestJsonHelper, Create001, TestSize.Level0)
 
 HWTEST_F(TestJsonHelper, CreateObject001, TestSize.Level0)
 {
-    EffectJsonPtr root = EFFECTJsonHelper::CreateObject();
+    EffectJsonPtr root = EffectJsonHelper::CreateObject();
     ASSERT_NE(root, nullptr);
     ASSERT_TRUE(root->IsObject());
     float floatValue = 50.0f;
@@ -209,7 +209,7 @@ HWTEST_F(TestJsonHelper, CreateObject001, TestSize.Level0)
 HWTEST_F(TestJsonHelper, CreateArray001, TestSize.Level0)
 {
     // float
-    EffectJsonPtr floatRoot = EFFECTJsonHelper::CreateArray();
+    EffectJsonPtr floatRoot = EffectJsonHelper::CreateArray();
     ASSERT_NE(floatRoot, nullptr);
     float floatValue1 = 50.0f;
     float floatValue2 = -20.0f;
@@ -221,7 +221,7 @@ HWTEST_F(TestJsonHelper, CreateArray001, TestSize.Level0)
     ASSERT_EQ(floatValues[1]->GetFloat(), floatValue2);
 
     // int
-    EffectJsonPtr intRoot = EFFECTJsonHelper::CreateArray();
+    EffectJsonPtr intRoot = EffectJsonHelper::CreateArray();
     ASSERT_NE(intRoot, nullptr);
     int32_t intValue1 = 50;
     int32_t intValue2 = -20;
@@ -236,7 +236,7 @@ HWTEST_F(TestJsonHelper, CreateArray001, TestSize.Level0)
     ASSERT_EQ(intValues[2]->GetInt(), intValue3);
 
     // uint
-    EffectJsonPtr uintRoot = EFFECTJsonHelper::CreateArray();
+    EffectJsonPtr uintRoot = EffectJsonHelper::CreateArray();
     ASSERT_NE(uintRoot, nullptr);
     uint32_t uintValue = 50;
     ASSERT_TRUE(uintRoot->Add(uintValue));
@@ -248,7 +248,7 @@ HWTEST_F(TestJsonHelper, CreateArray001, TestSize.Level0)
 HWTEST_F(TestJsonHelper, CreateArray002, TestSize.Level0)
 {
     // double
-    EffectJsonPtr doubleRoot = EFFECTJsonHelper::CreateArray();
+    EffectJsonPtr doubleRoot = EffectJsonHelper::CreateArray();
     double doubleValue = 30.5;
     ASSERT_TRUE(doubleRoot->Add(doubleValue));
     std::vector<EffectJsonPtr> doubleValues = doubleRoot->GetArray();
@@ -256,7 +256,7 @@ HWTEST_F(TestJsonHelper, CreateArray002, TestSize.Level0)
     ASSERT_DOUBLE_EQ(doubleValues[0]->GetDouble(), doubleValue);
 
     // bool
-    EffectJsonPtr boolRoot = EFFECTJsonHelper::CreateArray();
+    EffectJsonPtr boolRoot = EffectJsonHelper::CreateArray();
     bool boolValue = true;
     ASSERT_TRUE(boolRoot->Add(boolValue));
     std::vector<EffectJsonPtr> boolValues = boolRoot->GetArray();
@@ -264,7 +264,7 @@ HWTEST_F(TestJsonHelper, CreateArray002, TestSize.Level0)
     ASSERT_DOUBLE_EQ(boolValues[0]->GetBool(), boolValue);
 
     // string
-    EffectJsonPtr stringRoot = EFFECTJsonHelper::CreateArray();
+    EffectJsonPtr stringRoot = EffectJsonHelper::CreateArray();
     ASSERT_TRUE(stringRoot->Add(TEST_STR));
     ASSERT_TRUE(stringRoot->Add(std::string(TEST_STR)));
     std::vector<EffectJsonPtr> strValues = stringRoot->GetArray();
@@ -278,7 +278,7 @@ HWTEST_F(TestJsonHelper, Replace001, TestSize.Level0)
     std::string info = "{\"imageEffect\":{\"values\":{\"FloatTest\":50.1,\"IntTest\":-10,\"UintTest\":20,"
        "\"DoubleTest\":30.5,\"BoolTest\":true,\"StringTest\":\"testStr\"}}}";
 
-    EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(info);
+    EffectJsonPtr root = EffectJsonHelper::ParseJsonData(info);
     ASSERT_NE(root, nullptr);
     EffectJsonPtr imageEffect = root->GetElement(IMAGE_EFFECT);
     ASSERT_NE(imageEffect, nullptr);
@@ -315,7 +315,7 @@ HWTEST_F(TestJsonHelper, Replace001, TestSize.Level0)
 
 HWTEST_F(TestJsonHelper, Abnormal_001, TestSize.Level0)
 {
-    EffectJsonPtr root = EFFECTJsonHelper::CreateObject(false);
+    EffectJsonPtr root = EffectJsonHelper::CreateObject(false);
     ASSERT_NE(root, nullptr);
     ASSERT_TRUE(root->IsObject());
     ASSERT_TRUE(root->Put(INT_TEST, 10));

@@ -88,7 +88,7 @@ public:
     ErrorCode Save(EffectJsonPtr &res) override
     {
         res->Put("name", name_);
-        EffectJsonPtr jsonValues = EFFECTJsonHelper::CreateObject();
+        EffectJsonPtr jsonValues = EffectJsonHelper::CreateObject();
         Plugin::Any any;
         auto it = values_.find(Test::KEY_FILTER_INTENSITY);
         if (it == values_.end()) {
@@ -227,7 +227,7 @@ public:
             return true;
         },
         .save = [](OH_EffectFilter *filter, char **info) {
-            EffectJsonPtr root = EFFECTJsonHelper::CreateObject();
+            EffectJsonPtr root = EffectJsonHelper::CreateObject();
             root->Put("name", std::string(CUSTOM_BRIGHTNESS_EFILTER));
             std::string infoStr = root->ToString();
             char *infoChar = static_cast<char *>(malloc(infoStr.length() + 1));
@@ -1153,7 +1153,7 @@ HWTEST_F(NativeImageEffectUnittest, CustomTestFilterSave001, TestSize.Level1)
     ASSERT_NE(info, nullptr);
 
     std::string data = info;
-    EffectJsonPtr root = EFFECTJsonHelper::ParseJsonData(data);
+    EffectJsonPtr root = EffectJsonHelper::ParseJsonData(data);
     ASSERT_NE(root, nullptr);
 
     EffectJsonPtr imageInfo = root->GetElement("imageEffect");
