@@ -176,7 +176,7 @@ public:
     IMAGE_EFFECT_EXPORT void ConvertRGBA2YUV(std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &out);
     IMAGE_EFFECT_EXPORT void Draw2D2OES(RenderTexturePtr source, RenderTexturePtr output);
     IMAGE_EFFECT_EXPORT void UpdateCanvas();
-    EGLStatus GetEGLStatus() const;
+    IMAGE_EFFECT_EXPORT EGLStatus GetEGLStatus() const;
     IMAGE_EFFECT_EXPORT RenderTexturePtr RequestBuffer(int width, int height);
     bool IsPrepared() const;
     DataType GetOutputType() const;
