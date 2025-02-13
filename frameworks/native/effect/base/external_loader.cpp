@@ -14,6 +14,7 @@
 */
 
 #include "external_loader.h"
+#include "effect_trace.h"
 
 #include <dlfcn.h>
 
@@ -28,6 +29,7 @@ ExternLoader *ExternLoader::Instance()
 
 void ExternLoader::LoadExtSo()
 {
+    EFFECT_TRACE_NAME("ExternLoader::LoadExtSo");
     std::unique_lock<std::mutex> lock(loadExtSo_);
     EFFECT_LOGI("EFilterFactory:LoadExtSo enter!");
     if (isExtLoad_) {
