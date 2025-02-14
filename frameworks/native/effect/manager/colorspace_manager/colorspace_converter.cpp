@@ -319,7 +319,7 @@ PixelMap *GetPixelMap(EffectBuffer *effectBuffer)
         case DataType::URI:
         case DataType::PATH:
         case DataType::PICTURE:
-            return extraInfo->innerPixelMap.get();
+            return extraInfo->picture == nullptr ? nullptr : extraInfo->picture->GetMainPixel().get();
         case DataType::SURFACE:
         case DataType::SURFACE_BUFFER:
             return CreatePixelMap(effectBuffer);

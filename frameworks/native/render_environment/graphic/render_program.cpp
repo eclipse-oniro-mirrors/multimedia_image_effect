@@ -15,7 +15,7 @@
 
 #include "graphic/render_program.h"
 #include <GLES3/gl3.h>
-#include <effect_log.h>
+#include "effect_log.h"
 
 namespace OHOS {
 namespace Media {

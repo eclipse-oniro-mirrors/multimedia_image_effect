@@ -31,7 +31,11 @@ public:
 
     bool Push(const T &data) override
     {
-        _list.emplace_back(data);
+        try {
+            _list.emplace_back(data);
+        } catch (std::bad_array_new_length) {
+            return false;
+        }
         return true;
     }
 
@@ -81,7 +85,11 @@ public:
 
     void Remove(const std::function<bool(T &)> &checkFunc) override
     {
-        _list.remove_if(checkFunc);
+        try {
+            _list.remove_if(checkFunc);
+        } catch (std::bad_function_call) {
+            return;
+        }
     }
 
 private:

@@ -23,6 +23,7 @@
 #include "render_strategy.h"
 #include "capability_negotiate.h"
 #include "colorspace_manager.h"
+#include "efilter_cache_negotiate.h"
 #include "image_effect_marco_define.h"
 #include "efilter_metainfo_negotiate.h"
 
@@ -37,7 +38,9 @@ public:
     std::shared_ptr<CapabilityNegotiate> capNegotiate_;
     std::shared_ptr<RenderEnvironment> renderEnvironment_;
     std::shared_ptr<ColorSpaceManager> colorSpaceManager_;
+    std::shared_ptr<EFilterCacheNegotiate> cacheNegotiate_;
     std::shared_ptr<EfilterMetaInfoNegotiate> metaInfoNegotiate_;
+
     IPType ipType_ = IPType::DEFAULT;
     std::unordered_set<EffectColorSpace> filtersSupportedColorSpace_;
 

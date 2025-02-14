@@ -204,11 +204,11 @@
     "name": "OH_ImageEffect_SetOutputUri"
   },
   {
-    "first_introduced": "12",
+    "first_introduced": "13",
     "name": "OH_ImageEffect_SetInputPicture"
   },
   {
-    "first_introduced": "12",
+    "first_introduced": "13",
     "name": "OH_ImageEffect_SetOutputPicture"
   },
   {

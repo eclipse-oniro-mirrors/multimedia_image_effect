@@ -151,24 +151,53 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
     return ErrorCode::ERR_BUFFER_NOT_ALLOW_CHANGE;
 }
 
-ErrorCode ModifyInnerPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
+ErrorCode ModifyInnerPicture(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
-    std::shared_ptr<PixelMap> pixelMap = src->extraInfo_->innerPixelMap;
-    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "inner pixelMap is null!");
-    uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
+    std::shared_ptr<Picture> picture = src->extraInfo_->innerPicture;
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "inner picture is null!");
+    std::shared_ptr<PixelMap> mainPixel = picture->GetMainPixel();
+    CHECK_AND_RETURN_RET_LOG(mainPixel != nullptr, ErrorCode::ERR_INPUT_NULL, "picture main pixel is null!");
+    uint8_t *pixels = const_cast<uint8_t *>(mainPixel->GetPixels());
     if (pixels == buffer->buffer_) {
         // update output exif info
-        CommonUtils::UpdateImageExifDateTime(pixelMap.get());
+        CommonUtils::UpdateImageExifDateTime(picture.get());
 
         // update metadata
         CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
         return ColorSpaceHelper::UpdateMetadata(buffer.get());
     }
+
+    // update picture exif
+    CommonUtils::UpdateImageExifInfo(picture.get());
+
     if (buffer->extraInfo_->dataType == DataType::TEX) {
-        return CommonUtils::ModifyPixelMapPropertyForTexture(pixelMap.get(), buffer, context);
+        return CommonUtils::ModifyPixelMapPropertyForTexture(mainPixel.get(), buffer, context, false);
     }
-    return CommonUtils::ModifyPixelMapProperty(pixelMap.get(), buffer, context->memoryManager_);
+
+    ErrorCode res = CommonUtils::ModifyPixelMapProperty(mainPixel.get(), buffer, context->memoryManager_, false);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ModifyInnerPicture: modify main pixelmap property fail!");
+
+    if (buffer->auxiliaryBufferInfos == nullptr) {
+        return ErrorCode::SUCCESS;
+    }
+
+    auto it = buffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP);
+    if (it == buffer->auxiliaryBufferInfos->end()) {
+        return ErrorCode::SUCCESS;
+    }
+
+    auto gainMapBufferInfo = it->second;
+    std::shared_ptr<PixelMap> gainMap = picture->GetGainmapPixelMap();
+    if (gainMap != nullptr && gainMapBufferInfo != nullptr && gainMapBufferInfo->addr_ != nullptr &&
+        static_cast<uint8_t *>(gainMapBufferInfo->addr_) != gainMap->GetPixels()) {
+        std::shared_ptr<ExtraInfo> defaultExtraInfo = std::make_shared<ExtraInfo>();
+        std::shared_ptr<EffectBuffer> gainMapEffectBuffer =
+            std::make_shared<EffectBuffer>(gainMapBufferInfo, gainMapBufferInfo->addr_, defaultExtraInfo);
+        return CommonUtils::ModifyPixelMapProperty(gainMap.get(), gainMapEffectBuffer, context->memoryManager_, false);
+    }
+
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode ModifyPictureForInnerPixelMap(PixelMap *pixelMap, EffectBuffer *src,
@@ -253,7 +282,7 @@ ErrorCode ModifyDataInfo(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
             return ModifySurfaceBuffer(src, buffer, context);
         case DataType::PATH:
         case DataType::URI:
-            return ModifyInnerPixelMap(src, buffer, context);
+            return ModifyInnerPicture(src, buffer, context);
         case DataType::PICTURE:
             return ModifyPicture(src, buffer, context);
         default:
@@ -345,7 +374,7 @@ ErrorCode FillPictureOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode PackToFile(const std::string &path, const std::shared_ptr<PixelMap> &pixelMap)
+ErrorCode PackToFile(const std::string &path, const std::shared_ptr<Picture> &picture)
 {
     std::shared_ptr<ImagePacker> imagePacker = std::make_shared<ImagePacker>();
     std::string format = "";
@@ -364,7 +393,7 @@ ErrorCode PackToFile(const std::string &path, const std::shared_ptr<PixelMap> &p
     CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
         "StartPacking fail! result=%{public}d", result);
 
-    result = imagePacker->AddImage(*pixelMap);
+    result = imagePacker->AddPicture(*picture);
     CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
         "AddImage fail! result=%{public}d", result);
 
@@ -380,33 +409,33 @@ ErrorCode PackToFile(const std::string &path, const std::shared_ptr<PixelMap> &p
 
 ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<EffectBuffer> &buffer)
 {
-    std::shared_ptr<PixelMap> pixelMap = buffer->extraInfo_->innerPixelMap;
-    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "SaveUrlData: pixelMap is null!");
+    std::shared_ptr<Picture> picture = buffer->extraInfo_->innerPicture;
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "SaveUrlData: picture is null!");
 
     std::string path = CommonUtils::UrlToPath(url);
-    return PackToFile(path, pixelMap);
+    return PackToFile(path, picture);
 }
 
-ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<PixelMap> &pixelMap)
+ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<Picture> &picture)
 {
-    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "SaveUrlData: pixelMap is null!");
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "SaveUrlData: picture is null!");
 
     std::string path = CommonUtils::UrlToPath(url);
-    return PackToFile(path, pixelMap);
+    return PackToFile(path, picture);
 }
 
 ErrorCode SavePathData(const std::string &path, const std::shared_ptr<EffectBuffer> &buffer)
 {
-    std::shared_ptr<PixelMap> pixelMap = buffer->extraInfo_->innerPixelMap;
-    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "SavePathData: pixelMap is null!");
+    std::shared_ptr<Picture> picture = buffer->extraInfo_->innerPicture;
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "SavePathData: picture is null!");
 
-    return PackToFile(path, pixelMap);
+    return PackToFile(path, picture);
 }
 
-ErrorCode SavePathData(const std::string &path, const std::shared_ptr<PixelMap> &pixelMap)
+ErrorCode SavePathData(const std::string &path, const std::shared_ptr<Picture> &picture)
 {
-    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "SavePathData: pixelMap is null!");
-    return PackToFile(path, pixelMap);
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "SavePathData: picture is null!");
+    return PackToFile(path, picture);
 }
 
 ErrorCode SaveInputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
@@ -418,9 +447,9 @@ ErrorCode SaveInputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &
     EFFECT_LOGD("SaveInputData: dataType=%{public}d", buffer->extraInfo_->dataType);
     switch (src->extraInfo_->dataType) {
         case DataType::URI:
-            return SaveUrlData(src->extraInfo_->uri, src->extraInfo_->innerPixelMap);
+            return SaveUrlData(src->extraInfo_->uri, src->extraInfo_->innerPicture);
         case DataType::PATH:
-            return SavePathData(src->extraInfo_->path, src->extraInfo_->innerPixelMap);
+            return SavePathData(src->extraInfo_->path, src->extraInfo_->innerPicture);
         default:
             return ErrorCode::SUCCESS;
     }
@@ -432,16 +461,16 @@ ErrorCode SavaOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
     EFFECT_LOGD("SavaOutputData: dataType=%{public}d", outputBuffer->extraInfo_->dataType);
     switch (outputBuffer->extraInfo_->dataType) {
         case DataType::URI: {
-            ErrorCode ret = ModifyInnerPixelMap(src, inputBuffer, context);
+            ErrorCode ret = ModifyInnerPicture(src, inputBuffer, context);
             CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, ret,
-                "SavaOutputData: Uri ModifyInnerPixelMap fail! ret=%{public}d", ret);
-            return SaveUrlData(outputBuffer->extraInfo_->uri, src->extraInfo_->innerPixelMap);
+                "SavaOutputData: Uri ModifyInnerPicture fail! ret=%{public}d", ret);
+            return SaveUrlData(outputBuffer->extraInfo_->uri, src->extraInfo_->innerPicture);
         }
         case DataType::PATH: {
-            ErrorCode ret = ModifyInnerPixelMap(src, inputBuffer, context);
+            ErrorCode ret = ModifyInnerPicture(src, inputBuffer, context);
             CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, ret,
-                "SavaOutputData: Path ModifyInnerPixelMap fail! ret=%{public}d", ret);
-            return SavePathData(outputBuffer->extraInfo_->path, src->extraInfo_->innerPixelMap);
+                "SavaOutputData: Path ModifyInnerPicture fail! ret=%{public}d", ret);
+            return SavePathData(outputBuffer->extraInfo_->path, src->extraInfo_->innerPicture);
         }
         case DataType::PIXEL_MAP:
         case DataType::SURFACE:
@@ -513,7 +542,12 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
             if (input->extraInfo_->surfaceBuffer != nullptr) {
                 transformType = input->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
             }
+            RenderTexturePtr renderTexture = buffer->tex;
             context->renderEnvironment_->SetNativeWindowColorSpace(buffer->bufferInfo_->colorSpace_);
+            RenderTexturePtr tempTex = context->renderEnvironment_->RequestBuffer(renderTexture->Width(),
+                renderTexture->Height());
+            context->renderEnvironment_->DrawFlipTex(renderTexture, tempTex);
+            buffer->tex = tempTex;
             context->renderEnvironment_->DrawFrameWithTransform(const_cast<std::shared_ptr<EffectBuffer> &>(buffer),
                 transformType);
             return ErrorCode::SUCCESS;
@@ -523,7 +557,7 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
     if (output->extraInfo_->dataType == DataType::NATIVE_WINDOW && buffer->extraInfo_->surfaceBuffer != nullptr) {
         EGLImageKHR img = GLUtils::CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY),
             buffer->extraInfo_->surfaceBuffer);
-        GLuint tex = GLUtils::CreateTextureFromImage(img);
+        int tex = static_cast<int>(GLUtils::CreateTextureFromImage(img));
         buffer->extraInfo_->surfaceBuffer->FlushCache();
         context->renderEnvironment_->UpdateCanvas();
         GraphicTransformType transformType = buffer->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();

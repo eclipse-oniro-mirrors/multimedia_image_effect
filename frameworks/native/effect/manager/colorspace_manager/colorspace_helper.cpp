@@ -55,7 +55,7 @@ static const std::unordered_map<EffectColorSpace, CM_ColorSpaceType> EFFECT_TO_G
 static const std::unordered_map<EffectColorSpace, OH_NativeBuffer_ColorSpace> EFFECT_TO_NATIVE_BUFFER_COLORSPACE_MAP = {
     { EffectColorSpace::SRGB, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_SRGB_FULL },
     { EffectColorSpace::SRGB_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_SRGB_LIMIT },
-    { EffectColorSpace::DISPLAY_P3,  OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_FULL },
+    { EffectColorSpace::DISPLAY_P3, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_FULL },
     { EffectColorSpace::DISPLAY_P3_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_P3_LIMIT },
     { EffectColorSpace::BT2020_HLG, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_HLG_FULL },
     { EffectColorSpace::BT2020_HLG_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_HLG_LIMIT },
