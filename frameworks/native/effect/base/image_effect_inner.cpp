@@ -35,11 +35,12 @@
 #include "effect_context.h"
 #include "colorspace_helper.h"
 #include "memcpy_helper.h"
-#include "render_task.h"
-#include "render_environment.h"
+
 #include "v1_1/buffer_handle_meta_key_type.h"
 #include "effect_log.h"
 #include "effect_trace.h"
+#include "render_task.h"
+#include "render_environment.h"
 #include "native_window.h"
 #include "image_source.h"
 #include "capability_negotiate.h"
@@ -107,6 +108,7 @@ void ImageEffect::Impl::InitEffectContext()
     effectContext_->capNegotiate_ = std::make_shared<CapabilityNegotiate>();
     effectContext_->renderEnvironment_ = std::make_shared<RenderEnvironment>();
     effectContext_->colorSpaceManager_ = std::make_shared<ColorSpaceManager>();
+    effectContext_->cacheNegotiate_ = std::make_shared<EFilterCacheNegotiate>();
     effectContext_->metaInfoNegotiate_ = std::make_shared<EfilterMetaInfoNegotiate>();
 }
 
@@ -1211,7 +1213,7 @@ void ImageEffect::OnBufferAvailableWithCPU()
     outDateInfo_.dataType_ = DataType::SURFACE;
     UpdateProducerSurfaceInfo();
 
-    bool isSrcHebcData = IsSurfaceBufferHebc(inBuffer);
+    bool isSrcHebcData = false;
     CHECK_AND_RETURN_LOG(impl_ != nullptr, "OnBufferAvailableWithCPU: impl is nullptr.");
     bool isNeedSwap = true;
     bool isNeedRender = impl_->effectState_ == EffectState::RUNNING;

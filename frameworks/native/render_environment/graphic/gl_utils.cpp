@@ -27,6 +27,7 @@
 #include <cmath>
 #include <string>
 #include <cstdlib>
+#include "effect_log.h"
 
 namespace OHOS {
 namespace Media {
@@ -228,6 +229,11 @@ GLuint GLUtils::CreateTextureFromImage(EGLImageKHR img)
     return textureId;
 }
 
+void GLUtils::DestroyImage(EGLImageKHR img)
+{
+    eglDestroyImageKHR(eglGetDisplay(EGL_DEFAULT_DISPLAY), img);
+}
+
 GLuint GLUtils::CreateTextureFromSurfaceBuffer(SurfaceBuffer *buffer)
 {
     if (buffer == nullptr) {
@@ -236,11 +242,6 @@ GLuint GLUtils::CreateTextureFromSurfaceBuffer(SurfaceBuffer *buffer)
     EGLImageKHR img = CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY), buffer);
     GLuint tex = CreateTextureFromImage(img);
     return tex;
-}
-
-void GLUtils::DestroyImage(EGLImageKHR img)
-{
-    eglDestroyImageKHR(eglGetDisplay(EGL_DEFAULT_DISPLAY), img);
 }
 } // namespace Effect
 } // namespace Media

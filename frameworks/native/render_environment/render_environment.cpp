@@ -38,10 +38,10 @@ const char* const DEFAULT_FSHADER = "#extension GL_OES_EGL_image_external : requ
     "    gl_FragColor = texture2D(inputTexture, textureCoordinate);\n"
     "}\n";
 
-constexpr const static int RGB_PLANE_SIZE = 3;
+constexpr const static uint32_t RGB_PLANE_SIZE = 3;
 constexpr const static int G_POS = 1;
 constexpr const static int B_POS = 2;
-constexpr const static int UV_PLANE_SIZE = 2;
+constexpr const static uint32_t UV_PLANE_SIZE = 2;
 
 EGLStatus RenderEnvironment::GetEGLStatus() const
 {
@@ -53,7 +53,9 @@ void RenderEnvironment::Init()
     EFFECT_TRACE_NAME("RenderEnvironment::Init()");
     EFFECT_LOGI("RenderEnvironment init enter!");
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    needTerminate_ = true;
     if (eglInitialize(display, nullptr, nullptr) == EGL_FALSE) {
+        needTerminate_ = false;
         EFFECT_LOGE("EGL Initialize failed");
     }
     param_ = new RenderParam();
@@ -162,7 +164,7 @@ bool RenderEnvironment::IsPrepared() const
 
 void RenderEnvironment::GenMainTex(const std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectBuffer> &output)
 {
-    std::shared_ptr<BufferInfo> info =source->bufferInfo_;
+    std::shared_ptr<BufferInfo> info = source->bufferInfo_;
     int width = static_cast<int>(info->width_);
     int height = static_cast<int>(info->height_);
     RenderTexturePtr renderTex;
@@ -178,12 +180,6 @@ void RenderEnvironment::GenMainTex(const std::shared_ptr<EffectBuffer> &source, 
     if (needRender || hasInputChanged) {
         DrawBufferToTexture(renderTex, source.get());
         hasInputChanged = false;
-    }
-
-    if (outType_ == DataType::NATIVE_WINDOW) {
-        RenderTexturePtr tempTex = param_->resCache_->RequestTexture(param_->context_, width, height, GL_RGBA8);
-        DrawFlipTex(renderTex, tempTex);
-        renderTex = tempTex;
     }
 
     RenderTexturePtr tempTex = param_->resCache_->RequestTexture(param_->context_, width, height, GL_RGBA8);
@@ -258,7 +254,7 @@ void RenderEnvironment::DrawBufferToTexture(RenderTexturePtr renderTex, const Ef
         CHECK_AND_RETURN_LOG(renderTex != nullptr, "DrawBufferToTexture: renderTex is null!");
         GLuint tempFbo = GLUtils::CreateFramebuffer(renderTex->GetName());
         if (source->bufferInfo_->formatType_ == IEffectFormat::RGBA8888) {
-            int stride = static_cast<int>(source->bufferInfo_->rowStride_) / 4;
+            int stride = static_cast<int>(source->bufferInfo_->rowStride_ / 4);
             tex = GenTextureWithPixels(source->buffer_, width, height, stride);
         } else {
             tex = ConvertFromYUVToRGB(source, source->bufferInfo_->formatType_);
@@ -273,16 +269,16 @@ void RenderEnvironment::DrawBufferToTexture(RenderTexturePtr renderTex, const Ef
 
 GLuint RenderEnvironment::ConvertFromYUVToRGB(const EffectBuffer *source, IEffectFormat format)
 {
-    uint32_t width = source->bufferInfo_->width_;
-    uint32_t height = source->bufferInfo_->height_;
+    int width = static_cast<int>(source->bufferInfo_->width_);
+    int height = static_cast<int>(source->bufferInfo_->height_);
     auto *srcNV12 = static_cast<unsigned char *>(source->buffer_);
     uint8_t *srcNV12UV = srcNV12 + width * height;
     auto data = std::make_unique<unsigned char[]>(width * height * RGBA_SIZE_PER_PIXEL);
-    for (uint32_t i = 0; i < height; i++) {
-        for (uint32_t j = 0; j < width; j++) {
-            uint32_t nv_index = i / UV_PLANE_SIZE * width + j - j % UV_PLANE_SIZE; // 2 mean u/v split factor
-            uint32_t y_index = i * width + j;
-
+    for (uint32_t i = 0; i < static_cast<uint32_t>(height); i++) {
+        for (uint32_t j = 0; j < static_cast<uint32_t>(width); j++) {
+            uint32_t nv_index =
+                i / UV_PLANE_SIZE * static_cast<uint32_t>(width) + j - j % UV_PLANE_SIZE; // 2 mean u/v split factor
+            uint32_t y_index = i * static_cast<uint32_t>(width) + j;
             uint8_t y;
             uint8_t u;
             uint8_t v;
@@ -298,7 +294,7 @@ GLuint RenderEnvironment::ConvertFromYUVToRGB(const EffectBuffer *source, IEffec
             uint8_t r = FormatHelper::YuvToR(y, u, v);
             uint8_t g = FormatHelper::YuvToG(y, u, v);
             uint8_t b = FormatHelper::YuvToB(y, u, v);
-            uint32_t rgb_index = i * width * RGB_PLANE_SIZE + j * RGB_PLANE_SIZE;
+            uint32_t rgb_index = i * static_cast<uint32_t>(width) * RGB_PLANE_SIZE + j * RGB_PLANE_SIZE;
             data[rgb_index] = r;
             data[rgb_index + G_POS] = g;
             data[rgb_index + B_POS] = b;
@@ -310,17 +306,19 @@ GLuint RenderEnvironment::ConvertFromYUVToRGB(const EffectBuffer *source, IEffec
 
 void RenderEnvironment::ConvertFromRGBToYUV(RenderTexturePtr input, IEffectFormat format, void *data)
 {
-    uint32_t width = input->Width();
-    uint32_t height = input->Height();
+    int width = static_cast<int>(input->Width());
+    int height = static_cast<int>(input->Height());
     auto rgbData = std::make_unique<unsigned char[]>(width * height * RGBA_SIZE_PER_PIXEL);
     ReadPixelsFromTex(input, rgbData.get(), width, height, width);
     auto *srcNV12 = static_cast<unsigned char *>(data);
-    uint8_t *srcNV12UV = srcNV12 + width * height;
-    for (uint32_t i = 0; i < height; i++) {
-        for (uint32_t j = 0; j < width; j++) {
-            uint32_t y_index = i * width + j;
-            uint32_t nv_index = i / UV_PLANE_SIZE * width + j - j % UV_PLANE_SIZE; // 2 mean u/v split factor
-            uint32_t rgb_index = i * width * RGBA_SIZE_PER_PIXEL + j * RGBA_SIZE_PER_PIXEL;
+    uint8_t *srcNV12UV = srcNV12 + static_cast<uint32_t>(width * height);
+    for (uint32_t i = 0; i < static_cast<uint32_t>(height); i++) {
+        for (uint32_t j = 0; j < static_cast<uint32_t>(width); j++) {
+            uint32_t y_index = i * static_cast<uint32_t>(width) + j;
+            uint32_t nv_index =
+                i / UV_PLANE_SIZE * static_cast<uint32_t>(width) + j - j % UV_PLANE_SIZE; // 2 mean u/v split factor
+            uint32_t rgb_index = i * static_cast<uint32_t>(width) * static_cast<uint32_t>(RGBA_SIZE_PER_PIXEL) +
+                j * static_cast<uint32_t>(RGBA_SIZE_PER_PIXEL);
             uint8_t r = rgbData[rgb_index];
             uint8_t g = rgbData[rgb_index + G_POS];
             uint8_t b = rgbData[rgb_index + B_POS];
@@ -605,7 +603,10 @@ void RenderEnvironment::Release()
         delete screenSurface_;
         screenSurface_ = nullptr;
     }
-    eglTerminate(eglGetDisplay(EGL_DEFAULT_DISPLAY));
+    if (needTerminate_) {
+        eglTerminate(eglGetDisplay(EGL_DEFAULT_DISPLAY));
+        needTerminate_ = false;
+    }
 }
 
 void RenderEnvironment::ReleaseParam()

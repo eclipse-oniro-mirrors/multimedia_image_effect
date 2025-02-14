@@ -52,7 +52,7 @@ std::shared_ptr<ExifMetadata> EffectContext::GetExifMetadata()
             return GetExifMetadataFromPixelmap(extraInfo->pixelMap);
         case DataType::PATH:
         case DataType::URI:
-            return GetExifMetadataFromPixelmap(extraInfo->innerPixelMap.get());
+            return GetExifMetadataFromPicture(extraInfo->innerPicture.get());
         case DataType::PICTURE:
             return GetExifMetadataFromPicture(extraInfo->picture);
         default:

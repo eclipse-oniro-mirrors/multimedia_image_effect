@@ -30,10 +30,26 @@ namespace OHOS {
 namespace Media {
 namespace Effect {
 const std::string EFilter::Parameter::KEY_DEFAULT_VALUE = "default_value";
+const std::string START_CACHE_CONFIG = "START_CACHE";
+const std::string CANCEL_CACHE_CONFIG = "CANCEL_CACHE";
 
-EFilter::EFilter(const std::string &name) : EFilterBase(name) {}
+EFilter::EFilter(const std::string &name) : EFilterBase(name)
+{
+    cacheConfig_ = std::make_shared<EFilterCacheConfig>();
+}
 
 EFilter::~EFilter() = default;
+
+ErrorCode EFilter::ProcessConfig(const std::string &key)
+{
+    if (START_CACHE_CONFIG.compare(key) == 0) {
+        StartCache();
+    }
+    if (CANCEL_CACHE_CONFIG.compare(key) == 0) {
+        CancelCache();
+    }
+    return ErrorCode::SUCCESS;
+}
 
 ErrorCode EFilter::SetValue(const std::string &key, Plugin::Any &value)
 {
@@ -133,6 +149,7 @@ void EFilter::Negotiate(const std::string &inPort, const std::shared_ptr<Capabil
     outputCap->memNegotiatedCap_ = Negotiate(capability->memNegotiatedCap_, context);
     outputCap->colorSpaceCap_ = GetColorSpaceCap(name_);
     context->capNegotiate_->AddCapability(outputCap);
+    context->cacheNegotiate_->NegotiateConfig(cacheConfig_);
     NegotiateColorSpace(outputCap->colorSpaceCap_->colorSpaces, context->filtersSupportedColorSpace_);
     outputCap_ = outputCap;
     outPorts_[0]->Negotiate(outputCap, context);
@@ -223,15 +240,8 @@ std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<
     extraInfo->surfaceBuffer = static_cast<SurfaceBuffer *>(allocMemInfo.extra);
     std::shared_ptr<EffectBuffer> input = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data,
         extraInfo);
-    if (context->renderEnvironment_->GetOutputType() == DataType::NATIVE_WINDOW) {
-        context->renderEnvironment_->DrawFlipSurfaceBufferFromTex(buffer->tex, extraInfo->surfaceBuffer,
-            bufferInfo->formatType_);
-    } else {
-        context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, input.get());
-    }
-    if (extraInfo->surfaceBuffer != nullptr) {
-        extraInfo->surfaceBuffer->InvalidateCache();
-    }
+    context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, input.get());
+    extraInfo->surfaceBuffer->InvalidateCache();
     input->extraInfo_->dataType = DataType::SURFACE_BUFFER;
     input->extraInfo_->bufferType = BufferType::DMA_BUFFER;
     source = input;
@@ -250,23 +260,30 @@ std::shared_ptr<EffectBuffer> EFilter::ConvertFromCPU2GPU(const std::shared_ptr<
         source->extraInfo_->surfaceBuffer->FlushCache();
     }
     source = context->renderEnvironment_->ConvertBufferToTexture(buffer.get());
-    if (context->renderEnvironment_->GetOutputType() == DataType::NATIVE_WINDOW) {
-        RenderTexturePtr tempTex = context->renderEnvironment_->RequestBuffer(source->tex->Width(),
-            source->tex->Height());
-        context->renderEnvironment_->DrawFlipTex(source->tex, tempTex);
-        source->tex = tempTex;
-    }
     return source;
 }
 
 ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
+    bool needCache = context->cacheNegotiate_->needCache();
+    if (needCache && context->cacheNegotiate_->HasCached() && !context->cacheNegotiate_->HasUseCache()) {
+        if (cacheConfig_->GetStatus() == CacheStatus::CACHE_USED) {
+            return UseCache(context);
+        } else if (cacheConfig_->GetStatus() == CacheStatus::NO_CACHE
+            || cacheConfig_->GetStatus() == CacheStatus::CACHE_ENABLED) {
+            return PushData(buffer.get(), context);
+        }
+    }
     IPType preIPType = context->ipType_;
     std::shared_ptr<EffectBuffer> source = IpTypeConvert(buffer, context);
     IPType runningIPType = context->ipType_;
 
     if (runningIPType == IPType::GPU) {
+        if (cacheConfig_->GetStatus() == CacheStatus::CACHE_START && !context->cacheNegotiate_->HasCached()) {
+            CacheBuffer(source.get(), context);
+            cacheConfig_->SetStatus(CacheStatus::CACHE_ENABLED);
+        }
         ErrorCode res = Render(source.get(), context);
         return res;
     }
@@ -275,6 +292,10 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
     EffectBuffer *output = preIPType != runningIPType ? source.get()
         : context->renderStrategy_->ChooseBestOutput(source.get(), memNegotiatedCap);
     if (source.get() == output) {
+        if (cacheConfig_->GetStatus() == CacheStatus::CACHE_START && !context->cacheNegotiate_->HasCached()) {
+            CacheBuffer(source.get(), context);
+            cacheConfig_->SetStatus(CacheStatus::CACHE_ENABLED);
+        }
         ErrorCode res = Render(source.get(), context);
         CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
             "Render input fail! filterName=%{public}s", name_.c_str());
@@ -282,34 +303,72 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
     }
 
     std::shared_ptr<EffectBuffer> effectBuffer = nullptr;
-    if (output == nullptr || source.get() == output) {
-        MemoryInfo memInfo = {
-            .bufferInfo = {
-                .width_ = memNegotiatedCap->width,
-                .height_ = memNegotiatedCap->height,
-                .len_ = FormatHelper::CalculateSize(
-                    memNegotiatedCap->width, memNegotiatedCap->height, buffer->bufferInfo_->formatType_),
-                .formatType_ = buffer->bufferInfo_->formatType_,
-                .colorSpace_ = buffer->bufferInfo_->colorSpace_,
-            }
-        };
-        MemoryData *memoryData = context->memoryManager_->AllocMemory(source->buffer_, memInfo);
-        CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc new memory fail!");
-        MemoryInfo &allocMemInfo = memoryData->memoryInfo;
-        std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
-        *bufferInfo = allocMemInfo.bufferInfo;
-        std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
-        *extraInfo = *source->extraInfo_;
-        extraInfo->bufferType = allocMemInfo.bufferType;
-        extraInfo->surfaceBuffer = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
-            static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
-        effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
+    if (output == nullptr) {
+        AllocBuffer(context, memNegotiatedCap, source, effectBuffer);
     }
     if (effectBuffer != nullptr) {
         output = effectBuffer.get();
     }
+    if (cacheConfig_->GetStatus() == CacheStatus::CACHE_START && !context->cacheNegotiate_->HasCached()) {
+        CacheBuffer(source.get(), context);
+        cacheConfig_->SetStatus(CacheStatus::CACHE_ENABLED);
+    }
     ErrorCode res = Render(source.get(), output, context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Render inout fail! filterName=%{public}s", name_.c_str());
+    return PushData(output, context);
+}
+
+ErrorCode EFilter::AllocBuffer(std::shared_ptr<EffectContext> &context,
+    const std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap, std::shared_ptr<EffectBuffer> &source,
+    std::shared_ptr<EffectBuffer> &effectBuffer) const
+{
+    MemoryInfo memInfo = {
+        .bufferInfo = {
+            .width_ = memNegotiatedCap->width,
+            .height_ = memNegotiatedCap->height,
+            .len_ = FormatHelper::CalculateSize(
+                memNegotiatedCap->width, memNegotiatedCap->height, source->bufferInfo_->formatType_),
+            .formatType_ = source->bufferInfo_->formatType_,
+            .colorSpace_ = source->bufferInfo_->colorSpace_,
+        }
+    };
+    MemoryData *memoryData = context->memoryManager_->AllocMemory(source->buffer_, memInfo);
+    CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc new memory fail!");
+    MemoryInfo &allocMemInfo = memoryData->memoryInfo;
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    *bufferInfo = allocMemInfo.bufferInfo;
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
+    *extraInfo = *source->extraInfo_;
+    extraInfo->bufferType = allocMemInfo.bufferType;
+    extraInfo->surfaceBuffer = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
+        static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
+    effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode EFilter::UseCache(std::shared_ptr<EffectContext> &context)
+{
+    CHECK_AND_RETURN_RET_LOG(context != nullptr && context->cacheNegotiate_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "UseCache fail, context or context cacheNegotiate is null");
+    context->cacheNegotiate_->UseCache();
+    std::shared_ptr<EffectBuffer> cacheBuffer = nullptr;
+    GetFilterCache(cacheBuffer, context);
+    CHECK_AND_RETURN_RET_LOG(cacheConfig_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "GetIPType fail, cacheConfig_ is null");
+    if (cacheConfig_->GetIPType() == IPType::GPU) {
+        return Render(cacheBuffer.get(), context);
+    }
+    CHECK_AND_RETURN_RET_LOG(outputCap_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "get memNegotiatedCap fail, outputCap is null");
+    std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap = outputCap_->memNegotiatedCap_;
+    EffectBuffer *output = context->renderStrategy_->ChooseBestOutput(cacheBuffer.get(), memNegotiatedCap);
+    CHECK_AND_RETURN_RET_LOG(output != nullptr, ErrorCode::ERR_INPUT_NULL, "RChooseBestOutput fail, out is null");
+    if (cacheBuffer.get() == output) {
+        return Render(cacheBuffer.get(), context);
+    }
+    ErrorCode res = Render(cacheBuffer.get(), output, context);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Render inout fail! filterName=%{public}s",
+        name_.c_str());
     return PushData(output, context);
 }
 
@@ -574,6 +633,34 @@ ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<Ef
     }
     return ErrorCode::SUCCESS;
 }
+ErrorCode EFilter::StartCache()
+{
+    cacheConfig_->SetStatus(CacheStatus::CACHE_START);
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode EFilter::CacheBuffer(EffectBuffer *cache, std::shared_ptr<EffectContext> &context)
+{
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode EFilter::GetFilterCache(std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
+{
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode EFilter::ReleaseCache()
+{
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode EFilter::CancelCache()
+{
+    cacheConfig_->SetStatus(CacheStatus::NO_CACHE);
+    cacheConfig_->SetIPType(IPType::DEFAULT);
+    return ReleaseCache();
+}
+
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS

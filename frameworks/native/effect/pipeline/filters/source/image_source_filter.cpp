@@ -35,7 +35,6 @@ ErrorCode ImageSourceFilter::SetSource(const std::shared_ptr<EffectBuffer> &sour
     }
 
     srcBuffer_ = source;
-    context_ = context;
     return ErrorCode::SUCCESS;
 }
 
@@ -128,6 +127,7 @@ ErrorCode ImageSourceFilter::DoNegotiate()
     std::for_each(allSupportedColorSpaces.begin(), allSupportedColorSpaces.end(), [&](const auto &item) {
         context_->filtersSupportedColorSpace_.emplace(item);
     });
+    context_->cacheNegotiate_->ClearConfig();
 
     if (outPorts_[0] == nullptr) {
         EFFECT_LOGE("Negotiate: outPort is null. filterName=%{public}s", name_.c_str());

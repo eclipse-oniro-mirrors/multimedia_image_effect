@@ -131,7 +131,8 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     } else {
         bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
     }
-    bufferInfo->len_ = FormatHelper::CalculateSize(bufferInfo->width_, bufferInfo->height_, formatType);
+    bufferInfo->len_ = formatType == IEffectFormat::RGBA8888 ? bufferInfo->height_ * bufferInfo->rowStride_ :
+        FormatHelper::CalculateSize(bufferInfo->width_, bufferInfo->height_, formatType);
     bufferInfo->formatType_ = formatType;
     bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceName);
 
@@ -254,24 +255,23 @@ ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer
     CHECK_AND_RETURN_RET_LOG(imageSource != nullptr, ErrorCode::ERR_CREATE_IMAGESOURCE_FAIL,
         "ImageSource::CreateImageSource fail! path=%{public}s, errorCode=%{public}d", path.c_str(), errorCode);
 
-    DecodeOptions options;
+    DecodingOptionsForPicture options;
     options.desiredPixelFormat = CommonUtils::SwitchToPixelFormat(format);
     EFFECT_LOGD("CommonUtils::ParsePath. PixelFormat=%{public}d", options.desiredPixelFormat);
-    options.desiredDynamicRange = DecodeDynamicRange::AUTO;
-    std::unique_ptr<PixelMap> pixelMap = imageSource->CreatePixelMap(options, errorCode);
-    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_CREATE_PIXELMAP_FAIL,
-        "CreatePixelMap fail! path=%{public}s, errorCode=%{public}d", path.c_str(), errorCode);
+    std::unique_ptr<Picture> picture = imageSource->CreatePicture(options, errorCode);
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_CREATE_PICTURE_FAIL,
+        "CreatePicture fail! path=%{public}s, errorCode=%{public}d", path.c_str(), errorCode);
 
-    ErrorCode res = LockPixelMap(pixelMap.get(), effectBuffer);
+    ErrorCode res = ParsePicture(picture.get(), effectBuffer);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
-        "ParsePath: lock pixel map fail! path=%{public}s, res=%{public}d", path.c_str(), res);
+        "ParsePath: parse picture fail! path=%{public}s, res=%{public}d", path.c_str(), res);
 
     CHECK_AND_RETURN_RET_LOG(effectBuffer->extraInfo_ != nullptr, ErrorCode::ERR_EXTRA_INFO_NULL,
         "ParsePath: extra info is null! uri=%{public}s", path.c_str());
     effectBuffer->extraInfo_->dataType = DataType::PATH;
     effectBuffer->extraInfo_->path = std::move(path);
-    effectBuffer->extraInfo_->pixelMap = nullptr;
-    effectBuffer->extraInfo_->innerPixelMap = std::move(pixelMap);
+    effectBuffer->extraInfo_->picture = nullptr;
+    effectBuffer->extraInfo_->innerPicture = std::move(picture);
 
     return ErrorCode::SUCCESS;
 }
@@ -396,7 +396,7 @@ ErrorCode GetPixelsContext(std::shared_ptr<MemoryData> &memoryData, BufferType b
     return ErrorCode::SUCCESS;
 }
 
-int32_t  GetImagePropertyInt(const std::shared_ptr<ExifMetadata> &exifMetadata, const std::string &key, int32_t &value)
+int32_t GetImagePropertyInt(const std::shared_ptr<ExifMetadata> &exifMetadata, const std::string &key, int32_t &value)
 {
     std::string strValue;
     int ret = exifMetadata->GetValue(key, strValue);
@@ -489,7 +489,7 @@ void UpdateExifMetadata(const std::shared_ptr<ExifMetadata> &exifMetadata, Pixel
 
     // Set Length
     int32_t length = 0;
-    if (GetImagePropertyInt(exifMetadata, IMAGE_LENGTH, width) == 0 && pixelMap->GetHeight() != length) {
+    if (GetImagePropertyInt(exifMetadata, IMAGE_LENGTH, length) == 0 && pixelMap->GetHeight() != length) {
         exifMetadata->SetValue(IMAGE_LENGTH, std::to_string(pixelMap->GetHeight()));
     }
 
@@ -504,7 +504,7 @@ void UpdateExifMetadata(const std::shared_ptr<ExifMetadata> &exifMetadata, Pixel
 
     // Set PixelYDimension
     int32_t yDimension = 0;
-    if (GetImagePropertyInt(exifMetadata, PIXEL_Y_DIMENSION, xDimension) == 0 && pixelMap->GetHeight() != yDimension) {
+    if (GetImagePropertyInt(exifMetadata, PIXEL_Y_DIMENSION, yDimension) == 0 && pixelMap->GetHeight() != yDimension) {
         exifMetadata->SetValue(PIXEL_Y_DIMENSION, std::to_string(pixelMap->GetHeight()));
     }
 
@@ -570,7 +570,7 @@ void ProcessYUVInfo(PixelMap *pixelMap, const SurfaceBuffer *sBuffer, const OH_N
     int32_t width = sBuffer->GetWidth();
     int32_t height = sBuffer->GetHeight();
     YUVDataInfo info;
-    info.imageSize = {width, height};
+    info.imageSize = { width, height };
     info.yWidth = static_cast<uint32_t>(width);
     info.uvWidth = static_cast<uint32_t>(width);
     info.yHeight = static_cast<uint32_t>(height);
@@ -707,6 +707,11 @@ ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, P
     imageInfo.size.height = static_cast<int32_t>(memoryInfo.bufferInfo.height_);
     imageInfo.pixelFormat = CommonUtils::SwitchToPixelFormat(memoryInfo.bufferInfo.formatType_);
     uint32_t result = pixelMap->SetImageInfo(imageInfo, true);
+    if (imageInfo.pixelFormat == PixelFormat::NV12 || imageInfo.pixelFormat == PixelFormat::NV21 ||
+        imageInfo.pixelFormat == PixelFormat::YCBCR_P010 || imageInfo.pixelFormat == PixelFormat::YCRCB_P010) {
+        res = ModifyYUVInfo(pixelMap, context, memoryInfo);
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "HandleYUVInfo fail! res=%{public}d", res);
+    }
     EFFECT_LOGI("ModifyPixelMapPropertyInner: SetImageInfo width=%{public}d, height=%{public}d, result: %{public}d",
         imageInfo.size.width, imageInfo.size.height, result);
     CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_SET_IMAGE_INFO_FAIL,

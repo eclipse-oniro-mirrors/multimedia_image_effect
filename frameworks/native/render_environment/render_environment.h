@@ -209,6 +209,7 @@ private:
     int canvasHeight = 0;
     EGLStatus isEGLReady = EGLStatus::UNREADY;
     DataType outType_ = DataType::UNKNOWN;
+    bool needTerminate_ = false;
     void InitDefaultMeshMT(RenderParam *param);
     void InitDefaultShaderMT(RenderParam *param);
     RenderMesh *CreateMeshMT(RenderParam *param, bool isBackGround, RenderGeneralProgram *shader);

@@ -314,7 +314,8 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputUri(OH_ImageEffect *imageEffect, c
  * @param picture Indicates the OH_PictureNative that contains the image information
  * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
  * {@link ImageEffect_ErrorCode}
- * @since 12
+ * {@link EFFECT_ERROR_PARAM_INVALID}, the input parameter is a null pointer.
+ * @since 13
  */
 ImageEffect_ErrorCode OH_ImageEffect_SetInputPicture(OH_ImageEffect *imageEffect, OH_PictureNative *picture);
 
@@ -326,7 +327,8 @@ ImageEffect_ErrorCode OH_ImageEffect_SetInputPicture(OH_ImageEffect *imageEffect
  * @param picture Indicates the OH_PictureNative that contains the image information
  * @return Returns EFFECT_SUCCESS if the execution is successful, otherwise returns a specific error code, refer to
  * {@link ImageEffect_ErrorCode}
- * @since 12
+ * {@link EFFECT_ERROR_PARAM_INVALID}, the input parameter is a null pointer.
+ * @since 13
  */
 ImageEffect_ErrorCode OH_ImageEffect_SetOutputPicture(OH_ImageEffect *imageEffect, OH_PictureNative *picture);
 

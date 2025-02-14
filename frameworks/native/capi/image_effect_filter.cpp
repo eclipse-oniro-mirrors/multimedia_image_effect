@@ -595,6 +595,7 @@ ImageEffect_ErrorCode OH_EffectFilter_SetValue(OH_EffectFilter *filter, const ch
         return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
     }
 
+    filter->filter_->ProcessConfig(key);
     result = filter->filter_->SetValue(key, any);
     if (result != ErrorCode::SUCCESS) {
         EFFECT_LOGE("FilterSetValue: set value fail! result=%{public}d, key=%{public}s, dataType=%{public}d", result,

@@ -26,8 +26,8 @@
 #include "image_type.h"
 #include "surface.h"
 #include "pixel_map.h"
-#include "render_thread.h"
 #include "image_effect_marco_define.h"
+#include "render_thread.h"
 #include "picture.h"
 
 namespace OHOS {
@@ -156,7 +156,7 @@ private:
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
     volatile int32_t imageEffectFlag_ = 0;
-    
+
     GraphicTransformType toProducerTransform_ = GRAPHIC_ROTATE_BUTT;
 
     // envSupportIpType

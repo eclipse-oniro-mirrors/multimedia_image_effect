@@ -26,6 +26,7 @@
 #include "error_code.h"
 #include "effect_json_helper.h"
 #include "image_effect_marco_define.h"
+#include "efilter_cache_config.h"
 
 namespace OHOS {
 namespace Media {
@@ -74,9 +75,27 @@ public:
     }
 
     IMAGE_EFFECT_EXPORT
+    ErrorCode ProcessConfig(const std::string &key);
+
+    IMAGE_EFFECT_EXPORT
+    ErrorCode StartCache();
+
+    IMAGE_EFFECT_EXPORT
+    virtual ErrorCode CacheBuffer(EffectBuffer *cache, std::shared_ptr<EffectContext> &context);
+
+    IMAGE_EFFECT_EXPORT
+    virtual ErrorCode GetFilterCache(std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context);
+
+    IMAGE_EFFECT_EXPORT
+    virtual ErrorCode ReleaseCache();
+
+    IMAGE_EFFECT_EXPORT
+    ErrorCode CancelCache();
+
+    IMAGE_EFFECT_EXPORT
     virtual std::shared_ptr<MemNegotiatedCap> Negotiate(const std::shared_ptr<MemNegotiatedCap> &input,
         std::shared_ptr<EffectContext> &context);
-    
+
     IMAGE_EFFECT_EXPORT
     virtual bool IsTextureInput();
 protected:
@@ -84,6 +103,7 @@ protected:
 
     std::map<std::string, Plugin::Any> values_;
 
+    std::shared_ptr<EFilterCacheConfig> cacheConfig_ = nullptr;
 private:
     IMAGE_EFFECT_EXPORT void Negotiate(const std::string &inPort, const std::shared_ptr<Capability> &capability,
         std::shared_ptr<EffectContext> &context) override;
@@ -103,6 +123,16 @@ private:
 
     std::shared_ptr<EffectBuffer> ConvertFromCPU2GPU(const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source);
+
+    std::shared_ptr<EffectBuffer> cacheBuffer_ = nullptr;
+    std::unique_ptr<AbsMemory> cacheMemory_ = nullptr;
+
+    ErrorCode UseCache(std::shared_ptr<EffectContext> &context);
+
+    ErrorCode AllocBuffer(std::shared_ptr<EffectContext> &context,
+        const std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap, std::shared_ptr<EffectBuffer> &source,
+        std::shared_ptr<EffectBuffer> &effectBuffer) const;
+
     ErrorCode UseTextureInput();
     void InitContext(std::shared_ptr<EffectContext> &context, IPType &runningType);
 };

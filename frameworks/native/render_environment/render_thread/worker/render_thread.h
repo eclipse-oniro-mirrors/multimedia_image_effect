@@ -24,7 +24,7 @@
 #include "render_fifo_queue.h"
 #include "render_task_itf.h"
 
-constexpr const static int TIME_FOR_STOP = 1000;
+#define TIME_FOR_STOP 1000
 constexpr const static int TIME_FOR_WAITING_TASK = 2500;
 
 template <typename QUEUE = RenderFifoQueue<RenderTaskPtr<void>>>
