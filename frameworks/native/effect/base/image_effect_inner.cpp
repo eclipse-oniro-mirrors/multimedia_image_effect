@@ -1215,6 +1215,7 @@ void ImageEffect::OnBufferAvailableWithCPU()
 
     bool isSrcHebcData = false;
     CHECK_AND_RETURN_LOG(impl_ != nullptr, "OnBufferAvailableWithCPU: impl is nullptr.");
+    UpdateCycleBuffersNumber();
     bool isNeedSwap = true;
     bool isNeedRender = impl_->effectState_ == EffectState::RUNNING;
     if (isNeedRender) {
@@ -1501,6 +1502,30 @@ ErrorCode ImageEffect::SetOutputPicture(Picture *picture)
     outDateInfo_.picture_ = picture;
 
     return ErrorCode::SUCCESS;
+}
+
+void ImageEffect::UpdateCycleBuffersNumber()
+{
+    if (setCycleBuffersNumber_) {
+        return;
+    }
+
+    if (!toProducerSurface_ || !fromProducerSurface_) {
+        EFFECT_LOGE("UpdateCycleBuffersNumber: toProducerSurface_ or fromProducerSurface_ is null!");
+        return;
+    }
+
+    uint32_t cycleBuffersNumber = toProducerSurface_->GetQueueSize() + fromProducerSurface_->GetQueueSize();
+    auto errorCode = toProducerSurface_->SetCycleBuffersNumber(cycleBuffersNumber);
+    if (errorCode != 0) {
+        EFFECT_LOGE("UpdateCycleBuffersNumber: SetCycleBuffersNumber failed! code: %{public}d", errorCode);
+        return;
+    }
+
+    EFFECT_LOGI("UpdateCycleBuffersNumber: SetCycleBuffersNumber success! cycleBuffersNumber: %{public}d",
+        cycleBuffersNumber);
+    setCycleBuffersNumber_ = true;
+    return;
 }
 } // namespace Effect
 } // namespace Media

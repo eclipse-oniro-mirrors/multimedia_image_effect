@@ -153,9 +153,12 @@ private:
     ErrorCode ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
         std::shared_ptr<EffectBuffer> dstEffectBuffer);
 
+    void UpdateCycleBuffersNumber();
+
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
     volatile int32_t imageEffectFlag_ = 0;
+    bool setCycleBuffersNumber_ = false;
 
     GraphicTransformType toProducerTransform_ = GRAPHIC_ROTATE_BUTT;
 
