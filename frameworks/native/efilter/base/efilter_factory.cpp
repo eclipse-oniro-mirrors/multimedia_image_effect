@@ -32,7 +32,8 @@ EFilterFactory *EFilterFactory::Instance()
 void EFilterFactory::RegisterFunction(const std::string &name, const EFilterFunction &function)
 {
     EFFECT_LOGI("register efilter. name=%{public}s", name.c_str());
-
+    CHECK_AND_RETURN_LOG(name.c_str() != nullptr,
+        "RegisterFunction: register RegisterFunction name fail! name=%{public}s", name.c_str());
     auto it = functions_.find(name);
     if (it == functions_.end()) {
         auto result = functions_.emplace(name, function);
@@ -87,6 +88,8 @@ std::shared_ptr<EFilter> EFilterFactory::Restore(const std::string &name, const 
 std::shared_ptr<EFilter> EFilterFactory::Create(const std::string &name, void *handler)
 {
     ExternLoader::Instance()->InitExt();
+    CHECK_AND_RETURN_RET_LOG(name.c_str() != nullptr, nullptr,
+        "Create: register Create name fail! name=%{public}s", name.c_str());
     auto it = functions_.find(name);
     if (it != functions_.end()) {
         std::shared_ptr<EFilter> efilter = it->second.generator_(name);
