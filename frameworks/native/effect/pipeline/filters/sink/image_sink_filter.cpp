@@ -374,40 +374,64 @@ ErrorCode FillPictureOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode PackToFile(const std::string &path, const std::shared_ptr<Picture> &picture)
+ErrorCode StartImagePacking(const std::shared_ptr<ImagePacker> &imagePacker, const std::string &path,
+    const PackOption option)
 {
-    std::shared_ptr<ImagePacker> imagePacker = std::make_shared<ImagePacker>();
-    std::string format = "";
-    if (CommonUtils::EndsWithHEIF(path)) {
-        format = "image/heif";
-    }
-    if (CommonUtils::EndsWithJPG(path)) {
-        format = "image/jpeg";
-    }
-    PackOption option = {
-        .format = format,
-        .desiredDynamicRange = EncodeDynamicRange::AUTO,
-        .needsPackProperties = true,
-    };
-    uint32_t result = imagePacker->StartPacking(path, option);
-    CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
-        "StartPacking fail! result=%{public}d", result);
-
-    result = imagePacker->AddPicture(*picture);
-    CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
-        "AddImage fail! result=%{public}d", result);
-
-    int64_t packedSize = 0;
-    result = imagePacker->FinalizePacking(packedSize);
-    CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
-        "FinalizePacking fail! result=%{public}d", result);
-
-    EFFECT_LOGI("PackToFile success! path=%{public}s, packedSize=%{public}lld", path.c_str(),
-        static_cast<long long>(packedSize));
+    uint32_t ret = imagePacker->StartPacking(path, option);
+    CHECK_AND_RETURN_RET_LOG(ret == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
+        "StartPacking fail! result=%{public}d, format=%{public}s", ret, option.format.c_str());
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<EffectBuffer> &buffer)
+ErrorCode ImageSinkFilter::PackToFile(const std::string &path, const std::shared_ptr<Picture> &picture)
+{
+    ErrorCode result = ErrorCode::SUCCESS;
+    SourceOptions opts;
+    uint32_t ret = 0;
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(inPath_, opts, ret);
+    CHECK_AND_RETURN_RET_LOG(imageSource != nullptr, ErrorCode::ERR_CREATE_IMAGESOURCE_FAIL,
+        "ImageSource::CreateImageSource fail! path=%{public}s, ret=%{public}d", inPath_.c_str(), ret);
+
+    ImageInfo info;
+    ret = imageSource->GetImageInfo(info);
+    CHECK_AND_RETURN_RET_LOG(ret == 0, ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT, "imageSource get image info fail!");
+
+    std::string encodedFormat = info.encodedFormat;
+    std::shared_ptr<ImagePacker> imagePacker = std::make_shared<ImagePacker>();
+    PackOption option = {
+        .format = encodedFormat,
+        .desiredDynamicRange = EncodeDynamicRange::AUTO,
+        .needsPackProperties = true,
+    };
+    if (encodedFormat == "image/heic" || encodedFormat == "image/heif") {
+        result = StartImagePacking(imagePacker, path, option);
+        if (result != ErrorCode::SUCCESS) {
+            option.format = "image/jpeg";
+            result = StartImagePacking(imagePacker, path, option);
+            CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
+                "StartPacking fail! result=%{public}d, format=%{public}s", result, option.format.c_str());
+        }
+    } else {
+        result = StartImagePacking(imagePacker, path, option);
+        CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
+            "StartPacking fail! result=%{public}d, format=%{public}s", result, option.format.c_str());
+    }
+    
+    ret = imagePacker->AddPicture(*picture);
+    CHECK_AND_RETURN_RET_LOG(ret == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
+        "AddImage fail! result=%{public}d", result);
+
+    int64_t packedSize = 0;
+    ret = imagePacker->FinalizePacking(packedSize);
+    CHECK_AND_RETURN_RET_LOG(ret == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
+        "FinalizePacking fail! result=%{public}d", result);
+
+    EFFECT_LOGI("PackToFile success! path=%{public}s, packedSize=%{public}lld, encodedFormat=%{public}s", path.c_str(),
+        static_cast<long long>(packedSize), encodedFormat.c_str());
+    return result;
+}
+
+ErrorCode ImageSinkFilter::SaveUrlData(const std::string &url, const std::shared_ptr<EffectBuffer> &buffer)
 {
     std::shared_ptr<Picture> picture = buffer->extraInfo_->innerPicture;
     CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "SaveUrlData: picture is null!");
@@ -416,7 +440,7 @@ ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<EffectBuffer
     return PackToFile(path, picture);
 }
 
-ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<Picture> &picture)
+ErrorCode ImageSinkFilter::SaveUrlData(const std::string &url, const std::shared_ptr<Picture> &picture)
 {
     CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "SaveUrlData: picture is null!");
 
@@ -424,7 +448,7 @@ ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<Picture> &pi
     return PackToFile(path, picture);
 }
 
-ErrorCode SavePathData(const std::string &path, const std::shared_ptr<EffectBuffer> &buffer)
+ErrorCode ImageSinkFilter::SavePathData(const std::string &path, const std::shared_ptr<EffectBuffer> &buffer)
 {
     std::shared_ptr<Picture> picture = buffer->extraInfo_->innerPicture;
     CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "SavePathData: picture is null!");
@@ -432,13 +456,13 @@ ErrorCode SavePathData(const std::string &path, const std::shared_ptr<EffectBuff
     return PackToFile(path, picture);
 }
 
-ErrorCode SavePathData(const std::string &path, const std::shared_ptr<Picture> &picture)
+ErrorCode ImageSinkFilter::SavePathData(const std::string &path, const std::shared_ptr<Picture> &picture)
 {
     CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_INPUT_NULL, "SavePathData: picture is null!");
     return PackToFile(path, picture);
 }
 
-ErrorCode SaveInputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
+ErrorCode ImageSinkFilter::SaveInputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
     ErrorCode result = ModifyDataInfo(src, buffer, context);
@@ -455,7 +479,7 @@ ErrorCode SaveInputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &
     }
 }
 
-ErrorCode SavaOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &inputBuffer,
+ErrorCode ImageSinkFilter::SavaOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &inputBuffer,
     std::shared_ptr<EffectBuffer> &outputBuffer, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGD("SavaOutputData: dataType=%{public}d", outputBuffer->extraInfo_->dataType);
@@ -483,8 +507,8 @@ ErrorCode SavaOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
     }
 }
 
-ErrorCode SaveData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::shared_ptr<EffectBuffer> &outputBuffer,
-    std::shared_ptr<EffectContext> &context)
+ErrorCode ImageSinkFilter::SaveData(const std::shared_ptr<EffectBuffer> &inputBuffer,
+    std::shared_ptr<EffectBuffer> &outputBuffer, std::shared_ptr<EffectContext> &context)
 {
     CHECK_AND_RETURN_RET_LOG(inputBuffer != nullptr && inputBuffer->bufferInfo_ != nullptr &&
         (inputBuffer->buffer_ != nullptr || inputBuffer->tex != nullptr) && inputBuffer->extraInfo_ != nullptr,

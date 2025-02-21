@@ -787,6 +787,7 @@ ErrorCode ImageEffect::Render()
         format = CapabilityNegotiate::NegotiateFormat(capabilities);
     }
     EFFECT_LOGD("image effect render, negotiate format=%{public}d", format);
+    impl_->sinkFilter_->inPath_ = CommonUtils::UrlToPath(inDateInfo_.uri_);
 
     std::shared_ptr<EffectBuffer> srcEffectBuffer = nullptr;
     std::shared_ptr<EffectBuffer> dstEffectBuffer = nullptr;

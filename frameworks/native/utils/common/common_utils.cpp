@@ -68,6 +68,8 @@ const std::unordered_map<AllocatorType, BufferType> CommonUtils::allocatorTypeTo
     { AllocatorType::SHARE_MEM_ALLOC, BufferType::SHARED_MEMORY },
 };
 
+std::vector<std::string> FILE_TYPE_SUPPORT_TABLE = {"image/heic", "image/heif", "image/jpeg"};
+
 template <class ValueType>
 ErrorCode ParseJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &json)
 {
@@ -255,9 +257,20 @@ ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer
     CHECK_AND_RETURN_RET_LOG(imageSource != nullptr, ErrorCode::ERR_CREATE_IMAGESOURCE_FAIL,
         "ImageSource::CreateImageSource fail! path=%{public}s, errorCode=%{public}d", path.c_str(), errorCode);
 
+    ImageInfo info;
+    uint32_t ret = imageSource->GetImageInfo(info);
+    CHECK_AND_RETURN_RET_LOG(ret == 0, ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT, "imageSource get image info fail!");
+    std::string encodedFormat = info.encodedFormat;
+    if (std::find(FILE_TYPE_SUPPORT_TABLE.begin(), FILE_TYPE_SUPPORT_TABLE.end(), encodedFormat) ==
+        FILE_TYPE_SUPPORT_TABLE.end()) {
+        EFFECT_LOGE("ParsePath: encodedFormat not support! encodedFormat=%{public}s", encodedFormat.c_str());
+        return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
+    }
+
     DecodingOptionsForPicture options;
     options.desiredPixelFormat = CommonUtils::SwitchToPixelFormat(format);
-    EFFECT_LOGD("CommonUtils::ParsePath. PixelFormat=%{public}d", options.desiredPixelFormat);
+    EFFECT_LOGD("CommonUtils::ParsePath. PixelFormat=%{public}d, encodedFormat=%{public}s", options.desiredPixelFormat,
+        encodedFormat.c_str());
     std::unique_ptr<Picture> picture = imageSource->CreatePicture(options, errorCode);
     CHECK_AND_RETURN_RET_LOG(picture != nullptr, ErrorCode::ERR_CREATE_PICTURE_FAIL,
         "CreatePicture fail! path=%{public}s, errorCode=%{public}d", path.c_str(), errorCode);
