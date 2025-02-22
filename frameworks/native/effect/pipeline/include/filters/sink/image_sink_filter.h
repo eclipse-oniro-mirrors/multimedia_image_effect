@@ -50,6 +50,27 @@ public:
     ErrorCode PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context) override;
 
+    ErrorCode PackToFile(const std::string &path, const std::shared_ptr<Picture> &picture);
+
+    ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<EffectBuffer> &buffer);
+
+    ErrorCode SaveUrlData(const std::string &url, const std::shared_ptr<Picture> &picture);
+
+    ErrorCode SavePathData(const std::string &path, const std::shared_ptr<EffectBuffer> &buffer);
+
+    ErrorCode SavePathData(const std::string &path, const std::shared_ptr<Picture> &picture);
+
+    ErrorCode SaveInputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
+        std::shared_ptr<EffectContext> &context);
+
+    ErrorCode SavaOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &inputBuffer,
+        std::shared_ptr<EffectBuffer> &outputBuffer, std::shared_ptr<EffectContext> &context);
+
+    ErrorCode SaveData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::shared_ptr<EffectBuffer> &outputBuffer,
+        std::shared_ptr<EffectContext> &context);
+
+    std::string inPath_;
+
 private:
     void OnEvent(const Event &event) override {}
 };
