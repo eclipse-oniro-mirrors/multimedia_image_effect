@@ -119,7 +119,7 @@ GSError EffectSurfaceAdapter::DetachConsumerSurfaceBuffer(sptr<SurfaceBuffer>& b
     CHECK_AND_RETURN_RET_LOG(receiverConsumerSurface_!= nullptr, GSERROR_NOT_INIT,
         "EffectSurfaceAdapter::DetachEffectSurfaceBuffer receiverConsumerSurface_ is nullptr");
 
-    return receiverConsumerSurface_->DetachBufferFromQueue(buffer);
+    return receiverConsumerSurface_->DetachBufferFromQueue(buffer, true);
 }
 
 GSError EffectSurfaceAdapter::AttachConsumerSurfaceBuffer(sptr<OHOS::SurfaceBuffer> &buffer) const
