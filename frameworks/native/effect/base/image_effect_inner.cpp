@@ -1144,7 +1144,7 @@ void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNe
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
     ret = impl_->ReleaseConsumerSurfaceBuffer(inBuffer, SyncFence::INVALID_FENCE);
-    CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
+    CHECK_AND_PRINT_LOG(ret == GSError::GSERROR_OK,
         "ProcessRender: ReleaseConsumerSurfaceBuffer failed. %{public}d", ret);
 
     ret = FlushBuffer(outBuffer, outBufferSyncFence, false, false, timestamp);
@@ -1157,7 +1157,7 @@ void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64
     sptr<SurfaceBuffer> outBuffer = bufferProcessInfo.outBuffer_;
     sptr<SyncFence> inBufferSyncFence = bufferProcessInfo.inBufferSyncFence_;
     sptr<SyncFence> outBufferSyncFence = bufferProcessInfo.outBufferSyncFence_;
-
+    // inBuffer aquired from impl
     auto requestConfig = GetBufferRequestConfig(inBuffer);
     auto ret = toProducerSurface_->RequestAndDetachBuffer(outBuffer, outBufferSyncFence, requestConfig);
     if (ret != 0 || outBuffer == nullptr) {
@@ -1167,6 +1167,7 @@ void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64
     }
     CHECK_AND_RETURN_LOG(inBuffer != nullptr && outBuffer != nullptr,
         "ProcessRender: inBuffer or outBuffer is nullptr");
+    // outBuffer requestAndDetached from XC
     EFFECT_LOGD("ProcessRender: inBuffer: %{public}d, outBuffer: %{public}d",
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
@@ -1174,25 +1175,29 @@ void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64
     if (ret != GSError::GSERROR_OK) {
         EFFECT_LOGE("ProcessSwapBuffers: DetachConsumerSurfaceBuffer failed. %{public}d", ret);
         ReleaseBuffer(inBuffer, inBufferSyncFence);
+        FlushBuffer(outBuffer, outBufferSyncFence, true, true, timestamp);
         return;
     }
-
+    // inBuffer detached from impl
     ret = impl_->AttachConsumerSurfaceBuffer(outBuffer);
     if (ret != GSError::GSERROR_OK) {
         EFFECT_LOGE("ProcessSwapBuffers: AttachConsumerSurfaceBuffer failed. %{public}d", ret);
         failureCount_++;
-        FlushBuffer(inBuffer, inBufferSyncFence, true, true, timestamp);
+        impl_->AttachConsumerSurfaceBuffer(inBuffer);
+        ReleaseBuffer(inBuffer, inBufferSyncFence);
+        FlushBuffer(outBuffer, inBufferSyncFence, true, false, timestamp);
         return;
     }
-
+    // outBuffer attached in Impl
     ret = FlushBuffer(inBuffer, inBufferSyncFence, true, true, timestamp);
     if (ret != GSError::GSERROR_OK) {
         EFFECT_LOGE("ProcessSwapBuffers: FlushBuffer failed. %{public}d", ret);
         ReleaseBuffer(outBuffer, outBufferSyncFence);
         return;
     }
-
-    ret = impl_->ReleaseConsumerSurfaceBuffer(outBuffer, outBufferSyncFence);
+    // inBuffer attachAndFlushed in XC
+    ret = ReleaseBuffer(outBuffer, outBufferSyncFence);
+    // outBuffer release in impl
     CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK,
         "ProcessSwapBuffers: ReleaseConsumerSurfaceBuffer failed. %{public}d", ret);
 }

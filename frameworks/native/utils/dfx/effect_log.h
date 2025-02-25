@@ -71,6 +71,11 @@
         continue;                              \
     }
 
+#define CHECK_AND_PRINT_LOG(cond, fmt, ...) \
+    if (!(cond)) {                             \
+        EFFECT_LOGE(fmt, ##__VA_ARGS__);       \
+    }
+
 #define CHECK_AND_RETURN_RET(cond, ret)               \
     do {                                              \
         if (!(cond)) {                                \
