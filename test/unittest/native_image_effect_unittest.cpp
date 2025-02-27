@@ -1422,7 +1422,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr001, TestSize.Level1)
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative.get());
+    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     int32_t ipType = 2;
