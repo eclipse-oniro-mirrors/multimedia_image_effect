@@ -155,6 +155,8 @@ private:
 
     void UpdateCycleBuffersNumber();
 
+    void SetPathToSink();
+
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
     volatile int32_t imageEffectFlag_ = 0;

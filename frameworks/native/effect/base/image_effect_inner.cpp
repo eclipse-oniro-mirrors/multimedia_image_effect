@@ -763,6 +763,15 @@ ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectB
     return ErrorCode::SUCCESS;
 }
 
+void ImageEffect::SetPathToSink()
+{
+    if (inDateInfo_.dataType_ == DataType::URI) {
+        impl_->sinkFilter_->inPath_ = CommonUtils::UrlToPath(inDateInfo_.uri_);
+    } else if (inDateInfo_.dataType_ == DataType::PATH) {
+        impl_->sinkFilter_->inPath_ = inDateInfo_.path_;
+    }
+}
+
 ErrorCode ImageEffect::Render()
 {
     CHECK_AND_RETURN_RET_LOG(!efilters_.empty(), ErrorCode::ERR_NOT_FILTERS_WITH_RENDER, "efilters is empty");
@@ -787,7 +796,7 @@ ErrorCode ImageEffect::Render()
         format = CapabilityNegotiate::NegotiateFormat(capabilities);
     }
     EFFECT_LOGD("image effect render, negotiate format=%{public}d", format);
-    impl_->sinkFilter_->inPath_ = CommonUtils::UrlToPath(inDateInfo_.uri_);
+    SetPathToSink();
 
     std::shared_ptr<EffectBuffer> srcEffectBuffer = nullptr;
     std::shared_ptr<EffectBuffer> dstEffectBuffer = nullptr;
