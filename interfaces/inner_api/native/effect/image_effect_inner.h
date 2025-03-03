@@ -153,6 +153,7 @@ private:
     ErrorCode ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
         std::shared_ptr<EffectBuffer> dstEffectBuffer);
 
+    void UpdateConsumedrBuffersNumber();
     void UpdateCycleBuffersNumber();
 
     void SetPathToSink();
@@ -161,6 +162,7 @@ private:
     sptr<Surface> fromProducerSurface_; // to camera hal
     volatile int32_t imageEffectFlag_ = 0;
     bool setCycleBuffersNumber_ = false;
+    bool setConsumerBufferSize_ = false;
 
     GraphicTransformType toProducerTransform_ = GRAPHIC_ROTATE_BUTT;
 
