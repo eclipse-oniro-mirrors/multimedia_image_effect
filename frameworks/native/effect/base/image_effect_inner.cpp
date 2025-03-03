@@ -1230,6 +1230,7 @@ void ImageEffect::OnBufferAvailableWithCPU()
 
     bool isSrcHebcData = false;
     CHECK_AND_RETURN_LOG(impl_ != nullptr, "OnBufferAvailableWithCPU: impl is nullptr.");
+    UpdateConsumedrBuffersNumber();
     UpdateCycleBuffersNumber();
     bool isNeedSwap = true;
     bool isNeedRender = impl_->effectState_ == EffectState::RUNNING;
@@ -1517,6 +1518,29 @@ ErrorCode ImageEffect::SetOutputPicture(Picture *picture)
     outDateInfo_.picture_ = picture;
 
     return ErrorCode::SUCCESS;
+}
+
+void ImageEffect::UpdateConsumedrBuffersNumber()
+{
+    if (setConsumerBufferSize_) {
+        return;
+    }
+
+    if (!toProducerSurface_ || !fromProducerSurface_) {
+        EFFECT_LOGE("UpdateConsumedrBuffersNumber: toProducerSurface_ or fromProducerSurface_ is null!");
+        return;
+    }
+
+    auto errorCode = toProducerSurface_->SetQueueSize(fromProducerSurface_->GetQueueSize());
+    if (errorCode != 0) {
+        EFFECT_LOGE("UpdateConsumedrBuffersNumber: SetQueueSize failed! code: %{public}d", errorCode);
+        return;
+    }
+
+    EFFECT_LOGI("UpdateConsumedrBuffersNumber: SetQueueSize success! ConsumedrBuffersNumber: %{public}d",
+        fromProducerSurface_->GetQueueSize());
+    setConsumerBufferSize_ = true;
+    return;
 }
 
 void ImageEffect::UpdateCycleBuffersNumber()
