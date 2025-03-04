@@ -1194,15 +1194,14 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest005, TestSize.L
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSingleFilterUnittest005 start";
     InSequence s;
 
-    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
+    std::shared_ptr<PixelMap> inputPixelmap = std::make_shared<MockPixelMap>();
+    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(inputPixelmap);
     std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
     ASSERT_NE(pixelMap, nullptr);
     pixelmapNative->pixelmap_ = std::move(pixelMap);
 
-    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
-
-    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, CROP_EFILTER);
-    ASSERT_NE(filter, nullptr) << "ImageEffectSingleFilterUnittest005 OH_ImageEffect_AddFilter failed";
+    OH_EffectFilter *filter = OH_EffectFilter_Create(CROP_EFILTER);
+    ASSERT_NE(filter, nullptr) << "ImageEffectSingleFilterUnittest005 OH_EffectFilter_Create failed";
     
     uint32_t x1 = static_cast<uint32_t>(pixelmapNative->pixelmap_->GetWidth() / CROP_FACTOR);
     uint32_t y1 = static_cast<uint32_t>(pixelmapNative->pixelmap_->GetHeight() / CROP_FACTOR);
@@ -1214,12 +1213,10 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest005, TestSize.L
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSingleFilterUnittest005 OH_EffectFilter_SetValue failed";
 
-    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    errorCode = OH_ImageEffect_Start(imageEffect);
+    pixelmapNative_->pixelmap_ = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
+    errorCode = OH_EffectFilter_Render(filter, pixelmapNative.get(), pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
-        "ImageEffectSingleFilterUnittest005 OH_ImageEffect_Start failed";
+        "ImageEffectSingleFilterUnittest005 OH_EffectFilter_Render failed";
 
     errorCode = OH_EffectFilter_Release(filter);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
