@@ -1214,7 +1214,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest005, TestSize.L
         "ImageEffectSingleFilterUnittest005 OH_EffectFilter_SetValue failed";
 
     pixelmapNative_->pixelmap_ = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
-    errorCode = OH_EffectFilter_Render(filter, pixelmapNative.get(), pixelmapNative_);
+    errorCode = OH_EffectFilter_Render(filter, pixelmapNative_, pixelmapNative_);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSingleFilterUnittest005 OH_EffectFilter_Render failed";
 
