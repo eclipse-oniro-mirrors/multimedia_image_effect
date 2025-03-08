@@ -32,6 +32,8 @@ public:
     void AddCapability(std::shared_ptr<Capability> &capability);
 
     void ClearNegotiateResult();
+
+    static IEffectFormat NegotiateFormat(std::vector<std::shared_ptr<Capability>> capabilities);
 private:
     std::vector<std::shared_ptr<Capability>> caps_;
 };
