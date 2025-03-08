@@ -201,29 +201,29 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_006, TestSize.Level1)
     EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::ERR_UNSUPPORTED_DATA_TYPE);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetOutPutPicture_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetOutputPicture_001, TestSize.Level1)
 {
-    ErrorCode result = imageEffect_->SetOutPutPicture(nullptr);
+    ErrorCode result = imageEffect_->SetOutputPicture(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetOutPutPicture_002, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetOutputPicture_002, TestSize.Level1)
 {
     std::shared_ptr<Picture> picture = std::make_shared<MockPicture>();
-    ErrorCode result = imageEffect_->SetOutPutPicture(picture.get());
+    ErrorCode result = imageEffect_->SetOutputPicture(picture.get());
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetInPutPicture_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetInputPicture_001, TestSize.Level1)
 {
-    ErrorCode result = imageEffect_->SetInPutPicture(nullptr);
+    ErrorCode result = imageEffect_->SetInputPicture(nullptr);
     ASSERT_NE(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetInPutPicture_002, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetInputPicture_002, TestSize.Level1)
 {
     std::shared_ptr<Picture> picture = std::make_shared<MockPicture>();
-    ErrorCode result = imageEffect_->SetInPutPicture(picture.get());
+    ErrorCode result = imageEffect_->SetInputPicture(picture.get());
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
@@ -233,52 +233,52 @@ HWTEST_F(ImageEffectInnerUnittest, SetExtraInfo_001, TestSize.Level1)
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetOutPutSurfaceBuffer_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetOutputSurfaceBuffer_001, TestSize.Level1)
 {
-    ErrorCode result = imageEffect_->SetOutPutSurfaceBuffer(nullptr);
+    ErrorCode result = imageEffect_->SetOutputSurfaceBuffer(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetOutPutSurfaceBuffer_002, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetOutputSurfaceBuffer_002, TestSize.Level1)
 {
     sptr<SurfaceBuffer> surfaceBuffer;
     MockProducerSurface::AllocDmaMemory(surfaceBuffer);
-    ErrorCode result = imageEffect_->SetOutPutSurfaceBuffer(surfaceBuffer);
+    ErrorCode result = imageEffect_->SetOutputSurfaceBuffer(surfaceBuffer);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
-    MockProducerSurface::ReleaseDmaMemory(surfaceBuffer);
+    MockProducerSurface::ReleaseDmaBuffer(surfaceBuffer);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetInPutSurfaceBuffer_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetInputSurfaceBuffer_001, TestSize.Level1)
 {
-    ErrorCode result = imageEffect_->SetInPutSurfaceBuffer(nullptr);
+    ErrorCode result = imageEffect_->SetInputSurfaceBuffer(nullptr);
     ASSERT_NE(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetInPutSurfaceBuffer_002, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetInputSurfaceBuffer_002, TestSize.Level1)
 {
     sptr<SurfaceBuffer> surfaceBuffer;
     MockProducerSurface::AllocDmaMemory(surfaceBuffer);
-    ErrorCode result = imageEffect_->SetInPutSurfaceBuffer(surfaceBuffer);
+    ErrorCode result = imageEffect_->SetInputSurfaceBuffer(surfaceBuffer);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
-    MockProducerSurface::ReleaseDmaMemory(surfaceBuffer);
+    MockProducerSurface::ReleaseDmaBuffer(surfaceBuffer);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetOutPutSurface_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetOutputSurface_001, TestSize.Level1)
 {
     sptr<Surface> surface = nullptr;
-    ErrorCode result = imageEffect_->SetOutPutSurface(surface);
+    ErrorCode result = imageEffect_->SetOutputSurface(surface);
     ASSERT_NE(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetOutPutPixelMap_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetOutputPixelMap_001, TestSize.Level1)
 {
-    ErrorCode result = imageEffect_->SetOutPutPixelMap(nullptr);
+    ErrorCode result = imageEffect_->SetOutputPixelMap(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetInPutPixelMap_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetInputPixelMap_001, TestSize.Level1)
 {
-    ErrorCode result = imageEffect_->SetInPutPixelMap(nullptr);
+    ErrorCode result = imageEffect_->SetInputPixelMap(nullptr);
     ASSERT_NE(result, ErrorCode::SUCCESS);
 }
 
@@ -307,7 +307,7 @@ HWTEST_F(ImageEffectInnerUnittest, ReplaceEFilter_001, TestSize.Level1)
     ErrorCode result = imageEffect_->ReplaceEFilter(efilter2, -1);
     ASSERT_NE(result, ErrorCode::SUCCESS);
 
-    ErrorCode result = imageEffect_->ReplaceEFilter(efilter2, 0);
+    result = imageEffect_->ReplaceEFilter(efilter2, 0);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 } // namespace Effect
