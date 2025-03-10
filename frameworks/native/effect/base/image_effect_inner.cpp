@@ -695,31 +695,31 @@ ImageInfo CreateImageSourceInfo(std::string path) {
 ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat pixelFormat) {
     switch (inDateInfo_.dataType_) {
         case DataType::PIXEL_MAP: {
-            width = static_cast<int>(inDateInfo_.pixelMap_->GetWidth());
-            height = static_cast<int>(inDateInfo_.pixelMap_->GetHeight());
+            width = static_cast<uint32_t>(inDateInfo_.pixelMap_->GetWidth());
+            height = static_cast<uint32_t>(inDateInfo_.pixelMap_->GetHeight());
             pixelFormat = inDateInfo_.pixelMap_->GetPixelFormat();
             break;
         }
         case DataType::SURFACE:
         case DataType::SURFACE_BUFFER: {
-            width = static_cast<int>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetWidth());
-            height = static_cast<int>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetHeight());
+            width = static_cast<uint32_t>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetWidth());
+            height = static_cast<uint32_t>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetHeight());
             pixelFormat = static_cast<PixelFormat>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetFormat());
             break;
         }
         case DataType::URI: {
             auto path = CommonUtils::UrlToPath(inDateInfo_.uri_);
             ImageInfo info = CreateImageSourceInfo(path);
-            width = static_cast<int>(info.size.width);
-            height = static_cast<int>(info.size.height);
+            width = static_cast<uint32_t>(info.size.width);
+            height = static_cast<uint32_t>(info.size.height);
             pixelFormat = info.pixelFormat;
             break;
         }
         case DataType::PATH: {
             auto path = inDateInfo_.path_;
             ImageInfo info = CreateImageSourceInfo(path);
-            width = static_cast<int>(info.size.width);
-            height = static_cast<int>(info.size.height);
+            width = static_cast<uint32_t>(info.size.width);
+            height = static_cast<uint32_t>(info.size.height);
             pixelFormat = info.pixelFormat;
             break;
         }
@@ -729,8 +729,8 @@ ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelForm
             break;
         case DataType::PICTURE: {
             std::shared_ptr<PixelMap> pixelMap = inDateInfo_.picture_->GetMainPixel();
-            width = static_cast<int>(pixelMap->GetWidth());
-            height = static_cast<int>(pixelMap->GetHeight());
+            width = static_cast<uint32_t>(pixelMap->GetWidth());
+            height = static_cast<uint32_t>(pixelMap->GetHeight());
             pixelFormat = pixelMap->GetPixelFormat();
             break;
         }
