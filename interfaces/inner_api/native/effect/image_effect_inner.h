@@ -149,9 +149,17 @@ private:
     IMAGE_EFFECT_EXPORT void ProcessRender(BufferProcessInfo &bufferProcessInfo, bool &isNeedSwap, int64_t &timestamp);
     IMAGE_EFFECT_EXPORT void ProcessSwapBuffers(BufferProcessInfo &bufferProcessInfo, int64_t &timestamp);
 
-    ErrorCode GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat pixelFormat);
+    ErrorCode GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
+        std::shared_ptr<ExifMetadata> &exifMetadata);
     ErrorCode ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
         std::shared_ptr<EffectBuffer> dstEffectBuffer);
+    ErrorCode GetImageInfoFromPixelMap(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
+            std::shared_ptr<ExifMetadata> &exifMetadata) const;
+    ErrorCode GetImageInfoFromSurface(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat) const;
+    ErrorCode GetImageInfoFromPath(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
+        std::shared_ptr<ExifMetadata> &exifMetadata) const;
+    ErrorCode GetImageInfoFromPicture(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
+        std::shared_ptr<ExifMetadata> &exifMetadata) const;
 
     void UpdateConsumedrBuffersNumber();
     void UpdateCycleBuffersNumber();

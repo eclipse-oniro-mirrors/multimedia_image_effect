@@ -680,47 +680,71 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     return ErrorCode::SUCCESS;
 }
 
-ImageInfo CreateImageSourceInfo(std::string path) {
-    ImageInfo info;
-    std::unique_ptr<ImageSource> imageSource;
-    uint32_t errorCode = 0;
-    SourceOptions opts;
-    imageSource = ImageSource::CreateImageSource(path, opts, errorCode);
-    CHECK_AND_RETURN_RET_LOG(imageSource != nullptr, info,
-        "ImageSource::CreateImageSource fail! path=%{public}s errorCode=%{public}d", path.c_str(), errorCode);
-    imageSource->GetImageInfo(info);
-    return info;
+ErrorCode ImageEffect::GetImageInfoFromPixelMap(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
+    std::shared_ptr<ExifMetadata> &exifMetadata) const
+{
+    width = static_cast<uint32_t>(inDateInfo_.pixelMap_->GetWidth());
+    height = static_cast<uint32_t>(inDateInfo_.pixelMap_->GetHeight());
+    pixelFormat = inDateInfo_.pixelMap_->GetPixelFormat();
+    exifMetadata = inDateInfo_.pixelMap_->GetExifMetadata();
+    return ErrorCode::SUCCESS;
 }
 
-ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat pixelFormat) {
+ErrorCode ImageEffect::GetImageInfoFromSurface(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat) const
+{
+    width = static_cast<uint32_t>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetWidth());
+    height = static_cast<uint32_t>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetHeight());
+    pixelFormat = static_cast<PixelFormat>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetFormat());
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode ImageEffect::GetImageInfoFromPath(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
+    std::shared_ptr<ExifMetadata> &exifMetadata) const
+{
+    auto path = inDateInfo_.dataType_ == DataType::URI ? CommonUtils::UrlToPath(inDateInfo_.uri_) : inDateInfo_.path_;
+    std::shared_ptr<ImageSource> imageSource = CommonUtils::GetImageSourceFromPath(path);
+    CHECK_AND_RETURN_RET_LOG(imageSource != nullptr, ErrorCode::ERR_CREATE_IMAGESOURCE_FAIL,
+        "CreateImageSource fail! path=%{public}s", path.c_str());
+    ImageInfo info;
+    imageSource->GetImageInfo(info);
+    width = static_cast<uint32_t>(info.size.width);
+    height = static_cast<uint32_t>(info.size.height);
+    pixelFormat = info.pixelFormat;
+    exifMetadata = imageSource->GetExifMetadata();
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode ImageEffect::GetImageInfoFromPicture(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
+    std::shared_ptr<ExifMetadata> &exifMetadata) const
+{
+    std::shared_ptr<PixelMap> pixelMap = inDateInfo_.picture_->GetMainPixel();
+    width = static_cast<uint32_t>(pixelMap->GetWidth());
+    height = static_cast<uint32_t>(pixelMap->GetHeight());
+    pixelFormat = pixelMap->GetPixelFormat();
+    exifMetadata = inDateInfo_.picture_->GetExifMetadata();
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
+    std::shared_ptr<ExifMetadata> &exifMetadata)
+{
+    ErrorCode errorCode = ErrorCode::SUCCESS;
     switch (inDateInfo_.dataType_) {
         case DataType::PIXEL_MAP: {
-            width = static_cast<uint32_t>(inDateInfo_.pixelMap_->GetWidth());
-            height = static_cast<uint32_t>(inDateInfo_.pixelMap_->GetHeight());
-            pixelFormat = inDateInfo_.pixelMap_->GetPixelFormat();
+            errorCode = GetImageInfoFromPixelMap(width, height, pixelFormat, exifMetadata);
+            CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode, "GetImageInfoFromPixelMap fail!");
             break;
         }
         case DataType::SURFACE:
         case DataType::SURFACE_BUFFER: {
-            width = static_cast<uint32_t>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetWidth());
-            height = static_cast<uint32_t>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetHeight());
-            pixelFormat = static_cast<PixelFormat>(inDateInfo_.surfaceBufferInfo_.surfaceBuffer_->GetFormat());
+            errorCode = GetImageInfoFromSurface(width, height, pixelFormat);
+            CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode, "GetImageInfoFromSurface fail!");
             break;
         }
-        case DataType::URI: {
-            auto path = CommonUtils::UrlToPath(inDateInfo_.uri_);
-            ImageInfo info = CreateImageSourceInfo(path);
-            width = static_cast<uint32_t>(info.size.width);
-            height = static_cast<uint32_t>(info.size.height);
-            pixelFormat = info.pixelFormat;
-            break;
-        }
+        case DataType::URI:
         case DataType::PATH: {
-            auto path = inDateInfo_.path_;
-            ImageInfo info = CreateImageSourceInfo(path);
-            width = static_cast<uint32_t>(info.size.width);
-            height = static_cast<uint32_t>(info.size.height);
-            pixelFormat = info.pixelFormat;
+            errorCode = GetImageInfoFromPath(width, height, pixelFormat, exifMetadata);
+            CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode, "GetImageInfoFromPath fail!");
             break;
         }
         case DataType::NATIVE_WINDOW:
@@ -728,10 +752,8 @@ ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelForm
             height = 0;
             break;
         case DataType::PICTURE: {
-            std::shared_ptr<PixelMap> pixelMap = inDateInfo_.picture_->GetMainPixel();
-            width = static_cast<uint32_t>(pixelMap->GetWidth());
-            height = static_cast<uint32_t>(pixelMap->GetHeight());
-            pixelFormat = pixelMap->GetPixelFormat();
+            errorCode = GetImageInfoFromPicture(width, height, pixelFormat, exifMetadata);
+            CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode, "GetImageInfoFromPicture fail!");
             break;
         }
         case DataType::UNKNOWN:
@@ -741,7 +763,7 @@ ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelForm
             EFFECT_LOGE("dataType is not support! dataType=%{public}d", static_cast<int>(inDateInfo_.dataType_));
             return ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
     }
-    return ErrorCode::SUCCESS;
+    return errorCode;
 }
 
 ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
@@ -779,10 +801,12 @@ ErrorCode ImageEffect::Render()
     uint32_t width = 0;
     uint32_t height = 0;
     PixelFormat pixelFormat = PixelFormat::RGBA_8888;
+    std::shared_ptr<ExifMetadata> exifMetadata = nullptr;
 
-    ErrorCode res = GetImageInfo(width, height, pixelFormat);
+    ErrorCode res = GetImageInfo(width, height, pixelFormat, exifMetadata);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "set image info fail! res = %{public}d", res);
     IEffectFormat format = CommonUtils::SwitchToEffectFormat(pixelFormat);
+    impl_->effectContext_->exifMetadata_ = exifMetadata;
 
     std::shared_ptr<ImageSourceFilter> &sourceFilter = impl_->srcFilter_;
     sourceFilter->SetNegotiateParameter(width, height, format, impl_->effectContext_);
@@ -1513,7 +1537,7 @@ ErrorCode ImageEffect::SetOutputPicture(Picture *picture)
         EFFECT_LOGI("SetOutputPicture:picture set to null!");
         return ErrorCode::SUCCESS;
     }
-    
+
     outDateInfo_.dataType_ = DataType::PICTURE;
     outDateInfo_.picture_ = picture;
 
