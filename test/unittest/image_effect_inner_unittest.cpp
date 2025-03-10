@@ -21,6 +21,8 @@
 #include "test_common.h"
 #include "external_loader.h"
 #include "crop_efilter.h"
+#include "mock_picture.h"
+#include "mock_producer_surface.h"
 
 using namespace testing::ext;
 using ::testing::_;
@@ -197,6 +199,116 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_006, TestSize.Level1)
 
     dataInfo.dataType_ = static_cast<DataType>(100);
     EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::ERR_UNSUPPORTED_DATA_TYPE);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputPicture_001, TestSize.Level1)
+{
+    ErrorCode result = imageEffect_->SetOutputPicture(nullptr);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputPicture_002, TestSize.Level1)
+{
+    std::shared_ptr<Picture> picture = std::make_shared<MockPicture>();
+    ErrorCode result = imageEffect_->SetOutputPicture(picture.get());
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetInputPicture_001, TestSize.Level1)
+{
+    ErrorCode result = imageEffect_->SetInputPicture(nullptr);
+    ASSERT_NE(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetInputPicture_002, TestSize.Level1)
+{
+    std::shared_ptr<Picture> picture = std::make_shared<MockPicture>();
+    ErrorCode result = imageEffect_->SetInputPicture(picture.get());
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetExtraInfo_001, TestSize.Level1)
+{
+    ErrorCode result = imageEffect_->SetExtraInfo(nullptr);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputSurfaceBuffer_001, TestSize.Level1)
+{
+    ErrorCode result = imageEffect_->SetOutputSurfaceBuffer(nullptr);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputSurfaceBuffer_002, TestSize.Level1)
+{
+    sptr<SurfaceBuffer> surfaceBuffer;
+    MockProducerSurface::AllocDmaMemory(surfaceBuffer);
+    ErrorCode result = imageEffect_->SetOutputSurfaceBuffer(surfaceBuffer);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    MockProducerSurface::ReleaseDmaBuffer(surfaceBuffer);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetInputSurfaceBuffer_001, TestSize.Level1)
+{
+    ErrorCode result = imageEffect_->SetInputSurfaceBuffer(nullptr);
+    ASSERT_NE(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetInputSurfaceBuffer_002, TestSize.Level1)
+{
+    sptr<SurfaceBuffer> surfaceBuffer;
+    MockProducerSurface::AllocDmaMemory(surfaceBuffer);
+    ErrorCode result = imageEffect_->SetInputSurfaceBuffer(surfaceBuffer);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    MockProducerSurface::ReleaseDmaBuffer(surfaceBuffer);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputSurface_001, TestSize.Level1)
+{
+    sptr<Surface> surface = nullptr;
+    ErrorCode result = imageEffect_->SetOutputSurface(surface);
+    ASSERT_NE(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputPixelMap_001, TestSize.Level1)
+{
+    ErrorCode result = imageEffect_->SetOutputPixelMap(nullptr);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetInputPixelMap_001, TestSize.Level1)
+{
+    ErrorCode result = imageEffect_->SetInputPixelMap(nullptr);
+    ASSERT_NE(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutNativeWindow_001, TestSize.Level1)
+{
+    ErrorCode result = imageEffect_->SetOutNativeWindow(nullptr);
+    ASSERT_NE(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutNativeWindow_002, TestSize.Level1)
+{
+    OHNativeWindow *nativeWindow = new OHNativeWindow();
+    nativeWindow->surface = nullptr;
+    ErrorCode result = imageEffect_->SetOutNativeWindow(nativeWindow);
+    ASSERT_NE(result, ErrorCode::SUCCESS);
+    delete nativeWindow;
+    nativeWindow = nullptr;
+}
+
+HWTEST_F(ImageEffectInnerUnittest, ReplaceEFilter_001, TestSize.Level1)
+{
+    std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
+    imageEffect_->AddEFilter(efilter);
+    std::shared_ptr<EFilter> efilter2 = EFilterFactory::Instance()->Create(CONTRAST_EFILTER);
+
+    ErrorCode result = imageEffect_->ReplaceEFilter(efilter2, -1);
+    ASSERT_NE(result, ErrorCode::SUCCESS);
+
+    result = imageEffect_->ReplaceEFilter(efilter2, 0);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 } // namespace Effect
 } // namespace Media
