@@ -45,6 +45,8 @@ public:
     std::unordered_set<EffectColorSpace> filtersSupportedColorSpace_;
 
     IMAGE_EFFECT_EXPORT std::shared_ptr<ExifMetadata> GetExifMetadata();
+
+    std::shared_ptr<ExifMetadata> exifMetadata_ = nullptr;
 };
 } // namespace Effect
 } // namespace Media

@@ -42,7 +42,9 @@ std::shared_ptr<ExifMetadata> EffectContext::GetExifMetadata()
         "EffectContext::GetExifMetadata: renderStrategy_ is null");
 
     EffectBuffer *src = renderStrategy_->GetInput();
-    CHECK_AND_RETURN_RET_LOG(src != nullptr, nullptr, "EffectContext::GetExifMetadata: src is null");
+    if (src == nullptr) {
+        return exifMetadata_;
+    }
 
     std::shared_ptr<ExtraInfo> &extraInfo = src->extraInfo_;
     CHECK_AND_RETURN_RET_LOG(extraInfo != nullptr, nullptr, "EffectContext::GetExifMetadata: extraInfo is null");

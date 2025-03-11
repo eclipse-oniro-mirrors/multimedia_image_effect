@@ -19,7 +19,6 @@
 
 #include "effect_log.h"
 #include "effect_buffer.h"
-#include "image_source.h"
 #include "uri.h"
 #include "string_helper.h"
 #include "memcpy_helper.h"
@@ -815,6 +814,17 @@ ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, cons
         buffer->bufferInfo_->height_, memoryData->memoryInfo.bufferInfo.rowStride_ / RGBA_BYTES_PER_PIXEL);
 
     return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType, isUpdateExif);
+}
+
+std::shared_ptr<ImageSource> CommonUtils::GetImageSourceFromPath(const std::string path)
+{
+    std::shared_ptr<ImageSource> imageSource;
+    uint32_t errorCode = 0;
+    SourceOptions opts;
+    imageSource = ImageSource::CreateImageSource(path, opts, errorCode);
+    CHECK_AND_RETURN_RET_LOG(imageSource != nullptr, imageSource,
+        "ImageSource::CreateImageSource fail! path=%{public}s errorCode=%{public}d", path.c_str(), errorCode);
+    return imageSource;
 }
 } // namespace Effect
 } // namespace Media

@@ -31,6 +31,7 @@
 #include "image_effect_marco_define.h"
 #include "effect_json_helper.h"
 #include "picture.h"
+#include "image_source.h"
 
 namespace OHOS {
 namespace Media {
@@ -60,6 +61,8 @@ public:
     static void UpdateImageExifInfo(PixelMap *pixelMap);
     static void UpdateImageExifInfo(Picture *picture);
     static ErrorCode ParsePicture(Picture *picture, std::shared_ptr<EffectBuffer> &effectBuffer);
+
+    static std::shared_ptr<ImageSource> GetImageSourceFromPath(std::string path);
 
     template <class ValueType> static ErrorCode ParseAny(Plugin::Any any, ValueType &value)
     {
