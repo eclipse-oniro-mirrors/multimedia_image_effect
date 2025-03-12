@@ -561,6 +561,7 @@ ImageEffect_ErrorCode OH_EffectBufferInfo_Release(OH_EffectBufferInfo *info)
 EFFECT_EXPORT
 OH_EffectFilter *OH_EffectFilter_Create(const char *name)
 {
+    std::unique_lock<std::mutex> lock(filterMutex_);
     CHECK_AND_RETURN_RET_LOG(name != nullptr, nullptr, "FilterCreate: input parameter name is null!");
     CHECK_AND_RETURN_RET_LOG(strlen(name) < MAX_CHAR_LEN, nullptr,
         "FilterCreate: the length of input parameter name is too long! len = %{public}zu", strlen(name));
@@ -645,6 +646,7 @@ EFFECT_EXPORT
 ImageEffect_ErrorCode OH_EffectFilter_Register(const OH_EffectFilterInfo *info,
     const ImageEffect_FilterDelegate *delegate)
 {
+    std::unique_lock<std::mutex> lock(filterMutex_);
     CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "RegisterFilter: input parameter info is null!");
     CHECK_AND_RETURN_RET_LOG(delegate != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
