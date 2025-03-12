@@ -34,10 +34,10 @@ void MemcpyHelper::CopyData(CopyInfo &src, CopyInfo &dst)
 
     BufferInfo &srcInfo = src.bufferInfo;
     BufferInfo &dstInfo = dst.bufferInfo;
-    EFFECT_LOGD("CopyData: srcAddr=%{public}p, srcH=%{public}d, srcFormat=%{public}d, srcStride=%{public}d, "
-        "srcLen=%{public}d, dstAddr=%{public}p, dstH=%{public}d, dstFormat=%{public}d, dstStride=%{public}d, "
-        "dstLen=%{public}d", src.data, srcInfo.height_, srcInfo.formatType_, srcInfo.rowStride_, srcInfo.len_,
-        dst.data, dstInfo.height_, dstInfo.formatType_, dstInfo.rowStride_, dstInfo.len_);
+    EFFECT_LOGD("CopyData: srcH=%{public}d, srcFormat=%{public}d, srcStride=%{public}d, "
+        "srcLen=%{public}d, dstH=%{public}d, dstFormat=%{public}d, dstStride=%{public}d, "
+        "dstLen=%{public}d", srcInfo.height_, srcInfo.formatType_, srcInfo.rowStride_, srcInfo.len_,
+        dstInfo.height_, dstInfo.formatType_, dstInfo.rowStride_, dstInfo.len_);
     uint32_t srcRowStride = srcInfo.rowStride_;
     uint32_t dstRowStride = dstInfo.rowStride_;
     uint32_t srcBufferLen = srcInfo.len_;

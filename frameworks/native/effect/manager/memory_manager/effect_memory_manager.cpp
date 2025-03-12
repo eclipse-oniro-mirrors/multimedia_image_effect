@@ -106,9 +106,9 @@ MemoryData *EffectMemoryManager::AllocMemory(void *srcAddr, MemoryInfo &allocMem
         if (bufferInfo.width_ == allocBufInfo.width_ && bufferInfo.height_ == allocBufInfo.height_ &&
             (allocMemInfo.bufferType == BufferType::DEFAULT || allocMemInfo.bufferType == memInfo.bufferType) &&
             bufferInfo.formatType_ == allocBufInfo.formatType_ && bufferInfo.colorSpace_ == allocBufInfo.colorSpace_) {
-            EFFECT_LOGD("reuse memory. width=%{public}d, height=%{public}d, addr=%{public}p, format=%{public}d, "
+            EFFECT_LOGD("reuse memory. width=%{public}d, height=%{public}d, format=%{public}d, "
                 "bufferType=%{public}d, allocBufType=%{public}d", bufferInfo.width_, bufferInfo.height_,
-                memory->memoryData_->data, bufferInfo.formatType_, memInfo.bufferType, allocMemInfo.bufferType);
+                bufferInfo.formatType_, memInfo.bufferType, allocMemInfo.bufferType);
             return memory->memoryData_.get();
         }
     }
@@ -136,7 +136,7 @@ void EffectMemoryManager::AddMemory(std::shared_ptr<Memory> &memory)
     if (std::find(memorys_.begin(), memorys_.end(), memory) == memorys_.end()) {
         memorys_.emplace_back(memory);
     } else {
-        EFFECT_LOGW("memory is already add! memory=%{public}p", memory.get());
+        EFFECT_LOGW("memory is already add!");
     }
 }
 
@@ -148,8 +148,8 @@ std::shared_ptr<Memory> EffectMemoryManager::GetAllocMemoryByAddr(void *addr)
         }
 
         if (memory->memoryData_->data == addr) {
-            EFFECT_LOGD("addr is find! addr=%{public}p, bufferType=%{public}d",
-                addr, memory->memoryData_->memoryInfo.bufferType);
+            EFFECT_LOGD("addr is find! bufferType=%{public}d",
+                memory->memoryData_->memoryInfo.bufferType);
             return memory;
         }
     }
