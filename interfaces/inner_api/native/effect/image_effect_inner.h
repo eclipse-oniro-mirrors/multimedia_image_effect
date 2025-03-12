@@ -140,6 +140,7 @@ private:
         int64_t timestamp, bool isNeedRender);
     void FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, int64_t timestamp, bool isNeedRender);
 
+    void UpdateConsumedrBuffersNumber();
     ErrorCode GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat pixelFormat);
     ErrorCode ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
         std::shared_ptr<EffectBuffer> dstEffectBuffer);
@@ -147,6 +148,7 @@ private:
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
     volatile int32_t imageEffectFlag_ = 0;
+    bool setConsumerBufferSize_ = false;
 
     GraphicTransformType toProducerTransform_ = GRAPHIC_ROTATE_BUTT;
 

@@ -1061,6 +1061,7 @@ bool ImageEffect::OnBufferAvailableWithCPU(sptr<SurfaceBuffer>& inBuffer, sptr<S
 
     bool isSrcHebcData = IsSurfaceBufferHebc(inBuffer);
     CHECK_AND_RETURN_RET_LOG(impl_ != nullptr, true, "OnBufferAvailableToProcess: impl is nullptr.");
+    UpdateConsumedrBuffersNumber();
     bool isNeedRender = !isSrcHebcData && impl_->effectState_ == EffectState::RUNNING;
 
     if (isNeedRender) {
@@ -1339,6 +1340,30 @@ ErrorCode ImageEffect::SetOutputPicture(Picture *picture)
 
     return ErrorCode::SUCCESS;
 }
+
+void ImageEffect::UpdateConsumedrBuffersNumber()
+{
+    if (setConsumerBufferSize_) {
+        return;
+    }
+
+    if (!toProducerSurface_ || !fromProducerSurface_) {
+        EFFECT_LOGE("UpdateConsumedrBuffersNumber: toProducerSurface_ or fromProducerSurface_ is null!");
+        return;
+    }
+
+    auto errorCode = toProducerSurface_->SetQueueSize(fromProducerSurface_->GetQueueSize());
+    if (errorCode != 0) {
+        EFFECT_LOGE("UpdateConsumedrBuffersNumber: SetQueueSize failed! code: %{public}d", errorCode);
+        return;
+    }
+
+    EFFECT_LOGI("UpdateConsumedrBuffersNumber: SetQueueSize success! ConsumedrBuffersNumber: %{public}d",
+        fromProducerSurface_->GetQueueSize());
+    setConsumerBufferSize_ = true;
+    return;
+}
+
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
