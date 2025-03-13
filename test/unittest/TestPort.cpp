@@ -102,6 +102,27 @@ HWTEST_F(TestPort, PullData001, TestSize.Level1) {
 
     emptyInPort.Negotiate(capabilityShared, contextShared);
 }
+
+HWTEST_F(TestPort, Port_001, TestSize.Level1) {
+    InfoTransfer *filterPtr = nullptr;
+    Port *inPort = new Inport(filterPtr);
+    std::shared_ptr<Port> res = inPort->Port::GetPeerPort();
+    Expect_EQ(res, nullptr);
+
+    WorkMode mode = inPort->Port::GetWorkMode();
+    Expect_EQ(mode, WorkMode::PUSH);
+
+    ErrorCode result = inPort->Disconnect():
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+
+    std::shared_ptr<Port> port = nullptr;
+    result = inPort->Connect(port);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+
+    delete inPort;
+    inPort = nullptr;
+}
+
 }
 }
 }
