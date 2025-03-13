@@ -364,7 +364,7 @@ HWTEST_F(ImageEffectInnerUnittest, SetInputPath_001, TestSize.Level1)
     ErrorCode result = imageEffect_->SetInputPath(g_notJpgPath);
     EXPECT_NE(result, ErrorCode::SUCCESS);
 
-    result = imageEffect_->SetInputPth(g_jpgPath);
+    result = imageEffect_->SetInputPath(g_jpgPath);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
 }
 
@@ -380,7 +380,7 @@ HWTEST_F(ImageEffectInnerUnittest, SetOutputPath_001, TestSize.Level1)
     result = imageEffect_->SetOutputPath(g_notJpgPath);
     EXPECT_NE(result, ErrorCode::SUCCESS);
 
-    result = imageEffect_->SetOutputPth(g_jpgPath);
+    result = imageEffect_->SetOutputPath(g_jpgPath);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
 }
 
