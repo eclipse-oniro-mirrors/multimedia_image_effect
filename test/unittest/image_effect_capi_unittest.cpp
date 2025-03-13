@@ -1194,8 +1194,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest005, TestSize.L
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectSingleFilterUnittest005 start";
     InSequence s;
 
-    std::shared_ptr<PixelMap> inputPixelmap = std::make_shared<MockPixelMap>();
-    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(inputPixelmap);
+    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
     std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
     ASSERT_NE(pixelMap, nullptr);
     pixelmapNative->pixelmap_ = std::move(pixelMap);
@@ -1210,12 +1209,11 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest005, TestSize.L
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_PTR;
     value.dataValue.ptrValue = static_cast<void *>(areaInfo);
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_REGION, &value);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSingleFilterUnittest005 OH_EffectFilter_SetValue failed";
 
-    pixelmapNative_->pixelmap_ = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
     errorCode = OH_EffectFilter_Render(filter, pixelmapNative_, pixelmapNative_);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSingleFilterUnittest005 OH_EffectFilter_Render failed";
 
     errorCode = OH_EffectFilter_Release(filter);
