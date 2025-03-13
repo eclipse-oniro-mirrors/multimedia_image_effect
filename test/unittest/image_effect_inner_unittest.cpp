@@ -203,12 +203,14 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_006, TestSize.Level1)
 
 HWTEST_F(ImageEffectInnerUnittest, SetOutputPicture_001, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     ErrorCode result = imageEffect_->SetOutputPicture(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, SetOutputPicture_002, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     std::shared_ptr<Picture> picture = std::make_shared<MockPicture>();
     ErrorCode result = imageEffect_->SetOutputPicture(picture.get());
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -216,12 +218,14 @@ HWTEST_F(ImageEffectInnerUnittest, SetOutputPicture_002, TestSize.Level1)
 
 HWTEST_F(ImageEffectInnerUnittest, SetInputPicture_001, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     ErrorCode result = imageEffect_->SetInputPicture(nullptr);
     ASSERT_NE(result, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, SetInputPicture_002, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     std::shared_ptr<Picture> picture = std::make_shared<MockPicture>();
     ErrorCode result = imageEffect_->SetInputPicture(picture.get());
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -229,18 +233,21 @@ HWTEST_F(ImageEffectInnerUnittest, SetInputPicture_002, TestSize.Level1)
 
 HWTEST_F(ImageEffectInnerUnittest, SetExtraInfo_001, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     ErrorCode result = imageEffect_->SetExtraInfo(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, SetOutputSurfaceBuffer_001, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     ErrorCode result = imageEffect_->SetOutputSurfaceBuffer(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, SetOutputSurfaceBuffer_002, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     sptr<SurfaceBuffer> surfaceBuffer;
     MockProducerSurface::AllocDmaMemory(surfaceBuffer);
     ErrorCode result = imageEffect_->SetOutputSurfaceBuffer(surfaceBuffer);
@@ -250,12 +257,14 @@ HWTEST_F(ImageEffectInnerUnittest, SetOutputSurfaceBuffer_002, TestSize.Level1)
 
 HWTEST_F(ImageEffectInnerUnittest, SetInputSurfaceBuffer_001, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     ErrorCode result = imageEffect_->SetInputSurfaceBuffer(nullptr);
     ASSERT_NE(result, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, SetInputSurfaceBuffer_002, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     sptr<SurfaceBuffer> surfaceBuffer;
     MockProducerSurface::AllocDmaMemory(surfaceBuffer);
     ErrorCode result = imageEffect_->SetInputSurfaceBuffer(surfaceBuffer);
@@ -265,6 +274,7 @@ HWTEST_F(ImageEffectInnerUnittest, SetInputSurfaceBuffer_002, TestSize.Level1)
 
 HWTEST_F(ImageEffectInnerUnittest, SetOutputSurface_001, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     sptr<Surface> surface = nullptr;
     ErrorCode result = imageEffect_->SetOutputSurface(surface);
     ASSERT_NE(result, ErrorCode::SUCCESS);
@@ -272,24 +282,28 @@ HWTEST_F(ImageEffectInnerUnittest, SetOutputSurface_001, TestSize.Level1)
 
 HWTEST_F(ImageEffectInnerUnittest, SetOutputPixelMap_001, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     ErrorCode result = imageEffect_->SetOutputPixelMap(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, SetInputPixelMap_001, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     ErrorCode result = imageEffect_->SetInputPixelMap(nullptr);
     ASSERT_NE(result, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, SetOutNativeWindow_001, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     ErrorCode result = imageEffect_->SetOutNativeWindow(nullptr);
     ASSERT_NE(result, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, SetOutNativeWindow_002, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     OHNativeWindow *nativeWindow = new OHNativeWindow();
     nativeWindow->surface = nullptr;
     ErrorCode result = imageEffect_->SetOutNativeWindow(nativeWindow);
@@ -300,6 +314,7 @@ HWTEST_F(ImageEffectInnerUnittest, SetOutNativeWindow_002, TestSize.Level1)
 
 HWTEST_F(ImageEffectInnerUnittest, ReplaceEFilter_001, TestSize.Level1)
 {
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
     imageEffect_->AddEFilter(efilter);
     std::shared_ptr<EFilter> efilter2 = EFilterFactory::Instance()->Create(CONTRAST_EFILTER);
@@ -308,6 +323,72 @@ HWTEST_F(ImageEffectInnerUnittest, ReplaceEFilter_001, TestSize.Level1)
     ASSERT_NE(result, ErrorCode::SUCCESS);
 
     result = imageEffect_->ReplaceEFilter(efilter2, 0);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetInputUri_001, TestSize.Level1)
+{
+    std::string g_jpgUri = std::string("file:///data/test/resource/image_effect_1k_test1.jpg");
+    std::string g_notJpgUri = std::string("file:///data/test/resource/image_effect_1k_test1.png");
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+
+    ErrorCode result = imageEffect_->SetInputUri(g_notJpgUri);
+    EXPECT_NE(result, ErrorCode::SUCCESS);
+
+    result = imageEffect_->SetInputUri(g_jpgUri);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputUri_001, TestSize.Level1)
+{
+    std::string g_jpgUri = std::string("file:///data/test/resource/image_effect_1k_test1.jpg");
+    std::string g_notJpgUri = std::string("file:///data/test/resource/image_effect_1k_test1.png");
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+
+    ErrorCode result = imageEffect_->SetOutputUri("");
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+
+    result = imageEffect_->SetOutputUri(g_notJpgUri);
+    EXPECT_NE(result, ErrorCode::SUCCESS);
+
+    result = imageEffect_->SetOutputUri(g_jpgUri);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetInputPath_001, TestSize.Level1)
+{
+    std::string g_jpgPath = std::string("/data/test/resource/image_effect_1k_test1.jpg");
+    std::string g_notJpgPath = std::string("/data/test/resource/image_effect_1k_test1.png");
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+
+    ErrorCode result = imageEffect_->SetInputPath(g_notJpgPath);
+    EXPECT_NE(result, ErrorCode::SUCCESS);
+
+    result = imageEffect_->SetInputPth(g_jpgPath);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputPath_001, TestSize.Level1)
+{
+    std::string g_jpgPath = std::string("/data/test/resource/image_effect_1k_test1.jpg");
+    std::string g_notJpgPath = std::string("/data/test/resource/image_effect_1k_test1.png");
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+
+    ErrorCode result = imageEffect_->SetOutputPath("");
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+
+    result = imageEffect_->SetOutputPath(g_notJpgPath);
+    EXPECT_NE(result, ErrorCode::SUCCESS);
+
+    result = imageEffect_->SetOutputPth(g_jpgPath);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, Save_001, TestSize.Level1)
+{
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+    EffectJsonPtr jsonValues = EffectJsonHelper::CreateObject();
+    ErrorCode result = imageEffect_->Save(jsonValues);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 } // namespace Effect

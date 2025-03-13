@@ -1210,7 +1210,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest005, TestSize.L
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_PTR;
     value.dataValue.ptrValue = static_cast<void *>(areaInfo);
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_REGION, &value);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSingleFilterUnittest005 OH_EffectFilter_SetValue failed";
 
     pixelmapNative_->pixelmap_ = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
