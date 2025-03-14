@@ -29,7 +29,7 @@ RenderMesh::~RenderMesh()
 {
     if (vboIds_ != nullptr) {
         glDeleteBuffers(RENDERMESH_BUFFER_SIZE, vboIds_);
-        delete vboIds_;
+        delete []vboIds_;
         vboIds_ = nullptr;
     }
     if (vaoId_) {
