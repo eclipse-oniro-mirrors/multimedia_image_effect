@@ -50,6 +50,8 @@ const std::unordered_map<PixelFormat, IEffectFormat> CommonUtils::pixelFmtToEffe
     { PixelFormat::NV21, IEffectFormat::YUVNV21 },
     { PixelFormat::NV12, IEffectFormat::YUVNV12 },
     { PixelFormat::RGBA_1010102, IEffectFormat::RGBA_1010102 },
+    { PixelFormat::YCBCR_P010, IEffectFormat::YCBCR_P010 },
+    { PixelFormat::YCRCB_P010, IEffectFormat::YCRCB_P010 },
 };
 
 const std::unordered_map<GraphicPixelFormat, IEffectFormat> CommonUtils::surfaceBufferFmtToEffectFmt_ = {
