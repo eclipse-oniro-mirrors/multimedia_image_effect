@@ -718,7 +718,8 @@ ErrorCode ImageEffect::GetImageInfoFromPicture(uint32_t &width, uint32_t &height
     std::shared_ptr<ExifMetadata> &exifMetadata) const
 {
     std::shared_ptr<PixelMap> pixelMap = inDateInfo_.picture_->GetMainPixel();
-    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_CREATE_IMAGESOURCE_FAIL, "GetMainPixel fail!");
+    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_CREATE_PIXELMAP_FAIL,
+        "GetImageInfoFromPicture pixelMap is nullptr!");
     width = static_cast<uint32_t>(pixelMap->GetWidth());
     height = static_cast<uint32_t>(pixelMap->GetHeight());
     pixelFormat = pixelMap->GetPixelFormat();
