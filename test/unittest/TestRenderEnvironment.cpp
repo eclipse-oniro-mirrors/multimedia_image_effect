@@ -305,7 +305,7 @@ HWTEST_F(TestRenderEnvironment, DrawOesTexture2DFromTexture_001, TestSize.Level1
     GLuint outputTex = 0;
     renderEnvironment->DrawOesTexture2DFromTexture(inputTexptr, outputTex, WIDTH, HEIGHT, IEffectFormat::RGBA8888);
 
-    GLunit outputTex = 1;
+    outputTex = 1;
     ASSERT_NO_THROW(renderEnvironment->DrawOesTexture2DFromTexture(inputTexptr,
         outputTex, WIDTH, HEIGHT, IEffectFormat::RGBA8888));
 
