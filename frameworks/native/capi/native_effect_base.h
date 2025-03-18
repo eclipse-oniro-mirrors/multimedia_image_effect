@@ -42,7 +42,7 @@ struct OH_ImageEffect {
     ~OH_ImageEffect()
     {
         if (saveJson != nullptr) {
-            delete saveJson;
+            delete[] saveJson;
             saveJson = nullptr;
         }
         for (const auto &filter : filters_) {
