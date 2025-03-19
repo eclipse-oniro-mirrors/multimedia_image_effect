@@ -391,6 +391,29 @@ HWTEST_F(ImageEffectInnerUnittest, Save_001, TestSize.Level1)
     ErrorCode result = imageEffect_->Save(jsonValues);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
+
+HWTEST_F(ImageEffectInnerUnittest, CacheBuffer_001, TestSize.Level1)
+{
+    std::shared_ptr<EffectContext> effectContext = std::make_shared<EffectContext>();
+    std::shared_ptr<EffectBuffer> buffer = std::make_shared<EffectBuffer>(
+        effectBuffer_->bufferInfo_, effectBuffer_->buffer_, effectBuffer_->extraInfo_);
+    std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
+
+    ErrorCode result = efilter->StartCache();
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+
+    result = efilter->CacheBuffer(buffer.get(), effectContext);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+
+    result = efilter->GetFilterCache(buffer, effectContext);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+
+    result = efilter->CancelCache();
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+
+    result = efilter->ReleaseCache();
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+}
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS

@@ -17,6 +17,8 @@
 
 #include "render_environment.h"
 #include "effect_context.h"
+#include "graphic/render_frame_buffer.h"
+#include "mock_producer_surface.h"
 
 using namespace testing::ext;
 
@@ -266,6 +268,34 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment008, TestSize.Level1) {
     EXPECT_NE(temp, 0);
     delete[] bitmap;
     bitmap = nullptr;
+}
+
+HWTEST_F(TestRenderEnvironment, RenderFrameBuffer_001, TestSize.Level1) {
+    RenderContext *context = renderEnvironment->GetContext();
+    ResourceCache *ceCache = renderEnvironment->GetResourceCache();
+    RenderFrameBuffer *renderFrameBuffer = new RenderFrameBuffer(context, ceCache, WIDTH, HEIGHT);
+    EXPECT_EQ(glGetError(), GL_NO_ERROR);
+
+    renderFrameBuffer->Resize(WIDTH/2, HEIGHT);
+    renderFrameBuffer->Resize(WIDTH, HEIGHT);
+    EXPECT_EQ(glGetError(), GL_NO_ERROR);
+
+    renderFrameBuffer->Bind();
+    renderFrameBuffer->UnBind();
+
+    RenderTexturePtr ptr = renderFrameBuffer->Texture();
+    EXPECT_NE(ptr, nullptr);
+
+    delete renderFrameBuffer;
+    renderFrameBuffer = nullptr;
+}
+
+HWTEST_F(TestRenderEnvironment, DrawFlipTex_001, TestSize.Level1) {
+    RenderTexturePtr inputTexptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
+    RenderTexturePtr outputTexptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
+    EXPECT_NE(inputTexptr, nullptr);
+    EXPECT_NE(outputTexptr, nullptr);
+    ASSERT_NO_THROW(renderEnvironment->DrawFlipTex(inputTexptr, outputTexptr));
 }
 }
 }
