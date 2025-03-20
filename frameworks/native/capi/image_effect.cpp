@@ -593,6 +593,9 @@ ImageEffect_ErrorCode OH_ImageEffect_Save(OH_ImageEffect *imageEffect, char **in
     std::string infoStr = effectInfo->ToString();
 
     char *infoChar = new char[infoStr.length() + 1];
+    if (imageEffect->saveJson != nullptr) {
+        delete[] imageEffect->saveJson;
+    }
     imageEffect->saveJson = infoChar;
     auto ret = strcpy_s(infoChar, infoStr.length() + 1, infoStr.c_str());
     if (ret != 0) {
