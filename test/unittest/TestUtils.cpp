@@ -346,7 +346,7 @@ HWTEST_F(TestUtils, FormatHelper002, TestSize.Level1)
     FormatConverterInfo rgbaConverterInfo2 = CreateConverterInfo(IEffectFormat::RGBA8888, rgbaBuffer2.get(),
          RGBA_BYTES_PER_PIXEL * WIDTH);
 
-    res = FormatHelper::ConvertFormat(rgbaConverterInfo2, nv21ConverterInfo);
+    res = FormatHelper::ConvertFormat(rgbaConverterInfo2, nv12ConverterInfo);
     ASSERT_EQ(res, ErrorCode::SUCCESS);
 }
 
@@ -392,9 +392,9 @@ HWTEST_F(TestUtils, MemcpyHelperCopyData001, TestSize.Level1)
     void *add = nullptr;
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     std::shared_ptr<EffectBuffer> dst2 = std::make_unique<EffectBuffer>(bufferInfo, add, extraInfo);
-    CopyInfo info {
-        .bufferInfo = *dts2->bufferInfo_;
-        .data = static_cast<uint8_t>(dst2->buffer_);
+    CopyInfo info = {
+        .bufferInfo = *dst2->bufferInfo_,
+        .data = static_cast<uint8_t>(dst2->buffer_),
     };
     MemcpyHelper::CopyData(info, nullptr);
     MemcpyHelper::CopyData(info, dst2.get());
@@ -455,8 +455,8 @@ HWTEST_F(TestUtils, ReportHiSysEvent_001, TestSize.Level1)
 {
     const EventInfo eventInfo = {
         .errorInfo = {
-	    .errorCode = 0;
-	    .errorMsg = "test";
+	    .errorCode = 0,
+	    .errorMsg = "test",
 	}
     };
     EventReport::ReportHiSysEvent("not_find_test", eventInfo);
@@ -464,15 +464,15 @@ HWTEST_F(TestUtils, ReportHiSysEvent_001, TestSize.Level1)
 
 HWTEST_F(TestUtils, CopyAuxiliaryBufferInfos_001, TestSize.Level1)
 {
-    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
-    void *add = nullptr;
-    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
-    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferInfo, add, extraInfo);
-    std::shared_ptr<EffectBuffer> dst = std::make_unique<EffectBuffer>(bufferInfo, add, extraInfo);
+    std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
+    void *addr = nullptr;
+    std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
+    std::shared_ptr<EffectBuffer> dst = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
     CommonUtils::CopyAuxiliaryBufferInfos(src.get(), dst.get());
     EXPECT_EQ(src->auxiliaryBufferInfos, nullptr);
 
-    src->auxiliaryBufferInfos = std::make_shared<std::unorderd_map<EffectPixelmapType, std::shared_ptr<BufferIno>>>();
+    src->auxiliaryBufferInfos = std::make_shared<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
     CommonUtils::CopyAuxiliaryBufferInfos(src.get(), dst.get());
     EXPECT_NE(src->auxiliaryBufferInfos, nullptr);
 }
@@ -492,10 +492,10 @@ HWTEST_F(TestUtils, MetaData_001, TestSize.Level1)
 
 HWTEST_F(TestUtils, ParsePixelMapData_001, TestSize.Level1)
 {
-    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
-    void *add = nullptr;
-    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
-    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferInfo, add, extraInfo);
+    std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
+    void *addr = nullptr;
+    std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
 
     PixelMap pixelMap;
     ErrorCode res = CommonUtils::ParsePixelMapData(&pixelMap, src);

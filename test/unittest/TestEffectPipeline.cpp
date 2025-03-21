@@ -190,11 +190,11 @@ HWTEST_F(TestEffectPipeline, Filter_001, TestSize.Level1)
     ErrorCode result = pipeline->AddFilter(nullptr);
     EXPECT_NE(result, ErrorCode::SUCCESS);
 
-    std::vector<Filter *> filterIn;
-    result = pipeline->AddFilter(filterIn);
+    std::vector<Filter *> filtersIn;
+    result = pipeline->AddFilters(filtersIn);
     EXPECT_NE(result, ErrorCode::SUCCESS);
 
-    result = pipline->RemoveFilterChain(nullptr);
+    result = pipeline->RemoveFilterChain(nullptr);
     EXPECT_NE(result, ErrorCode::SUCCESS);
 }
 
