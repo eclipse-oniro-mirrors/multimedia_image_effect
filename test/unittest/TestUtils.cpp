@@ -342,7 +342,8 @@ HWTEST_F(TestUtils, FormatHelper002, TestSize.Level1)
     res = FormatHelper::ConvertFormat(nv12ConverterInfo, nv21ConverterInfo);
     ASSERT_NE(res, ErrorCode::SUCCESS);
 
-    std::shared_ptr<void> rgbaBuffer2 = AllocBuffer(FormatHelper::CalculateSize(WIDTH / 2, HEIGHT, IEffectFormat::RGBA8888));
+    std::shared_ptr<void> rgbaBuffer2 = AllocBuffer(FormatHelper::CalculateSize(WIDTH / 2,
+        HEIGHT, IEffectFormat::RGBA8888));
     FormatConverterInfo rgbaConverterInfo2 = CreateConverterInfo(IEffectFormat::RGBA8888, rgbaBuffer2.get(),
          RGBA_BYTES_PER_PIXEL * WIDTH);
 
@@ -394,7 +395,7 @@ HWTEST_F(TestUtils, MemcpyHelperCopyData001, TestSize.Level1)
     std::shared_ptr<EffectBuffer> dst2 = std::make_unique<EffectBuffer>(bufferInfo, add, extraInfo);
     CopyInfo info = {
         .bufferInfo = *dst2->bufferInfo_,
-        .data = static_cast<uint8_t>(dst2->buffer_),
+        .data = static_cast<uint8_t *>(dst2->buffer_),
     };
     MemcpyHelper::CopyData(info, nullptr);
     MemcpyHelper::CopyData(info, dst2.get());
@@ -443,7 +444,6 @@ HWTEST_F(TestUtils, NativeCommonUtilsGetSupportedFormats001, TestSize.Level1)
     ASSERT_EQ(result, 0);
 }
 
-
 HWTEST_F(TestUtils, NativeCommonUtilsConverStartResult001, TestSize.Level1)
 {
     ErrorCode errorCode = ErrorCode::ERR_ALLOC_MEMORY_FAIL;
@@ -479,7 +479,7 @@ HWTEST_F(TestUtils, CopyAuxiliaryBufferInfos_001, TestSize.Level1)
 
 HWTEST_F(TestUtils, MetaData_001, TestSize.Level1)
 {
-    spt<SurfaceBuffer> inBuffer;
+    spr<SurfaceBuffer> inBuffer;
     MockProducerSurface::AllocDmaMemory(inBuffer);
 
     CommonUtils::GetMetaData(inBuffer);
