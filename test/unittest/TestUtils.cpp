@@ -479,7 +479,7 @@ HWTEST_F(TestUtils, CopyAuxiliaryBufferInfos_001, TestSize.Level1)
 
 HWTEST_F(TestUtils, MetaData_001, TestSize.Level1)
 {
-    spr<SurfaceBuffer> inBuffer;
+    sptr<SurfaceBuffer> inBuffer;
     MockProducerSurface::AllocDmaMemory(inBuffer);
 
     CommonUtils::GetMetaData(inBuffer);
