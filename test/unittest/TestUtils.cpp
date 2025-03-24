@@ -22,6 +22,8 @@
 #include "format_helper.h"
 #include "native_effect_base.h"
 #include "memcpy_helper.h"
+#include "event_report.h"
+#include "mock_producer_surface.h"
 
 using namespace testing::ext;
 namespace {
@@ -339,6 +341,14 @@ HWTEST_F(TestUtils, FormatHelper002, TestSize.Level1)
 
     res = FormatHelper::ConvertFormat(nv12ConverterInfo, nv21ConverterInfo);
     ASSERT_NE(res, ErrorCode::SUCCESS);
+
+    std::shared_ptr<void> rgbaBuffer2 = AllocBuffer(FormatHelper::CalculateSize(WIDTH / 2,
+        HEIGHT, IEffectFormat::RGBA8888));
+    FormatConverterInfo rgbaConverterInfo2 = CreateConverterInfo(IEffectFormat::RGBA8888, rgbaBuffer2.get(),
+         RGBA_BYTES_PER_PIXEL * WIDTH);
+
+    res = FormatHelper::ConvertFormat(rgbaConverterInfo2, nv12ConverterInfo);
+    ASSERT_EQ(res, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(TestUtils, NativeCommonUtils001, TestSize.Level1) {
@@ -375,6 +385,20 @@ HWTEST_F(TestUtils, MemcpyHelperCopyData001, TestSize.Level1)
     dst = new MemoryData();
     MemcpyHelper::CopyData(src, dst);
     EXPECT_NE(src, dst);
+
+    MemcpyHelper::CopyData(src, src);
+    EXPECT_EQ(src, src);
+
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    void *add = nullptr;
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> dst2 = std::make_unique<EffectBuffer>(bufferInfo, add, extraInfo);
+    CopyInfo info = {
+        .bufferInfo = *dst2->bufferInfo_,
+        .data = static_cast<uint8_t *>(dst2->buffer_),
+    };
+    MemcpyHelper::CopyData(info, nullptr);
+    MemcpyHelper::CopyData(info, dst2.get());
 
     delete src;
     src = nullptr;
@@ -420,12 +444,22 @@ HWTEST_F(TestUtils, NativeCommonUtilsGetSupportedFormats001, TestSize.Level1)
     ASSERT_EQ(result, 0);
 }
 
-
 HWTEST_F(TestUtils, NativeCommonUtilsConverStartResult001, TestSize.Level1)
 {
     ErrorCode errorCode = ErrorCode::ERR_ALLOC_MEMORY_FAIL;
     ImageEffect_ErrorCode result = NativeCommonUtils::ConvertStartResult(errorCode);
     ASSERT_EQ(result, ImageEffect_ErrorCode::EFFECT_ALLOCATE_MEMORY_FAILED);
+}
+
+HWTEST_F(TestUtils, ReportHiSysEvent_001, TestSize.Level1)
+{
+    const EventInfo eventInfo = {
+        .errorInfo = {
+	    .errorCode = 0,
+	    .errorMsg = "test",
+	}
+    };
+    EventReport::ReportHiSysEvent("not_find_test", eventInfo);
 }
 }
 }

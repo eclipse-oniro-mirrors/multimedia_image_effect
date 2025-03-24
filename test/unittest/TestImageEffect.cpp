@@ -460,6 +460,8 @@ HWTEST_F(TestImageEffect, Surface001, TestSize.Level1)
 
     // contrast filter
     imageEffect_->ConsumerBufferAvailable();
+
+    imageEffect_->Stop();
     MockProducerSurface::ReleaseDmaBuffer(surfaceBuffer);
 }
 

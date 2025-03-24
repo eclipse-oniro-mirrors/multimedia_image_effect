@@ -176,6 +176,42 @@ HWTEST_F(TestEffectPipeline, InPortActivate001, TestSize.Level1)
     ErrorCode result = inPort->Activate(modes, outMode);
     ASSERT_EQ(result, ErrorCode::ERR_INVALID_PARAMETER_VALUE);
 }
+
+HWTEST_F(TestEffectPipeline, Start_001, TestSize.Level1)
+{
+    std::shared_ptr<PipelineCore> pipeline = std::make_shared<PipelineCore>();
+    ErrorCode result = pipeline->Start();
+    EXPECT_NE(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(TestEffectPipeline, Filter_001, TestSize.Level1)
+{
+    std::shared_ptr<PipelineCore> pipeline = std::make_shared<PipelineCore>();
+    ErrorCode result = pipeline->AddFilter(nullptr);
+    EXPECT_NE(result, ErrorCode::SUCCESS);
+
+    std::vector<Filter *> filtersIn;
+    result = pipeline->AddFilters(filtersIn);
+    EXPECT_NE(result, ErrorCode::SUCCESS);
+
+    result = pipeline->RemoveFilterChain(nullptr);
+    EXPECT_NE(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(TestEffectPipeline, Port_001, TestSize.Level1)
+{
+    std::shared_ptr<PipelineCore> pipeline = std::make_shared<PipelineCore>();
+    InfoTransfer *filterPtr1 = nullptr;
+    OutPort port1(filterPtr1);
+    auto outPort = std::make_shared<OutPort>(port1);
+
+    InfoTransfer *filterPtr2 = nullptr;
+    InPort port2(filterPtr2);
+    auto inPort = std::make_shared<InPort>(port2);
+
+    ErrorCode result = pipeline->LinkPorts(outPort, inPort);
+    EXPECT_NE(result, ErrorCode::SUCCESS);
+}
 }
 }
 }
