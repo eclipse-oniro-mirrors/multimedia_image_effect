@@ -429,11 +429,11 @@ HWTEST_F(ImageEffectInnerUnittest, GetImageInfo_001, TestSize.Level1)
     imageEffect_->inDateInfo_.dataType_ = DataType::UNKNOWN;
     ErrorCode result = imageEffect_->Render();
 
-    imageEffect_->inDateInfo_.dataType = DataType::TEX;
-    ErrorCode result = imageEffect_->Render();
+    imageEffect_->inDateInfo_.dataType_ = DataType::TEX;
+    result = imageEffect_->Render();
 
-    imageEffect_->inDateInfo_.dataType = DataType::NATIVE_WINDOW;
-    ErrorCode result = imageEffect_->Render();
+    imageEffect_->inDateInfo_.dataType_ = DataType::NATIVE_WINDOW;
+    result = imageEffect_->Render();
     EXPECT_NE(result, ErrorCode::SUCCESS);
 }
 
