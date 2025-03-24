@@ -424,20 +424,20 @@ HWTEST_F(ImageEffectInnerUnittest, GetImageInfo_001, TestSize.Level1)
 {
     std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
-    imageEffect_->AddFilter(efilter);
+    imageEffect_->AddEFilter(efilter);
 
-    imageEffect_->inDateInfo_.dataType = DataType::UNKNOWN;
-    ErrorCode result = Render();
-
-    imageEffect_->inDateInfo_.dataType = DataType::NATIVE_WINDOW;
-    ErrorCode result = Render();
+    imageEffect_->inDateInfo_.dataType_ = DataType::UNKNOWN;
+    ErrorCode result = imageEffect_->Render();
 
     imageEffect_->inDateInfo_.dataType = DataType::TEX;
-    ErrorCode result = Render();
+    ErrorCode result = imageEffect_->Render();
+
+    imageEffect_->inDateInfo_.dataType = DataType::NATIVE_WINDOW;
+    ErrorCode result = imageEffect_->Render();
     EXPECT_NE(result, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, GetExifMetaData_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, GetExifMetadata_001, TestSize.Level1)
 {
     std::shared_ptr<EffectContext> context = std::make_shared<EffectContext>();
     context->renderStrategy_ = std::make_shared<RenderStrategy>();
@@ -447,16 +447,17 @@ HWTEST_F(ImageEffectInnerUnittest, GetExifMetaData_001, TestSize.Level1)
         effectBuffer_->bufferInfo_, effectBuffer_->buffer_, effectBuffer_->extraInfo_);
     context->renderStrategy_->src_ = src;
     context->renderStrategy_->dst_ = dst;
-    std::shared_ptr<ExifMetaData> data = context->GetExifMetaData();
+    std::shared_ptr<ExifMetadata> data = context->GetExifMetadata();
 
     context->renderStrategy_->src_->extraInfo_->dataType = DataType::PICTURE;
-    data = context->GetExifMetaData();
+    data = context->GetExifMetadata();
     EXPECT_EQ(data, nullptr);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, ExternLoader_001, TestSize.Level1)
 {
     ExternLoader *instance = ExternLoader::Instance();
+    instance->isExtLoad_ = true;
     instance->LoadExtSo();
     EXPECT_NE(instance, nullptr);
 }
