@@ -23,6 +23,7 @@
 #include "crop_efilter.h"
 #include "mock_picture.h"
 #include "mock_producer_surface.h"
+#include "external_loader.h"
 
 using namespace testing::ext;
 using ::testing::_;
@@ -268,7 +269,11 @@ HWTEST_F(ImageEffectInnerUnittest, SetInputSurfaceBuffer_002, TestSize.Level1)
     sptr<SurfaceBuffer> surfaceBuffer;
     MockProducerSurface::AllocDmaMemory(surfaceBuffer);
     ErrorCode result = imageEffect_->SetInputSurfaceBuffer(surfaceBuffer);
-    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+
+    imageEffect_->needPreFlush_ = true;
+    result = imageEffect_->SetInputSurfaceBuffer(surfaceBuffer);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
     MockProducerSurface::ReleaseDmaBuffer(surfaceBuffer);
 }
 
@@ -413,6 +418,47 @@ HWTEST_F(ImageEffectInnerUnittest, CacheBuffer_001, TestSize.Level1)
 
     result = efilter->ReleaseCache();
     EXPECT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, GetImageInfo_001, TestSize.Level1)
+{
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+    std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
+    imageEffect_->AddFilter(efilter);
+
+    imageEffect_->inDateInfo_.dataType = DataType::UNKNOWN;
+    ErrorCode result = Render();
+
+    imageEffect_->inDateInfo_.dataType = DataType::NATIVE_WINDOW;
+    ErrorCode result = Render();
+
+    imageEffect_->inDateInfo_.dataType = DataType::TEX;
+    ErrorCode result = Render();
+    EXPECT_NE(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, GetExifMetaData_001, TestSize.Level1)
+{
+    std::shared_ptr<EffectContext> context = std::make_shared<EffectContext>();
+    context->renderStrategy_ = std::make_shared<RenderStrategy>();
+    std::shared_ptr<EffectBuffer> src = std::make_shared<EffectBuffer>(
+        effectBuffer_->bufferInfo_, effectBuffer_->buffer_, effectBuffer_->extraInfo_);
+    std::shared_ptr<EffectBuffer> dst = std::make_shared<EffectBuffer>(
+        effectBuffer_->bufferInfo_, effectBuffer_->buffer_, effectBuffer_->extraInfo_);
+    context->renderStrategy_->src_ = src;
+    context->renderStrategy_->dst_ = dst;
+    std::shared_ptr<ExifMetaData> data = context->GetExifMetaData();
+
+    context->renderStrategy_->src_->extraInfo_->dataType = DataType::PICTURE;
+    data = context->GetExifMetaData();
+    EXPECT_EQ(data, nullptr);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, ExternLoader_001, TestSize.Level1)
+{
+    ExternLoader *instance = ExternLoader::Instance();
+    instance->LoadExtSo();
+    EXPECT_NE(instance, nullptr);
 }
 } // namespace Effect
 } // namespace Media

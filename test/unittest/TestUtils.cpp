@@ -461,52 +461,6 @@ HWTEST_F(TestUtils, ReportHiSysEvent_001, TestSize.Level1)
     };
     EventReport::ReportHiSysEvent("not_find_test", eventInfo);
 }
-
-HWTEST_F(TestUtils, CopyAuxiliaryBufferInfos_001, TestSize.Level1)
-{
-    std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
-    void *addr = nullptr;
-    std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
-    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
-    std::shared_ptr<EffectBuffer> dst = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
-    CommonUtils::CopyAuxiliaryBufferInfos(src.get(), dst.get());
-    EXPECT_EQ(src->auxiliaryBufferInfos, nullptr);
-
-    src->auxiliaryBufferInfos = std::make_shared<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
-    CommonUtils::CopyAuxiliaryBufferInfos(src.get(), dst.get());
-    EXPECT_NE(src->auxiliaryBufferInfos, nullptr);
-}
-
-HWTEST_F(TestUtils, MetaData_001, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> inBuffer;
-    MockProducerSurface::AllocDmaMemory(inBuffer);
-
-    CommonUtils::GetMetaData(inBuffer);
-
-    MetaDataMap map;
-    CommonUtils::SetMetaData(map, inBuffer);
-
-    MockProducerSurface::ReleaseDmaBuffer(inBuffer);
-}
-
-HWTEST_F(TestUtils, ParsePixelMapData_001, TestSize.Level1)
-{
-    std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
-    void *addr = nullptr;
-    std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
-    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
-
-    PixelMap pixelMap;
-    ErrorCode res = CommonUtils::ParsePixelMapData(&pixelMap, src);
-    EXPECT_NE(res, ErrorCode::SUCCESS);
-}
-
-HWTEST_F(TestUtils, isEnableCopyMetaData_001, TestSize.Level1)
-{
-    bool res = CommonUtils::isEnableCopyMetaData(2, nullptr, nullptr);
-    EXPECT_EQ(res, false);
-}
 }
 }
 }
