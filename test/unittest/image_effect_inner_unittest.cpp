@@ -461,6 +461,84 @@ HWTEST_F(ImageEffectInnerUnittest, ExternLoader_001, TestSize.Level1)
     instance->LoadExtSo();
     EXPECT_NE(instance, nullptr);
 }
+
+HWTEST_F(ImageEffectInnerUnittest, EFilter_001, TestSize.Level1)
+{
+    std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
+    ErrorCode res = efilter->ProcessConfig("START_CACHAE");
+    EXPECT_EQ(res, ErrorCode::SUCCESS);
+
+    res = efilter->ProcessConfig("CANCEL_CACHAE");
+    EXPECT_EQ(res, ErrorCode::SUCCESS);
+
+    std::shared_ptr<EffectContext> context = std::make_shared<EffectContext>();
+    std::shared_ptr<EffectBuffer> src = std::make_shared<EffectBuffer>(
+        effectBuffer_->bufferInfo_, effectBuffer_->buffer_, effectBuffer_->extraInfo_);
+    efilter->cacheConfig_ = std::make_shared<EFilterCacheConfig>();
+    efilter->cacheConfig_->status_ = CacheStatus::CACHE_START;
+    context->cacheNegotiate_ = std::make_shared<EFilterCacheNegotiate>();
+    context->cacheNegotiate_->config_ = nullptr;
+    efilter->HandleCacheStart(src, context);
+
+    context->cacheNegotiate_->config_ = std::make_shared<EFilterCacheConfig>();
+    efilter->HandleCacheStart(src, context);
+
+    efilter->cacheConfig_->status_ = CacheStatus::NO_CACHE;
+    efilter->HandleCacheStart(src, context);
+    EXPECT_EQ(efilter->cacheConfig_->status_, CacheStatus::NO_CACHE);
+
+    context->cacheNegotiate_->needCache_ = true;
+    context->cacheNegotiate_->hasUsedCache_ = false;
+    efilter->cacheConfig_->status_ = CacheStatus::CACHE_USED;
+    res = efilter->PushData("test", src, context);
+    EXPECT_NE(res, ErrorCode::SUCCESS);
+
+    context->cacheNegotiate_->needCache_ = true;
+    context->cacheNegotiate_->hasUsedCache_ = false;
+    efilter->cacheConfig_->status_ = CacheStatus::NO_CACHE;
+    src = nullptr;
+    res = efilter->PushData("test", src, context);
+    EXPECT_NE(res, ErrorCode::SUCCESS);
+
+    context->cacheNegotiate_->needCache_ = true;
+    context->cacheNegotiate_->hasUsedCache_ = false;
+    efilter->cacheConfig_->status_ = CacheStatus::CACHE_ENABLED;
+    res = efilter->PushData("test", src, context);
+    EXPECT_NE(res, ErrorCode::SUCCESS);
+
+    context->cacheNegotiate_->needCache_ = true;
+    context->cacheNegotiate_->hasUsedCache_ = false;
+    efilter->cacheConfig_->status_ = CacheStatus::CACHE_START;
+    src = std::make_shared<EffectBuffer>(
+        effectBuffer_->bufferInfo_, effectBuffer_->buffer_, effectBuffer_->extraInfo_);
+    res = efilter->PushData("test", src, context);
+    EXPECT_NE(res, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, PushData_001, TestSize.Level1)
+{
+    std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
+    std::shared_ptr<EffectContext> context = std::make_shared<EffectContext>();
+    std::shared_ptr<EffectBuffer> src = std::make_shared<EffectBuffer>(
+        effectBuffer_->bufferInfo_, effectBuffer_->buffer_, effectBuffer_->extraInfo_);
+    efilter->cacheConfig_ = std::make_shared<EFilterCacheConfig>();
+    context->cacheNegotiate_ = std::make_shared<EFilterCacheNegotiate>();
+
+    context->cacheNegotiate_->needCache_ = false;
+    ErrorCode res = efilter->PushData("test", src, context);
+    EXPECT_NE(res, ErrorCode::SUCCESS);
+
+    context->cacheNegotiate_->needCache_ = true;
+    context->cacheNegotiate_->config_ = nullptr;
+    res = efilter->PushData("test", src, context);
+    EXPECT_NE(res, ErrorCode::SUCCESS);
+
+    context->cacheNegotiate_->needCache_ = true;
+    context->cacheNegotiate_->config_ = std::make_shared<EFilterCacheConfig>();
+    context->cacheNegotiate_->hasUsedCache_ = true;
+    res = efilter->PushData("test", src, context);
+    EXPECT_NE(res, ErrorCode::SUCCESS);
+}
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
