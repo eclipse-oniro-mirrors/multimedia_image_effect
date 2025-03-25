@@ -465,10 +465,10 @@ HWTEST_F(ImageEffectInnerUnittest, ExternLoader_001, TestSize.Level1)
 HWTEST_F(ImageEffectInnerUnittest, EFilter_001, TestSize.Level1)
 {
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
-    ErrorCode res = efilter->ProcessConfig("START_CACHAE");
+    ErrorCode res = efilter->ProcessConfig("START_CACHE");
     EXPECT_EQ(res, ErrorCode::SUCCESS);
 
-    res = efilter->ProcessConfig("CANCEL_CACHAE");
+    res = efilter->ProcessConfig("CANCEL_CACHE");
     EXPECT_EQ(res, ErrorCode::SUCCESS);
 
     std::shared_ptr<EffectContext> context = std::make_shared<EffectContext>();
