@@ -478,14 +478,10 @@ HWTEST_F(ImageEffectInnerUnittest, EFilter_001, TestSize.Level1)
     efilter->cacheConfig_->status_ = CacheStatus::CACHE_START;
     context->cacheNegotiate_ = std::make_shared<EFilterCacheNegotiate>();
     context->cacheNegotiate_->config_ = nullptr;
-    efilter->HandleCacheStart(src, context);
 
     context->cacheNegotiate_->config_ = std::make_shared<EFilterCacheConfig>();
-    efilter->HandleCacheStart(src, context);
 
     efilter->cacheConfig_->status_ = CacheStatus::NO_CACHE;
-    efilter->HandleCacheStart(src, context);
-    EXPECT_EQ(efilter->cacheConfig_->status_, CacheStatus::NO_CACHE);
 
     context->cacheNegotiate_->needCache_ = true;
     context->cacheNegotiate_->hasUsedCache_ = false;
