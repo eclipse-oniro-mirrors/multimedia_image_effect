@@ -461,6 +461,8 @@ HWTEST_F(TestUtils, ReportHiSysEvent_001, TestSize.Level1)
     };
     EventReport::ReportHiSysEvent("not_find_test", eventInfo);
 }
+
+
 }
 }
 }
