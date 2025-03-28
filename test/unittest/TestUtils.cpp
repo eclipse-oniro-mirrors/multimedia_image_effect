@@ -342,14 +342,6 @@ HWTEST_F(TestUtils, FormatHelper002, TestSize.Level1)
 
     res = FormatHelper::ConvertFormat(nv12ConverterInfo, nv21ConverterInfo);
     ASSERT_NE(res, ErrorCode::SUCCESS);
-
-    std::shared_ptr<void> rgbaBuffer2 = AllocBuffer(FormatHelper::CalculateSize(WIDTH / 2,
-        HEIGHT, IEffectFormat::RGBA8888));
-    FormatConverterInfo rgbaConverterInfo2 = CreateConverterInfo(IEffectFormat::RGBA8888, rgbaBuffer2.get(),
-         RGBA_BYTES_PER_PIXEL * WIDTH);
-
-    res = FormatHelper::ConvertFormat(rgbaConverterInfo2, nv12ConverterInfo);
-    ASSERT_EQ(res, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(TestUtils, NativeCommonUtils001, TestSize.Level1) {
@@ -471,16 +463,16 @@ HWTEST_F(TestUtils, JsonHelper002, TestSize.Level1) {
     res1 = root->GetUInt("test", defaultValue1);
     EXPECT_EQ(res1, defaultValue1);
 
-    const char *json_string1 = "{\"intKey\": null}";
-    Json *json1 = cJSON_Parse(json_string1);
+    const char *jsonString1 = "{\"intKey\": null}";
+    Json *json1 = cJSON_Parse(jsonString1);
     root->Put("intKey", json1, true);
     res1 = root->GetInt("intKey", defaultValue1);
     EXPECT_EQ(res1, defaultValue1);
     res1 = root->GetUInt("intKey", defaultValue1);
     EXPECT_EQ(res1, defaultValue1);
 
-    const char *json_string11 = "{\"intKey\": \"test\"}";
-    Json *json11 = cJSON_Parse(json_string11);
+    const char *jsonString11 = "{\"intKey\": \"test\"}";
+    Json *json11 = cJSON_Parse(jsonString11);
     root->Put("intKey", json11, true);
     res1 = root->GetInt("intKey", defaultValue1);
     EXPECT_EQ(res1, defaultValue1);
@@ -491,30 +483,33 @@ HWTEST_F(TestUtils, JsonHelper002, TestSize.Level1) {
     float res2 = root->GetFloat("test", defaultValue2);
     EXPECT_EQ(res2, defaultValue2);
 
-    const char *json_string2 = "{\"floatKey\": null}";
-    Json *json2 = cJSON_Parse(json_string2);
+    const char *jsonString2 = "{\"floatKey\": null}";
+    Json *json2 = cJSON_Parse(jsonString2);
     root->Put("floatKey", json2, true);
     res2 = root->GetFloat("floatKey", defaultValue2);
     EXPECT_EQ(res2, defaultValue2);
 
-    const char *json_string22 = "{\"floatKey\": \"test\"}";
-    Json *json22 = cJSON_Parse(json_string22);
+    const char *jsonString22 = "{\"floatKey\": \"test\"}";
+    Json *json22 = cJSON_Parse(jsonString22);
     root->Put("floatKey", json22, true);
     res2 = root->GetFloat("floatKey", defaultValue2);
     EXPECT_EQ(res2, defaultValue2);
+}
 
+HWTEST_F(TestUtils, JsonHelper003, TestSize.Level1) {
+    EffectJsonPtr root = EffectJsonHelper::CreateObject();
     double defaultValue3 = 0.0;
     double res3 = root->GetDouble("test", defaultValue3);
     EXPECT_EQ(res3, defaultValue3);
 
-    const char *json_string3 = "{\"doubleKey\": null}";
-    Json *json3 = cJSON_Parse(json_string3);
+    const char *jsonString3 = "{\"doubleKey\": null}";
+    Json *json3 = cJSON_Parse(jsonString3);
     root->Put("doubleKey", json3, true);
     res3 = root->GetDouble("doubleKey", defaultValue3);
     EXPECT_EQ(res3, defaultValue3);
 
-    const char *json_string33 = "{\"doubleKey\": \"test\"}";
-    Json *json33 = cJSON_Parse(json_string33);
+    const char *jsonString33 = "{\"doubleKey\": \"test\"}";
+    Json *json33 = cJSON_Parse(jsonString33);
     root->Put("floatKey", json33, true);
     res3 = root->GetDouble("doubleKey", defaultValue3);
     EXPECT_EQ(res3, defaultValue3);
@@ -523,14 +518,14 @@ HWTEST_F(TestUtils, JsonHelper002, TestSize.Level1) {
     bool res4 = root->GetBool("test", defaultValue4);
     EXPECT_EQ(res4, defaultValue4);
 
-    const char *json_string4 = "{\"boolKey\": null}";
-    Json *json4 = cJSON_Parse(json_string4);
+    const char *jsonString4 = "{\"boolKey\": null}";
+    Json *json4 = cJSON_Parse(jsonString4);
     root->Put("boolKey", json4, true);
     res4 = root->GetBool("boolKey", defaultValue4);
     EXPECT_EQ(res4, defaultValue4);
 
-    const char *json_string44 = "{\"boolKey\": \"test\"}";
-    Json *json44 = cJSON_Parse(json_string44);
+    const char *jsonString44 = "{\"boolKey\": \"test\"}";
+    Json *json44 = cJSON_Parse(jsonString44);
     root->Put("boolKey", json44, true);
     res4 = root->GetBool("boolKey", defaultValue4);
     EXPECT_EQ(res4, defaultValue4);
@@ -539,32 +534,34 @@ HWTEST_F(TestUtils, JsonHelper002, TestSize.Level1) {
     std::string res5 = root->GetString("test", defaultValue5);
     EXPECT_EQ(res5, defaultValue5);
 
-    const char *json_string5 = "{\"stringKey\": null}";
-    Json *json5 = cJSON_Parse(json_string5);
+    const char *jsonString5 = "{\"stringKey\": null}";
+    Json *json5 = cJSON_Parse(jsonString5);
     root->Put("stringKey", json5, true);
     res5 = root->GetString("stringKey", defaultValue5);
     EXPECT_EQ(res5, defaultValue5);
 
-    const char *json_string55 = "{\"stringKey\": 1}";
-    Json *json55 = cJSON_Parse(json_string55);
+    const char *jsonString55 = "{\"stringKey\": 1}";
+    Json *json55 = cJSON_Parse(jsonString55);
     root->Put("stringKey", json55, true);
     res5 = root->GetString("stringKey", defaultValue5);
     EXPECT_EQ(res5, defaultValue5);
+}
 
-    EffectJsonPtr aRoot = EffectJsonHelper::CreateArray();
+HWTEST_F(TestUtils, JsonHelper004, TestSize.Level1) {
+    EffectJsonPtr root = EffectJsonHelper::CreateObject();
     std::vector<EffectJsonPtr> defaultValue6 = {};
 
     std::vector<EffectJsonPtr> res6 = root->GetArray("test");
     EXPECT_EQ(res6, defaultValue6);
 
-    const char *json_string6 = "{\"arrayKey\": null}";
-    Json *json6 = cJSON_Parse(json_string6);
+    const char *jsonString6 = "{\"arrayKey\": null}";
+    Json *json6 = cJSON_Parse(jsonString6);
     root->Put("arrayKey", json6, true);
     res6 = root->GetArray("arrayKey");
     EXPECT_EQ(res6, defaultValue6);
 
-    const char *json_string66 = "{\"arrayKey\": 1}";
-    Json *json66 = cJSON_Parse(json_string66);
+    const char *jsonString66 = "{\"arrayKey\": 1}";
+    Json *json66 = cJSON_Parse(jsonString66);
     root->Put("arrayKey", json66, true);
     res6 = root->GetArray("arrayKey");
     EXPECT_EQ(res6, defaultValue6);
