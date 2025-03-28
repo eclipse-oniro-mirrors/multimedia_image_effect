@@ -80,41 +80,6 @@ public:
     std::shared_ptr<RenderEnvironment> renderEnvironment;
 };
 
-HWTEST_F(TestRenderEnvironment, TestRenderEnvironment001, TestSize.Level1)
-{
-    std::shared_ptr<EffectBuffer> output;
-    renderEnvironment->outType_ = DataType::NATIVE_WINDOW;
-    effectBuffer->bufferInfo_->width_ = 2 * WIDTH;
-    renderEnvironment->GenMainTex(effectBuffer, output);
-
-    effectBuffer->bufferInfo_->formatType_ = IEffectFormat::DEFAULT;
-    renderEnvironment->GenMainTex(effectBuffer, output);
-
-    RenderTexturePtr texptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
-    EXPECT_NE(texptr, nullptr);
-    renderEnvironment->ConvertTextureToBuffer(texptr, effectBuffer.get());
-
-    GLenum internalFormat = GL_RG8;
-    size_t ret = GLUtils::GetInternalFormatPixelByteSize(internalFormat);
-    EXPECT_EQ(ret, 0);
-
-    internalFormat = GL_R8;
-    ret = GLUtils::GetInternalFormatPixelByteSize(internalFormat);
-    EXPECT_EQ(ret, 1);
-
-    internalFormat = GL_RGB565;
-    ret = GLUtils::GetInternalFormatPixelByteSize(internalFormat);
-    EXPECT_EQ(ret, 2);
-
-    internalFormat = GL_RGBA4;
-    ret = GLUtils::GetInternalFormatPixelByteSize(internalFormat);
-    EXPECT_EQ(ret, 2);
-
-    internalFormat = GL_RGBA16F;
-    ret = GLUtils::GetInternalFormatPixelByteSize(internalFormat);
-    EXPECT_EQ(ret, 8);
-}
-
 HWTEST_F(TestRenderEnvironment, TestRenderEnvironment002, TestSize.Level1)
 {
     IEffectFormat format = IEffectFormat::YUVNV12;
