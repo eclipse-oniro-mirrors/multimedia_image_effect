@@ -24,6 +24,7 @@
 #include "memcpy_helper.h"
 #include "event_report.h"
 #include "mock_producer_surface.h"
+#include "cJSON.h"
 
 using namespace testing::ext;
 namespace {
