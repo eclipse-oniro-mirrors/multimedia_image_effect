@@ -40,6 +40,7 @@ namespace {
     const int32_t TIME_MAX = 64;
     const int32_t YUV_PLANE_COUNT = 2;
     const int32_t YUV_HALF_HEIGHT = 2;
+    const int32_t P010_BYTES_PIXEL = 2;
 }
 
 using namespace OHOS::ColorManager;
@@ -83,12 +84,6 @@ ErrorCode ParseJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &jso
     return ErrorCode::SUCCESS;
 }
 
-static bool isYuvFormat(PixelFormat format)
-{
-    return format == PixelFormat::NV21 || format == PixelFormat::NV12 ||
-        format == PixelFormat::YCRCB_P010 || format == PixelFormat::YCBCR_P010;
-}
-
 std::shared_ptr<ExtraInfo> CreateExtraInfo(PixelMap * pixelMap)
 {
     BufferType bufferType = CommonUtils::SwitchToEffectBuffType(pixelMap->GetAllocatorType());
@@ -119,18 +114,22 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
         pixelMap->GetByteCount(), pixelMap->GetPixels(), colorSpaceName);
 
     IEffectFormat formatType = SwitchToEffectFormat(pixelMap->GetPixelFormat());
-    if (formatType == IEffectFormat::DEFAULT) {
-        EFFECT_LOGE("pixelFormat not support! pixelFormat=%{public}d", pixelMap->GetPixelFormat());
-        return ErrorCode::ERR_UNSUPPORTED_PIXEL_FORMAT;
-    }
+    CHECK_AND_RETURN_RET_LOG(formatType != IEffectFormat::DEFAULT, ErrorCode::ERR_UNSUPPORTED_PIXEL_FORMAT,
+        "pixelFormat not support! pixelFormat=%{public}d", pixelMap->GetPixelFormat());
 
     std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
     bufferInfo->width_ = static_cast<uint32_t>(pixelMap->GetWidth());
     bufferInfo->height_ = static_cast<uint32_t>(pixelMap->GetHeight());
-    if (isYuvFormat(pixelMap->GetPixelFormat())) {
+    if (pixelMap->GetPixelFormat() == PixelFormat::NV21 ||
+        pixelMap->GetPixelFormat() == PixelFormat::NV12) {
         YUVDataInfo info;
         pixelMap->GetImageYUVInfo(info);
         bufferInfo->rowStride_ = info.yStride;
+    } else if (pixelMap->GetPixelFormat() == PixelFormat::YCRCB_P010 ||
+        pixelMap->GetPixelFormat() == PixelFormat::YCBCR_P010) {
+        YUVDataInfo info;
+        pixelMap->GetImageYUVInfo(info);
+        bufferInfo->rowStride_ = info.yStride * P010_BYTES_PIXEL;
     } else {
         bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
     }
