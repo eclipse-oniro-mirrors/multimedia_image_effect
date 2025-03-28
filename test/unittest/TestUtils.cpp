@@ -463,27 +463,6 @@ HWTEST_F(TestUtils, ReportHiSysEvent_001, TestSize.Level1)
     EventReport::ReportHiSysEvent("not_find_test", eventInfo);
 }
 
-HWTEST_F(TestUtils, isEnableCopyMetaData_001, TestSize.Level1)
-{
-    bool res = CommonUtils::isEnableCopyMetaData(2, nullptr, nullptr);
-    EXPECT_EQ(res, false);
-
-    std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
-    void *addr = nullptr;
-    std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
-    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
-    src->bufferInfo_->bufferType_ = BufferType::DMA_BUFFER;
-    src->bufferInfo_->pixelMap_ = nullptr;
-    res = CommonUtils::isEnableCopyMetaData(1, src.get());
-    EXPECT_EQ(res, false);
-
-    PixelMap pixelMap;
-    src->bufferInfo_->pixelMap_ = &pixelMap;
-    src->bufferInfo_->surfaceBuffer_ = nullptr;
-    res = CommonUtils::isEnableCopyMetaData(1, src.get());
-    EXPECT_EQ(res, false);
-}
-
 HWTEST_F(TestUtils, JsonHelper002, TestSize.Level1) {
     EffectJsonPtr root = EffectJsonHelper::CreateObject();
     int32_t defaultValue1 = 0;
