@@ -1150,10 +1150,6 @@ void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNe
     auto ret = toProducerSurface_->RequestBuffer(outBuffer, outBufferSyncFence, requestConfig);
     if (ret != 0 || outBuffer == nullptr) {
         EFFECT_LOGE("ProcessRender::RequestBuffer failed. %{public}d", ret);
-        ret = impl_->ReleaseConsumerSurfaceBuffer(inBuffer, SyncFence::INVALID_FENCE);
-        if (ret != GSError::GSERROR_OK) {
-            EFFECT_LOGE("ProcessRender::ReleaseBuffer caused by RequestBuffer failed. %{public}d", ret);
-        }
         return;
     }
     CHECK_AND_RETURN_LOG(inBuffer != nullptr && outBuffer != nullptr,
