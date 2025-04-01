@@ -21,11 +21,11 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-RenderFrameBuffer::RenderFrameBuffer(RenderContext *ctx, ResourceCache *cache, int width, int height,
-    GLenum interFmt) : texture_(cache->RequestTexture(ctx, width, height, interFmt))
+RenderFrameBuffer::RenderFrameBuffer(RenderContext *ctx, ResourceCache *cache, int width, int height,GLenum interFmt)
 {
     CHECK_AND_RETURN_LOG(ctx != nullptr && cache != nullptr && texture_ != nullptr,
         "RenderFrameBuffer struct fail, ctx or cache or texture_ is null.");
+    texture_ = cache->RequestTexture(ctx, width, height, interFmt);
     context_ = ctx;
     cache_ = cache;
     fboId_ = GLUtils::CreateFramebuffer(texture_->GetName());
