@@ -30,7 +30,6 @@ constexpr uint32_t HEIGHT = 1280;
 constexpr IEffectFormat FORMATE_TYPE = IEffectFormat::RGBA8888;
 constexpr uint32_t ROW_STRIDE = WIDTH * 4;
 constexpr uint32_t LEN = ROW_STRIDE * HEIGHT;
-constexpr uint32_t EXTRA_LEN = 10;
 
 class TestRenderEnvironment : public testing::Test {
 public:
