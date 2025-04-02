@@ -21,7 +21,7 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-RenderFrameBuffer::RenderFrameBuffer(RenderContext *ctx, ResourceCache *cache, int width, int height,GLenum interFmt)
+RenderFrameBuffer::RenderFrameBuffer(RenderContext *ctx, ResourceCache *cache, int width, int height, GLenum interFmt)
 {
     CHECK_AND_RETURN_LOG(ctx != nullptr && cache != nullptr && texture_ != nullptr,
         "RenderFrameBuffer struct fail, ctx or cache or texture_ is null.");
