@@ -116,6 +116,19 @@ std::shared_ptr<PixelFormatCap> GetPixelFormatCap(std::string &name)
     return pixelFormatCap;
 }
 
+std::shared_ptr<HdrFormatCap> GetHdrFormatCap(std::string &name)
+{
+    std::shared_ptr<HdrFormatCap> hdrFormatCap = std::make_shared<HdrFormatCap>();
+    std::shared_ptr<EffectInfo> effectInfo = EFilterFactory::Instance()->GetEffectInfo(name);
+    if (effectInfo == nullptr) {
+        EFFECT_LOGE("GetHdrFormatCap: GetEffectInfo fail! name=%{public}s", name.c_str());
+        return hdrFormatCap;
+    }
+
+    hdrFormatCap->hdrFormats = effectInfo->hdrFormats_;
+    return hdrFormatCap;
+}
+
 std::shared_ptr<ColorSpaceCap> GetColorSpaceCap(std::string &name)
 {
     std::shared_ptr<ColorSpaceCap> colorSpaceCap = std::make_shared<ColorSpaceCap>();
@@ -127,6 +140,17 @@ std::shared_ptr<ColorSpaceCap> GetColorSpaceCap(std::string &name)
 
     colorSpaceCap->colorSpaces = effectInfo->colorSpaces_;
     return colorSpaceCap;
+}
+
+void NegotiateHdrFormat(std::vector<HdrFormat> &hdrFormats, std::unordered_set<HdrFormat> &filtersSupportedHDRFormat)
+{
+    for (auto it = filtersSupportedHDRFormat.begin(); it != filtersSupportedHDRFormat.end();) {
+        if (std::find(hdrFormats.begin(), hdrFormats.end(), *it) == hdrFormats.end()) {
+            it = filtersSupportedHDRFormat.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void NegotiateColorSpace(std::vector<EffectColorSpace> &colorSpaces,
@@ -148,9 +172,16 @@ void EFilter::Negotiate(const std::string &inPort, const std::shared_ptr<Capabil
     outputCap->pixelFormatCap_ = GetPixelFormatCap(name_);
     outputCap->memNegotiatedCap_ = Negotiate(capability->memNegotiatedCap_, context);
     outputCap->colorSpaceCap_ = GetColorSpaceCap(name_);
+    outputCap->hdrFormatCap_ = GetHdrFormatCap(name_);
+
     context->capNegotiate_->AddCapability(outputCap);
     context->cacheNegotiate_->NegotiateConfig(cacheConfig_);
+
     NegotiateColorSpace(outputCap->colorSpaceCap_->colorSpaces, context->filtersSupportedColorSpace_);
+    NegotiateHdrFormat(outputCap->hdrFormatCap_->hdrFormats, context->filtersSupportedHdrFormat_);
+    EFFECT_LOGD("Negotiate::filtersSupportedHdrFormat count: %{public}d, colorSpace count: %{public}d",
+        static_cast<int>(context->filtersSupportedHdrFormat_.size()),
+        static_cast<int>(context->filtersSupportedColorSpace_.size()));
     outputCap_ = outputCap;
     outPorts_[0]->Negotiate(outputCap, context);
 }
@@ -165,7 +196,7 @@ std::shared_ptr<MemoryData> AllocMemory(BufferType allocBufferType, EffectBuffer
         "alloc memory fail, buffer or buffer extraInfo is null!");
     MemoryInfo allocMemInfo = {
         .bufferInfo = *buffer->bufferInfo_,
-        .extra = static_cast<void *>(buffer->extraInfo_->surfaceBuffer),
+        .extra = static_cast<void *>(buffer->bufferInfo_->surfaceBuffer_),
     };
     std::shared_ptr<MemoryData> memoryData = absMemory->Alloc(allocMemInfo);
     CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, nullptr,
@@ -182,7 +213,7 @@ ErrorCode CreateEffectBuffer(EffectBuffer *buffer, std::shared_ptr<MemoryData> &
     *bufferInfo = allocMemInfo.bufferInfo;
     std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
     *extraInfo = *buffer->extraInfo_;
-    extraInfo->surfaceBuffer = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
+    bufferInfo->surfaceBuffer_ = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
         static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
     effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, allocMemData->data, extraInfo);
     return ErrorCode::SUCCESS;
@@ -214,53 +245,100 @@ std::shared_ptr<EffectBuffer> EFilter::IpTypeConvert(const std::shared_ptr<Effec
     return source;
 }
 
-std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<EffectBuffer> &buffer,
-    std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source)
+std::shared_ptr<EffectBuffer> EFilter::CreateEffectBufferFromTexture(const std::shared_ptr<EffectBuffer> &buffer,
+    const std::shared_ptr<EffectContext> &context)
 {
-    CHECK_AND_RETURN_RET_LOG(buffer != nullptr, buffer, "ConvertFromGPU2CPU fail, buffer is null!");
-    EFFECT_LOGE("ConvertFromGPU2CPU");
-    context->ipType_ = IPType::CPU;
+    auto texture = buffer->tex;
     MemoryInfo memInfo = {
         .bufferInfo = {
-            .width_ = buffer->tex->Width(),
-            .height_ = buffer->tex->Height(),
-            .len_ = FormatHelper::CalculateSize(buffer->tex->Width(), buffer->tex->Height(), IEffectFormat::RGBA8888),
+            .width_ = texture->Width(),
+            .height_ = texture->Height(),
+            .len_ = FormatHelper::CalculateSize(texture->Width(), texture->Height(), IEffectFormat::RGBA8888),
             .formatType_ = IEffectFormat::RGBA8888,
         },
         .bufferType = BufferType::DMA_BUFFER,
     };
-    MemoryData *memoryData = context->memoryManager_->AllocMemory(nullptr, memInfo);
+
+    MemoryData* memoryData = context->memoryManager_->AllocMemory(nullptr, memInfo);
     CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, buffer, "Alloc new memory fail!");
-    MemoryInfo &allocMemInfo = memoryData->memoryInfo;
-    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
-    *bufferInfo = allocMemInfo.bufferInfo;
-    std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
-    *extraInfo = *buffer->extraInfo_;
+
+    MemoryInfo& allocMemInfo = memoryData->memoryInfo;
+    auto bufferInfo = std::make_shared<BufferInfo>();
+    CommonUtils::CopyBufferInfo(allocMemInfo.bufferInfo, *bufferInfo);
+    auto extraInfo = std::make_shared<ExtraInfo>();
+    CommonUtils::CopyExtraInfo(*buffer->extraInfo_, *extraInfo);
     extraInfo->bufferType = allocMemInfo.bufferType;
-    extraInfo->surfaceBuffer = static_cast<SurfaceBuffer *>(allocMemInfo.extra);
-    std::shared_ptr<EffectBuffer> input = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data,
-        extraInfo);
-    context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, input.get());
-    extraInfo->surfaceBuffer->InvalidateCache();
-    input->extraInfo_->dataType = DataType::SURFACE_BUFFER;
-    input->extraInfo_->bufferType = BufferType::DMA_BUFFER;
+    bufferInfo->surfaceBuffer_ = static_cast<SurfaceBuffer*>(allocMemInfo.extra);
+
+    auto effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
+    context->renderEnvironment_->ConvertTextureToBuffer(texture, effectBuffer.get());
+    bufferInfo->surfaceBuffer_->InvalidateCache();
+    effectBuffer->extraInfo_->dataType = DataType::SURFACE_BUFFER;
+    effectBuffer->extraInfo_->bufferType = BufferType::DMA_BUFFER;
+
+    return effectBuffer;
+}
+
+std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<EffectBuffer> &buffer,
+    std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source)
+{
+    EFFECT_LOGD("EFilter::ConvertFromGPU2CPU enter");
+    CHECK_AND_RETURN_RET_LOG(buffer != nullptr, buffer, "ConvertFromGPU2CPU fail, buffer is null!");
+    context->ipType_ = IPType::CPU;
+
+    auto input = CreateEffectBufferFromTexture(buffer, context);
+    if (!input) return source;
+    input->bufferInfo_->gainMapTex_ = buffer->bufferInfo_->gainMapTex_;
+    input->bufferInfo_->hdrFormat_ = buffer->bufferInfo_->hdrFormat_;
+    input->bufferInfo_->pixelMap_ = buffer->bufferInfo_->pixelMap_;
     source = input;
+
+    auto gainMapTex = buffer->bufferInfo_->gainMapTex_;
+    if (buffer->auxiliaryBufferInfos == nullptr) return source;
+    auto gainMapBufferInfoIt = buffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP);
+    if (!gainMapTex || gainMapBufferInfoIt == buffer->auxiliaryBufferInfos->end()) return source;
+
+    auto gainMapBufferInfo = gainMapBufferInfoIt->second;
+    auto tmpGainMapBuffer = std::make_shared<EffectBuffer>(gainMapBufferInfo, nullptr, input->extraInfo_);
+    tmpGainMapBuffer->tex = gainMapTex;
+    auto gainMapBuffer = CreateEffectBufferFromTexture(tmpGainMapBuffer, context);
+    if (!gainMapBuffer) return source;
+
+    gainMapBuffer->bufferInfo_->pixelmapType_ = EffectPixelmapType::GAINMAP;
+    gainMapBuffer->bufferInfo_->bufferType_ = gainMapBuffer->extraInfo_->bufferType;
+    gainMapBuffer->bufferInfo_->addr_ = gainMapBuffer->buffer_;
+    gainMapBuffer->bufferInfo_->pixelMap_ = gainMapBufferInfo->pixelMap_;
+    if (source->auxiliaryBufferInfos == nullptr) {
+        source->auxiliaryBufferInfos =
+            std::make_shared<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
+    }
+    source->auxiliaryBufferInfos->emplace(EffectPixelmapType::GAINMAP, gainMapBuffer->bufferInfo_);
+
     return source;
 }
 
 std::shared_ptr<EffectBuffer> EFilter::ConvertFromCPU2GPU(const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source)
 {
+    EFFECT_LOGD("EFilter::ConvertFromCPU2GPU enter");
     if (context->renderEnvironment_->GetEGLStatus() != EGLStatus::READY) {
         context->renderEnvironment_->Init();
         context->renderEnvironment_->Prepare();
     }
     context->ipType_ = IPType::GPU;
-    if (source->extraInfo_->surfaceBuffer != nullptr) {
-        source->extraInfo_->surfaceBuffer->FlushCache();
+    if (source->bufferInfo_->surfaceBuffer_ != nullptr) {
+        source->bufferInfo_->surfaceBuffer_->FlushCache();
     }
     source = context->renderEnvironment_->ConvertBufferToTexture(buffer.get());
     return source;
+}
+
+void EFilter::HandleCacheStart(const std::shared_ptr<EffectBuffer>& source, std::shared_ptr<EffectContext>& context)
+{
+    if (cacheConfig_->GetStatus() == CacheStatus::CACHE_START && !context->cacheNegotiate_->HasCached()) {
+        CacheBuffer(source.get(), context);
+        cacheConfig_->SetStatus(CacheStatus::CACHE_ENABLED);
+    }
 }
 
 ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
@@ -271,7 +349,7 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
         if (cacheConfig_->GetStatus() == CacheStatus::CACHE_USED) {
             return UseCache(context);
         } else if (cacheConfig_->GetStatus() == CacheStatus::NO_CACHE
-            || cacheConfig_->GetStatus() == CacheStatus::CACHE_ENABLED) {
+                   || cacheConfig_->GetStatus() == CacheStatus::CACHE_ENABLED) {
             return PushData(buffer.get(), context);
         }
     }
@@ -289,13 +367,10 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
     }
     CHECK_AND_RETURN_RET_LOG(outputCap_ != nullptr, ErrorCode::ERR_INPUT_NULL, "outputCap is null.");
     std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap = outputCap_->memNegotiatedCap_;
-    EffectBuffer *output = preIPType != runningIPType ? source.get()
-        : context->renderStrategy_->ChooseBestOutput(source.get(), memNegotiatedCap);
+    EffectBuffer *output = preIPType != runningIPType ? source.get() :
+        context->renderStrategy_->ChooseBestOutput(source.get(), memNegotiatedCap);
     if (source.get() == output) {
-        if (cacheConfig_->GetStatus() == CacheStatus::CACHE_START && !context->cacheNegotiate_->HasCached()) {
-            CacheBuffer(source.get(), context);
-            cacheConfig_->SetStatus(CacheStatus::CACHE_ENABLED);
-        }
+        HandleCacheStart(source, context);
         ErrorCode res = Render(source.get(), context);
         CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
             "Render input fail! filterName=%{public}s", name_.c_str());
@@ -309,10 +384,7 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
     if (effectBuffer != nullptr) {
         output = effectBuffer.get();
     }
-    if (cacheConfig_->GetStatus() == CacheStatus::CACHE_START && !context->cacheNegotiate_->HasCached()) {
-        CacheBuffer(source.get(), context);
-        cacheConfig_->SetStatus(CacheStatus::CACHE_ENABLED);
-    }
+    HandleCacheStart(source, context);
     ErrorCode res = Render(source.get(), output, context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Render inout fail! filterName=%{public}s", name_.c_str());
     return PushData(output, context);
@@ -337,12 +409,24 @@ ErrorCode EFilter::AllocBuffer(std::shared_ptr<EffectContext> &context,
     MemoryInfo &allocMemInfo = memoryData->memoryInfo;
     std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
     *bufferInfo = allocMemInfo.bufferInfo;
+    bufferInfo->fd_ = source->bufferInfo_->fd_;
     std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
     *extraInfo = *source->extraInfo_;
     extraInfo->bufferType = allocMemInfo.bufferType;
-    extraInfo->surfaceBuffer = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
+    bufferInfo->surfaceBuffer_ = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
         static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
     effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
+
+    if (source->auxiliaryBufferInfos != nullptr) {
+        effectBuffer->auxiliaryBufferInfos =
+            std::make_unique<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
+        EFFECT_LOGD("ConvertFromCPU2GPU buffer->auxiliaryBufferInfos != nullptr");
+        for (const auto &entry : *source->auxiliaryBufferInfos) {
+            std::shared_ptr<BufferInfo> auxiliaryBufferInfo = std::make_shared<BufferInfo>();
+            *auxiliaryBufferInfo = *(entry.second);
+            effectBuffer->auxiliaryBufferInfos->emplace(entry.first, auxiliaryBufferInfo);
+        }
+    }
     return ErrorCode::SUCCESS;
 }
 
@@ -352,7 +436,8 @@ ErrorCode EFilter::UseCache(std::shared_ptr<EffectContext> &context)
         "UseCache fail, context or context cacheNegotiate is null");
     context->cacheNegotiate_->UseCache();
     std::shared_ptr<EffectBuffer> cacheBuffer = nullptr;
-    GetFilterCache(cacheBuffer, context);
+    auto res = GetFilterCache(cacheBuffer, context);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "GetFilterCache fail");
     CHECK_AND_RETURN_RET_LOG(cacheConfig_ != nullptr, ErrorCode::ERR_INPUT_NULL,
         "GetIPType fail, cacheConfig_ is null");
     if (cacheConfig_->GetIPType() == IPType::GPU) {
@@ -366,7 +451,7 @@ ErrorCode EFilter::UseCache(std::shared_ptr<EffectContext> &context)
     if (cacheBuffer.get() == output) {
         return Render(cacheBuffer.get(), context);
     }
-    ErrorCode res = Render(cacheBuffer.get(), output, context);
+    res = Render(cacheBuffer.get(), output, context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Render inout fail! filterName=%{public}s",
         name_.c_str());
     return PushData(output, context);
@@ -389,7 +474,7 @@ ErrorCode OnPushDataPortsEmpty(std::shared_ptr<EffectBuffer> &buffer, std::share
     // efilter create new buffer and inout with the same buffer.
     EffectBuffer *output = context->renderStrategy_->GetOutput();
     if (output == nullptr || input->buffer_ == output->buffer_) {
-        return CommonUtils::ModifyPixelMapProperty(buffer->extraInfo_->pixelMap, buffer, context->memoryManager_);
+        return CommonUtils::ModifyPixelMapProperty(buffer->bufferInfo_->pixelMap_, buffer, context->memoryManager_);
     }
     EFFECT_LOGW("not support different input and output buffer! filterName=%{public}s", name.c_str());
     return ErrorCode::ERR_UNSUPPORTED_INOUT_WITH_DIFF_BUFFER;
@@ -459,7 +544,7 @@ ErrorCode CreateDmaEffectBufferIfNeed(IPType runningType, EffectBuffer *current,
     std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
     *extraInfo = *src->extraInfo_;
     extraInfo->bufferType = memData->memoryInfo.bufferType;
-    extraInfo->surfaceBuffer = (memData->memoryInfo.bufferType == BufferType::DMA_BUFFER) ?
+    bufferInfo->surfaceBuffer_ = (memData->memoryInfo.bufferType == BufferType::DMA_BUFFER) ?
         static_cast<SurfaceBuffer *>(memData->memoryInfo.extra) : nullptr;
     effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, memData->data, extraInfo);
     return ErrorCode::SUCCESS;
@@ -474,8 +559,9 @@ ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::s
     }
     std::shared_ptr<EffectBuffer> buffer = nullptr;
     context->renderEnvironment_->BeginFrame();
-    if (src->bufferInfo_->formatType_ == IEffectFormat::RGBA8888) {
-        context->renderEnvironment_->GenMainTex(src, buffer);
+    if (src->bufferInfo_->formatType_ == IEffectFormat::RGBA8888 ||
+        src->bufferInfo_->formatType_ == IEffectFormat::RGBA_1010102) {
+        context->renderEnvironment_->GenTex(src, buffer);
     } else {
         context->renderEnvironment_->ConvertYUV2RGBA(src, buffer);
     }
@@ -485,14 +571,27 @@ ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::s
     std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
     extraInfo->dataType = DataType::TEX;
     std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
-    effectBuffer->tex = context->renderEnvironment_->RequestBuffer(bufferInfo->width_, bufferInfo->height_);
+    effectBuffer->tex = context->renderEnvironment_->RequestBuffer(bufferInfo->width_, bufferInfo->height_,
+                                                                   buffer->tex->Format());
     ErrorCode res = Render(buffer.get(), effectBuffer.get(), context);
     if (needModifySource) {
-        CommonUtils::ModifyPixelMapPropertyForTexture(dst->extraInfo_->pixelMap, effectBuffer, context);
+        CommonUtils::ModifyPixelMapPropertyForTexture(dst->bufferInfo_->pixelMap_, effectBuffer, context);
     } else {
         context->renderEnvironment_->ConvertTextureToBuffer(effectBuffer->tex, dst.get());
     }
     return res;
+}
+
+void GetSupportedHdrFormat(std::string &name, std::unordered_set<HdrFormat> &filtersSupportedHDRFormat)
+{
+    filtersSupportedHDRFormat = {
+            HdrFormat::SDR,
+            HdrFormat::HDR8_GAINMAP,
+            HdrFormat::HDR10
+    };
+
+    std::shared_ptr<HdrFormatCap> hdrFormatCap = GetHdrFormatCap(name);
+    NegotiateHdrFormat(hdrFormatCap->hdrFormats, filtersSupportedHDRFormat);
 }
 
 void GetSupportedColorSpace(std::string &name, std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace)
@@ -514,7 +613,7 @@ std::shared_ptr<EffectContext> CreateEffectContext(std::shared_ptr<EffectBuffer>
     context->renderStrategy_ = std::make_shared<RenderStrategy>();
     context->colorSpaceManager_ = std::make_shared<ColorSpaceManager>();
     GetSupportedColorSpace(name, context->filtersSupportedColorSpace_);
-
+    GetSupportedHdrFormat(name, context->filtersSupportedHdrFormat_);
     context->memoryManager_->Init(src, dst); // local variable and not need invoke ClearMemory
     context->renderStrategy_->Init(src, dst);
     context->colorSpaceManager_->Init(src, dst);
@@ -629,7 +728,7 @@ ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<Ef
 
     // update exif info
     if (!IsTextureInput()) {
-        CommonUtils::UpdateImageExifDateTime(dst->extraInfo_->pixelMap);
+        CommonUtils::UpdateImageExifDateTime(dst->bufferInfo_->pixelMap_);
     }
     return ErrorCode::SUCCESS;
 }

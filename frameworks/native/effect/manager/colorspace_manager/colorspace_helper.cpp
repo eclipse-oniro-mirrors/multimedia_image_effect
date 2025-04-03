@@ -64,6 +64,10 @@ static const std::unordered_map<EffectColorSpace, OH_NativeBuffer_ColorSpace> EF
     { EffectColorSpace::ADOBE_RGB, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_ADOBERGB_FULL },
 };
 
+static const std::unordered_set<HdrFormat> SUPPORT_HDR_FORMAT_SET = {
+    HdrFormat::HDR10, HdrFormat::HDR8_GAINMAP
+};
+
 bool ColorSpaceHelper::IsHdrColorSpace(EffectColorSpace colorSpace)
 {
     return colorSpace == EffectColorSpace::BT2020_HLG || colorSpace == EffectColorSpace::BT2020_HLG_LIMIT ||
@@ -196,7 +200,7 @@ ErrorCode ColorSpaceHelper::UpdateMetadata(EffectBuffer *input)
     CHECK_AND_RETURN_RET_LOG(input != nullptr && input->bufferInfo_ != nullptr && input->extraInfo_ != nullptr,
         ErrorCode::ERR_INPUT_NULL, "UpdateMetadata: inputBuffer is null");
 
-    return UpdateMetadata(input->extraInfo_->surfaceBuffer, input->bufferInfo_->colorSpace_);
+    return UpdateMetadata(input->bufferInfo_->surfaceBuffer_, input->bufferInfo_->colorSpace_);
 }
 
 ErrorCode ColorSpaceHelper::UpdateMetadata(SurfaceBuffer *input, const EffectColorSpace &colorSpace)
@@ -234,7 +238,7 @@ ErrorCode ApplyColorSpaceIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, const 
         updateMemory->memoryData_ = std::make_shared<MemoryData>();
         updateMemory->memoryData_->data = srcBuffer->buffer_;
         updateMemory->memoryData_->memoryInfo.bufferInfo = *srcBuffer->bufferInfo_;
-        updateMemory->memoryData_->memoryInfo.extra = srcBuffer->extraInfo_->surfaceBuffer;
+        updateMemory->memoryData_->memoryInfo.extra = srcBuffer->bufferInfo_->surfaceBuffer_;
         updateMemory->memoryData_->memoryInfo.bufferType = srcBuffer->extraInfo_->bufferType;
         updateMemory->memDataType_ = MemDataType::INPUT;
         updateMemory->isAllowModify_ = true;
@@ -245,15 +249,29 @@ ErrorCode ApplyColorSpaceIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, const 
     return ErrorCode::SUCCESS;
 }
 
+bool isNeedDecomposeHdrImage(const EffectColorSpace &colorSpace, const EffectColorSpace &chosenColorSpace,
+    std::shared_ptr<EffectBuffer> &buffer, const std::shared_ptr<EffectContext> &context)
+{
+    bool isNeedDecompose = ColorSpaceHelper::IsHdrColorSpace(colorSpace) &&
+        !ColorSpaceHelper::IsHdrColorSpace(chosenColorSpace);
+    CHECK_AND_RETURN_RET_LOG(buffer, false, "isNeedDecomposeHdrImage : buffer is null");
+
+    bool isSupportHdr = !std::none_of(SUPPORT_HDR_FORMAT_SET.begin(), SUPPORT_HDR_FORMAT_SET.end(),
+        [&context](const HdrFormat &format) {
+            return context->filtersSupportedHdrFormat_.count(format) > 0;
+    }) && SUPPORT_HDR_FORMAT_SET.count(buffer->bufferInfo_->hdrFormat_) > 0;
+    EFFECT_LOGD("isNeedDecomposeHdrImage: colorSpace=%{public}d, chosenColorSpace=%{public}d, isSupportHdr=%{public}d",
+        colorSpace, chosenColorSpace, isSupportHdr);
+    return isNeedDecompose && !isSupportHdr;
+}
+
 ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const EffectColorSpace &chosenColorSpace,
     std::shared_ptr<EffectBuffer> &buffer, const std::shared_ptr<EffectContext> &context)
 {
-    bool isNeedDecompose =
-        ColorSpaceHelper::IsHdrColorSpace(colorSpace) && !ColorSpaceHelper::IsHdrColorSpace(chosenColorSpace);
-    if (!isNeedDecompose) {
+    if (!isNeedDecomposeHdrImage(colorSpace, chosenColorSpace, buffer, context)) {
+        EFFECT_LOGI("DecomposeHdrImageIfNeed: no need decompose HDR image!");
         return ErrorCode::SUCCESS;
     }
-
     EFFECT_LOGI("ColorSpaceHelper::DecomposeHdrImage");
     std::shared_ptr<Memory> oldMemory = context->memoryManager_->GetMemoryByAddr(buffer->buffer_);
     std::shared_ptr<ColorSpaceConverter> converter = std::make_shared<ColorSpaceConverter>();
@@ -266,9 +284,9 @@ ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const Effe
         "sdrImage=%{public}d, sdrImage->extraInfo_=%{public}d", sdrImage == nullptr, sdrImage->extraInfo_ == nullptr);
 
     context->memoryManager_->RemoveMemory(oldMemory);
-    std::shared_ptr<MemoryData> memoryData = converter->GetMemoryData(sdrImage->extraInfo_->surfaceBuffer);
+    std::shared_ptr<MemoryData> memoryData = converter->GetMemoryData(sdrImage->bufferInfo_->surfaceBuffer_);
 
-    SurfaceBuffer *sb = sdrImage->extraInfo_->surfaceBuffer;
+    SurfaceBuffer *sb = sdrImage->bufferInfo_->surfaceBuffer_;
     ColorSpaceHelper::SetSurfaceBufferMetadataType(sb, CM_HDR_Metadata_Type::CM_METADATA_NONE);
     ColorSpaceHelper::SetSurfaceBufferColorSpaceType(sb, CM_ColorSpaceType::CM_COLORSPACE_NONE);
 

@@ -55,13 +55,13 @@ public:
         bufferInfo->rowStride_ = ROW_STRIDE;
         bufferInfo->len_ = LEN;
         bufferInfo->formatType_ = FORMATE_TYPE;
+        bufferInfo->pixelMap_ = nullptr;
+        bufferInfo->surfaceBuffer_ = nullptr;
         void *addr = malloc(bufferInfo->len_);
 
         std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
         extraInfo->dataType = DataType::PIXEL_MAP;
         extraInfo->bufferType = BufferType::HEAP_MEMORY;
-        extraInfo->pixelMap = nullptr;
-        extraInfo->surfaceBuffer = nullptr;
         effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, addr, extraInfo);
 
         free(addr);
@@ -87,10 +87,10 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment001, TestSize.Level1)
     std::shared_ptr<EffectBuffer> output;
     renderEnvironment->outType_ = DataType::NATIVE_WINDOW;
     effectBuffer->bufferInfo_->width_ = 2 * WIDTH;
-    renderEnvironment->GenMainTex(effectBuffer, output);
+    renderEnvironment->GenTex(effectBuffer, output);
 
     effectBuffer->bufferInfo_->formatType_ = IEffectFormat::DEFAULT;
-    renderEnvironment->GenMainTex(effectBuffer, output);
+    renderEnvironment->GenTex(effectBuffer, output);
 
     RenderTexturePtr texptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
     EXPECT_NE(texptr, nullptr);
@@ -162,7 +162,7 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment003, TestSize.Level1)
 
     effectBuffer->tex = texptr;
     renderEnvironment->ConvertYUV2RGBA(effectBuffer, input);
-    effectBuffer->extraInfo_->surfaceBuffer = nullptr;
+    effectBuffer->bufferInfo_->surfaceBuffer_ = nullptr;
     std::shared_ptr<EffectBuffer> buffer =
         renderEnvironment->ConvertBufferToTexture(effectBuffer.get());
     EXPECT_NE(buffer, nullptr);
@@ -228,7 +228,7 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment006, TestSize.Level1)
     EXPECT_NE(texptr, nullptr);
 
     effectBuffer->tex = texptr;
-    effectBuffer->extraInfo_->surfaceBuffer = buffer;
+    effectBuffer->bufferInfo_->surfaceBuffer_ = buffer;
     effectBuffer->bufferInfo_->formatType_ = IEffectFormat::YUVNV12;
 
     renderEnvironment->ConvertYUV2RGBA(effectBuffer, input);

@@ -162,7 +162,11 @@ public:
     void InitEngine(OHNativeWindow *window);
     void NotifyInputChanged();
     IMAGE_EFFECT_EXPORT bool IfNeedGenMainTex() const;
-    IMAGE_EFFECT_EXPORT void GenMainTex(const std::shared_ptr<EffectBuffer> &source,
+    RenderTexturePtr ReCreateTexture(RenderTexturePtr renderTex, int width, int height, bool isHdr10) const;
+    IMAGE_EFFECT_EXPORT RenderTexturePtr GenMainTex(const std::shared_ptr<EffectBuffer> &source, bool isHdr10);
+    IMAGE_EFFECT_EXPORT std::unordered_map<std::string, RenderTexturePtr> GenHdr8GainMapTexs(
+        const std::shared_ptr<EffectBuffer> &source);
+    IMAGE_EFFECT_EXPORT void GenTex(const std::shared_ptr<EffectBuffer> &source,
         std::shared_ptr<EffectBuffer> &output);
     IMAGE_EFFECT_EXPORT std::shared_ptr<EffectBuffer> ConvertBufferToTexture(EffectBuffer *source);
     IMAGE_EFFECT_EXPORT void ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output);
@@ -177,22 +181,28 @@ public:
     IMAGE_EFFECT_EXPORT void Draw2D2OES(RenderTexturePtr source, RenderTexturePtr output);
     IMAGE_EFFECT_EXPORT void UpdateCanvas();
     IMAGE_EFFECT_EXPORT EGLStatus GetEGLStatus() const;
-    IMAGE_EFFECT_EXPORT RenderTexturePtr RequestBuffer(int width, int height);
+    IMAGE_EFFECT_EXPORT RenderTexturePtr RequestBuffer(int width, int height, GLenum format = GL_RGBA8);
     bool IsPrepared() const;
-    DataType GetOutputType() const;
+    IMAGE_EFFECT_EXPORT DataType GetOutputType() const;
     void SetOutputType(DataType type);
     void ReadPixelsFromTex(RenderTexturePtr tex, void *data, int width, int height, int stride);
     void DrawBufferToTexture(RenderTexturePtr renderTex, const EffectBuffer *source);
-    IMAGE_EFFECT_EXPORT GLuint GenTextureWithPixels(void *data, int width, int height, int stride);
+    IMAGE_EFFECT_EXPORT GLuint GenTextureWithPixels(void *data, int width, int height, int stride,
+        IEffectFormat format = IEffectFormat::RGBA8888);
+    IMAGE_EFFECT_EXPORT bool GetOrCreateTextureFromCache(RenderTexturePtr &renderTex, const std::string &texName,
+        int width, int height, bool isHdr10) const;
     IMAGE_EFFECT_EXPORT void DrawFlipSurfaceBufferFromTex(RenderTexturePtr tex,
         SurfaceBuffer *buffer, IEffectFormat format);
     IMAGE_EFFECT_EXPORT void DrawSurfaceBufferFromTex(RenderTexturePtr tex,
         SurfaceBuffer *buffer, IEffectFormat format);
     IMAGE_EFFECT_EXPORT void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer,
         IEffectFormat format = IEffectFormat::RGBA8888);
+    void DrawOesTexture2DFromTexture(RenderTexturePtr inputTex, GLuint outputTex, int32_t width, int32_t height,
+        IEffectFormat format);
+    void DrawSurfaceBufferFromSurfaceBuffer(SurfaceBuffer *inBuffer, SurfaceBuffer *outBuffer,
+        IEffectFormat format) const;
     IMAGE_EFFECT_EXPORT void DrawFlipTex(RenderTexturePtr input, RenderTexturePtr output);
-    std::shared_ptr<EffectBuffer> GenTexEffectBuffer(std::shared_ptr<EffectBuffer> input);
-    IMAGE_EFFECT_EXPORT GLuint GenTexFromEffectBuffer(const EffectBuffer *source);
+    IMAGE_EFFECT_EXPORT std::shared_ptr<EffectBuffer> GenTexEffectBuffer(const std::shared_ptr<EffectBuffer> &input);
     IMAGE_EFFECT_EXPORT GLuint ConvertFromYUVToRGB(const EffectBuffer *source, IEffectFormat format);
     IMAGE_EFFECT_EXPORT void ConvertFromRGBToYUV(RenderTexturePtr input, IEffectFormat format, void *data);
     IMAGE_EFFECT_EXPORT void ReleaseParam();

@@ -43,6 +43,7 @@ public:
 
     IPType ipType_ = IPType::DEFAULT;
     std::unordered_set<EffectColorSpace> filtersSupportedColorSpace_;
+    std::unordered_set<HdrFormat> filtersSupportedHdrFormat_;
 
     IMAGE_EFFECT_EXPORT std::shared_ptr<ExifMetadata> GetExifMetadata();
 

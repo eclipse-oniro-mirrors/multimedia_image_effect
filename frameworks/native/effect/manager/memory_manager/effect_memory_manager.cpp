@@ -52,7 +52,7 @@ void EffectMemoryManager::AddFilterMemory(const std::shared_ptr<EffectBuffer> &e
     memory->memoryData_ = std::make_shared<MemoryData>();
     memory->memoryData_->data = effectBuffer->buffer_;
     memory->memoryData_->memoryInfo.bufferInfo = *effectBuffer->bufferInfo_;
-    memory->memoryData_->memoryInfo.extra = effectBuffer->extraInfo_->surfaceBuffer;
+    memory->memoryData_->memoryInfo.extra = effectBuffer->bufferInfo_->surfaceBuffer_;
     memory->memoryData_->memoryInfo.bufferType = effectBuffer->extraInfo_->bufferType;
     memory->memDataType_ = memDataType;
     memory->isAllowModify_ = isAllowModify;

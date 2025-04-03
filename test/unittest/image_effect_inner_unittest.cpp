@@ -89,11 +89,11 @@ void ImageEffectInnerUnittest::SetUp()
     info->rowStride_ = mockPixelMap_->GetRowStride();
     info->len_ = mockPixelMap_->GetHeight() * mockPixelMap_->GetRowStride();
     info->formatType_ = IEffectFormat::RGBA8888;
+    info->pixelMap_ = mockPixelMap_;
+    info->surfaceBuffer_ = nullptr;
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = DataType::PIXEL_MAP;
     extraInfo->bufferType = BufferType::HEAP_MEMORY;
-    extraInfo->pixelMap = mockPixelMap_;
-    extraInfo->surfaceBuffer = nullptr;
     effectBuffer_ = new EffectBuffer(info, (void *)mockPixelMap_->GetPixels(), extraInfo);
 }
 

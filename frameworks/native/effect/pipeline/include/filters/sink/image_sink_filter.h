@@ -16,6 +16,7 @@
 #ifndef IE_PIPELINE_FILTERS_IMAGE_SINK_FILTER_H
 #define IE_PIPELINE_FILTERS_IMAGE_SINK_FILTER_H
 
+#include <surface.h>
 #include "filter_base.h"
 
 namespace OHOS {
@@ -28,9 +29,30 @@ public:
         filterType_ = FilterType::OUTPUT_SINK;
     }
 
-    ~ImageSinkFilter() override = default;
+    ~ImageSinkFilter() override
+    {
+        if (hdrSurfaceBuffer_) {
+            hdrSurfaceBuffer_->DecStrongRef(hdrSurfaceBuffer_);
+            hdrSurfaceBuffer_ = nullptr;
+        }
+
+        DestoryTexureCache();
+    }
+
+    struct TextureCacheSeq {
+        TextureCacheSeq() : texId_(0), eglImage_(nullptr), eglSync_(nullptr) {}
+        TextureCacheSeq(unsigned int texId, void* img, void* sync)
+            : texId_(texId), eglImage_(img), eglSync_(sync) {}
+        unsigned int texId_;
+        void* eglImage_;
+        void* eglSync_;
+    };
 
     virtual ErrorCode SetSink(const std::shared_ptr<EffectBuffer> &sink);
+
+    void DestoryTexureCache();
+
+    ErrorCode SetXComponentSurface(sptr<Surface> &surface);
 
     ErrorCode SetParameter(int32_t key, const Media::Plugin::Any &value) override
     {
@@ -46,6 +68,25 @@ public:
 
     void Negotiate(const std::string& inPort, const std::shared_ptr<Capability> &capability,
         std::shared_ptr<EffectContext> &context) override;
+    void FlushBufferToScreen(sptr<SurfaceBuffer> &outBuffer, sptr<SyncFence> &fence) const;
+
+    void RequestBufferFromScreen(BufferRequestConfig &requestConfig, sptr<SurfaceBuffer> &outBuffer,
+        sptr<SyncFence> &syncFence) const;
+
+    static BufferRequestConfig CreateBaseBufferConfig(int32_t width, int32_t height, GraphicPixelFormat format,
+        GraphicTransformType transform, GraphicColorGamut colorGamut);
+
+    ErrorCode SurfaceRenderFlow(SurfaceBuffer* srcBuffer, BufferRequestConfig &requestConfig,
+        MetaDataMap& hdrMetaDataMap, const int32_t &colorSpaceType,
+        const std::shared_ptr<EffectContext> &context) const;
+
+    ErrorCode TextureRenderFlow(RenderTexturePtr texture, BufferRequestConfig &requestConfig,
+        MetaDataMap &hdrMetaDataMap, const int32_t &colorSpaceType,
+        const std::shared_ptr<EffectContext> &context);
+
+    ErrorCode RenderToDisplay(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context);
+    ErrorCode RenderHdr10(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context);
+    ErrorCode Render8GainMap(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context);
 
     ErrorCode PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context) override;
@@ -73,6 +114,10 @@ public:
 
 private:
     void OnEvent(const Event &event) override {}
+
+    sptr<Surface> toXComponentSurface_;
+    std::unordered_map<uint32_t, TextureCacheSeq> texureCacheSeqs_;
+    sptr<SurfaceBuffer> hdrSurfaceBuffer_ = nullptr;
 };
 } // namespace Effect
 } // namespace Media

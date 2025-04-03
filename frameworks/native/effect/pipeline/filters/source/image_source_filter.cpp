@@ -66,11 +66,11 @@ ErrorCode UpdateInputBufferIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std:
         std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
         *extraInfo = *srcBuffer->extraInfo_;
         extraInfo->bufferType = allocMemInfo.bufferType;
-        extraInfo->surfaceBuffer = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
+        bufferInfo->surfaceBuffer_ = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
             static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
-        if (extraInfo->surfaceBuffer != nullptr && srcBuffer->extraInfo_->surfaceBuffer != nullptr) {
-            GraphicTransformType transformType = srcBuffer->extraInfo_->surfaceBuffer->GetSurfaceBufferTransform();
-            extraInfo->surfaceBuffer->SetSurfaceBufferTransform(transformType);
+        if (bufferInfo->surfaceBuffer_ != nullptr && srcBuffer->bufferInfo_->surfaceBuffer_ != nullptr) {
+            GraphicTransformType transformType = srcBuffer->bufferInfo_->surfaceBuffer_->GetSurfaceBufferTransform();
+            bufferInfo->surfaceBuffer_->SetSurfaceBufferTransform(transformType);
         }
         buffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
 
@@ -93,7 +93,7 @@ ErrorCode UpdateInputBufferIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std:
     }
 
     context->renderEnvironment_->BeginFrame();
-    context->renderEnvironment_->GenMainTex(srcBuffer, buffer);
+    context->renderEnvironment_->GenTex(srcBuffer, buffer);
     return ErrorCode::SUCCESS;
 }
 
@@ -127,6 +127,12 @@ ErrorCode ImageSourceFilter::DoNegotiate()
     std::for_each(allSupportedColorSpaces.begin(), allSupportedColorSpaces.end(), [&](const auto &item) {
         context_->filtersSupportedColorSpace_.emplace(item);
     });
+
+    context_->filtersSupportedHdrFormat_ = {
+        HdrFormat::SDR,
+        HdrFormat::HDR8_GAINMAP,
+        HdrFormat::HDR10,
+    };
     context_->cacheNegotiate_->ClearConfig();
 
     if (outPorts_[0] == nullptr) {

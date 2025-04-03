@@ -17,6 +17,7 @@
 #define IMAGE_EFFECT_COMMON_UTILS_H
 
 #include <memory>
+#include <cstdarg>
 
 #include "any.h"
 #include "display_type.h"
@@ -39,6 +40,13 @@ namespace Effect {
 class CommonUtils {
 public:
     static const int32_t RGBA_BYTES_PER_PIXEL = 4;
+    static void CopyBufferInfo(const BufferInfo &src, BufferInfo &dst);
+    static void CopyExtraInfo(const ExtraInfo &src, ExtraInfo &dst);
+
+    static MetaDataMap GetMetaData(SurfaceBuffer *surfaceBuffer);
+    static void SetMetaData(MetaDataMap& metaData, SurfaceBuffer* surfaceBuffer);
+
+    static ErrorCode ParsePixelMapData(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
     IMAGE_EFFECT_EXPORT static ErrorCode LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
     static ErrorCode ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
         std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType, int64_t timestamp = 0);
@@ -61,6 +69,7 @@ public:
     static void UpdateImageExifInfo(PixelMap *pixelMap);
     static void UpdateImageExifInfo(Picture *picture);
     static ErrorCode ParsePicture(Picture *picture, std::shared_ptr<EffectBuffer> &effectBuffer);
+    static bool IsEnableCopyMetaData(int numBuffers, ...);
 
     static std::shared_ptr<ImageSource> GetImageSourceFromPath(std::string path);
 

@@ -135,7 +135,7 @@ ErrorCode GpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     renderEffectData_->ratio = ParseContrast(value) / MAX_CONTRAST;
 
     RenderTexturePtr tex = context->renderEnvironment_->RequestBuffer(renderEffectData_->outputWidth_,
-        renderEffectData_->outputHeight_);
+        renderEffectData_->outputHeight_, renderEffectData_->inputTexture_->Format());
     Render(GL_TEXTURE_2D, tex);
     if (dst->extraInfo_->dataType != DataType::TEX) {
         context->renderEnvironment_->ConvertTextureToBuffer(tex, dst);

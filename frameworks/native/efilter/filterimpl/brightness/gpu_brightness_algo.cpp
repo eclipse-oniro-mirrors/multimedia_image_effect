@@ -134,7 +134,7 @@ ErrorCode GpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
     renderEffectData_->ratio = ParseBrightness(value) / MAX_BRIGHTNESS;
 
     RenderTexturePtr tex = context->renderEnvironment_->RequestBuffer(renderEffectData_->outputWidth_,
-        renderEffectData_->outputHeight_);
+        renderEffectData_->outputHeight_, renderEffectData_->inputTexture_->Format());
     Render(GL_TEXTURE_2D, tex);
     if (dst->extraInfo_->dataType != DataType::TEX) {
         context->renderEnvironment_->ConvertTextureToBuffer(tex, dst);

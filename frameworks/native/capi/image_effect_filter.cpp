@@ -203,7 +203,7 @@ protected:
         std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
         *extraInfo = *src->extraInfo_;
         extraInfo->bufferType = BufferType::DEFAULT;
-        extraInfo->surfaceBuffer = nullptr;
+        bufferInfo->surfaceBuffer_ = nullptr;
         std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, dst->addr, extraInfo);
 
         Plugin::Any any;

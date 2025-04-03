@@ -344,12 +344,16 @@ ErrorCode ConfigSourceFilter(std::shared_ptr<ImageSourceFilter> &srcFilter, std:
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode ConfigSinkFilter(std::shared_ptr<ImageSinkFilter> &sinkFilter, std::shared_ptr<EffectBuffer> &sinkBuffer)
+ErrorCode ConfigSinkFilter(std::shared_ptr<ImageSinkFilter> &sinkFilter, std::shared_ptr<EffectBuffer> &sinkBuffer,
+    sptr<Surface> &toXComponentSurface)
 {
     CHECK_AND_RETURN_RET_LOG(sinkFilter != nullptr, ErrorCode::ERR_INPUT_NULL, "sinkFilter is null");
 
     ErrorCode res = sinkFilter->SetSink(sinkBuffer);
     FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "set sink fail! res=%{public}d", res);
+
+    res = sinkFilter->SetXComponentSurface(toXComponentSurface);
+    FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "set xcomponent surface fail! res=%{public}d", res);
 
     return ErrorCode::SUCCESS;
 }
@@ -371,6 +375,20 @@ void GetConfigIPTypes(const std::map<ConfigType, Plugin::Any> &config, std::vect
     configIPTypes = { IPType::CPU, IPType::GPU };
 }
 
+void AdjustEffectFormat(IEffectFormat &effectFormat)
+{
+    switch (effectFormat) {
+        case IEffectFormat::RGBA_1010102:
+        case IEffectFormat::YCRCB_P010:
+        case IEffectFormat::YCBCR_P010:
+            effectFormat = IEffectFormat::RGBA_1010102;
+            break;
+        default:
+            effectFormat = IEffectFormat::RGBA8888;
+            break;
+    }
+}
+
 ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     const std::shared_ptr<EffectContext> &context, const std::map<ConfigType, Plugin::Any> &config,
     IPType &runningIPType)
@@ -388,7 +406,7 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
         }
         std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
         if (runningIPType == IPType::GPU) {
-            effectFormat = IEffectFormat::RGBA8888;
+            AdjustEffectFormat(effectFormat);
         }
 
         auto it = formats.find(effectFormat);
@@ -727,6 +745,25 @@ ErrorCode ImageEffect::GetImageInfoFromPicture(uint32_t &width, uint32_t &height
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
+    std::shared_ptr<EffectBuffer> dstEffectBuffer) {
+    std::shared_ptr<ImageSourceFilter> &sourceFilter = impl_->srcFilter_;
+    ErrorCode res = ConfigSourceFilter(sourceFilter, srcEffectBuffer, impl_->effectContext_);
+    if (res != ErrorCode::SUCCESS) {
+        UnLockAll();
+        return res;
+    }
+
+    std::shared_ptr<ImageSinkFilter> &sinkFilter = impl_->sinkFilter_;
+    res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_);
+    if (res != ErrorCode::SUCCESS) {
+        UnLockAll();
+        return res;
+    }
+
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
     std::shared_ptr<ExifMetadata> &exifMetadata)
 {
@@ -766,25 +803,6 @@ ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelForm
             return ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
     }
     return errorCode;
-}
-
-ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
-    std::shared_ptr<EffectBuffer> dstEffectBuffer) {
-    std::shared_ptr<ImageSourceFilter> &sourceFilter = impl_->srcFilter_;
-    ErrorCode res = ConfigSourceFilter(sourceFilter, srcEffectBuffer, impl_->effectContext_);
-    if (res != ErrorCode::SUCCESS) {
-        UnLockAll();
-        return res;
-    }
-
-    std::shared_ptr<ImageSinkFilter> &sinkFilter = impl_->sinkFilter_;
-    res = ConfigSinkFilter(sinkFilter, dstEffectBuffer);
-    if (res != ErrorCode::SUCCESS) {
-        UnLockAll();
-        return res;
-    }
-
-    return ErrorCode::SUCCESS;
 }
 
 void ImageEffect::SetPathToSink()

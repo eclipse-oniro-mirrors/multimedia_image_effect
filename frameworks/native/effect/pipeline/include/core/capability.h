@@ -40,6 +40,10 @@ struct ColorSpaceCap {
     std::vector<EffectColorSpace> colorSpaces;
 };
 
+struct HdrFormatCap {
+    std::vector<HdrFormat> hdrFormats;
+};
+
 struct Capability {
     Capability(std::string &name):name_(name) {}
 
@@ -47,6 +51,7 @@ struct Capability {
     std::shared_ptr<PixelFormatCap> pixelFormatCap_ = nullptr;
     std::shared_ptr<MemNegotiatedCap> memNegotiatedCap_ = nullptr;
     std::shared_ptr<ColorSpaceCap> colorSpaceCap_ = nullptr;
+    std::shared_ptr<HdrFormatCap> hdrFormatCap_ = nullptr;
 };
 } // namespace Effect
 } // namespace Media

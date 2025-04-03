@@ -47,11 +47,13 @@ std::shared_ptr<ExifMetadata> EffectContext::GetExifMetadata()
     }
 
     std::shared_ptr<ExtraInfo> &extraInfo = src->extraInfo_;
+    std::shared_ptr<BufferInfo> &bufferInfo = src->bufferInfo_;
     CHECK_AND_RETURN_RET_LOG(extraInfo != nullptr, nullptr, "EffectContext::GetExifMetadata: extraInfo is null");
+    CHECK_AND_RETURN_RET_LOG(bufferInfo != nullptr, nullptr, "EffectContext::GetExifMetadata: bufferInfo is null");
 
     switch (extraInfo->dataType) {
         case DataType::PIXEL_MAP:
-            return GetExifMetadataFromPixelmap(extraInfo->pixelMap);
+            return GetExifMetadataFromPixelmap(bufferInfo->pixelMap_);
         case DataType::PATH:
         case DataType::URI:
             return GetExifMetadataFromPicture(extraInfo->innerPicture.get());
