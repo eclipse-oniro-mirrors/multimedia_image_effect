@@ -27,6 +27,7 @@
 #include "format_helper.h"
 #include "exif_metadata.h"
 #include "v1_1/buffer_handle_meta_key_type.h"
+#include "surface_buffer.h"
 
 namespace OHOS {
 namespace Media {
@@ -84,34 +85,87 @@ ErrorCode ParseJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &jso
     return ErrorCode::SUCCESS;
 }
 
-std::shared_ptr<ExtraInfo> CreateExtraInfo(PixelMap * pixelMap)
+std::shared_ptr<ExtraInfo> CreateExtraInfo(PixelMap *pixelMap)
 {
     BufferType bufferType = CommonUtils::SwitchToEffectBuffType(pixelMap->GetAllocatorType());
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = DataType::PIXEL_MAP;
     extraInfo->bufferType = bufferType;
-    extraInfo->pixelMap = pixelMap;
-    extraInfo->surfaceBuffer = nullptr;
-    if (extraInfo->bufferType == BufferType::DMA_BUFFER && pixelMap->GetFd() != nullptr) {
-        extraInfo->surfaceBuffer = reinterpret_cast<SurfaceBuffer*>(pixelMap->GetFd());
-    }
-    if (extraInfo->bufferType == BufferType::SHARED_MEMORY && pixelMap->GetFd() != nullptr) {
-        extraInfo->fd = reinterpret_cast<int *>(pixelMap->GetFd());
-    }
     EFFECT_LOGI("pixelMap extraInfos: dataType=%{public}d, bufferType=%{public}d",
         extraInfo->dataType, extraInfo->bufferType);
     return extraInfo;
 }
 
-ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer)
+void CommonUtils::CopyBufferInfo(const BufferInfo& src, BufferInfo& dst)
+{
+    dst.width_ = src.width_;
+    dst.height_ = src.height_;
+    dst.len_ = src.len_;
+    dst.hdrFormat_ = src.hdrFormat_;
+    dst.formatType_ = src.formatType_;
+    dst.colorSpace_ = src.colorSpace_;
+    dst.rowStride_ = src.rowStride_;
+    dst.bufferType_ = src.bufferType_;
+    dst.pixelmapType_ = src.pixelmapType_;
+    dst.surfaceBuffer_ = src.surfaceBuffer_;
+    dst.fd_ = src.fd_;
+    dst.pixelMap_ = src.pixelMap_;
+    dst.gainMapTex_ = src.gainMapTex_;
+    dst.addr_ = src.addr_;
+}
+
+void CommonUtils::CopyExtraInfo(const ExtraInfo& src, ExtraInfo& dst)
+{
+    dst.dataType = src.dataType;
+    dst.bufferType = src.bufferType;
+    dst.uri = src.uri;
+    dst.path = src.path;
+    dst.timestamp = src.timestamp;
+    dst.picture = src.picture;
+    dst.innerPixelMap = src.innerPixelMap;
+    dst.innerPicture = src.innerPicture;
+}
+
+MetaDataMap CommonUtils::GetMetaData(SurfaceBuffer* surfaceBuffer)
+{
+    std::unordered_map<uint32_t, std::vector<uint8_t>> metadataMap;
+    std::vector<uint32_t> keys = {};
+    surfaceBuffer->ListMetadataKeys(keys);
+    EFFECT_LOGD("CommonUtils::GetMetaData: keys length = %{public}d", static_cast<int>(keys.size()));
+
+    for (const auto key : keys) {
+        std::vector<uint8_t> values;
+        auto ret = surfaceBuffer->GetMetadata(key, values);
+        if (ret != 0) {
+            EFFECT_LOGE("GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
+            continue;
+        }
+
+        metadataMap.emplace(key, std::move(values));
+    }
+
+    return metadataMap;
+}
+
+void CommonUtils::SetMetaData(MetaDataMap& metaData, SurfaceBuffer* surfaceBuffer)
+{
+    EFFECT_LOGD("CommonUtils::SetMetaData");
+    CHECK_AND_RETURN_LOG(surfaceBuffer != nullptr, "CommonUtils::SetMetaData: surfaceBuffer is null!");
+
+    for (const auto& [key, values] : metaData) {
+        GSError ret = surfaceBuffer->SetMetadata(key, values);
+        if (ret != 0) {
+            EFFECT_LOGE("SetMetadata failed! key = %{public}d, res = %{public}d", key, ret);
+        }
+    }
+}
+
+ErrorCode CommonUtils::ParsePixelMapData(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer)
 {
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
     ColorSpaceName colorSpaceName = pixelMap->InnerGetGrColorSpacePtr() == nullptr ? ColorSpaceName::NONE :
         pixelMap->InnerGetGrColorSpacePtr()->GetColorSpaceName();
-    EFFECT_LOGD("pixelMapInfos: width=%{public}d, height=%{public}d, formatType=%{public}d " \
-        "rowStride=%{public}d, byteCount=%{public}d, addr=%{private}p, colorSpaceName=%{public}d",
-        pixelMap->GetWidth(), pixelMap->GetHeight(), pixelMap->GetPixelFormat(), pixelMap->GetRowStride(),
-        pixelMap->GetByteCount(), pixelMap->GetPixels(), colorSpaceName);
+    EFFECT_LOGD("pixelMapInfos::colorSpaceName = %{public}d", colorSpaceName);
 
     IEffectFormat formatType = SwitchToEffectFormat(pixelMap->GetPixelFormat());
     CHECK_AND_RETURN_RET_LOG(formatType != IEffectFormat::DEFAULT, ErrorCode::ERR_UNSUPPORTED_PIXEL_FORMAT,
@@ -133,30 +187,56 @@ ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBu
     } else {
         bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
     }
-    bufferInfo->len_ = formatType == IEffectFormat::RGBA8888 ? bufferInfo->height_ * bufferInfo->rowStride_ :
-        FormatHelper::CalculateSize(bufferInfo->width_, bufferInfo->height_, formatType);
+    bufferInfo->len_ = (formatType == IEffectFormat::RGBA8888 || formatType == IEffectFormat::RGBA_1010102) ?
+        bufferInfo->height_ * bufferInfo->rowStride_ :
+        FormatHelper::CalculateSize(bufferInfo->rowStride_, bufferInfo->height_, formatType);
     bufferInfo->formatType_ = formatType;
     bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceName);
-
+    bufferInfo->hdrFormat_ = formatType == IEffectFormat::RGBA_1010102 ? HdrFormat::HDR10 : bufferInfo->hdrFormat_;
+    BufferType bufferType = CommonUtils::SwitchToEffectBuffType(pixelMap->GetAllocatorType());
+    bufferInfo->bufferType_ = bufferType;
+    bufferInfo->surfaceBuffer_ = nullptr;
+    bufferInfo->pixelMap_ = pixelMap;
+    if (bufferType == BufferType::DMA_BUFFER && pixelMap->GetFd() != nullptr) {
+        bufferInfo->surfaceBuffer_ = reinterpret_cast<SurfaceBuffer*>(pixelMap->GetFd());
+        bufferInfo->len_ = bufferInfo->surfaceBuffer_->GetSize();
+    }
+    if (bufferType == BufferType::SHARED_MEMORY && pixelMap->GetFd() != nullptr) {
+        bufferInfo->fd_ = reinterpret_cast<int*>(pixelMap->GetFd());
+    }
     uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
     void *srcData = static_cast<void *>(pixels);
     CHECK_AND_RETURN_RET_LOG(srcData != nullptr, ErrorCode::ERR_PIXELMAP_ACCESSPIXELS_FAIL, "fail exec GetPixels!");
+    std::shared_ptr<ExtraInfo> extraInfo = CreateExtraInfo(pixelMap);
+    effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, srcData, extraInfo);
+    return ErrorCode::SUCCESS;
+}
 
+ErrorCode CommonUtils::LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer)
+{
+    EFFECT_LOGD("pixelMapInfos: width=%{public}d, height=%{public}d, formatType=%{public}d " \
+        "rowStride=%{public}d, byteCount=%{public}d, addr=%{private}p",
+        pixelMap->GetWidth(), pixelMap->GetHeight(), pixelMap->GetPixelFormat(), pixelMap->GetRowStride(),
+        pixelMap->GetByteCount(), pixelMap->GetPixels());
+    auto res = ParsePixelMapData(pixelMap, effectBuffer);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "LockPixelMap::ParsePixelMapData fail! %{public}d", res);
+
+    auto bufferInfo = effectBuffer->bufferInfo_;
     EFFECT_LOGI("pixelMap bufferInfos: width=%{public}d, height=%{public}d, formatType=%{public}d, " \
         "rowStride_=%{public}d, len=%{public}d, colorspace=%{public}d, addr=%{private}p",
         bufferInfo->width_, bufferInfo->height_, bufferInfo->formatType_, bufferInfo->rowStride_,
-        bufferInfo->len_, bufferInfo->colorSpace_, pixels);
+        bufferInfo->len_, bufferInfo->colorSpace_, effectBuffer->buffer_);
 
-    std::shared_ptr<ExtraInfo> extraInfo = CreateExtraInfo(pixelMap);
+    EFFECT_LOGI("pixelMap extraInfos: dataType=%{public}d, bufferType=%{public}d",
+        effectBuffer->extraInfo_->dataType, effectBuffer->extraInfo_->bufferType);
 
-    if (extraInfo->surfaceBuffer != nullptr) {
-        SurfaceBuffer *sb = extraInfo->surfaceBuffer;
+    if (effectBuffer->bufferInfo_->surfaceBuffer_ != nullptr) {
+        SurfaceBuffer *sb = effectBuffer->bufferInfo_->surfaceBuffer_;
         EFFECT_LOGD("pixelMap surfaceBufferInfo: width=%{public}d, height=%{public}d, format=%{public}d, "
             "rowStride=%{public}d, size=%{public}d, addr=%{private}p", sb->GetWidth(),
             sb->GetHeight(), sb->GetFormat(), sb->GetStride(), sb->GetSize(), sb->GetVirAddr());
     }
 
-    effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, srcData, extraInfo);
     return ErrorCode::SUCCESS;
 }
 
@@ -168,11 +248,10 @@ ErrorCode CommonUtils::ParseNativeWindowData(std::shared_ptr<EffectBuffer> &effe
     bufferInfo->rowStride_ = 0;
     bufferInfo->len_ = 0;
     bufferInfo->formatType_ = IEffectFormat::DEFAULT;
+    bufferInfo->surfaceBuffer_ = nullptr;
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = dataType;
     extraInfo->bufferType = BufferType::DMA_BUFFER;
-    extraInfo->pixelMap = nullptr;
-    extraInfo->surfaceBuffer = nullptr;
     effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, nullptr, extraInfo);
     return ErrorCode::SUCCESS;
 }
@@ -191,12 +270,11 @@ ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
     CM_ColorSpaceType colorSpaceType = CM_ColorSpaceType::CM_COLORSPACE_NONE;
     ColorSpaceHelper::GetSurfaceBufferColorSpaceType(surfaceBuffer, colorSpaceType);
     bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceType);
+    bufferInfo->surfaceBuffer_ = surfaceBuffer;
 
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = dataType;
     extraInfo->bufferType = BufferType::DMA_BUFFER;
-    extraInfo->pixelMap = nullptr;
-    extraInfo->surfaceBuffer = surfaceBuffer;
     extraInfo->timestamp = timestamp;
 
     effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, surfaceBuffer->GetVirAddr(), extraInfo);
@@ -536,6 +614,35 @@ void CommonUtils::UpdateImageExifInfo(Picture *picture)
     CHECK_AND_RETURN_LOG(picture != nullptr, "UpdateImageExifInfo: picture is null!");
 
     UpdateExifMetadata(picture->GetExifMetadata(), picture->GetMainPixel().get());
+}
+
+bool CommonUtils::IsEnableCopyMetaData(int numBuffers, ...)
+{
+    va_list args;
+    va_start(args, numBuffers);
+    for (int i = 0; i < numBuffers; ++i) {
+        EffectBuffer* buffer = va_arg(args, EffectBuffer*);
+        if (!buffer) {
+            EFFECT_LOGD("IsEnableCopyMetaData: buffer is null!");
+            va_end(args);
+            return false;
+        }
+        auto extraInfo = buffer->extraInfo_;
+        auto bufferInfo = buffer->bufferInfo_;
+        if (bufferInfo->bufferType_ != BufferType::DMA_BUFFER) {
+            EFFECT_LOGD("IsEnableCopyMetaData: outBuffer bufferType is %{public}d, not DMA_BUFFER!",
+                bufferInfo->bufferType_);
+            va_end(args);
+            return false;
+        }
+        if (!bufferInfo->surfaceBuffer_) {
+            EFFECT_LOGD("IsEnableCopyMetaData: surfaceBuffer is nullptr!");
+            va_end(args);
+            return false;
+        }
+    }
+    va_end(args);
+    return true;
 }
 
 ErrorCode CommonUtils::ParsePicture(Picture *picture, std::shared_ptr<EffectBuffer> &effectBuffer)

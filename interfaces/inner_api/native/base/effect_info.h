@@ -60,10 +60,18 @@ enum class EffectColorSpace : uint32_t {
     BT2020_PQ_LIMIT,
 };
 
+enum class HdrFormat : uint32_t {
+    DEFAULT = 0,
+    SDR,
+    HDR10,
+    HDR8_GAINMAP,
+};
+
 class EffectInfo {
 public:
     std::map<IEffectFormat, std::vector<IPType>> formats_;
     std::vector<EffectColorSpace> colorSpaces_;
+    std::vector<HdrFormat> hdrFormats_;
     Category category_;
 };
 } // namespace Effect

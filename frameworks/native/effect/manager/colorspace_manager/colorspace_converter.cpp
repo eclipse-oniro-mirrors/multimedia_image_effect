@@ -139,9 +139,9 @@ ErrorCode ColorSpaceConverter::ComposeHdrImageInner(int32_t vpeColorSpaceInstanc
     CHECK_AND_RETURN_RET_LOG(inputSdr != nullptr && inputGainmap != nullptr && outputHdr != nullptr,
         ErrorCode::ERR_INPUT_NULL, "ComposeHdrImageInner: inputSdr or inputGainmap or outputHdr is null!");
 
-    sptr<SurfaceBuffer> sdrSb = inputSdr->extraInfo_->surfaceBuffer;
+    sptr<SurfaceBuffer> sdrSb = inputSdr->bufferInfo_->surfaceBuffer_;
     sptr<SurfaceBuffer> gainmapSb = const_cast<SurfaceBuffer *>(inputGainmap);
-    sptr<SurfaceBuffer> hdrSb = outputHdr->extraInfo_->surfaceBuffer;
+    sptr<SurfaceBuffer> hdrSb = outputHdr->bufferInfo_->surfaceBuffer_;
     CHECK_AND_RETURN_RET_LOG(sdrSb != nullptr && gainmapSb != nullptr && hdrSb != nullptr,
         ErrorCode::ERR_INVALID_SURFACE_BUFFER, "ComposeHdrImageInner: invalid surface buffer! sdrSb=%{public}d,"
         "gainmapSb=%{public}d, hdrSb=%{public}d", sdrSb == nullptr, gainmapSb == nullptr, hdrSb == nullptr);
@@ -176,7 +176,7 @@ ErrorCode ColorSpaceConverter::DecomposeHdrImageInner(int32_t vpeColorSpaceInsta
     CHECK_AND_RETURN_RET_LOG(inputHdr != nullptr && outputGainmap != nullptr,
         ErrorCode::ERR_INPUT_NULL, "DecomposeHdrImageInner: inputHdr or outputGainmap is null!");
 
-    sptr<SurfaceBuffer> hdrSb = inputHdr->extraInfo_->surfaceBuffer;
+    sptr<SurfaceBuffer> hdrSb = inputHdr->bufferInfo_->surfaceBuffer_;
     sptr<SurfaceBuffer> sdrSb = AllocSdrSurfaceBuffer(memoryDataArray_, inputHdr, CM_IMAGE_HDR_VIVID_DUAL, CM_P3_FULL,
         EffectColorSpace::DISPLAY_P3);
     sptr<SurfaceBuffer> gainmapSb = AllocGainmapSurfaceBuffer(memoryDataArray_, inputHdr, CM_METADATA_NONE, CM_P3_FULL,
@@ -205,7 +205,7 @@ ErrorCode ColorSpaceConverter::DecomposeHdrImageInner(int32_t vpeColorSpaceInsta
         "DecomposeHdrImageInner: buffer is null or extraInfo of buffer is null!"
         "buffer=%{public}d, buffer->extraInfo_=%{public}d", buffer == nullptr, buffer->extraInfo_ == nullptr);
     *buffer->extraInfo_ = *inputHdr->extraInfo_;
-    buffer->extraInfo_->surfaceBuffer = sdrSb;
+    buffer->bufferInfo_->surfaceBuffer_ = sdrSb;
     buffer->extraInfo_->bufferType = BufferType::DMA_BUFFER;
 
     outputSdr = buffer;
@@ -235,7 +235,7 @@ ErrorCode ColorSpaceConverter::ProcessHdrImageInner(int32_t vpeColorSpaceInstanc
 
     sptr<SurfaceBuffer> sdrSb = AllocSdrSurfaceBuffer(memoryDataArray_, inputHdr, CM_IMAGE_HDR_VIVID_DUAL, CM_P3_FULL,
         EffectColorSpace::DISPLAY_P3);
-    sptr<SurfaceBuffer> hdrSb = inputHdr->extraInfo_->surfaceBuffer;
+    sptr<SurfaceBuffer> hdrSb = inputHdr->bufferInfo_->surfaceBuffer_;
     CHECK_AND_RETURN_RET_LOG(sdrSb != nullptr && hdrSb != nullptr, ErrorCode::ERR_INVALID_SURFACE_BUFFER,
         "ProcessHdrImageInner: invalid surface buffer! sdrSb=%{public}d, hdrSb=%{public}d",
         sdrSb == nullptr, hdrSb == nullptr);
@@ -256,7 +256,7 @@ ErrorCode ColorSpaceConverter::ProcessHdrImageInner(int32_t vpeColorSpaceInstanc
     CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode,
         "ProcessHdrImageInner: ParseSurfaceData fail! errorCode=%{public}d", errorCode);
     *buffer->extraInfo_ = *inputHdr->extraInfo_;
-    buffer->extraInfo_->surfaceBuffer = sdrSb;
+    buffer->bufferInfo_->surfaceBuffer_ = sdrSb;
     buffer->extraInfo_->bufferType = BufferType::DMA_BUFFER;
 
     outputSdr = buffer;
@@ -313,9 +313,10 @@ PixelMap *CreatePixelMap(EffectBuffer *effectBuffer)
 PixelMap *GetPixelMap(EffectBuffer *effectBuffer)
 {
     std::shared_ptr<ExtraInfo> &extraInfo = effectBuffer->extraInfo_;
+    std::shared_ptr<BufferInfo> &bufferInfo = effectBuffer->bufferInfo_;
     switch (extraInfo->dataType) {
         case DataType::PIXEL_MAP:
-            return extraInfo->pixelMap;
+            return bufferInfo->pixelMap_;
         case DataType::URI:
         case DataType::PATH:
         case DataType::PICTURE:
@@ -356,7 +357,7 @@ ErrorCode ColorSpaceConverter::ApplyColorSpace(EffectBuffer *effectBuffer, Effec
 
     effectBuffer->bufferInfo_ = buffer->bufferInfo_;
     effectBuffer->buffer_ = buffer->buffer_;
-    effectBuffer->extraInfo_->surfaceBuffer = buffer->extraInfo_->surfaceBuffer;
+    effectBuffer->bufferInfo_->surfaceBuffer_ = buffer->bufferInfo_->surfaceBuffer_;
 
     return ErrorCode::SUCCESS;
 }

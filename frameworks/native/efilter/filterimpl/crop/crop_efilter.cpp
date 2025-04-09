@@ -131,8 +131,8 @@ ErrorCode CropEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::shared_
 
 void UpdateDstEffectBufferIfNeed(EffectBuffer *src, EffectBuffer *dst)
 {
-    SurfaceBuffer *srcSurfaceBuffer = src->extraInfo_->surfaceBuffer;
-    SurfaceBuffer *dstSurfaceBuffer = dst->extraInfo_->surfaceBuffer;
+    SurfaceBuffer *srcSurfaceBuffer = src->bufferInfo_->surfaceBuffer_;
+    SurfaceBuffer *dstSurfaceBuffer = dst->bufferInfo_->surfaceBuffer_;
     if (srcSurfaceBuffer == nullptr || dstSurfaceBuffer == nullptr ||
         !ColorSpaceHelper::IsHdrColorSpace(src->bufferInfo_->colorSpace_)) {
         return;
@@ -173,7 +173,7 @@ ErrorCode CropEFilter::CropToOutputBuffer(EffectBuffer *src, std::shared_ptr<Eff
             .formatType_ = src->bufferInfo_->formatType_,
             .colorSpace_ = src->bufferInfo_->colorSpace_,
         },
-        .extra = src->extraInfo_->surfaceBuffer,
+        .extra = src->bufferInfo_->surfaceBuffer_,
         .bufferType = ColorSpaceHelper::IsHdrColorSpace(src->bufferInfo_->colorSpace_) ?
             BufferType::DMA_BUFFER : BufferType::DEFAULT,
     };
@@ -184,7 +184,7 @@ ErrorCode CropEFilter::CropToOutputBuffer(EffectBuffer *src, std::shared_ptr<Eff
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     *extraInfo = *src->extraInfo_;
     extraInfo->bufferType = memData->memoryInfo.bufferType;
-    extraInfo->surfaceBuffer = (memData->memoryInfo.bufferType == BufferType::DMA_BUFFER) ?
+    bufferInfo->surfaceBuffer_ = (memData->memoryInfo.bufferType == BufferType::DMA_BUFFER) ?
         static_cast<OHOS::SurfaceBuffer *>(memData->memoryInfo.extra) : nullptr;
     output = std::make_shared<EffectBuffer>(bufferInfo, memData->data, extraInfo);
     UpdateDstEffectBufferIfNeed(src, output.get());

@@ -69,14 +69,14 @@ static std::shared_ptr<EffectBuffer> CreateEffectBufferByPicture(Picture* pictur
     info->rowStride_ = pixelMap->GetRowStride();
     info->len_ = info->rowStride_ * info->height_;
     info->formatType_ = IEffectFormat::RGBA8888;
+    info->pixelMap_ = pixelMap.get();
+    info->surfaceBuffer_ = nullptr;
     uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
     void *addr = static_cast<void *>(pixels);
 
     std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
     extraInfo->dataType = DataType::PIXEL_MAP;
     extraInfo->bufferType = BufferType::HEAP_MEMORY;
-    extraInfo->pixelMap = pixelMap.get();
-    extraInfo->surfaceBuffer = nullptr;
     extraInfo->picture = picture;
 
     std::shared_ptr<EffectBuffer> effectBuf = std::make_shared<EffectBuffer>(info, addr, extraInfo);
@@ -197,11 +197,11 @@ HWTEST_F(TestEffectColorSpaceManager, ColorSpaceHelper_UpdateMetadata001, TestSi
     std::shared_ptr<EffectBuffer> inputEffectBuffer = CreateEffectBufferByPicture(g_picture.get());
     EXPECT_NE(inputEffectBuffer, nullptr);
 
-    inputEffectBuffer->extraInfo_->surfaceBuffer = nullptr;
+    inputEffectBuffer->bufferInfo_->surfaceBuffer_ = nullptr;
     ErrorCode result = ColorSpaceHelper::UpdateMetadata(inputEffectBuffer.get());
     EXPECT_EQ(result, ErrorCode::SUCCESS);
 
-    inputEffectBuffer->extraInfo_->surfaceBuffer = OHOS::SurfaceBuffer::Create();
+    inputEffectBuffer->bufferInfo_->surfaceBuffer_ = OHOS::SurfaceBuffer::Create();
     inputEffectBuffer->bufferInfo_->colorSpace_ = EffectColorSpace::DEFAULT;
     result = ColorSpaceHelper::UpdateMetadata(inputEffectBuffer.get());
     EXPECT_EQ(result, ErrorCode::SUCCESS);

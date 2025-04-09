@@ -64,6 +64,9 @@ public:
         return nullptr;
     }
 
+    IMAGE_EFFECT_EXPORT void HandleCacheStart(const std::shared_ptr<EffectBuffer> &source,
+        std::shared_ptr<EffectContext> &context);
+
     IMAGE_EFFECT_EXPORT ErrorCode PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context) override;
 
@@ -117,6 +120,9 @@ private:
     ErrorCode RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst);
 
     std::shared_ptr<Capability> outputCap_ = nullptr;
+
+    static std::shared_ptr<EffectBuffer> CreateEffectBufferFromTexture(const std::shared_ptr<EffectBuffer> &buffer,
+        const std::shared_ptr<EffectContext> &context);
 
     std::shared_ptr<EffectBuffer> ConvertFromGPU2CPU(const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source);

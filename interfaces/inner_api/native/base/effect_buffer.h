@@ -24,10 +24,15 @@
 #include "surface_buffer.h"
 #include "image_effect_marco_define.h"
 #include "picture.h"
+#include "unordered_map"
 
 namespace OHOS {
 namespace Media {
 namespace Effect {
+class RenderTexture;
+using RenderTexturePtr = std::shared_ptr<RenderTexture>;
+using MetaDataMap = std::unordered_map<uint32_t, std::vector<uint8_t>>;
+
 enum class EffectPixelmapType {
     UNKNOWN = 0,
     PRIMARY,
@@ -42,12 +47,17 @@ public:
     uint32_t width_ = 0;
     uint32_t height_ = 0;
     uint32_t len_ = 0;
+    HdrFormat hdrFormat_ = HdrFormat::DEFAULT;
     IEffectFormat formatType_ = IEffectFormat::DEFAULT;
     EffectColorSpace colorSpace_ = EffectColorSpace::DEFAULT;
     uint32_t rowStride_ = 0;
     BufferType bufferType_ = BufferType::DEFAULT;
     EffectPixelmapType pixelmapType_ = EffectPixelmapType::UNKNOWN;
     void *addr_ = nullptr;
+    RenderTexturePtr gainMapTex_;
+    int *fd_ = nullptr;
+    SurfaceBuffer *surfaceBuffer_ = nullptr;
+    PixelMap *pixelMap_ = nullptr;
 };
 
 enum class DataType {
@@ -65,19 +75,14 @@ enum class DataType {
 struct ExtraInfo {
     DataType dataType = DataType::UNKNOWN;
     BufferType bufferType = BufferType::DEFAULT;
-    PixelMap *pixelMap = nullptr;
     std::shared_ptr<PixelMap> innerPixelMap = nullptr; // converter pixel map for color space, such as adobe rgb
-    OHOS::SurfaceBuffer *surfaceBuffer = nullptr;
     Picture *picture = nullptr;
     std::shared_ptr<Picture> innerPicture = nullptr; // decoded pixel map for url or path
-    int *fd = nullptr;
     std::string uri;
     std::string path;
     int64_t timestamp = 0;
 };
 
-class RenderTexture;
-using RenderTexturePtr = std::shared_ptr<RenderTexture>;
 class EffectBuffer {
 public:
     IMAGE_EFFECT_EXPORT

@@ -56,6 +56,12 @@ public:
     static GLuint CreateTextureFromSurfaceBuffer(SurfaceBuffer *buffer);
 
     static void DestroyImage(EGLImageKHR img);
+
+    static void DestroySyncKHR(EGLSyncKHR sync);
+
+    static void CreateSyncKHR(EGLSyncKHR &sync);
+
+    static int32_t GetEGLFenceFd(EGLSyncKHR sync);
 };
 } // namespace Effect
 } // namespace Media

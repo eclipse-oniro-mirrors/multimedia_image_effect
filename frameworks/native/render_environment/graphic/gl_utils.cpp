@@ -38,6 +38,7 @@ constexpr const int BYTES_OF_R32F = 4;
 constexpr const int BYTES_OF_R8 = 1;
 constexpr const int BYTES_OF_RGB565 = 2;
 constexpr const int BYTES_OF_RGBA4 = 2;
+constexpr const EGLenum FENCE_TYPE = 0x3144;
 
 GLuint GLUtils::CreateTexture2D(GLsizei width, GLsizei height, GLsizei levels, GLenum internalFormat, GLint minFilter,
     GLint magFilter, GLint wrapS, GLint wrapT)
@@ -232,6 +233,30 @@ GLuint GLUtils::CreateTextureFromImage(EGLImageKHR img)
 void GLUtils::DestroyImage(EGLImageKHR img)
 {
     eglDestroyImageKHR(eglGetDisplay(EGL_DEFAULT_DISPLAY), img);
+}
+
+void GLUtils::DestroySyncKHR(EGLSyncKHR sync)
+{
+    if (sync != EGL_NO_SYNC_KHR) {
+        eglDestroySyncKHR(eglGetDisplay(EGL_DEFAULT_DISPLAY), sync);
+    }
+}
+
+void GLUtils::CreateSyncKHR(EGLSyncKHR &sync)
+{
+    DestroySyncKHR(sync);
+    sync = eglCreateSyncKHR(eglGetDisplay(EGL_DEFAULT_DISPLAY), FENCE_TYPE, nullptr);
+}
+
+int32_t GLUtils::GetEGLFenceFd(EGLSyncKHR sync)
+{
+    int32_t glFenceFd = -1;
+    if (sync != EGL_NO_SYNC_KHR) {
+        glFenceFd = eglDupNativeFenceFDANDROID(eglGetDisplay(EGL_DEFAULT_DISPLAY), sync);
+        glFenceFd = glFenceFd >= 0 ? glFenceFd : -1;
+    }
+
+    return glFenceFd;
 }
 
 GLuint GLUtils::CreateTextureFromSurfaceBuffer(SurfaceBuffer *buffer)
