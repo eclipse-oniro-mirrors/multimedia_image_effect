@@ -122,6 +122,7 @@ size_t GLUtils::GetInternalFormatPixelByteSize(GLenum internalFormat)
     switch (internalFormat) {
         case GL_RGBA8:
         case GL_R32F:
+        case GL_RGB10_A2:
             ret = BYTES_OF_R32F;
             break;
         case GL_RGBA16F:
