@@ -341,6 +341,7 @@ ErrorCode ModifyPicture(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &
 GraphicTransformType GetSurfaceTransform(EffectBuffer *input)
 {
     CHECK_AND_RETURN_RET_LOG(input != nullptr, GRAPHIC_ROTATE_NONE, "GetSurfaceTransform: input is null!");
+    CHECK_AND_RETURN_RET_LOG(input->bufferInfo_ != nullptr, GRAPHIC_ROTATE_NONE, "GetSurfaceTransform: bufferInfo_ is null!");
     if (input->bufferInfo_->surfaceBuffer_ != nullptr) {
         return input->bufferInfo_->surfaceBuffer_->GetSurfaceBufferTransform();
     }
