@@ -218,7 +218,11 @@ ErrorCode ModifyInnerPicture(EffectBuffer *src, const std::shared_ptr<EffectBuff
         std::shared_ptr<ExtraInfo> defaultExtraInfo = std::make_shared<ExtraInfo>();
         std::shared_ptr<EffectBuffer> gainMapEffectBuffer =
             std::make_shared<EffectBuffer>(gainMapBufferInfo, gainMapBufferInfo->addr_, defaultExtraInfo);
-        return CommonUtils::ModifyPixelMapProperty(gainMap.get(), gainMapEffectBuffer, context->memoryManager_, false);
+        res = CommonUtils::ModifyPixelMapProperty(gainMap.get(), gainMapEffectBuffer, context->memoryManager_, false);
+        auto auxilaryPicture = picture->GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
+        CHECK_AND_RETURN_RET_LOG(auxilaryPicture, res, "ModifyInnerPicture: auxilaryPicture not exist!");
+        auxilaryPicture->SetContentPixel(gainMap);
+        return res;
     }
 
     return ErrorCode::SUCCESS;
@@ -335,6 +339,9 @@ ErrorCode ModifyPicture(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &
     res = ModifyPictureForGainMap(srcGainMap.get(), src, gainMapEffectBuffer, context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ModifyPicture: modify gainmap pixelMap fail!");
 
+    auto auxilaryPicture = picture->GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
+    CHECK_AND_RETURN_RET_LOG(auxilaryPicture, res, "ModifyPicture: auxilaryPicture not exist!");
+    auxilaryPicture->SetContentPixel(srcGainMap);
     return ErrorCode::SUCCESS;
 }
 
@@ -553,6 +560,9 @@ void ProcessGainMap(const std::shared_ptr<EffectBuffer>& srcEffectBuffer,
         CommonUtils::SetMetaData(metaData,
             reinterpret_cast<SurfaceBuffer*>(dstEffectBuffer->bufferInfo_->pixelMap_->GetFd()));
     }
+    auto auxilaryPicture = procCtx.dstPicture->GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
+    CHECK_AND_RETURN_LOG(auxilaryPicture, "ModifyPicture: auxilaryPicture not exist!");
+    auxilaryPicture->SetContentPixel(dstPixelMap);
 }
 
 void ProcessAuxiliaryEntry(EffectPixelmapType pixelmapType, const std::shared_ptr<EffectBuffer>& srcEffectBuffer,
