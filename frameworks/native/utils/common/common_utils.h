@@ -20,7 +20,6 @@
 #include <cstdarg>
 
 #include "any.h"
-#include "display_type.h"
 #include "effect_buffer.h"
 #include "effect_log.h"
 #include "error_code.h"
