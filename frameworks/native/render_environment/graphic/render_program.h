@@ -27,7 +27,7 @@ namespace Effect {
 class RenderProgram : public RenderObject {
 public:
     const static unsigned int INVALID_PROGRAM_NAME = 0;
-    IMAGE_EFFECT_EXPORT RenderProgram(RenderContext *context);
+    IMAGE_EFFECT_EXPORT RenderProgram();
     IMAGE_EFFECT_EXPORT ~RenderProgram() = default;
     IMAGE_EFFECT_EXPORT void Bind();
     IMAGE_EFFECT_EXPORT static void Unbind();
@@ -41,7 +41,6 @@ public:
     IMAGE_EFFECT_EXPORT int GetUniformLocation(const std::string &name);
 protected:
     unsigned int program_;
-    RenderContext *context_;
 };
 } // namespace Effect
 } // namespace Media

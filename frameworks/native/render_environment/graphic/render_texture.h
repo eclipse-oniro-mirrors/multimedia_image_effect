@@ -27,9 +27,8 @@ namespace Media {
 namespace Effect {
 class RenderTexture : public RenderObject {
 public:
-    RenderTexture(RenderContext *ctx, GLsizei w, GLsizei h, GLenum interFmt = GL_RGBA8)
+    RenderTexture(GLsizei w, GLsizei h, GLenum interFmt = GL_RGBA8)
     {
-        context_ = ctx;
         internalFormat_ = interFmt;
         width_ = w;
         height_ = h;
@@ -87,7 +86,6 @@ private:
     GLsizei width_{ 0 };
     GLsizei height_{ 0 };
     GLenum internalFormat_;
-    RenderContext *context_{ nullptr };
 };
 
 class TextureSizeMeasurer {

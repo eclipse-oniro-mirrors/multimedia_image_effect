@@ -25,7 +25,7 @@ namespace Media {
 namespace Effect {
 class RenderGeneralProgram : public RenderProgram {
 public:
-    IMAGE_EFFECT_EXPORT RenderGeneralProgram(RenderContext *context, const std::string &vss, const std::string &fss);
+    IMAGE_EFFECT_EXPORT RenderGeneralProgram(const std::string &vss, const std::string &fss);
     IMAGE_EFFECT_EXPORT ~RenderGeneralProgram();
     IMAGE_EFFECT_EXPORT bool Init() override;
     IMAGE_EFFECT_EXPORT bool Release() override;
