@@ -19,6 +19,7 @@
 #include "filter_factory.h"
 #include "memcpy_helper.h"
 #include "render_environment.h"
+#include "common_utils.h"
 
 namespace OHOS {
 namespace Media {
@@ -28,7 +29,7 @@ REGISTER_FILTER_FACTORY(ImageSourceFilter);
 ErrorCode ImageSourceFilter::SetSource(const std::shared_ptr<EffectBuffer> &source,
     std::shared_ptr<EffectContext> &context)
 {
-    EFFECT_LOGI("SetSource entered.");
+    EFFECT_LOGD("SetSource entered.");
     if (source == nullptr) {
         EFFECT_LOGE("Invalid source");
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
@@ -44,20 +45,29 @@ ErrorCode ImageSourceFilter::Prepare()
     return DoNegotiate();
 }
 
+MemoryInfo CreateDMAMemoryInfo(std::shared_ptr<EffectBuffer> &srcBuffer)
+{
+    MemoryInfo memInfo = {
+        .bufferInfo = {
+            .width_ = srcBuffer->bufferInfo_->width_,
+            .height_ = srcBuffer->bufferInfo_->height_,
+            .len_ = srcBuffer->bufferInfo_->len_,
+            .hdrFormat_ = srcBuffer->bufferInfo_->hdrFormat_,
+            .formatType_ = srcBuffer->bufferInfo_->formatType_,
+            .colorSpace_ = srcBuffer->bufferInfo_->colorSpace_,
+        },
+        .bufferType = BufferType::DMA_BUFFER,
+        .extra = static_cast<void *>(srcBuffer->bufferInfo_->surfaceBuffer_)
+    };
+    return memInfo;
+}
+
 ErrorCode UpdateInputBufferIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
     CHECK_AND_RETURN_RET_LOG(context != nullptr, ErrorCode::ERR_INPUT_NULL, "UpdateInputBufferIfNeed context is null!");
     if (context->ipType_ != IPType::GPU && context->renderEnvironment_->GetOutputType() == DataType::NATIVE_WINDOW) {
-        MemoryInfo memInfo = {
-            .bufferInfo = {
-                .width_ = srcBuffer->bufferInfo_->width_,
-                .height_ = srcBuffer->bufferInfo_->height_,
-                .len_ = srcBuffer->bufferInfo_->len_,
-                .formatType_ = srcBuffer->bufferInfo_->formatType_,
-            },
-            .bufferType = BufferType::DMA_BUFFER,
-        };
+        MemoryInfo memInfo = CreateDMAMemoryInfo(srcBuffer);
         MemoryData *memoryData = context->memoryManager_->AllocMemory(srcBuffer->buffer_, memInfo);
         CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc new memory fail!");
         MemoryInfo &allocMemInfo = memoryData->memoryInfo;
@@ -66,6 +76,8 @@ ErrorCode UpdateInputBufferIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std:
         std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
         *extraInfo = *srcBuffer->extraInfo_;
         extraInfo->bufferType = allocMemInfo.bufferType;
+        bufferInfo->bufferType_ = allocMemInfo.bufferType;
+        bufferInfo->hdrFormat_ = srcBuffer->bufferInfo_->hdrFormat_;
         bufferInfo->surfaceBuffer_ = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
             static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
         if (bufferInfo->surfaceBuffer_ != nullptr && srcBuffer->bufferInfo_->surfaceBuffer_ != nullptr) {
@@ -85,13 +97,14 @@ ErrorCode UpdateInputBufferIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std:
             .data = static_cast<uint8_t *>(buffer->buffer_),
         };
         MemcpyHelper::CopyData(srcBuffer.get(), dst);
+
+        CommonUtils::CopyAuxiliaryBufferInfos(srcBuffer.get(), buffer.get());
         return ErrorCode::SUCCESS;
     }
 
     if (context->ipType_ != IPType::GPU) {
         return ErrorCode::SUCCESS;
     }
-
     context->renderEnvironment_->BeginFrame();
     context->renderEnvironment_->GenTex(srcBuffer, buffer);
     return ErrorCode::SUCCESS;
@@ -99,7 +112,7 @@ ErrorCode UpdateInputBufferIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std:
 
 ErrorCode ImageSourceFilter::Start()
 {
-    EFFECT_LOGI("Start entered.");
+    EFFECT_LOGD("Start entered.");
     state_ = FilterState::RUNNING;
     if (outPorts_[0] == nullptr) {
         EFFECT_LOGE("Start: outPort is null. filterName=%{public}s", name_.c_str());
@@ -127,11 +140,10 @@ ErrorCode ImageSourceFilter::DoNegotiate()
     std::for_each(allSupportedColorSpaces.begin(), allSupportedColorSpaces.end(), [&](const auto &item) {
         context_->filtersSupportedColorSpace_.emplace(item);
     });
-
     context_->filtersSupportedHdrFormat_ = {
         HdrFormat::SDR,
         HdrFormat::HDR8_GAINMAP,
-        HdrFormat::HDR10,
+        HdrFormat::HDR10
     };
     context_->cacheNegotiate_->ClearConfig();
 

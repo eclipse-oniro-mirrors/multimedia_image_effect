@@ -37,6 +37,7 @@ enum class IEffectFormat : uint32_t {
     RGBA_1010102,
     YCBCR_P010,
     YCRCB_P010,
+    RGBA_F16,
 };
 
 enum class Category : uint32_t {
@@ -65,6 +66,11 @@ enum class HdrFormat : uint32_t {
     SDR,
     HDR10,
     HDR8_GAINMAP,
+};
+
+enum class LOG_STRATEGY {
+    NORMAL = 0,
+    LIMITED
 };
 
 class EffectInfo {

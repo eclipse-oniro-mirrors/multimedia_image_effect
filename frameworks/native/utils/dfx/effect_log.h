@@ -71,7 +71,7 @@
         continue;                              \
     }
 
-#define CHECK_AND_PRINT_LOG(cond, fmt, ...) \
+#define CHECK_AND_PRINT_LOG(cond, fmt, ...)    \
     if (!(cond)) {                             \
         EFFECT_LOGE(fmt, ##__VA_ARGS__);       \
     }
@@ -93,5 +93,10 @@
         }                                             \
     } while (0)
 #endif
+
+#define EFFECT_LOGI_WITH_STRATEGY(cond, fmt, ...) \
+        if (cond == LOG_STRATEGY::NORMAL) {                               \
+            EFFECT_LOGI(fmt, ##__VA_ARGS__);  \
+        }                                         \
 
 #endif // IMAGE_EFFECT_EFFECT_LOG_H

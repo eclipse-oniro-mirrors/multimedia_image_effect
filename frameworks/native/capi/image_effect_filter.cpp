@@ -73,7 +73,7 @@ public:
 
     bool Render(void *efilter, EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context) override
     {
-        EFFECT_LOGI("FilterDelegate Render with src and dst.");
+        EFFECT_LOGD("FilterDelegate Render with src and dst.");
         OH_EffectFilter *ohEFilter = (OH_EffectFilter *)efilter;
         CHECK_AND_RETURN_RET_LOG(ohEFilter != nullptr && ohEFilter->filter_ != nullptr, false,
             "FilterDelegateRender: filter is null!");
@@ -91,7 +91,7 @@ public:
 
     bool Render(void *efilter, EffectBuffer *src, std::shared_ptr<EffectContext> &context) override
     {
-        EFFECT_LOGI("FilterDelegate Render.");
+        EFFECT_LOGD("FilterDelegate Render.");
         std::unique_ptr<OH_EffectBufferInfo> srcBuffer = std::make_unique<OH_EffectBufferInfo>();
         srcBuffer->addr = src->buffer_;
         srcBuffer->width = static_cast<int32_t>(src->bufferInfo_->width_);
@@ -200,10 +200,10 @@ protected:
         NativeCommonUtils::SwitchToFormatType(dst->format, bufferInfo->formatType_);
         bufferInfo->len_ =
             FormatHelper::CalculateDataRowCount(bufferInfo->height_, bufferInfo->formatType_) * bufferInfo->rowStride_;
+        bufferInfo->surfaceBuffer_ = nullptr;
         std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
         *extraInfo = *src->extraInfo_;
         extraInfo->bufferType = BufferType::DEFAULT;
-        bufferInfo->surfaceBuffer_ = nullptr;
         std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, dst->addr, extraInfo);
 
         Plugin::Any any;

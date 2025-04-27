@@ -17,12 +17,10 @@
 #include "effect_log.h"
 #include "image_source.h"
 #include "pixel_map.h"
-#include "metadata_generator.h"
-#include "colorspace_converter.h"
+#include "colorspace_processor.h"
 #include "colorspace_helper.h"
 #include "colorspace_manager.h"
 #include "colorspace_strategy.h"
-#include "vpe_helper.h"
 
 using namespace testing::ext;
 
@@ -69,10 +67,10 @@ static std::shared_ptr<EffectBuffer> CreateEffectBufferByPicture(Picture* pictur
     info->rowStride_ = pixelMap->GetRowStride();
     info->len_ = info->rowStride_ * info->height_;
     info->formatType_ = IEffectFormat::RGBA8888;
-    info->pixelMap_ = pixelMap.get();
     info->surfaceBuffer_ = nullptr;
     uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
     void *addr = static_cast<void *>(pixels);
+    info->pixelMap_ = pixelMap.get();
 
     std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
     extraInfo->dataType = DataType::PIXEL_MAP;
@@ -123,15 +121,15 @@ HWTEST_F(TestEffectColorSpaceManager, ColorSpaceConverter_ApplyColorSpace001, Te
     EXPECT_NE(inputEffectBuffer, nullptr);
 
     EffectColorSpace targetColorSpace = EffectColorSpace::SRGB;
-    ErrorCode result = ColorSpaceConverter::ApplyColorSpace(inputEffectBuffer.get(), targetColorSpace);
+    ErrorCode result = ColorSpaceProcessor::ApplyColorSpace(inputEffectBuffer.get(), targetColorSpace);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
 
     inputEffectBuffer->extraInfo_->dataType = DataType::URI;
-    result = ColorSpaceConverter::ApplyColorSpace(inputEffectBuffer.get(), targetColorSpace);
+    result = ColorSpaceProcessor::ApplyColorSpace(inputEffectBuffer.get(), targetColorSpace);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
 
     inputEffectBuffer->extraInfo_->dataType = DataType::UNKNOWN;
-    result = ColorSpaceConverter::ApplyColorSpace(inputEffectBuffer.get(), targetColorSpace);
+    result = ColorSpaceProcessor::ApplyColorSpace(inputEffectBuffer.get(), targetColorSpace);
     EXPECT_NE(result, ErrorCode::SUCCESS);
     EFFECT_LOGW("%{public}s ColorSpaceConverter_ApplyColorSpace001 end", TAG.c_str());
 }
@@ -140,7 +138,7 @@ HWTEST_F(TestEffectColorSpaceManager, ColorSpaceConverter_GetMemoryData001, Test
 {
     EFFECT_LOGW("%{public}s ColorSpaceConverter_GetMemoryData001 enter", TAG.c_str());
     SurfaceBuffer *sb = OHOS::SurfaceBuffer::Create();
-    std::shared_ptr<ColorSpaceConverter> colorSpaceConverter = std::make_shared<ColorSpaceConverter>();
+    std::shared_ptr<ColorSpaceProcessor> colorSpaceConverter = std::make_shared<ColorSpaceProcessor>();
     auto result = colorSpaceConverter->GetMemoryData(sb);
     EXPECT_EQ(result, nullptr);
 
@@ -198,16 +196,17 @@ HWTEST_F(TestEffectColorSpaceManager, ColorSpaceHelper_UpdateMetadata001, TestSi
     EXPECT_NE(inputEffectBuffer, nullptr);
 
     inputEffectBuffer->bufferInfo_->surfaceBuffer_ = nullptr;
-    ErrorCode result = ColorSpaceHelper::UpdateMetadata(inputEffectBuffer.get());
+    std::shared_ptr<EffectContext> context = std::make_unique<EffectContext>();
+    ErrorCode result = ColorSpaceHelper::UpdateMetadata(inputEffectBuffer.get(), context);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
 
     inputEffectBuffer->bufferInfo_->surfaceBuffer_ = OHOS::SurfaceBuffer::Create();
     inputEffectBuffer->bufferInfo_->colorSpace_ = EffectColorSpace::DEFAULT;
-    result = ColorSpaceHelper::UpdateMetadata(inputEffectBuffer.get());
+    result = ColorSpaceHelper::UpdateMetadata(inputEffectBuffer.get(), context);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
 
     inputEffectBuffer->bufferInfo_->colorSpace_ = EffectColorSpace::SRGB;
-    result = ColorSpaceHelper::UpdateMetadata(inputEffectBuffer.get());
+    result = ColorSpaceHelper::UpdateMetadata(inputEffectBuffer.get(), context);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
     EFFECT_LOGW("%{public}s ColorSpaceHelper_UpdateMetadata001 end", TAG.c_str());
 }
@@ -289,16 +288,6 @@ HWTEST_F(TestEffectColorSpaceManager, ColorSpaceStrategy_CheckConverterColorSpac
     result = colorSpaceStrategy->CheckConverterColorSpace(targetColorSpace);
     EXPECT_NE(result, ErrorCode::SUCCESS);
     EFFECT_LOGW("%{public}s ColorSpaceStrategy_CheckConverterColorSpace001 end", TAG.c_str());
-}
-
-HWTEST_F(TestEffectColorSpaceManager, MetadataGenerator_GetVpeMetadataGeneratorInstance001, TestSize.Level1)
-{
-    EFFECT_LOGW("%{public}s MetadataGenerator_GetVpeMetadataGeneratorInstance001 enter", TAG.c_str());
-    std::shared_ptr<MetadataGenerator> metadataGenerator = std::make_shared<MetadataGenerator>();
-    metadataGenerator->vpeMetadataGeneratorInstance_ = 0;
-    int32_t result = metadataGenerator->GetVpeMetadataGeneratorInstance();
-    EXPECT_NE(result, VPE_INVALID_INSTANCE_ID);
-    EFFECT_LOGW("%{public}s MetadataGenerator_GetVpeMetadataGeneratorInstance001 end", TAG.c_str());
 }
 }
 }

@@ -18,9 +18,13 @@
 #include <unordered_map>
 
 #include "metadata_helper.h"
-#include "colorspace_converter.h"
-#include "metadata_generator.h"
+#include "colorspace_processor.h"
+#include "metadata_processor.h"
 #include "effect_log.h"
+
+#include <hdr_type.h>
+#include <v1_0/cm_color_space.h>
+#include <v1_0/buffer_handle_meta_key_type.h>
 
 namespace OHOS {
 namespace Media {
@@ -186,6 +190,15 @@ ErrorCode ColorSpaceHelper::SetHDRDynamicMetadata(SurfaceBuffer *sb, const std::
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode ColorSpaceHelper::GetHDRDynamicMetadata(SurfaceBuffer *sb, std::vector<uint8_t> &hdrDynamicMetadata)
+{
+    sptr<SurfaceBuffer> buffer = sb;
+    auto res = MetadataHelper::GetHDRDynamicMetadata(buffer, hdrDynamicMetadata);
+    CHECK_AND_RETURN_RET_LOG(res == GSError::GSERROR_OK, ErrorCode::ERR_SET_METADATA_FAIL,
+        "GetHDRDynamicMetadata: GetHDRDynamicMetadata fail! res=%{public}d", res);
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ColorSpaceHelper::SetHDRStaticMetadata(SurfaceBuffer *sb, const std::vector<uint8_t> &hdrStaticMetadata)
 {
     sptr<SurfaceBuffer> buffer = sb;
@@ -195,23 +208,29 @@ ErrorCode ColorSpaceHelper::SetHDRStaticMetadata(SurfaceBuffer *sb, const std::v
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode ColorSpaceHelper::UpdateMetadata(EffectBuffer *input)
+ErrorCode ColorSpaceHelper::UpdateMetadata(EffectBuffer *input, const std::shared_ptr<EffectContext> &context)
 {
     CHECK_AND_RETURN_RET_LOG(input != nullptr && input->bufferInfo_ != nullptr && input->extraInfo_ != nullptr,
         ErrorCode::ERR_INPUT_NULL, "UpdateMetadata: inputBuffer is null");
 
-    return UpdateMetadata(input->bufferInfo_->surfaceBuffer_, input->bufferInfo_->colorSpace_);
+    HdrFormat format = input->bufferInfo_->hdrFormat_;
+    if (format != HdrFormat::HDR8_GAINMAP && format != HdrFormat::HDR10) {
+        return ErrorCode::SUCCESS;
+    }
+
+    return UpdateMetadata(input->bufferInfo_->surfaceBuffer_, input->bufferInfo_->colorSpace_, context);
 }
 
-ErrorCode ColorSpaceHelper::UpdateMetadata(SurfaceBuffer *input, const EffectColorSpace &colorSpace)
+ErrorCode ColorSpaceHelper::UpdateMetadata(SurfaceBuffer *input, const EffectColorSpace &colorSpace,
+    const std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGD("UpdateMetadata: colorSpace=%{public}d}", colorSpace);
+    CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate(), ErrorCode::SUCCESS);
     if (input == nullptr || !ColorSpaceHelper::IsHdrColorSpace(colorSpace)) {
         return ErrorCode::SUCCESS;
     }
 
-    std::shared_ptr<MetadataGenerator> metadataGenerator = std::make_shared<MetadataGenerator>();
-    return metadataGenerator->ProcessImage(input);
+    return context->colorSpaceManager_->GetMetaDataProcessor()->ProcessImage(input);
 }
 
 ErrorCode ApplyColorSpaceIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, const std::shared_ptr<EffectContext> &context,
@@ -254,12 +273,13 @@ bool isNeedDecomposeHdrImage(const EffectColorSpace &colorSpace, const EffectCol
 {
     bool isNeedDecompose = ColorSpaceHelper::IsHdrColorSpace(colorSpace) &&
         !ColorSpaceHelper::IsHdrColorSpace(chosenColorSpace);
-    CHECK_AND_RETURN_RET_LOG(buffer, false, "isNeedDecomposeHdrImage : buffer is null");
 
+    CHECK_AND_RETURN_RET_LOG(buffer, false, "isNeedDecomposeHdrImage buffer is nullptr");
     bool isSupportHdr = !std::none_of(SUPPORT_HDR_FORMAT_SET.begin(), SUPPORT_HDR_FORMAT_SET.end(),
-        [&context](const HdrFormat &format) {
+        [&context](HdrFormat format) {
             return context->filtersSupportedHdrFormat_.count(format) > 0;
-    }) && SUPPORT_HDR_FORMAT_SET.count(buffer->bufferInfo_->hdrFormat_) > 0;
+        }) && SUPPORT_HDR_FORMAT_SET.count(buffer->bufferInfo_->hdrFormat_) > 0;
+
     EFFECT_LOGD("isNeedDecomposeHdrImage: colorSpace=%{public}d, chosenColorSpace=%{public}d, isSupportHdr=%{public}d",
         colorSpace, chosenColorSpace, isSupportHdr);
     return isNeedDecompose && !isSupportHdr;
@@ -269,14 +289,14 @@ ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const Effe
     std::shared_ptr<EffectBuffer> &buffer, const std::shared_ptr<EffectContext> &context)
 {
     if (!isNeedDecomposeHdrImage(colorSpace, chosenColorSpace, buffer, context)) {
-        EFFECT_LOGI("DecomposeHdrImageIfNeed: no need decompose HDR image!");
+        EFFECT_LOGD("DecomposeHdrImageIfNeed: no need to decompose");
         return ErrorCode::SUCCESS;
     }
+
     EFFECT_LOGI("ColorSpaceHelper::DecomposeHdrImage");
     std::shared_ptr<Memory> oldMemory = context->memoryManager_->GetMemoryByAddr(buffer->buffer_);
-    std::shared_ptr<ColorSpaceConverter> converter = std::make_shared<ColorSpaceConverter>();
     std::shared_ptr<EffectBuffer> sdrImage = nullptr;
-    ErrorCode res = converter->ProcessHdrImage(buffer.get(), sdrImage);
+    ErrorCode res = context->colorSpaceManager_->GetColorSpaceProcessor()->ProcessHdrImage(buffer.get(), sdrImage);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "DecomposeHdrImageIfNeed: ProcessHdrImage fail! "
         "res=%{public}d, colorSpace=%{public}d, chosenColorSpace=%{public}d", res, colorSpace, chosenColorSpace);
     CHECK_AND_RETURN_RET_LOG(sdrImage != nullptr && sdrImage->extraInfo_ != nullptr, ErrorCode::ERR_INPUT_NULL,
@@ -284,7 +304,8 @@ ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const Effe
         "sdrImage=%{public}d, sdrImage->extraInfo_=%{public}d", sdrImage == nullptr, sdrImage->extraInfo_ == nullptr);
 
     context->memoryManager_->RemoveMemory(oldMemory);
-    std::shared_ptr<MemoryData> memoryData = converter->GetMemoryData(sdrImage->bufferInfo_->surfaceBuffer_);
+    std::shared_ptr<MemoryData> memoryData = context->colorSpaceManager_->GetColorSpaceProcessor()
+        ->GetMemoryData(sdrImage->bufferInfo_->surfaceBuffer_);
 
     SurfaceBuffer *sb = sdrImage->bufferInfo_->surfaceBuffer_;
     ColorSpaceHelper::SetSurfaceBufferMetadataType(sb, CM_HDR_Metadata_Type::CM_METADATA_NONE);
@@ -329,6 +350,58 @@ ErrorCode ColorSpaceHelper::ConvertColorSpace(std::shared_ptr<EffectBuffer> &src
         "res=%{public}d, colorSpace=%{public}d, chosenColorSpace=%{public}d", res, colorSpace, chosenColorSpace);
 
     return ErrorCode::SUCCESS;
+}
+
+void ColorSpaceHelper::TryFixGainmapHdrMetadata(sptr<SurfaceBuffer> &gainmapSptr)
+{
+    std::vector<uint8_t> gainmapDynamicMetadata;
+    GetHDRDynamicMetadata(gainmapSptr.GetRefPtr(), gainmapDynamicMetadata);
+    if (gainmapDynamicMetadata.size() != sizeof(ISOMetadata)) {
+        EFFECT_LOGI("%{public}s no need to fix gainmap dynamic metadata, size: %{public}zu",
+            __func__, gainmapDynamicMetadata.size());
+        return;
+    }
+ 
+    HDRVividExtendMetadata extendMetadata = {};
+    int32_t memCpyRes = memcpy_s(&extendMetadata.metaISO, sizeof(ISOMetadata),
+        gainmapDynamicMetadata.data(), gainmapDynamicMetadata.size());
+    if (memCpyRes != EOK) {
+        EFFECT_LOGE("%{public}s memcpy_s ISOMetadata fail, error: %{public}d", __func__, memCpyRes);
+        return;
+    }
+    if (extendMetadata.metaISO.useBaseColorFlag != 0) {
+        extendMetadata.baseColorMeta.baseColorPrimary = COLORPRIMARIES_SRGB;
+        extendMetadata.gainmapColorMeta.combineColorPrimary = COLORPRIMARIES_SRGB;
+    } else {
+        extendMetadata.gainmapColorMeta.combineColorPrimary = COLORPRIMARIES_BT2020;
+        extendMetadata.gainmapColorMeta.alternateColorPrimary = COLORPRIMARIES_BT2020;
+    }
+    std::vector<uint8_t> extendMetadataVec(sizeof(HDRVividExtendMetadata));
+    memCpyRes = memcpy_s(extendMetadataVec.data(), extendMetadataVec.size(),
+        &extendMetadata, sizeof(HDRVividExtendMetadata));
+    if (memCpyRes != EOK) {
+        EFFECT_LOGE("%{public}s memcpy_s HDRVividExtendMetadata fail, error: %{public}d", __func__, memCpyRes);
+        return;
+    }
+    SetHDRDynamicMetadata(gainmapSptr.GetRefPtr(), extendMetadataVec);
+}
+
+bool ColorSpaceHelper::ShouldComposeAsCuva(const sptr<SurfaceBuffer> &baseSptr, const sptr<SurfaceBuffer> &gainmapSptr)
+{
+    std::vector<uint8_t> baseStaticMetadata;
+    GetHDRDynamicMetadata(baseSptr.GetRefPtr(), baseStaticMetadata);
+    std::vector<uint8_t> baseDynamicMetadata;
+    GetHDRDynamicMetadata(gainmapSptr.GetRefPtr(), baseDynamicMetadata);
+    if (baseStaticMetadata.size() == 0 || baseDynamicMetadata.size() == 0) {
+        return true;
+    }
+
+    std::vector<uint8_t> gainmapDynamicMetadata;
+    GetHDRDynamicMetadata(gainmapSptr.GetRefPtr(), gainmapDynamicMetadata);
+    if (gainmapDynamicMetadata.size() != sizeof(HDRVividExtendMetadata)) {
+        return true;
+    }
+    return false;
 }
 } // namespace Effect
 } // namespace Media

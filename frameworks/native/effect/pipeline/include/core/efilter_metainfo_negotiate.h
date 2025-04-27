@@ -34,7 +34,7 @@ namespace Effect {
             isNeedUpdate_ = isNeedUpdate;
         }
     private:
-        bool isNeedUpdate_ = true;
+        bool isNeedUpdate_ = false;
     };
 } // namespace Effect
 } // namespace Media

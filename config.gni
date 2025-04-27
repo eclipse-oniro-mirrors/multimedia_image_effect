@@ -12,6 +12,14 @@
 # limitations under the License.
 
 image_effect_root_dir = "//foundation/multimedia/image_effect"
+declare_args() {
+image_effect_colorspace_convertor_enable = false
+}
+
+if (defined(global_parts_info) &&
+  defined(global_parts_info.multimedia_video_processing_engine)) {
+  image_effect_colorspace_convertor_enable = true
+}
 
 image_effect_sanitize = {
   integer_overflow = true

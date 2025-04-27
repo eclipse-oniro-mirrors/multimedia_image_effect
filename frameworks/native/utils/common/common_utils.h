@@ -39,16 +39,18 @@ namespace Effect {
 class CommonUtils {
 public:
     static const int32_t RGBA_BYTES_PER_PIXEL = 4;
-    static void CopyBufferInfo(const BufferInfo &src, BufferInfo &dst);
-    static void CopyExtraInfo(const ExtraInfo &src, ExtraInfo &dst);
+
+    static void CopyBufferInfo(const BufferInfo& src, BufferInfo& dst);
+    static void CopyExtraInfo(const ExtraInfo& src, ExtraInfo& dst);
+    static void CopyAuxiliaryBufferInfos(const EffectBuffer *src, EffectBuffer *dst);
 
     static MetaDataMap GetMetaData(SurfaceBuffer *surfaceBuffer);
-    static void SetMetaData(MetaDataMap& metaData, SurfaceBuffer* surfaceBuffer);
-
+    static void SetMetaData(MetaDataMap &metaData, SurfaceBuffer *surfaceBuffer);
+    
     static ErrorCode ParsePixelMapData(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
     IMAGE_EFFECT_EXPORT static ErrorCode LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
-    static ErrorCode ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
-        std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType, int64_t timestamp = 0);
+    static ErrorCode ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer, std::shared_ptr<EffectBuffer> &effectBuffer,
+        const DataType &dataType, LOG_STRATEGY strategy = LOG_STRATEGY::NORMAL, int64_t timestamp = 0);
     static std::string UrlToPath(const std::string &url);
     static ErrorCode ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData,
         IEffectFormat format);
@@ -59,7 +61,7 @@ public:
     static bool EndsWithJPG(const std::string &input);
     static bool EndsWithHEIF(const std::string &input);
     static ErrorCode ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
-        const std::shared_ptr<EffectMemoryManager> &memoryManager, bool isUpdateExif = true);
+        const std::shared_ptr<EffectContext> &context, bool isUpdateExif = true);
     static ErrorCode ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
         const std::shared_ptr<EffectContext> &context, bool isUpdateExif = true);
     static ErrorCode ParseNativeWindowData(std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType);

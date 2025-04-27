@@ -58,10 +58,21 @@ public:
     IMAGE_EFFECT_EXPORT
     static ErrorCode SetHDRStaticMetadata(SurfaceBuffer *sb, const std::vector<uint8_t> &hdrStaticMetadata);
 
-    IMAGE_EFFECT_EXPORT static ErrorCode UpdateMetadata(EffectBuffer *input);
-    IMAGE_EFFECT_EXPORT static ErrorCode UpdateMetadata(SurfaceBuffer *input, const EffectColorSpace &colorSpace);
+    IMAGE_EFFECT_EXPORT
+    static ErrorCode GetHDRDynamicMetadata(SurfaceBuffer *sb, std::vector<uint8_t> &hdrDynamicMetadata);
+
+    IMAGE_EFFECT_EXPORT
+    static ErrorCode UpdateMetadata(EffectBuffer *input, const std::shared_ptr<EffectContext> &context);
+    IMAGE_EFFECT_EXPORT static ErrorCode UpdateMetadata(SurfaceBuffer *input, const EffectColorSpace &colorSpace,
+        const std::shared_ptr<EffectContext> &context);
     IMAGE_EFFECT_EXPORT static ErrorCode ConvertColorSpace(std::shared_ptr<EffectBuffer> &srcBuffer,
         std::shared_ptr<EffectContext> &context);
+
+    IMAGE_EFFECT_EXPORT
+    static void TryFixGainmapHdrMetadata(sptr<SurfaceBuffer> &gainmapSptr);
+
+    IMAGE_EFFECT_EXPORT
+    static bool ShouldComposeAsCuva(const sptr<SurfaceBuffer> &baseSptr, const sptr<SurfaceBuffer> &gainmapSptr);
 };
 } // namespace Effect
 } // namespace Media

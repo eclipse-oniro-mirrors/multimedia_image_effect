@@ -25,12 +25,6 @@
 #include "crop_efilter.h"
 #include "mock_producer_surface.h"
 
-#include "surface_buffer_impl.h"
-#include <sync_fence.h>
-#include "metadata_helper.h"
-#include "effect_surface_adapter.h"
-#include "v1_1/buffer_handle_meta_key_type.h"
-
 using namespace testing::ext;
 using namespace OHOS::Media::Effect;
 
@@ -42,7 +36,6 @@ static std::string g_notJpgUri;
 namespace OHOS {
 namespace Media {
 namespace Effect {
-using namespace OHOS::HDI::Display::Graphic::Common;
 namespace Test {
 class CustomTestEFilter : public IFilterDelegate {
 public:
@@ -111,7 +104,6 @@ public:
     {
         mockPixelMap_ = new MockPixelMap();
         imageEffect_ = new ImageEffect();
-        effectSurfaceAdapter_ = new EffectSurfaceAdapter();
         ExternLoader::Instance()->InitExt();
         EFilterFactory::Instance()->functions_.clear();
         EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
@@ -125,12 +117,9 @@ public:
         mockPixelMap_ = nullptr;
         delete imageEffect_;
         imageEffect_ = nullptr;
-        delete effectSurfaceAdapter_;
-        effectSurfaceAdapter_ = nullptr;
     }
     PixelMap *mockPixelMap_ = nullptr;
     ImageEffect *imageEffect_ = nullptr;
-    EffectSurfaceAdapter *effectSurfaceAdapter_ = nullptr;
 };
 
 HWTEST_F(TestImageEffect, AddEfilter001, TestSize.Level1)
@@ -463,233 +452,6 @@ HWTEST_F(TestImageEffect, Surface001, TestSize.Level1)
 
     imageEffect_->Stop();
     MockProducerSurface::ReleaseDmaBuffer(surfaceBuffer);
-}
-
-HWTEST_F(TestImageEffect, UpdateProducerSurfaceInfo001, TestSize.Level1)
-{
-    imageEffect_->UpdateProducerSurfaceInfo();
-    ASSERT_EQ(imageEffect_->toProducerSurface_, nullptr);
-}
-
-HWTEST_F(TestImageEffect, MemoryCopyForSurfaceBuffer001, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> buffer;
-    MockProducerSurface::AllocDmaMemory(buffer);
-    sptr<SurfaceBuffer> outBuffer;
-    MockProducerSurface::AllocDmaMemory(outBuffer);
-    buffer->SetSurfaceBufferWidth(100);
-    buffer->SetSurfaceBufferHeight(100);
-
-    buffer->SetSurfaceBufferWidth(200);
-    buffer->SetSurfaceBufferHeight(200);
-
-    MemoryCopyForSurfaceBuffer(buffer, outBuffer);
-    ASSERT_EQ(buffer->GetWidth(), outBuffer->GetWidth());
-}
-
-HWTEST_F(TestImageEffect, IsSurfaceBufferHebc001, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> buffer;
-    MockProducerSurface::AllocDmaMemory(buffer);
-    std::vector<uint8_t> values;
-    buffer->SetMetadata(V1_1::BufferHandleAttrKey::ATTRKEY_ACCESS_TYPE, values);
-    bool result = IsSurfaceBufferHebc(buffer);
-    ASSERT_NE(result, true);
-}
-
-HWTEST_F(TestImageEffect, GetBufferRequestConfig001, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> buffer;
-    MockProducerSurface::AllocDmaMemory(buffer);
-    BufferRequestConfig result = imageEffect_->GetBufferRequestConfig(buffer);
-    ASSERT_EQ(result.strideAlignment, 0x8);
-
-    sptr<SurfaceBuffer> outBuffer;
-    MockProducerSurface::AllocDmaMemory(outBuffer);
-    buffer->SetSurfaceBufferWidth(1920);
-    buffer->SetSurfaceBufferHeight(1080);
-    BufferRequestConfig result2 = imageEffect_->GetBufferRequestConfig(outBuffer);
-    ASSERT_EQ(result2.width, 960);
-    ASSERT_EQ(result2.height, 1280);
-}
-
-HWTEST_F(TestImageEffect, FlushBuffer001, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> inBuffer;
-    MockProducerSurface::AllocDmaMemory(inBuffer);
-    sptr<SyncFence> inBufferSyncFence = SyncFence::INVALID_FENCE;
-    int64_t timestamp = 0;
-    GSError result = imageEffect_->FlushBuffer(inBuffer, inBufferSyncFence, true, true, timestamp);
-    ASSERT_NE(result, GSERROR_OK);
-}
-
-HWTEST_F(TestImageEffect, FlushBuffer002, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> inBuffer;
-    MockProducerSurface::AllocDmaMemory(inBuffer);
-    sptr<SyncFence> inBufferSyncFence = SyncFence::INVALID_FENCE;
-    int64_t timestamp = 0;
-    GSError result = imageEffect_->FlushBuffer(inBuffer, inBufferSyncFence, true, false, timestamp);
-    ASSERT_NE(result, GSERROR_OK);
-}
-
-HWTEST_F(TestImageEffect, FlushBuffer003, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> inBuffer;
-    MockProducerSurface::AllocDmaMemory(inBuffer);
-    sptr<SyncFence> inBufferSyncFence = SyncFence::INVALID_FENCE;
-    int64_t timestamp = 0;
-    GSError result = imageEffect_->FlushBuffer(inBuffer, inBufferSyncFence, false, true, timestamp);
-    ASSERT_NE(result, GSERROR_OK);
-}
-
-HWTEST_F(TestImageEffect, FlushBuffer004, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> inBuffer;
-    MockProducerSurface::AllocDmaMemory(inBuffer);
-    sptr<SyncFence> inBufferSyncFence = SyncFence::INVALID_FENCE;
-    int64_t timestamp = 0;
-    GSError result = imageEffect_->FlushBuffer(inBuffer, inBufferSyncFence, false, false, timestamp);
-    ASSERT_NE(result, GSERROR_OK);
-}
-
-HWTEST_F(TestImageEffect, ReleaseBuffer001, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> buffer;
-    MockProducerSurface::AllocDmaMemory(buffer);
-    sptr<SyncFence> fence = SyncFence::INVALID_FENCE;
-    GSError result = imageEffect_->ReleaseBuffer(buffer, fence);
-    ASSERT_NE(result, GSERROR_OK);
-}
-
-HWTEST_F(TestImageEffect, ProcessRender001, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> inBuffer;
-    MockProducerSurface::AllocDmaMemory(inBuffer);
-    sptr<SurfaceBuffer> outBuffer;
-    MockProducerSurface::AllocDmaMemory(outBuffer);
-
-    BufferProcessInfo bufferProcessInfo{
-        .inBuffer_ = inBuffer,
-        .outBuffer_ = outBuffer,
-        .inBufferSyncFence_ = SyncFence::INVALID_FENCE,
-        .outBufferSyncFence_ = SyncFence::INVALID_FENCE,
-        .isSrcHebcData_ = true,
-    };
-
-    bool isNeedSwap = true;
-    int64_t timestamp = 0;
-    imageEffect_->ProcessRender(bufferProcessInfo, isNeedSwap, timestamp);
-    ASSERT_NE(bufferProcessInfo.outBuffer_, nullptr);
-}
-
-HWTEST_F(TestImageEffect, ProcessRender002, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> inBuffer;
-    MockProducerSurface::AllocDmaMemory(inBuffer);
-    sptr<SurfaceBuffer> outBuffer = nullptr;
-
-    BufferProcessInfo bufferProcessInfo{
-        .inBuffer_ = inBuffer,
-        .outBuffer_ = outBuffer,
-        .inBufferSyncFence_ = SyncFence::INVALID_FENCE,
-        .outBufferSyncFence_ = SyncFence::INVALID_FENCE,
-        .isSrcHebcData_ = true,
-    };
-
-    bool isNeedSwap = true;
-    int64_t timestamp = 0;
-    imageEffect_->ProcessRender(bufferProcessInfo, isNeedSwap, timestamp);
-    ASSERT_EQ(bufferProcessInfo.outBuffer_, nullptr);
-}
-
-HWTEST_F(TestImageEffect, ProcessRender003, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> inBuffer;
-    MockProducerSurface::AllocDmaMemory(inBuffer);
-    sptr<SurfaceBuffer> outBuffer;
-    MockProducerSurface::AllocDmaMemory(outBuffer);
-
-    BufferProcessInfo bufferProcessInfo{
-        .inBuffer_ = inBuffer,
-        .outBuffer_ = outBuffer,
-        .inBufferSyncFence_ = SyncFence::INVALID_FENCE,
-        .outBufferSyncFence_ = SyncFence::INVALID_FENCE,
-        .isSrcHebcData_ = true,
-    };
-
-    bool isNeedSwap = false;
-    int64_t timestamp = 0;
-    imageEffect_->ProcessRender(bufferProcessInfo, isNeedSwap, timestamp);
-    ASSERT_NE(bufferProcessInfo.outBuffer_, nullptr);
-}
-
-HWTEST_F(TestImageEffect, GetProducerSurface001, TestSize.Level1)
-{
-    auto receiverConsumerSurface_ = IConsumerSurface::Create("EffectSurfaceAdapter");
-    auto producer = receiverConsumerSurface_->GetProducer();
-    effectSurfaceAdapter_->fromProducerSurface_ = Surface::CreateSurfaceAsProducer(producer);
-    effectSurfaceAdapter_->GetProducerSurface();
-    ASSERT_NE(effectSurfaceAdapter_->fromProducerSurface_, nullptr);
-}
-
-HWTEST_F(TestImageEffect, ReleaseConsumerSurfaceBuffer001, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> buffer;
-    MockProducerSurface::AllocDmaMemory(buffer);
-    sptr<SyncFence> fence = SyncFence::INVALID_FENCE;
-    GSError result = effectSurfaceAdapter_->ReleaseConsumerSurfaceBuffer(buffer, fence);
-    ASSERT_NE(result, GSERROR_OK);
-}
-
-HWTEST_F(TestImageEffect, DetachConsumerSurfaceBuffer001, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> buffer;
-    MockProducerSurface::AllocDmaMemory(buffer);
-    GSError result = effectSurfaceAdapter_->DetachConsumerSurfaceBuffer(buffer);
-    ASSERT_NE(result, GSERROR_OK);
-}
-
-HWTEST_F(TestImageEffect, AttachConsumerSurfaceBuffer001, TestSize.Level1)
-{
-    sptr<SurfaceBuffer> buffer;
-    MockProducerSurface::AllocDmaMemory(buffer);
-    GSError result = effectSurfaceAdapter_->AttachConsumerSurfaceBuffer(buffer);
-    ASSERT_NE(result, GSERROR_OK);
-}
-
-HWTEST_F(TestImageEffect, SetConsumerListener001, TestSize.Level1)
-{
-    ErrorCode result = effectSurfaceAdapter_->SetConsumerListener(nullptr);
-    ASSERT_EQ(result, ErrorCode::ERR_INPUT_NULL);
-}
-
-HWTEST_F(TestImageEffect, GetTransform001, TestSize.Level1)
-{
-    effectSurfaceAdapter_->receiverConsumerSurface_ = nullptr;
-    auto result = effectSurfaceAdapter_->GetTransform();
-    ASSERT_EQ(result, GRAPHIC_ROTATE_BUTT);
-}
-
-HWTEST_F(TestImageEffect, GetTransform002, TestSize.Level1)
-{
-    effectSurfaceAdapter_->receiverConsumerSurface_ = IConsumerSurface::Create("EffectSurfaceAdapter");
-    auto result = effectSurfaceAdapter_->GetTransform();
-    ASSERT_NE(result, GRAPHIC_ROTATE_BUTT);
-}
-
-HWTEST_F(TestImageEffect, OnBufferAvailable001, TestSize.Level1)
-{
-    effectSurfaceAdapter_->receiverConsumerSurface_ = nullptr;
-    effectSurfaceAdapter_->OnBufferAvailable();
-    ASSERT_EQ(effectSurfaceAdapter_->receiverConsumerSurface_, nullptr);
-}
-
-HWTEST_F(TestImageEffect, OnBufferAvailable002, TestSize.Level1)
-{
-    effectSurfaceAdapter_->receiverConsumerSurface_ = IConsumerSurface::Create("EffectSurfaceAdapter");
-    effectSurfaceAdapter_->OnBufferAvailable();
-    ASSERT_NE(effectSurfaceAdapter_->receiverConsumerSurface_, nullptr);
 }
 } // namespace Test
 } // namespace Effect

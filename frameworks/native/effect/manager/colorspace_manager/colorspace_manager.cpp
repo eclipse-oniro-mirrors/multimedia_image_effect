@@ -16,7 +16,8 @@
 #include "colorspace_manager.h"
 
 #include "effect_log.h"
-#include "colorspace_converter.h"
+#include "colorspace_processor.h"
+#include "metadata_processor.h"
 
 namespace OHOS {
 namespace Media {
@@ -61,7 +62,7 @@ ErrorCode ColorSpaceManager::ApplyColorSpace(EffectBuffer *effectBuffer, const E
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
         "ApplyColorSpace: CheckConverterColorSpace fail! res=%{public}d", res);
 
-    res = ColorSpaceConverter::ApplyColorSpace(effectBuffer, targetColorSpace);
+    res = ColorSpaceProcessor::ApplyColorSpace(effectBuffer, targetColorSpace);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ApplyColorSpace: convert fail! "
         "res=%{public}d, colorSpace=%{public}d, targetColorSpace=%{public}d", res, colorSpace, targetColorSpace);
     outputColorSpace = targetColorSpace;
@@ -78,6 +79,22 @@ ErrorCode ColorSpaceManager::ChooseColorSpace(const std::unordered_set<EffectCol
 void ColorSpaceManager::Deinit()
 {
     strategy_->Deinit();
+}
+
+std::shared_ptr<ColorSpaceProcessor> ColorSpaceManager::GetColorSpaceProcessor()
+{
+    if (!colorSpaceConverter_) {
+        colorSpaceConverter_ = std::make_shared<ColorSpaceProcessor>();
+    }
+    return colorSpaceConverter_;
+}
+
+std::shared_ptr<MetadataProcessor> ColorSpaceManager::GetMetaDataProcessor()
+{
+    if (!metadataGenerator_) {
+        metadataGenerator_ = std::make_shared<MetadataProcessor>();
+    }
+    return metadataGenerator_;
 }
 
 } // namespace Effect

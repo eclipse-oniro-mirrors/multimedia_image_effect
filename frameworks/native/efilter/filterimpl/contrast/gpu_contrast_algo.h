@@ -19,6 +19,7 @@
 #include "effect_buffer.h"
 #include "error_code.h"
 #include "any.h"
+#include "image_effect_marco_define.h"
 
 #include "core/render_default_data.h"
 #include "core/algorithm_program.h"
@@ -38,6 +39,7 @@ public:
 using ContrastFilterDataPtr = std::shared_ptr<ContrastFilterData>;
 class GpuContrastAlgo {
 public:
+    IMAGE_EFFECT_EXPORT
     ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
         const std::shared_ptr<EffectContext> &context);
     ErrorCode Release();

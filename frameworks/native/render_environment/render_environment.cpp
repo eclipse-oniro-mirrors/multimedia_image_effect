@@ -169,7 +169,7 @@ RenderTexturePtr RenderEnvironment::ReCreateTexture(RenderTexturePtr renderTex, 
     bool isHdr10) const
 {
     RenderTexturePtr tempTex = param_->resCache_->RequestTexture(param_->context_, width, height,
-                                                                 isHdr10 ? GL_RGB10_A2 : GL_RGBA8);
+        isHdr10 ? GL_RGB10_A2 : GL_RGBA8);
     GLuint tempFbo = GLUtils::CreateFramebuffer(tempTex->GetName());
     RenderViewport vp(0, 0, renderTex->Width(), renderTex->Height());
 
@@ -185,7 +185,7 @@ bool RenderEnvironment::GetOrCreateTextureFromCache(RenderTexturePtr& renderTex,
     renderTex = param_->resCache_->GetTexGlobalCache(texName);
     if (renderTex == nullptr || hasInputChanged) {
         renderTex = param_->resCache_->RequestTexture(param_->context_, width, height,
-                                                      isHdr10 ? GL_RGB10_A2 : GL_RGBA8);
+            isHdr10 ? GL_RGB10_A2 : GL_RGBA8);
         param_->resCache_->AddTexGlobalCache(texName, renderTex);
         return true;
     }
@@ -500,7 +500,7 @@ void RenderEnvironment::DrawFrame(GLuint texId, GraphicTransformType type)
     }
 }
 
-void RenderEnvironment::ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output)
+void RenderEnvironment::ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output, bool needProcessCache)
 {
     int w = static_cast<int>(source->Width());
     int h = static_cast<int>(source->Height());
@@ -513,6 +513,9 @@ void RenderEnvironment::ConvertTextureToBuffer(RenderTexturePtr source, EffectBu
         }
     } else {
         DrawSurfaceBufferFromTex(source, output->bufferInfo_->surfaceBuffer_, output->bufferInfo_->formatType_);
+        if (needProcessCache) {
+            output->bufferInfo_->surfaceBuffer_->InvalidateCache();
+        }
     }
     GLUtils::CheckError(__FILE_NAME__, __LINE__);
 }
@@ -726,7 +729,7 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::GenTexEffectBuffer(const std::s
 
     if (input->auxiliaryBufferInfos != nullptr) {
         out->auxiliaryBufferInfos = std::make_shared<std::unordered_map<
-            EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
+                EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
         for (const auto& [pixType, effectBufferInfo] : *input->auxiliaryBufferInfos) {
             auto auxiliaryBufferInfo = std::make_shared<BufferInfo>();
             CommonUtils::CopyBufferInfo(*effectBufferInfo, *auxiliaryBufferInfo);

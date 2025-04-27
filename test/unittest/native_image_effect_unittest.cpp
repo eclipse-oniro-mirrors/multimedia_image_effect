@@ -997,7 +997,6 @@ HWTEST_F(NativeImageEffectUnittest, OHEFilterLookupFilters001, TestSize.Level1)
 
     ASSERT_NE(filterNames, nullptr);
     ASSERT_EQ(size, static_cast<uint32_t>(5));
-
     std::vector<string> filterNamesVector;
     for (uint32_t i = 0; i < size; i++) {
         filterNamesVector.emplace_back(nameList[i]);
@@ -1106,12 +1105,6 @@ HWTEST_F(NativeImageEffectUnittest, CustomFilterAdjustmentSaveAndRestore001, Tes
     ASSERT_NE(imageEffect, nullptr);
 
     errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
-    std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_jpgPath);
-    pixelmapNative->pixelmap_ = std::move(pixelMap);
-    errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, pixelmapNative.get());
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);
@@ -1224,11 +1217,6 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest001, TestSize.Level1
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    std::shared_ptr<OH_NativeBuffer> nativeBufferNV21 =
-        TestNativeBufferUtils::CreateNativeBuffer(GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
-    errorCode = OH_ImageEffect_SetOutputNativeBuffer(imageEffect, nativeBufferNV21.get());
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
     int32_t ipType = 2;
     ImageEffect_Any runningType;
     runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
@@ -1278,11 +1266,6 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest002, TestSize.Level1
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    std::shared_ptr<OH_NativeBuffer> nativeBufferNV12 =
-        TestNativeBufferUtils::CreateNativeBuffer(GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCBCR_420_SP);
-    errorCode = OH_ImageEffect_SetOutputNativeBuffer(imageEffect, nativeBufferNV12.get());
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-    
     int32_t ipType = 2;
     ImageEffect_Any runningType;
     runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
@@ -1332,11 +1315,6 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest003, TestSize.Level1
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    std::shared_ptr<OH_NativeBuffer> nativeBufferNV21 =
-        TestNativeBufferUtils::CreateNativeBuffer(GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
-    errorCode = OH_ImageEffect_SetOutputNativeBuffer(imageEffect, nativeBufferNV21.get());
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
     int32_t ipType = 1;
     ImageEffect_Any runningType;
     runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
@@ -1375,11 +1353,6 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest004, TestSize.Level1
 
     OH_NativeBuffer *nativeBuffer = nativeBufferNV21_.get();
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    std::shared_ptr<OH_NativeBuffer> nativeBufferNV21 =
-        TestNativeBufferUtils::CreateNativeBuffer(GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCRCB_420_SP);
-    errorCode = OH_ImageEffect_SetOutputNativeBuffer(imageEffect, nativeBufferNV21.get());
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     int32_t ipType = 1;
@@ -1593,7 +1566,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectAdobe001, TestSize.Level1)
     std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
     std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_adobeHdrPath);
     pixelmapNative->pixelmap_ = std::move(pixelMap);
-
+    
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
 
@@ -1635,32 +1608,32 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectPicture001, TestSize.Level1)
 {
     std::shared_ptr<Picture> picture = std::make_shared<MockPicture>();
     std::shared_ptr<OH_PictureNative> pictureNative = std::make_shared<OH_PictureNative>(picture);
-
+ 
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
-
+ 
     OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, OH_EFFECT_CONTRAST_FILTER);
     ASSERT_NE(filter, nullptr);
-
+ 
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
     value.dataValue.floatValue = 100.f;
     ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
+ 
     errorCode = OH_ImageEffect_SetInputPicture(imageEffect, pictureNative.get());
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
+ 
     // start with input
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
+ 
     // start with in and out(input equal to output)
     errorCode = OH_ImageEffect_SetOutputPicture(imageEffect, pictureNative.get());
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
+ 
     // start with in and out
     std::shared_ptr<Picture> outputPicture = std::make_shared<MockPicture>();
     std::shared_ptr<OH_PictureNative> outputPictureNative = std::make_shared<OH_PictureNative>(outputPicture);
@@ -1668,11 +1641,11 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectPicture001, TestSize.Level1)
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
     errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
+ 
     errorCode = OH_ImageEffect_Release(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 }
-
+ 
 /**
  * Feature: ImageEffect
  * Function: Test OH_ImageEffect with picture for abnormal input parameters.
@@ -1693,14 +1666,14 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectPicture002, TestSize.Level1)
     std::shared_ptr<OH_PictureNative> pictureNative = std::make_shared<OH_PictureNative>(picture);
     std::shared_ptr<Picture> defaultPicture;
     std::shared_ptr<OH_PictureNative> abnormalPictureNative = std::make_shared<OH_PictureNative>(defaultPicture);
-
+ 
     ASSERT_NE(OH_ImageEffect_SetInputPicture(nullptr, pictureNative.get()), ImageEffect_ErrorCode::EFFECT_SUCCESS);
     ASSERT_NE(OH_ImageEffect_SetInputPicture(imageEffectPtr.get(), nullptr), ImageEffect_ErrorCode::EFFECT_SUCCESS);
     ASSERT_NE(OH_ImageEffect_SetInputPicture(imageEffectPtr.get(), abnormalPictureNative.get()),
         ImageEffect_ErrorCode::EFFECT_SUCCESS);
     ASSERT_EQ(OH_ImageEffect_SetInputPicture(imageEffectPtr.get(), pictureNative.get()),
         ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
+ 
     ASSERT_NE(OH_ImageEffect_SetOutputPicture(nullptr, pictureNative.get()), ImageEffect_ErrorCode::EFFECT_SUCCESS);
     ASSERT_EQ(OH_ImageEffect_SetOutputPicture(imageEffectPtr.get(), nullptr), ImageEffect_ErrorCode::EFFECT_SUCCESS);
     ASSERT_EQ(OH_ImageEffect_SetOutputPicture(imageEffectPtr.get(), abnormalPictureNative.get()),

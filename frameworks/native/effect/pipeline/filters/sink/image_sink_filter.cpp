@@ -90,21 +90,22 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
 {
     PixelMap *pixelMap = src->bufferInfo_->pixelMap_;
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
+
     uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
     if (pixels == buffer->buffer_) {
         EFFECT_LOGD("ModifyPixelMap: not need modify pixelmap!");
         CommonUtils::UpdateImageExifDateTime(pixelMap);
-        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
-        return ColorSpaceHelper::UpdateMetadata(src);
+        ColorSpaceHelper::UpdateMetadata(src, context);
+        return ErrorCode::SUCCESS;
     }
 
     if (buffer->extraInfo_->dataType == DataType::TEX) {
         if (pixelMap->GetWidth() == static_cast<int32_t>(buffer->bufferInfo_->width_) &&
             pixelMap->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_) && pixels == src->buffer_) {
-            context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
+            context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src, true);
             CommonUtils::UpdateImageExifDateTime(pixelMap);
-            CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
-            return ColorSpaceHelper::UpdateMetadata(src);
+            ColorSpaceHelper::UpdateMetadata(src, context);
+            return ErrorCode::SUCCESS;
         } else {
             return CommonUtils::ModifyPixelMapPropertyForTexture(pixelMap, buffer, context);
         }
@@ -115,11 +116,11 @@ ErrorCode ModifyPixelMap(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
         CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat()) == buffer->bufferInfo_->formatType_) {
         EFFECT_LOGD("Copy data to pixel map.");
         CopyDataToPixelMap(pixelMap, buffer);
-        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
-        return ColorSpaceHelper::UpdateMetadata(buffer.get());
+        ColorSpaceHelper::UpdateMetadata(buffer.get(), context);
+        return ErrorCode::SUCCESS;
     }
 
-    ErrorCode result = CommonUtils::ModifyPixelMapProperty(pixelMap, buffer, context->memoryManager_);
+    ErrorCode result = CommonUtils::ModifyPixelMapProperty(pixelMap, buffer, context);
     return result;
 }
 
@@ -147,16 +148,16 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
     EFFECT_LOGD("ModifySurfaceBuffer: virAddr=%{public}p, inputBufAddr=%{public}p",
         surfaceBuffer->GetVirAddr(), buffer->buffer_);
     if (surfaceBuffer->GetVirAddr() == buffer->buffer_) {
-        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
-        return ColorSpaceHelper::UpdateMetadata(buffer.get());
+        ColorSpaceHelper::UpdateMetadata(buffer.get(), context);
+        return ErrorCode::SUCCESS;
     }
 
     if (buffer->extraInfo_->dataType == DataType::TEX) {
         if (surfaceBuffer->GetWidth() == static_cast<int32_t>(buffer->bufferInfo_->width_) &&
             surfaceBuffer->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_)) {
-            context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
-            CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
-            return ColorSpaceHelper::UpdateMetadata(src);
+            context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src, true);
+            ColorSpaceHelper::UpdateMetadata(src, context);
+            return ErrorCode::SUCCESS;
         }
         return ErrorCode::ERR_BUFFER_NOT_ALLOW_CHANGE;
     }
@@ -167,8 +168,9 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
         buffer->bufferInfo_->formatType_) {
         EFFECT_LOGD("Copy data to surface buffer.");
         CopyDataToSurfaceBuffer(surfaceBuffer, buffer);
-        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
-        return ColorSpaceHelper::UpdateMetadata(buffer.get());
+        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate(), ErrorCode::SUCCESS);
+        ColorSpaceHelper::UpdateMetadata(buffer.get(), context);
+        return ErrorCode::SUCCESS;
     }
 
     EFFECT_LOGE("surface buffer not allow changed!");
@@ -188,8 +190,8 @@ ErrorCode ModifyInnerPicture(EffectBuffer *src, const std::shared_ptr<EffectBuff
         CommonUtils::UpdateImageExifDateTime(picture.get());
 
         // update metadata
-        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
-        return ColorSpaceHelper::UpdateMetadata(buffer.get());
+        ColorSpaceHelper::UpdateMetadata(buffer.get(), context);
+        return ErrorCode::SUCCESS;
     }
 
     // update picture exif
@@ -199,7 +201,7 @@ ErrorCode ModifyInnerPicture(EffectBuffer *src, const std::shared_ptr<EffectBuff
         return CommonUtils::ModifyPixelMapPropertyForTexture(mainPixel.get(), buffer, context, false);
     }
 
-    ErrorCode res = CommonUtils::ModifyPixelMapProperty(mainPixel.get(), buffer, context->memoryManager_, false);
+    ErrorCode res = CommonUtils::ModifyPixelMapProperty(mainPixel.get(), buffer, context, false);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ModifyInnerPicture: modify main pixelmap property fail!");
 
     if (buffer->auxiliaryBufferInfos == nullptr) {
@@ -218,7 +220,7 @@ ErrorCode ModifyInnerPicture(EffectBuffer *src, const std::shared_ptr<EffectBuff
         std::shared_ptr<ExtraInfo> defaultExtraInfo = std::make_shared<ExtraInfo>();
         std::shared_ptr<EffectBuffer> gainMapEffectBuffer =
             std::make_shared<EffectBuffer>(gainMapBufferInfo, gainMapBufferInfo->addr_, defaultExtraInfo);
-        res = CommonUtils::ModifyPixelMapProperty(gainMap.get(), gainMapEffectBuffer, context->memoryManager_, false);
+        res = CommonUtils::ModifyPixelMapProperty(gainMap.get(), gainMapEffectBuffer, context, false);
         auto auxilaryPicture = picture->GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
         CHECK_AND_RETURN_RET_LOG(auxilaryPicture, res, "ModifyInnerPicture: auxilaryPicture not exist!");
         auxilaryPicture->SetContentPixel(gainMap);
@@ -232,7 +234,7 @@ ErrorCode ModifyPictureForGainMap(PixelMap *gainMapPixelMap, EffectBuffer *src,
     const std::shared_ptr<EffectBuffer> &gainMapBuffer, std::shared_ptr<EffectContext> &context)
 {
     CHECK_AND_RETURN_RET_LOG(gainMapPixelMap != nullptr, ErrorCode::ERR_INPUT_NULL,
-                             "ModifyPictureForInnerPixelMap: pixelMap is null!");
+        "ModifyPictureForInnerPixelMap: pixelMap is null!");
 
     uint8_t *pixels = const_cast<uint8_t *>(gainMapPixelMap->GetPixels());
     if (pixels == gainMapBuffer->buffer_) {
@@ -245,24 +247,25 @@ ErrorCode ModifyPictureForGainMap(PixelMap *gainMapPixelMap, EffectBuffer *src,
     if (gainMapBuffer->extraInfo_->dataType == DataType::TEX) {
         if (gainMapPixelMap->GetWidth() == static_cast<int32_t>(gainMapBuffer->bufferInfo_->width_) &&
             gainMapPixelMap->GetHeight() == static_cast<int32_t>(gainMapBuffer->bufferInfo_->height_)) {
-            context->renderEnvironment_->ConvertTextureToBuffer(gainMapBuffer->tex, srcGainMapBuffer.get());
-            return ColorSpaceHelper::UpdateMetadata(src);
-        } else {
-            EFFECT_LOGD("ModifyPicture: ModifyPixelMapPropertyForTexture");
-            return CommonUtils::ModifyPixelMapPropertyForTexture(gainMapPixelMap, gainMapBuffer, context);
-        }
+                context->renderEnvironment_->ConvertTextureToBuffer(gainMapBuffer->tex, srcGainMapBuffer.get(), true);
+                ColorSpaceHelper::UpdateMetadata(src, context);
+                return ErrorCode::SUCCESS;
+            } else {
+                EFFECT_LOGD("ModifyPicture: ModifyPixelMapPropertyForTexture");
+                return CommonUtils::ModifyPixelMapPropertyForTexture(gainMapPixelMap, gainMapBuffer, context);
+            }
     }
 
     auto gainMapEffectType = CommonUtils::SwitchToEffectFormat(gainMapPixelMap->GetPixelFormat());
     if (static_cast<uint32_t>(gainMapPixelMap->GetRowStride()) == gainMapBuffer->bufferInfo_->rowStride_ &&
         static_cast<uint32_t>(gainMapPixelMap->GetHeight()) == gainMapBuffer->bufferInfo_->height_ &&
         gainMapEffectType == gainMapBuffer->bufferInfo_->formatType_) {
-        EFFECT_LOGD("ModifyPicture: Copy data to pixel map.");
-        CopyDataToPixelMap(gainMapPixelMap, gainMapBuffer);
-        return ErrorCode::SUCCESS;
-    }
+            EFFECT_LOGD("ModifyPicture: Copy data to pixel map.");
+            CopyDataToPixelMap(gainMapPixelMap, gainMapBuffer);
+            return ErrorCode::SUCCESS;
+        }
 
-    return CommonUtils::ModifyPixelMapProperty(gainMapPixelMap, gainMapBuffer, context->memoryManager_, false);
+    return CommonUtils::ModifyPixelMapProperty(gainMapPixelMap, gainMapBuffer, context, false);
 }
 
 
@@ -281,7 +284,8 @@ ErrorCode ModifyPictureForInnerPixelMap(PixelMap *pixelMap, EffectBuffer *src,
     if (buffer->extraInfo_->dataType == DataType::TEX) {
         if (pixelMap->GetWidth() == static_cast<int32_t>(buffer->bufferInfo_->width_) &&
             pixelMap->GetHeight() == static_cast<int32_t>(buffer->bufferInfo_->height_) && pixels == src->buffer_) {
-            context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src);
+            context->renderEnvironment_->ConvertTextureToBuffer(buffer->tex, src, true);
+            ColorSpaceHelper::UpdateMetadata(src, context);
             return ErrorCode::SUCCESS;
         } else {
             return CommonUtils::ModifyPixelMapPropertyForTexture(pixelMap, buffer, context);
@@ -296,7 +300,7 @@ ErrorCode ModifyPictureForInnerPixelMap(PixelMap *pixelMap, EffectBuffer *src,
         return ErrorCode::SUCCESS;
     }
 
-    return CommonUtils::ModifyPixelMapProperty(pixelMap, buffer, context->memoryManager_, false);
+    return CommonUtils::ModifyPixelMapProperty(pixelMap, buffer, context, false);
 }
 
 ErrorCode ModifyPicture(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
@@ -427,18 +431,18 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
     const std::shared_ptr<EffectContext> &context)
 {
     if (inputBuffer->buffer_ == outputBuffer->buffer_) {
-        EFFECT_LOGI("ImageSinkFilter: not need copy!");
+        EFFECT_LOGD("ImageSinkFilter: not need copy!");
 
         // update output exif info
         if (outputBuffer->bufferInfo_->pixelMap_ != nullptr) {
             CommonUtils::UpdateImageExifDateTime(outputBuffer->bufferInfo_->pixelMap_);
         } else {
-            EFFECT_LOGW("Before UpdateImageExifDateTime: pixelMap is null!");
+            EFFECT_LOGD("Before UpdateImageExifDateTime: pixelMap is null!");
         }
 
         // update metadata
-        CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
-        return ColorSpaceHelper::UpdateMetadata(outputBuffer.get());
+        ColorSpaceHelper::UpdateMetadata(outputBuffer.get(), context);
+        return ErrorCode::SUCCESS;
     }
 
     size_t outputBufferSize = outputBuffer->bufferInfo_->len_;
@@ -447,10 +451,9 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
     uint32_t inputRowStride = inputBuffer->bufferInfo_->rowStride_;
     EFFECT_LOGI("outputBufferSize=%{public}zu, inputBufferSize=%{public}zu, outputRowStride=%{public}d, "
         "inputRowStride=%{public}d", outputBufferSize, inputBufferSize, outputRowStride, inputRowStride);
-
     // update nativePixelMap
     if (inputBuffer->extraInfo_->dataType == DataType::TEX) {
-        context->renderEnvironment_->ConvertTextureToBuffer(inputBuffer->tex, outputBuffer.get());
+        context->renderEnvironment_->ConvertTextureToBuffer(inputBuffer->tex, outputBuffer.get(), true);
     } else {
         MemcpyHelper::CopyData(inputBuffer.get(), outputBuffer.get());
     }
@@ -459,8 +462,8 @@ ErrorCode FillOutputData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::
     CommonUtils::UpdateImageExifDateTime(outputBuffer->bufferInfo_->pixelMap_);
 
     // update metadata
-    CHECK_AND_RETURN_RET(context->metaInfoNegotiate_->IsNeedUpdate() != true, ErrorCode::SUCCESS);
-    return ColorSpaceHelper::UpdateMetadata(outputBuffer.get());
+    ColorSpaceHelper::UpdateMetadata(outputBuffer.get(), context);
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode FillPictureMainPixel(const std::shared_ptr<EffectBuffer> &inputBuffer,
@@ -479,7 +482,8 @@ ErrorCode FillPictureMainPixel(const std::shared_ptr<EffectBuffer> &inputBuffer,
     if (inputBuffer->extraInfo_->dataType == DataType::TEX) {
         if (outputBuffer->bufferInfo_->width_ == inputBuffer->bufferInfo_->width_ &&
             outputBuffer->bufferInfo_->height_ == inputBuffer->bufferInfo_->height_) {
-            context->renderEnvironment_->ConvertTextureToBuffer(inputBuffer->tex, outputBuffer.get());
+            context->renderEnvironment_->ConvertTextureToBuffer(inputBuffer->tex, outputBuffer.get(), true);
+            ColorSpaceHelper::UpdateMetadata(outputBuffer.get(), context);
         } else {
             res = CommonUtils::ModifyPixelMapPropertyForTexture(dstPixelMap.get(), inputBuffer, context);
         }
@@ -553,7 +557,7 @@ void ProcessGainMap(const std::shared_ptr<EffectBuffer>& srcEffectBuffer,
 
     if (dstEffectBuffer->bufferInfo_->width_ == srcEffectBuffer->bufferInfo_->width_ &&
         dstEffectBuffer->bufferInfo_->height_ == srcEffectBuffer->bufferInfo_->height_) {
-        procCtx.context->renderEnvironment_->ConvertTextureToBuffer(srcEffectBuffer->tex, dstEffectBuffer.get());
+        procCtx.context->renderEnvironment_->ConvertTextureToBuffer(srcEffectBuffer->tex, dstEffectBuffer.get(), true);
     } else {
         CommonUtils::ModifyPixelMapPropertyForTexture(dstPixelMap.get(), srcEffectBuffer, procCtx.context);
     }
@@ -625,9 +629,7 @@ ErrorCode FillPictureOutputData(EffectBuffer *src, const std::shared_ptr<EffectB
     CommonUtils::UpdateImageExifDateTime(outputBuffer->extraInfo_->picture);
 
     auto res = FillPictureMainPixel(inputBuffer, outputBuffer, context);
-    if (res != ErrorCode::SUCCESS) {
-        return res;
-    }
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "FillPictureOutputData: FillPictureMainPixel failed!");
 
     res = FillPictureAuxilaryMap(src, inputBuffer, outputBuffer, context);
     return res;
@@ -675,7 +677,7 @@ ErrorCode ImageSinkFilter::PackToFile(const std::string &path, const std::shared
         CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
             "StartPacking fail! result=%{public}d, format=%{public}s", result, option.format.c_str());
     }
-    
+
     ret = imagePacker->AddPicture(*picture);
     CHECK_AND_RETURN_RET_LOG(ret == 0, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
         "AddImage fail! result=%{public}d", result);
@@ -909,6 +911,26 @@ ErrorCode ImageSinkFilter::TextureRenderFlow(RenderTexturePtr texture, BufferReq
     return ErrorCode::SUCCESS;
 }
 
+sptr<SurfaceBuffer> ImageSinkFilter::GetOrCreateSurfaceBuffer(const BufferRequestConfig& requestConfig)
+{
+    if (hdrSurfaceBuffer_) {
+        if (hdrSurfaceBuffer_->GetHeight() == requestConfig.height &&
+            hdrSurfaceBuffer_->GetWidth() == requestConfig.width) {
+            return hdrSurfaceBuffer_;
+        } else {
+            hdrSurfaceBuffer_->DecStrongRef(hdrSurfaceBuffer_);
+            hdrSurfaceBuffer_ = nullptr;
+        }
+    }
+
+    EFFECT_LOGI("ImageSinkFilter::GetOrCreateSurfaceBuffer: Create new hdrSurfaceBuffer");
+    hdrSurfaceBuffer_ = SurfaceBuffer::Create();
+    hdrSurfaceBuffer_->Alloc(requestConfig);
+    hdrSurfaceBuffer_->Map();
+    hdrSurfaceBuffer_->IncStrongRef(hdrSurfaceBuffer_);
+    return hdrSurfaceBuffer_;
+}
+
 BufferRequestConfig ImageSinkFilter::CreateBaseBufferConfig(int32_t width, int32_t height, GraphicPixelFormat format,
     GraphicTransformType transform, GraphicColorGamut colorGamut) {
     return {
@@ -917,7 +939,7 @@ BufferRequestConfig ImageSinkFilter::CreateBaseBufferConfig(int32_t width, int32
         .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
         .format = format,
         .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE
-                 | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
+               | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
         .timeout = 0,
         .colorGamut = colorGamut,
         .transform = transform
@@ -1005,10 +1027,46 @@ ErrorCode ImageSinkFilter::RenderToDisplay(const std::shared_ptr<EffectBuffer> &
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode ImageSinkFilter::ProcessDisplayForNoTex(const std::shared_ptr<EffectBuffer> &buffer,
+    std::shared_ptr<EffectContext> &context)
+{
+    if (context->renderEnvironment_->GetEGLStatus() != EGLStatus::READY) {
+        context->renderEnvironment_->Init();
+        context->renderEnvironment_->Prepare();
+    }
+    if (buffer->bufferInfo_->hdrFormat_ == HdrFormat::HDR10
+        && buffer->bufferInfo_->formatType_ == IEffectFormat::RGBA_1010102) {
+        EffectBuffer *input = context->renderStrategy_->GetInput();
+        CHECK_AND_RETURN_RET_LOG(input, ErrorCode::ERR_INPUT_NULL, "Input buffer is nullptr");
+        auto sb = buffer->bufferInfo_->surfaceBuffer_;
+        CHECK_AND_RETURN_RET_LOG(input, ErrorCode::ERR_INPUT_NULL, "Input buffer is nullptr");
+        auto transformType = GetSurfaceTransform(input);
+        auto requestConfig = CreateBaseBufferConfig(
+            static_cast<int32_t>(buffer->bufferInfo_->width_),
+            static_cast<int32_t>(buffer->bufferInfo_->height_),
+            CommonUtils::SwitchToGraphicPixelFormat(buffer->bufferInfo_->formatType_),
+            transformType, sb->GetSurfaceBufferColorGamut());
+        CM_ColorSpaceType colorSpaceType;
+        ColorSpaceHelper::GetSurfaceBufferColorSpaceType(sb, colorSpaceType);
+        ColorSpaceHelper::UpdateMetadata(sb, ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceType), context);
+        auto srcMetaData = CommonUtils::GetMetaData(sb);
+        return SurfaceRenderFlow(sb, requestConfig, srcMetaData, colorSpaceType, context);
+    }
+    EGLImageKHR img = GLUtils::CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY),
+        buffer->bufferInfo_->surfaceBuffer_);
+    int tex = static_cast<int>(GLUtils::CreateTextureFromImage(img));
+    buffer->bufferInfo_->surfaceBuffer_->FlushCache();
+    context->renderEnvironment_->UpdateCanvas();
+    GraphicTransformType transformType = buffer->bufferInfo_->surfaceBuffer_->GetSurfaceBufferTransform();
+    context->renderEnvironment_->DrawFrame(tex, transformType);
+    GLUtils::DestroyImage(img);
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
-    EFFECT_LOGI("image sink effect push data started, state: %{public}d", state_.load());
+    EFFECT_LOGD("image sink effect push data started, state: %{public}d", state_.load());
     EffectBuffer *output = nullptr;
     if (sinkBuffer_ != nullptr) {
         output = sinkBuffer_.get();
@@ -1042,18 +1100,13 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
     }
 
     if (output->extraInfo_->dataType == DataType::NATIVE_WINDOW && buffer->bufferInfo_->surfaceBuffer_ != nullptr) {
-        EGLImageKHR img = GLUtils::CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY),
-            buffer->bufferInfo_->surfaceBuffer_);
-        int tex = static_cast<int>(GLUtils::CreateTextureFromImage(img));
-        buffer->bufferInfo_->surfaceBuffer_->FlushCache();
-        context->renderEnvironment_->UpdateCanvas();
-        GraphicTransformType transformType = buffer->bufferInfo_->surfaceBuffer_->GetSurfaceBufferTransform();
-        context->renderEnvironment_->DrawFrame(tex, transformType);
-        GLUtils::DestroyImage(img);
+        ErrorCode result = ProcessDisplayForNoTex(buffer, context);
+        CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, result, "ProcessDisplayForNoTex fail!");
+
         return ErrorCode::SUCCESS;
     }
 
-    EFFECT_LOGI("ImageSinkFilter::PushData SaveData");
+    EFFECT_LOGD("ImageSinkFilter::PushData SaveData");
     ErrorCode result = SaveData(buffer, sinkBuffer_, context);
     CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, result, "SaveData fail! result=%{public}d", result);
     eventReceiver_->OnEvent(Event{ name_, EventType::EVENT_COMPLETE, { buffer } });
