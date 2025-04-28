@@ -433,8 +433,11 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
 
 ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> pipeline, const EffectParameters &effectParameters)
 {
+    EFFECT_TRACE_NAME("ProcessPipelineTask");
+    EFFECT_TRACE_BEGIN("ConvertColorSpace");
     ErrorCode res = ColorSpaceHelper::ConvertColorSpace(effectParameters.srcEffectBuffer_,
         effectParameters.effectContext_);
+    EFFECT_TRACE_END();
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("ProcessPipelineTask:ConvertColorSpace fail! res=%{public}d", res);
         return res;
@@ -816,6 +819,7 @@ void ImageEffect::SetPathToSink()
 
 ErrorCode ImageEffect::Render()
 {
+    EFFECT_TRACE_NAME("ImageEffect::Render");
     CHECK_AND_RETURN_RET_LOG(!efilters_.empty(), ErrorCode::ERR_NOT_FILTERS_WITH_RENDER, "efilters is empty");
 
     uint32_t width = 0;
@@ -859,11 +863,8 @@ ErrorCode ImageEffect::Render()
     res = ConfigureFilters(srcEffectBuffer, dstEffectBuffer);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "configure filters fail! res=%{puiblic}d", res);
 
-    if (dstEffectBuffer != nullptr) {
-        impl_->effectContext_->renderEnvironment_->SetOutputType(dstEffectBuffer->extraInfo_->dataType);
-    } else {
-        impl_->effectContext_->renderEnvironment_->SetOutputType(srcEffectBuffer->extraInfo_->dataType);
-    }
+    std::shared_ptr<EffectBuffer> outBuffer = dstEffectBuffer != nullptr ? dstEffectBuffer : srcEffectBuffer;
+    impl_->effectContext_->renderEnvironment_->SetOutputType(outBuffer->extraInfo_->dataType);
     EffectParameters effectParameters(srcEffectBuffer, dstEffectBuffer, config_, impl_->effectContext_);
     res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread, !impl_->isQosEnabled_);
     if (res != ErrorCode::SUCCESS) {
@@ -900,6 +901,7 @@ ErrorCode ImageEffect::Save(EffectJsonPtr &res)
 
 std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
 {
+    EFFECT_TRACE_NAME("ImageEffect::Restore");
     const EffectJsonPtr root = EffectJsonHelper::ParseJsonData(info);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "Restore: no imageEffect");
     const EffectJsonPtr &imageInfo = root->GetElement("imageEffect");

@@ -17,6 +17,7 @@
 
 #include "common_utils.h"
 #include "effect_log.h"
+#include "effect_trace.h"
 #include "effect_json_helper.h"
 #include "efilter_factory.h"
 #include "memcpy_helper.h"
@@ -394,6 +395,7 @@ ErrorCode EFilter::AllocBuffer(std::shared_ptr<EffectContext> &context,
     const std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap, std::shared_ptr<EffectBuffer> &source,
     std::shared_ptr<EffectBuffer> &effectBuffer) const
 {
+    EFFECT_TRACE_NAME("EFilter::AllocBuffer");
     MemoryInfo memInfo = {
         .bufferInfo = {
             .width_ = memNegotiatedCap->width,

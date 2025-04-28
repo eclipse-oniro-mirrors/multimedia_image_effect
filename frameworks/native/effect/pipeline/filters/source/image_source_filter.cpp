@@ -16,6 +16,7 @@
 #include "image_source_filter.h"
 
 #include "effect_log.h"
+#include "effect_trace.h"
 #include "filter_factory.h"
 #include "memcpy_helper.h"
 #include "render_environment.h"
@@ -107,7 +108,9 @@ ErrorCode ImageSourceFilter::Start()
     }
 
     std::shared_ptr<EffectBuffer> buffer = srcBuffer_;
+    EFFECT_TRACE_BEGIN("UpdateInputBufferIfNeed");
     ErrorCode res = UpdateInputBufferIfNeed(srcBuffer_, buffer, context_);
+    EFFECT_TRACE_END();
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Update input buffer fail! res=%{public}d", res);
 
     return outPorts_[0]->PushData(buffer, context_);
