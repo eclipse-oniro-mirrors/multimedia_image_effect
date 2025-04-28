@@ -102,7 +102,7 @@ public:
         return effectMap_.erase(name);
     }
 
-    RenderTexturePtr RequestTexture(RenderContext *ctx, GLsizei w, GLsizei h, GLenum interFmt)
+    RenderTexturePtr RequestTexture(GLsizei w, GLsizei h, GLenum interFmt)
     {
         UINT64 tag = GetTexTag(w, h, interFmt);
         RenderTexture *rawTex;
@@ -112,7 +112,7 @@ public:
             rawTex = tex.get();
             tex.reset();
         } else {
-            rawTex = new RenderTexture(ctx, w, h, interFmt);
+            rawTex = new RenderTexture(w, h, interFmt);
             rawTex->Init();
         }
         return RenderTexturePtr(rawTex, [this](auto *p) {

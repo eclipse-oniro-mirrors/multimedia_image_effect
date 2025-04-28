@@ -50,7 +50,6 @@ private:
     BrightnessFilterDataPtr renderEffectData_;
     void PreDraw(GLenum target);
     void PostDraw(GLenum target);
-    RenderContext *context_{ nullptr };
     std::string vertexShaderCode_;
     std::string fragmentShaderCode_;
     GLuint fbo_{ 0 };

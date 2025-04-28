@@ -29,7 +29,7 @@ class ResourceCache;
 class RenderFrameBuffer {
 public:
     IMAGE_EFFECT_EXPORT
-    RenderFrameBuffer(RenderContext *ctx, ResourceCache *cache, int width, int height, GLenum interFmt = GL_RGBA8);
+    RenderFrameBuffer(ResourceCache *cache, int width, int height, GLenum interFmt = GL_RGBA8);
     IMAGE_EFFECT_EXPORT ~RenderFrameBuffer();
 
     IMAGE_EFFECT_EXPORT void Resize(int width, int height);
@@ -42,7 +42,6 @@ public:
 private:
     unsigned int fboId_ = GL_NONE;
     RenderTexturePtr texture_;
-    RenderContext *context_{ nullptr };
     ResourceCache *cache_{ nullptr };
 };
 

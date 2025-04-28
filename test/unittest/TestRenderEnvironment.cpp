@@ -270,9 +270,8 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment008, TestSize.Level1) {
 }
 
 HWTEST_F(TestRenderEnvironment, RenderFrameBuffer_001, TestSize.Level1) {
-    RenderContext *context = renderEnvironment->GetContext();
     ResourceCache *ceCache = renderEnvironment->GetResourceCache();
-    RenderFrameBuffer *renderFrameBuffer = new RenderFrameBuffer(context, ceCache, WIDTH, HEIGHT);
+    RenderFrameBuffer *renderFrameBuffer = new RenderFrameBuffer(ceCache, WIDTH, HEIGHT);
     EXPECT_EQ(glGetError(), GL_NO_ERROR);
 
     renderFrameBuffer->Resize(WIDTH/2, HEIGHT);
