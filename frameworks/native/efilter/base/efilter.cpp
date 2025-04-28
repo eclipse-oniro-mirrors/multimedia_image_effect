@@ -17,6 +17,7 @@
 
 #include "common_utils.h"
 #include "effect_log.h"
+#include "effect_trace.h"
 #include "effect_json_helper.h"
 #include "efilter_factory.h"
 #include "memcpy_helper.h"
@@ -395,28 +396,29 @@ ErrorCode EFilter::AllocBuffer(std::shared_ptr<EffectContext> &context,
     const std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap, std::shared_ptr<EffectBuffer> &source,
     std::shared_ptr<EffectBuffer> &effectBuffer) const
 {
-        MemoryInfo memInfo = {
-            .bufferInfo = {
-                .width_ = memNegotiatedCap->width,
-                .height_ = memNegotiatedCap->height,
-                .len_ = FormatHelper::CalculateSize(
-                    memNegotiatedCap->width, memNegotiatedCap->height, source->bufferInfo_->formatType_),
-                .formatType_ = source->bufferInfo_->formatType_,
-                .colorSpace_ = source->bufferInfo_->colorSpace_,
-            }
-        };
-        MemoryData *memoryData = context->memoryManager_->AllocMemory(source->buffer_, memInfo);
-        CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc new memory fail!");
-        MemoryInfo &allocMemInfo = memoryData->memoryInfo;
-        std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
-        *bufferInfo = allocMemInfo.bufferInfo;
-        bufferInfo->fd_ = source->bufferInfo_->fd_;
-        std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
-        *extraInfo = *source->extraInfo_;
-        extraInfo->bufferType = allocMemInfo.bufferType;
-        bufferInfo->surfaceBuffer_ = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
-            static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
-        effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
+    EFFECT_TRACE_NAME("EFilter::AllocBuffer");
+    MemoryInfo memInfo = {
+        .bufferInfo = {
+            .width_ = memNegotiatedCap->width,
+            .height_ = memNegotiatedCap->height,
+            .len_ = FormatHelper::CalculateSize(
+                memNegotiatedCap->width, memNegotiatedCap->height, source->bufferInfo_->formatType_),
+            .formatType_ = source->bufferInfo_->formatType_,
+            .colorSpace_ = source->bufferInfo_->colorSpace_,
+        }
+    };
+    MemoryData *memoryData = context->memoryManager_->AllocMemory(source->buffer_, memInfo);
+    CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc new memory fail!");
+    MemoryInfo &allocMemInfo = memoryData->memoryInfo;
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    *bufferInfo = allocMemInfo.bufferInfo;
+    bufferInfo->fd_ = source->bufferInfo_->fd_;
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
+    *extraInfo = *source->extraInfo_;
+    extraInfo->bufferType = allocMemInfo.bufferType;
+    bufferInfo->surfaceBuffer_ = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
+        static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
+    effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
 
         if (source->auxiliaryBufferInfos != nullptr) {
             effectBuffer->auxiliaryBufferInfos =
