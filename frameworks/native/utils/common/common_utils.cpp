@@ -952,7 +952,7 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
     std::shared_ptr<Memory> allocMemory = memoryManager->GetAllocMemoryByAddr(buffer->buffer_);
     std::shared_ptr<MemoryData> memoryData;
     if (allocMemory != nullptr && allocMemory->memoryData_->memoryInfo.bufferType == bufferType) {
-        EFFECT_LOGD("ModifyPixelMapProperty reuse allocated memory. addr=%{public}p", buffer->buffer_);
+        EFFECT_LOGD("ModifyPixelMapProperty reuse allocated memory");
         allocMemory->memoryData_->memoryInfo.isAutoRelease = false;
         memoryData = allocMemory->memoryData_;
     } else {
