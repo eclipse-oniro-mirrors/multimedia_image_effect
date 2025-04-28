@@ -838,6 +838,7 @@ ErrorCode ImageEffect::Render()
     res = impl_->pipeline_->Prepare();
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "pipeline prepare fail! res=%{public}d", res);
 
+    RemoveGainMapIfNeed();
     if (inDateInfo_.dataType_ == DataType::URI || inDateInfo_.dataType_ == DataType::PATH) {
         const std::vector<std::shared_ptr<Capability>> &capabilities =
             impl_->effectContext_->capNegotiate_->GetCapabilityList();
@@ -1429,6 +1430,25 @@ bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
             return inDataInfo.picture_ == outDataInfo.picture_;
         default:
             return false;
+    }
+}
+
+void ImageEffect::RemoveGainMapIfNeed() const
+{
+    auto context = impl_->effectContext_;
+    const auto& supportedHdrFormats = context->filtersSupportedHdrFormat_;
+    const bool needRemove = supportedHdrFormats.find(HdrFormat::HDR8_GAINMAP) == supportedHdrFormats.end();
+    if (!needRemove) {
+        return;
+    }
+
+    EFFECT_LOGI("RemoveGainMapIfNeed: gainMap is not supported, remove it!");
+    if (outDateInfo_.dataType_ == DataType::PICTURE && outDateInfo_.picture_ &&
+        outDateInfo_.picture_->HasAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)) {
+        outDateInfo_.picture_->DropAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
+    } else if (inDateInfo_.dataType_ == DataType::PICTURE && inDateInfo_.picture_ &&
+        inDateInfo_.picture_->HasAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)) {
+        inDateInfo_.picture_->DropAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
     }
 }
 

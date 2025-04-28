@@ -121,6 +121,8 @@ private:
     ErrorCode LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer, std::shared_ptr<EffectBuffer> &dstEffectBuffer,
         IEffectFormat format);
 
+    void RemoveGainMapIfNeed() const;
+
     static void UnLockData(DataInfo &dataInfo);
     IMAGE_EFFECT_EXPORT static BufferRequestConfig GetBufferRequestConfig(const sptr<SurfaceBuffer>& buffer);
 
