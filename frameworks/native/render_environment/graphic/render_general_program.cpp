@@ -21,8 +21,8 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-RenderGeneralProgram::RenderGeneralProgram(RenderContext *context, const std::string &vss, const std::string &fss)
-    : RenderProgram(context), vss_(vss), fss_(fss)
+RenderGeneralProgram::RenderGeneralProgram(const std::string &vss, const std::string &fss)
+    : vss_(vss), fss_(fss)
 {
     SetTag("RenderGeneralProgram");
 }

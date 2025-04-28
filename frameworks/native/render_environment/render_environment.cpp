@@ -104,25 +104,25 @@ void RenderEnvironment::InitDefaultMeshMT(RenderParam *param)
 
 void RenderEnvironment::InitDefaultShaderMT(RenderParam *param)
 {
-    param->shaderBase_ = new RenderGeneralProgram(param->context_, DEFAULT_VERTEX_SHADER_SCREEN_CODE,
+    param->shaderBase_ = new RenderGeneralProgram(DEFAULT_VERTEX_SHADER_SCREEN_CODE,
         DEFAULT_FRAGMENT_SHADER_CODE);
     param->shaderBase_->Init();
-    param->shaderBaseDMA_ = new RenderGeneralProgram(param->context_, DEFAULT_VERTEX_SHADER_SCREEN_CODE,
+    param->shaderBaseDMA_ = new RenderGeneralProgram(DEFAULT_VERTEX_SHADER_SCREEN_CODE,
         DEFAULT_FSHADER);
     param->shaderBaseDMA_->Init();
-    param->shaderBaseYUVDMA_ = new RenderGeneralProgram(param->context_, DEFAULT_YUV_VERTEX_SHADER,
+    param->shaderBaseYUVDMA_ = new RenderGeneralProgram(DEFAULT_YUV_VERTEX_SHADER,
         DEFAULT_YUV_SHADER_CODE);
     param->shaderBaseYUVDMA_->Init();
-    param->shaderBaseYUVDMA2RGB2D_ = new RenderGeneralProgram(param->context_, DEFAULT_YUV_VERTEX_SHADER,
+    param->shaderBaseYUVDMA2RGB2D_ = new RenderGeneralProgram(DEFAULT_YUV_VERTEX_SHADER,
         DEFAULT_YUV_RGBA_SHADER_CODE);
     param->shaderBaseYUVDMA2RGB2D_->Init();
-    param->shaderBaseRGB2D2YUVDMA_ = new RenderGeneralProgram(param->context_, DEFAULT_YUV_VERTEX_SHADER,
+    param->shaderBaseRGB2D2YUVDMA_ = new RenderGeneralProgram(DEFAULT_YUV_VERTEX_SHADER,
         DEFAULT_RGBA_YUV_SHADER_CODE);
     param->shaderBaseRGB2D2YUVDMA_->Init();
-    param->shaderBaseDrawFrame_ = new RenderGeneralProgram(param->context_, TRANSFORM_VERTEX_SHADER_SCREEN_CODE,
+    param->shaderBaseDrawFrame_ = new RenderGeneralProgram(TRANSFORM_VERTEX_SHADER_SCREEN_CODE,
         DEFAULT_FRAGMENT_SHADER_CODE);
     param->shaderBaseDrawFrame_->Init();
-    param->shaderBaseDrawFrameYUV_ = new RenderGeneralProgram(param->context_, TRANSFORM_YUV_VERTEX_SHADER,
+    param->shaderBaseDrawFrameYUV_ = new RenderGeneralProgram(TRANSFORM_YUV_VERTEX_SHADER,
         DEFAULT_YUV_RGBA_SHADER_CODE);
     param->shaderBaseDrawFrameYUV_->Init();
 }
@@ -156,7 +156,7 @@ bool RenderEnvironment::BeginFrame()
 
 RenderTexturePtr RenderEnvironment::RequestBuffer(int width, int height, GLenum format)
 {
-    RenderTexturePtr renderTex = param_->resCache_->RequestTexture(param_->context_, width, height, format);
+    RenderTexturePtr renderTex = param_->resCache_->RequestTexture(width, height, format);
     return renderTex;
 }
 
@@ -168,7 +168,7 @@ bool RenderEnvironment::IsPrepared() const
 RenderTexturePtr RenderEnvironment::ReCreateTexture(RenderTexturePtr renderTex, int width, int height,
     bool isHdr10) const
 {
-    RenderTexturePtr tempTex = param_->resCache_->RequestTexture(param_->context_, width, height,
+    RenderTexturePtr tempTex = param_->resCache_->RequestTexture(width, height,
                                                                  isHdr10 ? GL_RGB10_A2 : GL_RGBA8);
     GLuint tempFbo = GLUtils::CreateFramebuffer(tempTex->GetName());
     RenderViewport vp(0, 0, renderTex->Width(), renderTex->Height());
@@ -184,7 +184,7 @@ bool RenderEnvironment::GetOrCreateTextureFromCache(RenderTexturePtr& renderTex,
 {
     renderTex = param_->resCache_->GetTexGlobalCache(texName);
     if (renderTex == nullptr || hasInputChanged) {
-        renderTex = param_->resCache_->RequestTexture(param_->context_, width, height,
+        renderTex = param_->resCache_->RequestTexture(width, height,
                                                       isHdr10 ? GL_RGB10_A2 : GL_RGBA8);
         param_->resCache_->AddTexGlobalCache(texName, renderTex);
         return true;
@@ -274,7 +274,7 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::ConvertBufferToTexture(EffectBu
 {
     std::shared_ptr<BufferInfo> info = source->bufferInfo_;
     GLenum interFmt = source->bufferInfo_->hdrFormat_ == HdrFormat::HDR10 ? GL_RGB10_A2 : GL_RGBA8;
-    RenderTexturePtr renderTex = param_->resCache_->RequestTexture(param_->context_, static_cast<int>(info->width_),
+    RenderTexturePtr renderTex = param_->resCache_->RequestTexture(static_cast<int>(info->width_),
         static_cast<int>(info->height_), interFmt);
     DrawBufferToTexture(renderTex, source);
 
@@ -301,7 +301,7 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::ConvertBufferToTexture(EffectBu
                 std::shared_ptr<ExtraInfo> gainExtraInfo = std::make_unique<ExtraInfo>();
                 auto tempGainBuffer =
                     std::make_shared<EffectBuffer>(gainBufferInfo, gainBufferInfo->addr_, gainExtraInfo);
-                RenderTexturePtr gainTex = param_->resCache_->RequestTexture(param_->context_,
+                RenderTexturePtr gainTex = param_->resCache_->RequestTexture(
                     static_cast<int>(gainBufferInfo->width_), static_cast<int>(gainBufferInfo->height_), GL_RGBA8);
                 DrawBufferToTexture(gainTex, tempGainBuffer.get());
                 output->bufferInfo_->gainMapTex_ = gainTex;
@@ -523,10 +523,10 @@ void RenderEnvironment::ConvertYUV2RGBA(std::shared_ptr<EffectBuffer> &source, s
     int height = static_cast<int>(source->bufferInfo_->height_);
     RenderTexturePtr outTex;
     if (source->bufferInfo_->surfaceBuffer_ == nullptr) {
-        outTex = std::make_shared<RenderTexture>(param_->context_, width, height, GL_RGBA8);
+        outTex = std::make_shared<RenderTexture>(width, height, GL_RGBA8);
         outTex->SetName(ConvertFromYUVToRGB(source.get(), source->bufferInfo_->formatType_));
     } else {
-        outTex = param_->resCache_->RequestTexture(param_->context_, width, height, GL_RGBA8);
+        outTex = param_->resCache_->RequestTexture(width, height, GL_RGBA8);
         EGLImageKHR img = GLUtils::CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY),
             source->bufferInfo_->surfaceBuffer_);
         GLuint sourceTex = GLUtils::CreateTextureFromImage(img);
@@ -551,7 +551,7 @@ void RenderEnvironment::ConvertRGBA2YUV(std::shared_ptr<EffectBuffer> &source, s
     RenderTexturePtr sourceTex = source->tex;
     EGLImageKHR img = GLUtils::CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY), out->bufferInfo_->surfaceBuffer_);
     GLuint outTex = GLUtils::CreateTextureFromImage(img);
-    RenderTexturePtr tex = std::make_shared<RenderTexture>(param_->context_, width, height, GL_RGBA8);
+    RenderTexturePtr tex = std::make_shared<RenderTexture>(width, height, GL_RGBA8);
     tex->SetName(outTex);
     Draw2D2OES(sourceTex, tex);
     glFinish();

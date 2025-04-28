@@ -20,7 +20,7 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-RenderProgram::RenderProgram(RenderContext *context) : program_(0), context_(context) {}
+RenderProgram::RenderProgram() : program_(0) {}
 
 void RenderProgram::SetUniform(const std::string &name, float value)
 {

@@ -153,7 +153,7 @@ ErrorCode GpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
 void GpuContrastAlgo::Render(GLenum target, RenderTexturePtr tex)
 {
     if (shader_ == nullptr) {
-        shader_ = new AlgorithmProgram(context_, vertexShaderCode_, fragmentShaderCode_);
+        shader_ = new AlgorithmProgram(vertexShaderCode_, fragmentShaderCode_);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
