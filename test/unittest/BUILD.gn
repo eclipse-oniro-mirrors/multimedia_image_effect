@@ -101,8 +101,8 @@ ohos_unittest("image_effect_unittest") {
     "image_framework:picture",
     "image_framework:pixelmap",
     "ipc:ipc_single",
-    "libexif:libexif",
     "napi:ace_napi",
+    "libexif:libexif",
   ]
 
   use_exceptions = true

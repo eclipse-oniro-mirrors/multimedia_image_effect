@@ -17,6 +17,7 @@
 #define IMAGE_EFFECT_EFFECT_BUFFER_H
 
 #include <memory>
+#include <unordered_map>
 
 #include "effect_info.h"
 #include "effect_type.h"
@@ -24,7 +25,6 @@
 #include "surface_buffer.h"
 #include "image_effect_marco_define.h"
 #include "picture.h"
-#include "unordered_map"
 
 namespace OHOS {
 namespace Media {
@@ -40,6 +40,7 @@ enum class EffectPixelmapType {
     DEPTHMAP,
     UNREFOCUS,
     WATERMARK_CUT,
+    LINEAR,
 };
 
 class BufferInfo {
@@ -47,7 +48,7 @@ public:
     uint32_t width_ = 0;
     uint32_t height_ = 0;
     uint32_t len_ = 0;
-    HdrFormat hdrFormat_ = HdrFormat::DEFAULT;
+    HdrFormat hdrFormat_ = HdrFormat::DEFAULT;  // ExraInfo
     IEffectFormat formatType_ = IEffectFormat::DEFAULT;
     EffectColorSpace colorSpace_ = EffectColorSpace::DEFAULT;
     uint32_t rowStride_ = 0;
@@ -91,7 +92,7 @@ public:
 
     std::shared_ptr<BufferInfo> bufferInfo_ = nullptr;
     void *buffer_ = nullptr;
-    RenderTexturePtr tex;
+    RenderTexturePtr tex;  // bufferInfo
     std::shared_ptr<ExtraInfo> extraInfo_ = nullptr;
     std::shared_ptr<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>> auxiliaryBufferInfos = nullptr;
 };

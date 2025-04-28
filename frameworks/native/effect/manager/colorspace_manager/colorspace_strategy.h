@@ -37,7 +37,7 @@ public:
     static std::unordered_set<EffectColorSpace> GetAllSupportedColorSpaces();
 
     void Init(const std::shared_ptr<EffectBuffer> &src, const std::shared_ptr<EffectBuffer> &dst);
-    
+
     IMAGE_EFFECT_EXPORT
     ErrorCode ChooseColorSpace(const std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace,
         const EffectColorSpace &srcRealColorSpace, EffectColorSpace &outputColorSpace);

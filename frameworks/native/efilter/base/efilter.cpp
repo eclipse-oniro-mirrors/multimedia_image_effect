@@ -174,6 +174,7 @@ void EFilter::Negotiate(const std::string &inPort, const std::shared_ptr<Capabil
     outputCap->memNegotiatedCap_ = Negotiate(capability->memNegotiatedCap_, context);
     outputCap->colorSpaceCap_ = GetColorSpaceCap(name_);
     outputCap->hdrFormatCap_ = GetHdrFormatCap(name_);
+    logStrategy_ = context->logStrategy_;
 
     context->capNegotiate_->AddCapability(outputCap);
     context->cacheNegotiate_->NegotiateConfig(cacheConfig_);
@@ -350,7 +351,7 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
         if (cacheConfig_->GetStatus() == CacheStatus::CACHE_USED) {
             return UseCache(context);
         } else if (cacheConfig_->GetStatus() == CacheStatus::NO_CACHE
-                   || cacheConfig_->GetStatus() == CacheStatus::CACHE_ENABLED) {
+            || cacheConfig_->GetStatus() == CacheStatus::CACHE_ENABLED) {
             return PushData(buffer.get(), context);
         }
     }
@@ -368,8 +369,8 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
     }
     CHECK_AND_RETURN_RET_LOG(outputCap_ != nullptr, ErrorCode::ERR_INPUT_NULL, "outputCap is null.");
     std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap = outputCap_->memNegotiatedCap_;
-    EffectBuffer *output = preIPType != runningIPType ? source.get() :
-        context->renderStrategy_->ChooseBestOutput(source.get(), memNegotiatedCap);
+    EffectBuffer *output = preIPType != runningIPType ? source.get()
+        : context->renderStrategy_->ChooseBestOutput(source.get(), memNegotiatedCap);
     if (source.get() == output) {
         HandleCacheStart(source, context);
         ErrorCode res = Render(source.get(), context);
@@ -419,17 +420,17 @@ ErrorCode EFilter::AllocBuffer(std::shared_ptr<EffectContext> &context,
         static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
     effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
 
-    if (source->auxiliaryBufferInfos != nullptr) {
-        effectBuffer->auxiliaryBufferInfos =
-            std::make_unique<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
-        EFFECT_LOGD("ConvertFromCPU2GPU buffer->auxiliaryBufferInfos != nullptr");
-        for (const auto &entry : *source->auxiliaryBufferInfos) {
-            std::shared_ptr<BufferInfo> auxiliaryBufferInfo = std::make_shared<BufferInfo>();
-            *auxiliaryBufferInfo = *(entry.second);
-            effectBuffer->auxiliaryBufferInfos->emplace(entry.first, auxiliaryBufferInfo);
+        if (source->auxiliaryBufferInfos != nullptr) {
+            effectBuffer->auxiliaryBufferInfos =
+                std::make_unique<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
+            EFFECT_LOGD("ConvertFromCPU2GPU buffer->auxiliaryBufferInfos != nullptr");
+            for (const auto &entry : *source->auxiliaryBufferInfos) {
+                std::shared_ptr<BufferInfo> auxiliaryBufferInfo = std::make_shared<BufferInfo>();
+                *auxiliaryBufferInfo = *(entry.second);
+                effectBuffer->auxiliaryBufferInfos->emplace(entry.first, auxiliaryBufferInfo);
+            }
         }
-    }
-    return ErrorCode::SUCCESS;
+        return ErrorCode::SUCCESS;
 }
 
 ErrorCode EFilter::UseCache(std::shared_ptr<EffectContext> &context)
@@ -470,13 +471,14 @@ ErrorCode OnPushDataPortsEmpty(std::shared_ptr<EffectBuffer> &buffer, std::share
 
     // efilter modify input buffer directly
     if (input->buffer_ == buffer->buffer_) {
-        return ColorSpaceHelper::UpdateMetadata(buffer.get());
+        ColorSpaceHelper::UpdateMetadata(buffer.get(), context);
+        return ErrorCode::SUCCESS;
     }
 
     // efilter create new buffer and inout with the same buffer.
     EffectBuffer *output = context->renderStrategy_->GetOutput();
     if (output == nullptr || input->buffer_ == output->buffer_) {
-        return CommonUtils::ModifyPixelMapProperty(buffer->bufferInfo_->pixelMap_, buffer, context->memoryManager_);
+        return CommonUtils::ModifyPixelMapProperty(buffer->bufferInfo_->pixelMap_, buffer, context);
     }
     EFFECT_LOGW("not support different input and output buffer! filterName=%{public}s", name.c_str());
     return ErrorCode::ERR_UNSUPPORTED_INOUT_WITH_DIFF_BUFFER;
@@ -574,7 +576,7 @@ ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::s
     extraInfo->dataType = DataType::TEX;
     std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
     effectBuffer->tex = context->renderEnvironment_->RequestBuffer(bufferInfo->width_, bufferInfo->height_,
-                                                                   buffer->tex->Format());
+        buffer->tex->Format());
     ErrorCode res = Render(buffer.get(), effectBuffer.get(), context);
     if (needModifySource) {
         CommonUtils::ModifyPixelMapPropertyForTexture(dst->bufferInfo_->pixelMap_, effectBuffer, context);
@@ -587,9 +589,9 @@ ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::s
 void GetSupportedHdrFormat(std::string &name, std::unordered_set<HdrFormat> &filtersSupportedHDRFormat)
 {
     filtersSupportedHDRFormat = {
-            HdrFormat::SDR,
-            HdrFormat::HDR8_GAINMAP,
-            HdrFormat::HDR10
+        HdrFormat::SDR,
+        HdrFormat::HDR8_GAINMAP,
+        HdrFormat::HDR10
     };
 
     std::shared_ptr<HdrFormatCap> hdrFormatCap = GetHdrFormatCap(name);
@@ -699,8 +701,7 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
             "Render CreateDmaEffectBuffer dst fail! res=%{public}d, name=%{public}s", res, name_.c_str());
         res = Render(input == nullptr ? srcBuf : input.get(), output == nullptr ? dstBuf : output.get(), context);
         CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Render: render with input and output fail!");
-        res = ColorSpaceHelper::UpdateMetadata(output == nullptr ? dst.get() : output.get());
-        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "OnPushDataPortsEmpty: UpdateMetadata fail!");
+        ColorSpaceHelper::UpdateMetadata(output == nullptr ? dst.get() : output.get(), context);
         if (output != nullptr) {
             MemcpyHelper::CopyData(output.get(), dstBuf);
         }

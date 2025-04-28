@@ -64,8 +64,8 @@ public:
         return nullptr;
     }
 
-    IMAGE_EFFECT_EXPORT void HandleCacheStart(const std::shared_ptr<EffectBuffer> &source,
-        std::shared_ptr<EffectContext> &context);
+    IMAGE_EFFECT_EXPORT void HandleCacheStart(const std::shared_ptr<EffectBuffer>& source,
+        std::shared_ptr<EffectContext>& context);
 
     IMAGE_EFFECT_EXPORT ErrorCode PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context) override;
@@ -107,6 +107,8 @@ protected:
     std::map<std::string, Plugin::Any> values_;
 
     std::shared_ptr<EFilterCacheConfig> cacheConfig_ = nullptr;
+
+    LOG_STRATEGY logStrategy_ = LOG_STRATEGY::NORMAL;
 private:
     IMAGE_EFFECT_EXPORT void Negotiate(const std::string &inPort, const std::shared_ptr<Capability> &capability,
         std::shared_ptr<EffectContext> &context) override;

@@ -68,10 +68,13 @@ public:
 
     void Negotiate(const std::string& inPort, const std::shared_ptr<Capability> &capability,
         std::shared_ptr<EffectContext> &context) override;
+
     void FlushBufferToScreen(sptr<SurfaceBuffer> &outBuffer, sptr<SyncFence> &fence) const;
 
     void RequestBufferFromScreen(BufferRequestConfig &requestConfig, sptr<SurfaceBuffer> &outBuffer,
         sptr<SyncFence> &syncFence) const;
+
+    sptr<SurfaceBuffer> GetOrCreateSurfaceBuffer(const BufferRequestConfig &requestConfig);
 
     static BufferRequestConfig CreateBaseBufferConfig(int32_t width, int32_t height, GraphicPixelFormat format,
         GraphicTransformType transform, GraphicColorGamut colorGamut);
@@ -87,6 +90,9 @@ public:
     ErrorCode RenderToDisplay(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context);
     ErrorCode RenderHdr10(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context);
     ErrorCode Render8GainMap(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context);
+
+    ErrorCode ProcessDisplayForNoTex(const std::shared_ptr<EffectBuffer> &buffer,
+        std::shared_ptr<EffectContext> &context);
 
     ErrorCode PushData(const std::string &inPort, const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context) override;

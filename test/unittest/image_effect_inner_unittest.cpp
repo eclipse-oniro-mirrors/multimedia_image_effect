@@ -394,7 +394,12 @@ HWTEST_F(ImageEffectInnerUnittest, Save_001, TestSize.Level1)
     std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     EffectJsonPtr jsonValues = EffectJsonHelper::CreateObject();
     ErrorCode result = imageEffect_->Save(jsonValues);
-    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+
+    EffectJsonPtr extra = EffectJsonHelper::CreateObject();
+    imageEffect_->SetExtraInfo(extra);
+    result = imageEffect_->Save(jsonValues);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, CacheBuffer_001, TestSize.Level1)
