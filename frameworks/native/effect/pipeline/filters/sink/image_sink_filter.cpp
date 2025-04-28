@@ -145,8 +145,7 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
 {
     SurfaceBuffer *surfaceBuffer = src->bufferInfo_->surfaceBuffer_;
     CHECK_AND_RETURN_RET_LOG(surfaceBuffer != nullptr, ErrorCode::ERR_INPUT_NULL, "surfaceBuffer is null!");
-    EFFECT_LOGD("ModifySurfaceBuffer: virAddr=%{public}p, inputBufAddr=%{public}p",
-        surfaceBuffer->GetVirAddr(), buffer->buffer_);
+    EFFECT_LOGD("ModifySurfaceBuffer");
     if (surfaceBuffer->GetVirAddr() == buffer->buffer_) {
         ColorSpaceHelper::UpdateMetadata(buffer.get(), context);
         return ErrorCode::SUCCESS;
