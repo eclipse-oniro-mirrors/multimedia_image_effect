@@ -217,7 +217,6 @@ std::unordered_map<std::string, RenderTexturePtr> RenderEnvironment::GenHdr8Gain
     auto gainMapBufferInfo = source->auxiliaryBufferInfos->at(EffectPixelmapType::GAINMAP);
     auto gainMapExtraInfo = std::make_shared<ExtraInfo>();
     auto gainMapBuffer = std::make_shared<EffectBuffer>(gainMapBufferInfo, nullptr, gainMapExtraInfo);
-    gainMapBuffer->tex = mainTexInfo->gainMapTex_;
     RenderTexturePtr primaryTex = nullptr;
     RenderTexturePtr gainMapTex = nullptr;
 
@@ -247,17 +246,17 @@ void RenderEnvironment::GenTex(const std::shared_ptr<EffectBuffer> &source, std:
     switch (info->hdrFormat_) {
         case HdrFormat::HDR8_GAINMAP: {
             auto texMap = GenHdr8GainMapTexs(source);
-            output->tex = texMap["Primary"];
-            output->bufferInfo_->gainMapTex_ = texMap["GainMap"];
+            output->bufferInfo_->tex_ = texMap["Primary"];
+            output->auxiliaryBufferInfos->at(EffectPixelmapType::GAINMAP)->tex_ = texMap["GainMap"];
             break;
         }
         case HdrFormat::HDR10:
-            output->tex = GenMainTex(source, true);
+            output->bufferInfo_->tex_ = GenMainTex(source, true);
             break;
         case HdrFormat::SDR:
         case HdrFormat::DEFAULT:
         default:
-            output->tex = GenMainTex(source, false);
+            output->bufferInfo_->tex_ = GenMainTex(source, false);
             break;
     }
 }
@@ -284,7 +283,7 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::ConvertBufferToTexture(EffectBu
     CommonUtils::CopyExtraInfo(*source->extraInfo_, *extraInfo);
     extraInfo->dataType = DataType::TEX;
     std::shared_ptr<EffectBuffer> output = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
-    output->tex = renderTex;
+    output->bufferInfo_->tex_ = renderTex;
     if (source->bufferInfo_->hdrFormat_ == HdrFormat::HDR8_GAINMAP && source->auxiliaryBufferInfos != nullptr) {
         output->auxiliaryBufferInfos =
             std::make_unique<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
@@ -304,7 +303,7 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::ConvertBufferToTexture(EffectBu
                 RenderTexturePtr gainTex = param_->resCache_->RequestTexture(
                     static_cast<int>(gainBufferInfo->width_), static_cast<int>(gainBufferInfo->height_), GL_RGBA8);
                 DrawBufferToTexture(gainTex, tempGainBuffer.get());
-                output->bufferInfo_->gainMapTex_ = gainTex;
+                gainBufferInfo->tex_ = gainTex;
             }
         }
     }
@@ -461,11 +460,11 @@ void RenderEnvironment::DrawFrameWithTransform(const std::shared_ptr<EffectBuffe
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glm::mat4 trans = GetTransformMatrix(type);
-        if (buffer->tex == nullptr) {
+        if (buffer->bufferInfo_->tex_ == nullptr) {
             EFFECT_LOGE("RenderEnvironment DrawFrameWithTransform tex is nullptr");
             return;
         }
-        param_->renderer_->DrawOnScreen(buffer->tex->GetName(), param_->meshBaseDrawFrame_,
+        param_->renderer_->DrawOnScreen(buffer->bufferInfo_->tex_->GetName(), param_->meshBaseDrawFrame_,
             param_->shaderBaseDrawFrame_, &param_->viewport_, MathUtils::NativePtr(trans), GL_TEXTURE_2D);
 
         if (screenSurface_ == nullptr) {
@@ -543,7 +542,7 @@ void RenderEnvironment::ConvertYUV2RGBA(std::shared_ptr<EffectBuffer> &source, s
 
     out = GenTexEffectBuffer(source);
     out->bufferInfo_->formatType_ = IEffectFormat::RGBA8888;
-    out->tex = outTex;
+    out->bufferInfo_->tex_ = outTex;
     GLUtils::CheckError(__FILE_NAME__, __LINE__);
 }
 
@@ -551,7 +550,7 @@ void RenderEnvironment::ConvertRGBA2YUV(std::shared_ptr<EffectBuffer> &source, s
 {
     int width = static_cast<int>(source->bufferInfo_->width_);
     int height = static_cast<int>(source->bufferInfo_->height_);
-    RenderTexturePtr sourceTex = source->tex;
+    RenderTexturePtr sourceTex = source->bufferInfo_->tex_;
     EGLImageKHR img = GLUtils::CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY), out->bufferInfo_->surfaceBuffer_);
     GLuint outTex = GLUtils::CreateTextureFromImage(img);
     RenderTexturePtr tex = std::make_shared<RenderTexture>(width, height, GL_RGBA8);

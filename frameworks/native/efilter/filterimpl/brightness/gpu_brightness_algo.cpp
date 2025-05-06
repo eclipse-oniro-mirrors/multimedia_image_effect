@@ -128,9 +128,9 @@ ErrorCode GpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
         inEffectBuffer = src;
     }
     Init();
-    renderEffectData_->inputTexture_ = inEffectBuffer->tex;
-    renderEffectData_->outputHeight_ = inEffectBuffer->tex->Height();
-    renderEffectData_->outputWidth_ = inEffectBuffer->tex->Width();
+    renderEffectData_->inputTexture_ = inEffectBuffer->bufferInfo_->tex_;
+    renderEffectData_->outputHeight_ = inEffectBuffer->bufferInfo_->tex_->Height();
+    renderEffectData_->outputWidth_ = inEffectBuffer->bufferInfo_->tex_->Width();
     renderEffectData_->ratio = ParseBrightness(value) / MAX_BRIGHTNESS;
 
     RenderTexturePtr tex = context->renderEnvironment_->RequestBuffer(renderEffectData_->outputWidth_,
@@ -144,7 +144,7 @@ ErrorCode GpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
         dst->bufferInfo_->rowStride_ = tex->Width() * RGBA_SIZE_PER_PIXEL;
         dst->bufferInfo_->len_ = tex->Width() * tex->Height() * RGBA_SIZE_PER_PIXEL;
         dst->bufferInfo_->formatType_ = IEffectFormat::RGBA8888;
-        dst->tex = tex;
+        dst->bufferInfo_->tex_ = tex;
     }
     return ErrorCode::SUCCESS;
 }

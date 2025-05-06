@@ -127,7 +127,7 @@ void CommonUtils::CopyBufferInfo(const BufferInfo& src, BufferInfo& dst)
     dst.surfaceBuffer_ = src.surfaceBuffer_;
     dst.fd_ = src.fd_;
     dst.pixelMap_ = src.pixelMap_;
-    dst.gainMapTex_ = src.gainMapTex_;
+    dst.tex_ = src.tex_;
     dst.addr_ = src.addr_;
 }
 
@@ -997,8 +997,9 @@ ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, cons
     };
     std::shared_ptr<MemoryData> memoryData = memory->Alloc(memoryInfo);
     CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc fail!");
-    context->renderEnvironment_->ReadPixelsFromTex(buffer->tex, memoryData->data, buffer->bufferInfo_->width_,
-        buffer->bufferInfo_->height_, memoryData->memoryInfo.bufferInfo.rowStride_ / RGBA_BYTES_PER_PIXEL);
+    context->renderEnvironment_->ReadPixelsFromTex(buffer->bufferInfo_->tex_, memoryData->data,
+        buffer->bufferInfo_->width_, buffer->bufferInfo_->height_,
+        memoryData->memoryInfo.bufferInfo.rowStride_ / RGBA_BYTES_PER_PIXEL);
 
     return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType, isUpdateExif, context);
 }

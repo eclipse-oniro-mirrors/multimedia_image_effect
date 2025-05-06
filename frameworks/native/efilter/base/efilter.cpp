@@ -250,7 +250,7 @@ std::shared_ptr<EffectBuffer> EFilter::IpTypeConvert(const std::shared_ptr<Effec
 std::shared_ptr<EffectBuffer> EFilter::CreateEffectBufferFromTexture(const std::shared_ptr<EffectBuffer> &buffer,
     const std::shared_ptr<EffectContext> &context)
 {
-    auto texture = buffer->tex;
+    auto texture = buffer->bufferInfo_->tex_;
     MemoryInfo memInfo = {
         .bufferInfo = {
             .width_ = texture->Width(),
@@ -290,19 +290,17 @@ std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<
 
     auto input = CreateEffectBufferFromTexture(buffer, context);
     if (!input) return source;
-    input->bufferInfo_->gainMapTex_ = buffer->bufferInfo_->gainMapTex_;
+    input->bufferInfo_->tex_ = buffer->bufferInfo_->tex_;
     input->bufferInfo_->hdrFormat_ = buffer->bufferInfo_->hdrFormat_;
     input->bufferInfo_->pixelMap_ = buffer->bufferInfo_->pixelMap_;
     source = input;
 
-    auto gainMapTex = buffer->bufferInfo_->gainMapTex_;
     if (buffer->auxiliaryBufferInfos == nullptr) return source;
     auto gainMapBufferInfoIt = buffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP);
-    if (!gainMapTex || gainMapBufferInfoIt == buffer->auxiliaryBufferInfos->end()) return source;
+    if (gainMapBufferInfoIt == buffer->auxiliaryBufferInfos->end()) return source;
 
     auto gainMapBufferInfo = gainMapBufferInfoIt->second;
     auto tmpGainMapBuffer = std::make_shared<EffectBuffer>(gainMapBufferInfo, nullptr, input->extraInfo_);
-    tmpGainMapBuffer->tex = gainMapTex;
     auto gainMapBuffer = CreateEffectBufferFromTexture(tmpGainMapBuffer, context);
     if (!gainMapBuffer) return source;
 
@@ -491,7 +489,7 @@ ErrorCode EFilter::PushData(EffectBuffer *buffer, std::shared_ptr<EffectContext>
 
     std::shared_ptr<EffectBuffer> effectBuffer =
         std::make_shared<EffectBuffer>(buffer->bufferInfo_, buffer->buffer_, buffer->extraInfo_);
-    effectBuffer->tex = buffer->tex;
+    effectBuffer->bufferInfo_->tex_ = buffer->bufferInfo_->tex_;
     effectBuffer->auxiliaryBufferInfos = buffer->auxiliaryBufferInfos;
     if (outPorts_.empty()) {
         return OnPushDataPortsEmpty(effectBuffer, context, name_);
@@ -575,13 +573,13 @@ ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::s
     std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
     extraInfo->dataType = DataType::TEX;
     std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
-    effectBuffer->tex = context->renderEnvironment_->RequestBuffer(bufferInfo->width_, bufferInfo->height_,
-        buffer->tex->Format());
+    effectBuffer->bufferInfo_->tex_ = context->renderEnvironment_->RequestBuffer(bufferInfo->width_,
+        bufferInfo->height_, buffer->bufferInfo_->tex_->Format());
     ErrorCode res = Render(buffer.get(), effectBuffer.get(), context);
     if (needModifySource) {
         CommonUtils::ModifyPixelMapPropertyForTexture(dst->bufferInfo_->pixelMap_, effectBuffer, context);
     } else {
-        context->renderEnvironment_->ConvertTextureToBuffer(effectBuffer->tex, dst.get());
+        context->renderEnvironment_->ConvertTextureToBuffer(effectBuffer->bufferInfo_->tex_, dst.get());
     }
     return res;
 }
