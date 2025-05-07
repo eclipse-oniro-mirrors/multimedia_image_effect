@@ -55,7 +55,7 @@ public:
     BufferType bufferType_ = BufferType::DEFAULT;
     EffectPixelmapType pixelmapType_ = EffectPixelmapType::UNKNOWN;
     void *addr_ = nullptr;
-    RenderTexturePtr gainMapTex_;
+    RenderTexturePtr tex_;
     int *fd_ = nullptr;
     SurfaceBuffer *surfaceBuffer_ = nullptr;
     PixelMap *pixelMap_ = nullptr;

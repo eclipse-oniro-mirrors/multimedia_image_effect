@@ -124,8 +124,8 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment002, TestSize.Level1)
     GraphicTransformType type = GraphicTransformType::GRAPHIC_ROTATE_NONE;
     renderEnvironment->DrawFrame(tex, type);
     renderEnvironment->DrawFrameWithTransform(effectBuffer, type);
-    effectBuffer->tex = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
-    EXPECT_NE(effectBuffer->tex, nullptr);
+    effectBuffer->bufferInfo_->tex_ = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
+    EXPECT_NE(effectBuffer->bufferInfo_->tex_, nullptr);
 
     type = GraphicTransformType::GRAPHIC_ROTATE_90;
     renderEnvironment->DrawFrame(tex, type);
@@ -158,7 +158,7 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment003, TestSize.Level1)
     RenderTexturePtr texptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
     EXPECT_NE(texptr, nullptr);
 
-    effectBuffer->tex = texptr;
+    effectBuffer->bufferInfo_->tex_ = texptr;
     renderEnvironment->ConvertYUV2RGBA(effectBuffer, input);
     effectBuffer->bufferInfo_->surfaceBuffer_ = nullptr;
     std::shared_ptr<EffectBuffer> buffer =
@@ -225,7 +225,7 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment006, TestSize.Level1)
     RenderTexturePtr texptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
     EXPECT_NE(texptr, nullptr);
 
-    effectBuffer->tex = texptr;
+    effectBuffer->bufferInfo_->tex_ = texptr;
     effectBuffer->bufferInfo_->surfaceBuffer_ = buffer;
     effectBuffer->bufferInfo_->formatType_ = IEffectFormat::YUVNV12;
 
