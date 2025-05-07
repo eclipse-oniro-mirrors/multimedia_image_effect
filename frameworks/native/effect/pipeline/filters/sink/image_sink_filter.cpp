@@ -1005,7 +1005,7 @@ ErrorCode ImageSinkFilter::Render8GainMap(const std::shared_ptr<EffectBuffer> &b
         std::make_shared<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
     primaryBuffer->auxiliaryBufferInfos->emplace(EffectPixelmapType::GAINMAP, auxiliaryBuffer->bufferInfo_);
     context->renderEnvironment_->GetOrCreateTextureFromCache(primaryBuffer->bufferInfo_->tex_, "Primary", 0, 0, false);
-    context->renderEnvironment_->GetOrCreateTextureFromCache(auxiliaryBuffer->bufferInfo_->tex_, 
+    context->renderEnvironment_->GetOrCreateTextureFromCache(auxiliaryBuffer->bufferInfo_->tex_,
         "GainMap", 0, 0, false);
 
     result = ModifyPicture(input, primaryBuffer, context);
