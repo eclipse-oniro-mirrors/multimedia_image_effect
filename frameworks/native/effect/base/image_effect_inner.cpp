@@ -59,7 +59,6 @@ enum class EffectState {
 
 const int STRUCT_IMAGE_EFFECT_CONSTANT = 1;
 const int DESTRUCTOR_IMAGE_EFFECT_CONSTANT = 2;
-const int VIDEO_SINK_FILTER_STATUS = 3;
 const std::string FUNCTION_FLUSH_SURFACE_BUFFER = "flushSurfaceBuffer";
 
 class ImageEffect::Impl {
@@ -215,7 +214,7 @@ ImageEffect::ImageEffect(const char *name)
 
     if (m_renderThread == nullptr) {
         auto func = [this]() {
-            EFFECT_LOGW("ImageEffect has no render work to do!");
+            EFFECT_LOGD("ImageEffect has no render work to do!");
         };
         m_renderThread = new RenderThread<>(RENDER_QUEUE_SIZE, func);
         m_renderThread->Start();
@@ -351,9 +350,8 @@ ErrorCode ConfigSinkFilter(std::shared_ptr<ImageSinkFilter> &sinkFilter, std::sh
 
     ErrorCode res = sinkFilter->SetSink(sinkBuffer);
     FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "set sink fail! res=%{public}d", res);
-
     res = sinkFilter->SetXComponentSurface(toXComponentSurface);
-    FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "set xcomponent surface fail! res=%{public}d", res);
+    FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "SetRenderSurface fail! res=%{public}d", res);
 
     return ErrorCode::SUCCESS;
 }
@@ -375,12 +373,11 @@ void GetConfigIPTypes(const std::map<ConfigType, Plugin::Any> &config, std::vect
     configIPTypes = { IPType::CPU, IPType::GPU };
 }
 
-void AdjustEffectFormat(IEffectFormat &effectFormat)
-{
+void AdjustEffectFormat(IEffectFormat& effectFormat) {
     switch (effectFormat) {
         case IEffectFormat::RGBA_1010102:
-        case IEffectFormat::YCRCB_P010:
         case IEffectFormat::YCBCR_P010:
+        case IEffectFormat::YCRCB_P010:
             effectFormat = IEffectFormat::RGBA_1010102;
             break;
         default:
@@ -405,6 +402,7 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
             continue;
         }
         std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
+
         if (runningIPType == IPType::GPU) {
             AdjustEffectFormat(effectFormat);
         }
@@ -433,8 +431,11 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
 
 ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> pipeline, const EffectParameters &effectParameters)
 {
+    EFFECT_TRACE_NAME("ProcessPipelineTask");
+    EFFECT_TRACE_BEGIN("ConvertColorSpace");
     ErrorCode res = ColorSpaceHelper::ConvertColorSpace(effectParameters.srcEffectBuffer_,
         effectParameters.effectContext_);
+    EFFECT_TRACE_END();
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("ProcessPipelineTask:ConvertColorSpace fail! res=%{public}d", res);
         return res;
@@ -539,6 +540,7 @@ void ImageEffect::Stop()
     if (impl_->surfaceAdapter_) {
         impl_->surfaceAdapter_->ConsumerRequestCpuAccess(false);
     }
+    impl_->effectContext_->logStrategy_ = LOG_STRATEGY::NORMAL;
     impl_->effectContext_->memoryManager_->ClearMemory();
 }
 
@@ -745,25 +747,6 @@ ErrorCode ImageEffect::GetImageInfoFromPicture(uint32_t &width, uint32_t &height
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
-    std::shared_ptr<EffectBuffer> dstEffectBuffer) {
-    std::shared_ptr<ImageSourceFilter> &sourceFilter = impl_->srcFilter_;
-    ErrorCode res = ConfigSourceFilter(sourceFilter, srcEffectBuffer, impl_->effectContext_);
-    if (res != ErrorCode::SUCCESS) {
-        UnLockAll();
-        return res;
-    }
-
-    std::shared_ptr<ImageSinkFilter> &sinkFilter = impl_->sinkFilter_;
-    res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_);
-    if (res != ErrorCode::SUCCESS) {
-        UnLockAll();
-        return res;
-    }
-
-    return ErrorCode::SUCCESS;
-}
-
 ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
     std::shared_ptr<ExifMetadata> &exifMetadata)
 {
@@ -805,6 +788,25 @@ ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelForm
     return errorCode;
 }
 
+ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
+    std::shared_ptr<EffectBuffer> dstEffectBuffer) {
+    std::shared_ptr<ImageSourceFilter> &sourceFilter = impl_->srcFilter_;
+    ErrorCode res = ConfigSourceFilter(sourceFilter, srcEffectBuffer, impl_->effectContext_);
+    if (res != ErrorCode::SUCCESS) {
+        UnLockAll();
+        return res;
+    }
+
+    std::shared_ptr<ImageSinkFilter> &sinkFilter = impl_->sinkFilter_;
+    res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_);
+    if (res != ErrorCode::SUCCESS) {
+        UnLockAll();
+        return res;
+    }
+
+    return ErrorCode::SUCCESS;
+}
+
 void ImageEffect::SetPathToSink()
 {
     if (inDateInfo_.dataType_ == DataType::URI) {
@@ -816,6 +818,7 @@ void ImageEffect::SetPathToSink()
 
 ErrorCode ImageEffect::Render()
 {
+    EFFECT_TRACE_NAME("ImageEffect::Render");
     CHECK_AND_RETURN_RET_LOG(!efilters_.empty(), ErrorCode::ERR_NOT_FILTERS_WITH_RENDER, "efilters is empty");
 
     uint32_t width = 0;
@@ -834,6 +837,7 @@ ErrorCode ImageEffect::Render()
     res = impl_->pipeline_->Prepare();
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "pipeline prepare fail! res=%{public}d", res);
 
+    RemoveGainMapIfNeed();
     if (inDateInfo_.dataType_ == DataType::URI || inDateInfo_.dataType_ == DataType::PATH) {
         const std::vector<std::shared_ptr<Capability>> &capabilities =
             impl_->effectContext_->capNegotiate_->GetCapabilityList();
@@ -859,11 +863,8 @@ ErrorCode ImageEffect::Render()
     res = ConfigureFilters(srcEffectBuffer, dstEffectBuffer);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "configure filters fail! res=%{puiblic}d", res);
 
-    if (dstEffectBuffer != nullptr) {
-        impl_->effectContext_->renderEnvironment_->SetOutputType(dstEffectBuffer->extraInfo_->dataType);
-    } else {
-        impl_->effectContext_->renderEnvironment_->SetOutputType(srcEffectBuffer->extraInfo_->dataType);
-    }
+    std::shared_ptr<EffectBuffer> outBuffer = dstEffectBuffer != nullptr ? dstEffectBuffer : srcEffectBuffer;
+    impl_->effectContext_->renderEnvironment_->SetOutputType(outBuffer->extraInfo_->dataType);
     EffectParameters effectParameters(srcEffectBuffer, dstEffectBuffer, config_, impl_->effectContext_);
     res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread, !impl_->isQosEnabled_);
     if (res != ErrorCode::SUCCESS) {
@@ -900,6 +901,7 @@ ErrorCode ImageEffect::Save(EffectJsonPtr &res)
 
 std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
 {
+    EFFECT_TRACE_NAME("ImageEffect::Restore");
     const EffectJsonPtr root = EffectJsonHelper::ParseJsonData(info);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), nullptr, "Restore: no imageEffect");
     const EffectJsonPtr &imageInfo = root->GetElement("imageEffect");
@@ -917,6 +919,8 @@ std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
         std::string name = efilterInfo->GetString("name");
         CHECK_AND_CONTINUE_LOG(!name.empty(), "Restore: [name] not exist");
         std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Restore(name, efilterInfo, nullptr);
+        CHECK_AND_RETURN_RET_LOG(efilter != nullptr, nullptr,
+            "Restore: efilter restore fail! name=%{public}s", name.c_str());
         imageEffect->AddEFilter(efilter);
     }
     return imageEffect;
@@ -1069,8 +1073,6 @@ bool ImageEffect::RenderBuffer(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer
             EFFECT_LOGE("GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
             continue;
         }
-        auto isNeedUpdate = !(key == VIDEO_SINK_FILTER_STATUS && values[0] == VIDEO_SINK_FILTER_STATUS);
-        impl_->effectContext_->metaInfoNegotiate_->SetNeedUpdate(isNeedUpdate);
         ret = outBuffer->SetMetadata(key, values);
         if (ret != 0) {
             EFFECT_LOGE("SetMetadata fail! key = %{public}d res = %{public}d", key, ret);
@@ -1189,6 +1191,10 @@ void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNe
         EFFECT_TRACE_END();
     }
 
+    if (impl_->effectContext_->logStrategy_ == LOG_STRATEGY::NORMAL) {
+        impl_->effectContext_->logStrategy_ = LOG_STRATEGY::LIMITED;
+    }
+
     EFFECT_LOGD("ProcessRender: ReleaseBuffer: %{public}d, FlushBuffer: %{public}d",
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
@@ -1270,7 +1276,7 @@ void ImageEffect::OnBufferAvailableWithCPU()
 
     bool isSrcHebcData = false;
     CHECK_AND_RETURN_LOG(impl_ != nullptr, "OnBufferAvailableWithCPU: impl is nullptr.");
-    UpdateConsumedrBuffersNumber();
+    UpdateConsumerBuffersNumber();
     UpdateCycleBuffersNumber();
     bool isNeedSwap = true;
     bool isNeedRender = impl_->effectState_ == EffectState::RUNNING;
@@ -1430,31 +1436,50 @@ bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
     }
 }
 
+void ImageEffect::RemoveGainMapIfNeed() const
+{
+    auto context = impl_->effectContext_;
+    const auto& supportedHdrFormats = context->filtersSupportedHdrFormat_;
+    const bool needRemove = supportedHdrFormats.find(HdrFormat::HDR8_GAINMAP) == supportedHdrFormats.end();
+    if (!needRemove) {
+        return;
+    }
+
+    EFFECT_LOGI("RemoveGainMapIfNeed: gainMap is not supported, remove it!");
+    if (outDateInfo_.dataType_ == DataType::PICTURE && outDateInfo_.picture_ &&
+        outDateInfo_.picture_->HasAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)) {
+        outDateInfo_.picture_->DropAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
+    } else if (inDateInfo_.dataType_ == DataType::PICTURE && inDateInfo_.picture_ &&
+        inDateInfo_.picture_->HasAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)) {
+        inDateInfo_.picture_->DropAuxiliaryPicture(AuxiliaryPictureType::GAINMAP);
+    }
+}
+
 ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     std::shared_ptr<EffectBuffer> &dstEffectBuffer, IEffectFormat format)
 {
-    ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, false, format);
+    ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, false, format, impl_->effectContext_->logStrategy_);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("ParseDataInfo inData fail! res=%{public}d", res);
         return res;
     }
-    EFFECT_LOGI("input data set, parse data info success! dataType=%{public}d", inDateInfo_.dataType_);
+    EFFECT_LOGD("input data set, parse data info success! dataType=%{public}d", inDateInfo_.dataType_);
 
     if (outDateInfo_.dataType_ != DataType::UNKNOWN && !IsSameInOutputData(inDateInfo_, outDateInfo_)) {
-        EFFECT_LOGI("output data set, start parse data info. dataType=%{public}d", outDateInfo_.dataType_);
-        res = ParseDataInfo(outDateInfo_, dstEffectBuffer, true, format);
+        EFFECT_LOGD("output data set, start parse data info. dataType=%{public}d", outDateInfo_.dataType_);
+        res = ParseDataInfo(outDateInfo_, dstEffectBuffer, true, format, impl_->effectContext_->logStrategy_);
         if (res != ErrorCode::SUCCESS) {
             EFFECT_LOGE("ParseDataInfo outData fail! res=%{public}d", res);
             return res;
         }
-        EFFECT_LOGI("output data set, parse data info success! dataType=%{public}d", outDateInfo_.dataType_);
+        EFFECT_LOGD("output data set, parse data info success! dataType=%{public}d", outDateInfo_.dataType_);
     }
 
     return ErrorCode::SUCCESS;
 }
 
 ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectBuffer> &effectBuffer,
-    bool isOutputData, IEffectFormat format)
+    bool isOutputData, IEffectFormat format, LOG_STRATEGY strategy)
 {
     switch (dataInfo.dataType_) {
         case DataType::PIXEL_MAP:
@@ -1462,7 +1487,8 @@ ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectB
         case DataType::SURFACE:
         case DataType::SURFACE_BUFFER:
             return CommonUtils::ParseSurfaceData(dataInfo.surfaceBufferInfo_.surfaceBuffer_, effectBuffer,
-                dataInfo.dataType_, dataInfo.surfaceBufferInfo_.timestamp_);
+
+                dataInfo.dataType_, strategy, dataInfo.surfaceBufferInfo_.timestamp_);
         case DataType::URI:
             return CommonUtils::ParseUri(dataInfo.uri_, effectBuffer, isOutputData, format);
         case DataType::PATH:
@@ -1560,24 +1586,24 @@ ErrorCode ImageEffect::SetOutputPicture(Picture *picture)
     return ErrorCode::SUCCESS;
 }
 
-void ImageEffect::UpdateConsumedrBuffersNumber()
+void ImageEffect::UpdateConsumerBuffersNumber()
 {
     if (setConsumerBufferSize_) {
         return;
     }
 
     if (!toProducerSurface_ || !fromProducerSurface_) {
-        EFFECT_LOGE("UpdateConsumedrBuffersNumber: toProducerSurface_ or fromProducerSurface_ is null!");
+        EFFECT_LOGE("UpdateConsumerBuffersNumber: toProducerSurface_ or fromProducerSurface_ is null!");
         return;
     }
 
     auto errorCode = toProducerSurface_->SetQueueSize(fromProducerSurface_->GetQueueSize());
     if (errorCode != 0) {
-        EFFECT_LOGE("UpdateConsumedrBuffersNumber: SetQueueSize failed! code: %{public}d", errorCode);
+        EFFECT_LOGE("UpdateConsumerBuffersNumber: SetQueueSize failed! code: %{public}d", errorCode);
         return;
     }
 
-    EFFECT_LOGI("UpdateConsumedrBuffersNumber: SetQueueSize success! ConsumedrBuffersNumber: %{public}d",
+    EFFECT_LOGI("UpdateConsumerBuffersNumber: SetQueueSize success! ConsumedrBuffersNumber: %{public}d",
         fromProducerSurface_->GetQueueSize());
     setConsumerBufferSize_ = true;
     return;

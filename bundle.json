@@ -13,7 +13,6 @@
     "name": "image_effect",
     "subsystem": "multimedia",
     "syscap": [ "SystemCapability.Multimedia.ImageEffect.Core" ],
-    "features": [],
     "adapted_system_type": [
       "standard"
     ],
@@ -35,7 +34,8 @@
         "drivers_interface_display",
         "hisysevent",
         "libexif",
-        "qos_manager"
+        "qos_manager",
+        "video_processing_engine"
       ],
       "third_party": [
         "egl",
@@ -52,6 +52,7 @@
           "header":{
             "header_base": [
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/base",
+              "//foundation/multimedia/image_effect/interfaces/inner_api/native/colorspace",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/common",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/custom",
               "//foundation/multimedia/image_effect/interfaces/inner_api/native/effect",
@@ -64,6 +65,7 @@
               "effect_context.h",
               "effect_info.h",
               "effect_type.h",
+              "colorspace_processor.h",
               "any.h",
               "error_code.h",
               "delegate.h",
@@ -96,3 +98,4 @@
     }
   }
 }
+

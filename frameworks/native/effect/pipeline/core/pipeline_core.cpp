@@ -37,7 +37,7 @@ ErrorCode PipelineCore::Prepare()
     // Set source buffer to source filter
     auto sourceFilter = filters_.at(0);
     FALSE_RETURN_MSG_W(sourceFilter, ErrorCode::ERR_PIPELINE_INVALID_FILTER, "Prepare, sourceFilter is not found");
-    EFFECT_LOGI("Prepare sourceFilter(%{public}s)", sourceFilter->GetName().c_str());
+    EFFECT_LOGD("Prepare sourceFilter(%{public}s)", sourceFilter->GetName().c_str());
     ErrorCode res = sourceFilter->Prepare();
     FALSE_RETURN_MSG_W(res == ErrorCode::SUCCESS, res, "Prepare, sourceFilter prepare fail! res=%{public}d", res);
     return ErrorCode::SUCCESS;
@@ -142,7 +142,7 @@ void PipelineCore::OnEvent(const Event &event)
     if (eventReceiver_) {
         eventReceiver_->OnEvent(event);
     } else {
-        EFFECT_LOGI("no event receiver when receive type %{public}d", event.type);
+        EFFECT_LOGD("no event receiver when receive type %{public}d", event.type);
     }
 }
 } // namespace Effect

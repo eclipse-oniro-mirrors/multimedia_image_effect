@@ -175,7 +175,7 @@ ErrorCode CropEFilter::CropToOutputBuffer(EffectBuffer *src, std::shared_ptr<Eff
         },
         .extra = src->bufferInfo_->surfaceBuffer_,
         .bufferType = ColorSpaceHelper::IsHdrColorSpace(src->bufferInfo_->colorSpace_) ?
-            BufferType::DMA_BUFFER : BufferType::DEFAULT,
+            BufferType::DMA_BUFFER : src->bufferInfo_->bufferType_,
     };
     MemoryData *memData = context->memoryManager_->AllocMemory(src->buffer_, allocMemInfo);
     CHECK_AND_RETURN_RET_LOG(memData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "alloc memory fail!");
@@ -186,6 +186,7 @@ ErrorCode CropEFilter::CropToOutputBuffer(EffectBuffer *src, std::shared_ptr<Eff
     extraInfo->bufferType = memData->memoryInfo.bufferType;
     bufferInfo->surfaceBuffer_ = (memData->memoryInfo.bufferType == BufferType::DMA_BUFFER) ?
         static_cast<OHOS::SurfaceBuffer *>(memData->memoryInfo.extra) : nullptr;
+    bufferInfo->hdrFormat_ = src->bufferInfo_->hdrFormat_;
     output = std::make_shared<EffectBuffer>(bufferInfo, memData->data, extraInfo);
     UpdateDstEffectBufferIfNeed(src, output.get());
     return Render(src, output.get(), context);
@@ -219,6 +220,7 @@ std::shared_ptr<MemNegotiatedCap> CropEFilter::Negotiate(const std::shared_ptr<M
     current->width = static_cast<uint32_t>(region.width);
     current->height = static_cast<uint32_t>(region.height);
     current->format = input->format;
+    context->metaInfoNegotiate_->SetNeedUpdate(true);
     return current;
 }
 
@@ -240,6 +242,10 @@ std::shared_ptr<EffectInfo> CropEFilter::GetEffectInfo(const std::string &name)
         EffectColorSpace::BT2020_HLG_LIMIT,
         EffectColorSpace::BT2020_PQ,
         EffectColorSpace::BT2020_PQ_LIMIT
+    };
+    info_->hdrFormats_ = {
+        HdrFormat::SDR,
+        HdrFormat::HDR10,
     };
     return info_;
 }

@@ -32,7 +32,6 @@ constexpr uint32_t HEIGHT = 1280;
 constexpr IEffectFormat FORMATE_TYPE = IEffectFormat::RGBA8888;
 constexpr uint32_t ROW_STRIDE = WIDTH * 4;
 constexpr uint32_t LEN = ROW_STRIDE * HEIGHT;
-constexpr uint32_t EXTRA_LEN = 10;
 
 class TestRenderEnvironment : public testing::Test {
 public:
@@ -55,7 +54,6 @@ public:
         bufferInfo->rowStride_ = ROW_STRIDE;
         bufferInfo->len_ = LEN;
         bufferInfo->formatType_ = FORMATE_TYPE;
-        bufferInfo->pixelMap_ = nullptr;
         bufferInfo->surfaceBuffer_ = nullptr;
         void *addr = malloc(bufferInfo->len_);
 
@@ -126,8 +124,8 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment002, TestSize.Level1)
     GraphicTransformType type = GraphicTransformType::GRAPHIC_ROTATE_NONE;
     renderEnvironment->DrawFrame(tex, type);
     renderEnvironment->DrawFrameWithTransform(effectBuffer, type);
-    effectBuffer->tex = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
-    EXPECT_NE(effectBuffer->tex, nullptr);
+    effectBuffer->bufferInfo_->tex_ = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
+    EXPECT_NE(effectBuffer->bufferInfo_->tex_, nullptr);
 
     type = GraphicTransformType::GRAPHIC_ROTATE_90;
     renderEnvironment->DrawFrame(tex, type);
@@ -160,7 +158,7 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment003, TestSize.Level1)
     RenderTexturePtr texptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
     EXPECT_NE(texptr, nullptr);
 
-    effectBuffer->tex = texptr;
+    effectBuffer->bufferInfo_->tex_ = texptr;
     renderEnvironment->ConvertYUV2RGBA(effectBuffer, input);
     effectBuffer->bufferInfo_->surfaceBuffer_ = nullptr;
     std::shared_ptr<EffectBuffer> buffer =
@@ -227,7 +225,7 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment006, TestSize.Level1)
     RenderTexturePtr texptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
     EXPECT_NE(texptr, nullptr);
 
-    effectBuffer->tex = texptr;
+    effectBuffer->bufferInfo_->tex_ = texptr;
     effectBuffer->bufferInfo_->surfaceBuffer_ = buffer;
     effectBuffer->bufferInfo_->formatType_ = IEffectFormat::YUVNV12;
 
@@ -258,22 +256,22 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment007, TestSize.Level1) {
     RenderSurface::SurfaceType type = renderSurface->GetSurfaceType();
     EXPECT_EQ(type, RenderSurface::SurfaceType::SURFACE_TYPE_NULL);
 }
+
 HWTEST_F(TestRenderEnvironment, TestRenderEnvironment008, TestSize.Level1) {
-    unsigned char *bitmap = new unsigned char[LEN];
+    unsigned char *bitmap = new unsigned char[WIDTH * HEIGHT * 4];
 
     int temp = renderEnvironment->GenTextureWithPixels(bitmap, WIDTH, HEIGHT, WIDTH);
     EXPECT_NE(temp, 0);
 
-    temp = renderEnvironment->GenTextureWithPixels(bitmap, WIDTH - EXTRA_LEN, HEIGHT, WIDTH);
+    temp = renderEnvironment->GenTextureWithPixels(bitmap, WIDTH - 10, HEIGHT, WIDTH);
     EXPECT_NE(temp, 0);
     delete[] bitmap;
     bitmap = nullptr;
 }
 
 HWTEST_F(TestRenderEnvironment, RenderFrameBuffer_001, TestSize.Level1) {
-    RenderContext *context = renderEnvironment->GetContext();
     ResourceCache *ceCache = renderEnvironment->GetResourceCache();
-    RenderFrameBuffer *renderFrameBuffer = new RenderFrameBuffer(context, ceCache, WIDTH, HEIGHT);
+    RenderFrameBuffer *renderFrameBuffer = new RenderFrameBuffer(ceCache, WIDTH, HEIGHT);
     EXPECT_EQ(glGetError(), GL_NO_ERROR);
 
     renderFrameBuffer->Resize(WIDTH/2, HEIGHT);
@@ -296,6 +294,42 @@ HWTEST_F(TestRenderEnvironment, DrawFlipTex_001, TestSize.Level1) {
     EXPECT_NE(inputTexptr, nullptr);
     EXPECT_NE(outputTexptr, nullptr);
     ASSERT_NO_THROW(renderEnvironment->DrawFlipTex(inputTexptr, outputTexptr));
+}
+
+HWTEST_F(TestRenderEnvironment, DrawOesTexture2DFromTexture_001, TestSize.Level1) {
+    RenderTexturePtr inputTexptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
+    EXPECT_NE(inputTexptr, nullptr);
+
+    GLuint outputTex = 0;
+    renderEnvironment->DrawOesTexture2DFromTexture(inputTexptr, outputTex, WIDTH, HEIGHT, IEffectFormat::RGBA8888);
+
+    outputTex = 1;
+    ASSERT_NO_THROW(renderEnvironment->DrawOesTexture2DFromTexture(inputTexptr,
+        outputTex, WIDTH, HEIGHT, IEffectFormat::RGBA8888));
+
+    ASSERT_NO_THROW(renderEnvironment->DrawOesTexture2DFromTexture(inputTexptr,
+        outputTex, WIDTH, HEIGHT, IEffectFormat::YUVNV21));
+}
+
+HWTEST_F(TestRenderEnvironment, DrawSurfaceBufferFromSurfaceBuffer_001, TestSize.Level1) {
+    RenderTexturePtr inputTexptr = renderEnvironment->RequestBuffer(WIDTH, HEIGHT);
+    EXPECT_NE(inputTexptr, nullptr);
+
+    sptr<SurfaceBuffer> inBuffer;
+    MockProducerSurface::AllocDmaMemory(inBuffer);
+    sptr<SurfaceBuffer> outBuffer;
+    MockProducerSurface::AllocDmaMemory(outBuffer);
+
+    renderEnvironment->DrawSurfaceBufferFromSurfaceBuffer(nullptr, outBuffer, IEffectFormat::RGBA8888);
+
+    ASSERT_NO_THROW(renderEnvironment->DrawSurfaceBufferFromSurfaceBuffer(inBuffer,
+        outBuffer, IEffectFormat::RGBA8888));
+
+    ASSERT_NO_THROW(renderEnvironment->DrawSurfaceBufferFromSurfaceBuffer(inBuffer,
+        outBuffer, IEffectFormat::YUVNV21));
+
+    MockProducerSurface::ReleaseDmaBuffer(inBuffer);
+    MockProducerSurface::ReleaseDmaBuffer(outBuffer);
 }
 }
 }

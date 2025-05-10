@@ -21,12 +21,11 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-RenderFrameBuffer::RenderFrameBuffer(RenderContext *ctx, ResourceCache *cache, int width, int height, GLenum interFmt)
+RenderFrameBuffer::RenderFrameBuffer(ResourceCache *cache, int width, int height, GLenum interFmt)
 {
-    CHECK_AND_RETURN_LOG(ctx != nullptr && cache != nullptr && texture_ != nullptr,
+    CHECK_AND_RETURN_LOG(cache != nullptr && texture_ != nullptr,
         "RenderFrameBuffer struct fail, ctx or cache or texture_ is null.");
-    texture_ = cache->RequestTexture(ctx, width, height, interFmt);
-    context_ = ctx;
+    texture_ = cache->RequestTexture(width, height, interFmt);
     cache_ = cache;
     fboId_ = GLUtils::CreateFramebuffer(texture_->GetName());
     GLUtils::CheckError(__FILE_NAME__, __LINE__);
@@ -45,7 +44,7 @@ void RenderFrameBuffer::Resize(int width, int height)
     if ((width != (int)texture_->Width()) || (height != (int)texture_->Height())) {
         GLenum fmt = texture_->Format();
         texture_.reset();
-        texture_ = cache_->RequestTexture(context_, width, height, fmt);
+        texture_ = cache_->RequestTexture(width, height, fmt);
         glBindFramebuffer(GL_FRAMEBUFFER, fboId_);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_->GetName(), 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);

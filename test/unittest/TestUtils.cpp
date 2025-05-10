@@ -41,6 +41,62 @@ namespace Media {
 namespace Effect {
 namespace Test {
 
+static const std::string TAG = "ParsePictureTest";
+constexpr char TEST_INCLUDE_AUX_PATH[] = "/data/test/resource/camera_efilter_test.jpg";
+constexpr char TEST_IMAGE_PATH[] = "/data/test/resource/image_effect_1k_test1.jpg";
+
+static std::unique_ptr<Picture> CreatePictureByPath(std::string imagePath)
+{
+    SourceOptions opts;
+    uint32_t errorCode = 0;
+    EFFECT_LOGW("%{public}s create pixelmap by path %{public}s", TAG.c_str(), imagePath.c_str());
+    std::unique_ptr<ImageSource> imageSource = ImageSource::CreateImageSource(imagePath, opts, errorCode);
+    CHECK_AND_RETURN_RET_LOG(imageSource != nullptr, nullptr,
+        "CreateImageSource fail! path=%{public}s, errorCode=%{public}d", imagePath.c_str(), errorCode);
+
+    DecodingOptionsForPicture decodingOptions;
+    decodingOptions.desireAuxiliaryPictures.insert(AuxiliaryPictureType::GAINMAP);
+    decodingOptions.desireAuxiliaryPictures.insert(AuxiliaryPictureType::DEPTH_MAP);
+    decodingOptions.desireAuxiliaryPictures.insert(AuxiliaryPictureType::UNREFOCUS_MAP);
+    decodingOptions.desireAuxiliaryPictures.insert(AuxiliaryPictureType::LINEAR_MAP);
+    std::unique_ptr<Picture> picture = imageSource->CreatePicture(decodingOptions, errorCode);
+    CHECK_AND_RETURN_RET_LOG(picture != nullptr, nullptr,
+        "CreatePicture fail! path=%{public}s, errorCode=%{public}d", imagePath.c_str(), errorCode);
+    
+    return picture;
+}
+
+static std::shared_ptr<EffectBuffer> CreateEffectBufferByPicture(Picture* picture)
+{
+    if (picture == nullptr) {
+        return nullptr;
+    }
+
+    std::shared_ptr<PixelMap> pixelMap = picture->GetMainPixel();
+    if (pixelMap == nullptr) {
+        return nullptr;
+    }
+
+    std::shared_ptr<BufferInfo> info = std::make_shared<BufferInfo>();
+    info->width_ = pixelMap->GetWidth();
+    info->height_ = pixelMap->GetHeight();
+    info->rowStride_ = pixelMap->GetRowStride();
+    info->len_ = info->rowStride_ * info->height_;
+    info->formatType_ = IEffectFormat::RGBA8888;
+    info->surfaceBuffer_ = nullptr;
+    uint8_t *pixels = const_cast<uint8_t *>(pixelMap->GetPixels());
+    void *addr = static_cast<void *>(pixels);
+    info->pixelMap_ = pixelMap.get();
+
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
+    extraInfo->dataType = DataType::PIXEL_MAP;
+    extraInfo->bufferType = BufferType::HEAP_MEMORY;
+    extraInfo->picture = picture;
+
+    std::shared_ptr<EffectBuffer> effectBuf = std::make_shared<EffectBuffer>(info, addr, extraInfo);
+    return effectBuf != nullptr && effectBuf->buffer_ != nullptr ? effectBuf : nullptr;
+}
+
 class TestUtils : public testing::Test {
 public:
     TestUtils() = default;
@@ -247,8 +303,9 @@ HWTEST_F(TestUtils, NativeCommonUtilsModifyPixelMapProperty001, TestSize.Level1)
     void *addr = nullptr;
     std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
     std::shared_ptr<EffectBuffer> buffer = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
-    std::shared_ptr<EffectMemoryManager> memoryManager = std::make_unique<EffectMemoryManager>();
-    ErrorCode result = CommonUtils::ModifyPixelMapProperty(&pixelMap, buffer, memoryManager);
+    std::shared_ptr<EffectContext> context = std::make_unique<EffectContext>();
+    context->memoryManager_ = std::make_unique<EffectMemoryManager>();
+    ErrorCode result = CommonUtils::ModifyPixelMapProperty(&pixelMap, buffer, context);
     EXPECT_EQ(result, ErrorCode::ERR_ALLOC_MEMORY_FAIL);
 }
 HWTEST_F(TestUtils, StringHelper001, TestSize.Level1) {
@@ -350,18 +407,18 @@ HWTEST_F(TestUtils, NativeCommonUtils001, TestSize.Level1) {
     std::shared_ptr<NativeCommonUtils> nativeCommonUtils = std::make_shared<NativeCommonUtils>();
     nativeCommonUtils->SwitchToFormatType(ohFormatType, formatType);
     ASSERT_EQ(formatType, IEffectFormat::RGBA8888);
-
+ 
     ohFormatType = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
     nativeCommonUtils->SwitchToFormatType(ohFormatType, formatType);
     ASSERT_EQ(formatType, IEffectFormat::DEFAULT);
 }
-
+ 
 HWTEST_F(TestUtils, ErrorCode001, TestSize.Level1) {
     ErrorCode code = ErrorCode::ERR_PERMISSION_DENIED;
     std::string expected = "ERROR_PERMISSION_DENIED";
     std::string actual = GetErrorName(code);
     ASSERT_EQ(expected, actual);
-
+ 
     code = ErrorCode::ERR_INPUT_NULL;
     expected = "Unknow error type";
     actual = GetErrorName(code);
@@ -453,6 +510,67 @@ HWTEST_F(TestUtils, ReportHiSysEvent_001, TestSize.Level1)
 	}
     };
     EventReport::ReportHiSysEvent("not_find_test", eventInfo);
+}
+
+HWTEST_F(TestUtils, CopyAuxiliaryBufferInfos_001, TestSize.Level1)
+{
+    std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
+    void *addr = nullptr;
+    std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
+    std::shared_ptr<EffectBuffer> dst = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
+    CommonUtils::CopyAuxiliaryBufferInfos(src.get(), dst.get());
+    EXPECT_EQ(src->auxiliaryBufferInfos, nullptr);
+
+    src->auxiliaryBufferInfos = std::make_shared<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
+    CommonUtils::CopyAuxiliaryBufferInfos(src.get(), dst.get());
+    EXPECT_NE(src->auxiliaryBufferInfos, nullptr);
+}
+
+HWTEST_F(TestUtils, MetaData_001, TestSize.Level1)
+{
+    sptr<SurfaceBuffer> inBuffer;
+    MockProducerSurface::AllocDmaMemory(inBuffer);
+
+    CommonUtils::GetMetaData(inBuffer);
+
+    MetaDataMap map;
+    CommonUtils::SetMetaData(map, inBuffer);
+
+    MockProducerSurface::ReleaseDmaBuffer(inBuffer);
+}
+
+HWTEST_F(TestUtils, ParsePixelMapData_001, TestSize.Level1)
+{
+    std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
+    void *addr = nullptr;
+    std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
+
+    PixelMap pixelMap;
+    ErrorCode res = CommonUtils::ParsePixelMapData(&pixelMap, src);
+    EXPECT_NE(res, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(TestUtils, IsEnableCopyMetaData_001, TestSize.Level1)
+{
+    bool res = CommonUtils::IsEnableCopyMetaData(2, nullptr, nullptr);
+    EXPECT_EQ(res, false);
+
+    std::shared_ptr<BufferInfo> bufferinfo = std::make_unique<BufferInfo>();
+    void *addr = nullptr;
+    std::shared_ptr<ExtraInfo> extrainfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<EffectBuffer> src = std::make_unique<EffectBuffer>(bufferinfo, addr, extrainfo);
+    src->bufferInfo_->bufferType_ = BufferType::DMA_BUFFER;
+    src->bufferInfo_->pixelMap_ = nullptr;
+    res = CommonUtils::IsEnableCopyMetaData(1, src.get());
+    EXPECT_EQ(res, false);
+    
+    PixelMap pixelMap;
+    src->bufferInfo_->pixelMap_ = &pixelMap;
+    src->bufferInfo_->surfaceBuffer_ = nullptr;
+    res = CommonUtils::IsEnableCopyMetaData(1, src.get());
+    EXPECT_EQ(res, false);
 }
 
 HWTEST_F(TestUtils, JsonHelper002, TestSize.Level1) {
@@ -569,6 +687,70 @@ HWTEST_F(TestUtils, JsonHelper004, TestSize.Level1) {
     EffectJsonPtr root2 = EffectJsonHelper::CreateObject((true));
     root2->json_ = nullptr;
     std::string s = root2->ToString();
+}
+
+HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
+{
+    static std::unique_ptr<Picture> g_picture = CreatePictureByPath(TEST_INCLUDE_AUX_PATH);
+    EXPECT_NE(g_picture, nullptr);
+    Picture *testPicture = g_picture.get();
+    std::shared_ptr<EffectBuffer> testEffectBuffer = CreateEffectBufferByPicture(testPicture);
+    EXPECT_NE(testEffectBuffer, nullptr);
+    ErrorCode result = CommonUtils::ParsePicture(testPicture, testEffectBuffer);
+
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
+    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->size(), 4);
+    EXPECT_EQ(testEffectBuffer->bufferInfo_->pixelmapType_, EffectPixelmapType::PRIMARY);
+    EXPECT_EQ(testEffectBuffer->bufferInfo_->bufferType_, testEffectBuffer->extraInfo_->bufferType);
+    EXPECT_EQ(testEffectBuffer->bufferInfo_->addr_, testEffectBuffer->buffer_);
+    EXPECT_EQ(testEffectBuffer->extraInfo_->dataType, DataType::PICTURE);
+    EXPECT_EQ(testEffectBuffer->extraInfo_->picture, testPicture);
+    EXPECT_EQ(testEffectBuffer->bufferInfo_->hdrFormat_, HdrFormat::HDR8_GAINMAP);
+
+    std::shared_ptr<PixelMap> gainMap =
+        testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)->GetContentPixel();
+    BufferType bufferType = CommonUtils::SwitchToEffectBuffType(gainMap.get()->GetAllocatorType());
+    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP)->second->pixelmapType_,
+              EffectPixelmapType::GAINMAP);
+    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP)->second->bufferType_,
+              bufferType);
+    EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP)->second->addr_, nullptr);
+
+    std::shared_ptr<PixelMap> unRefocusMap =
+        testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::UNREFOCUS_MAP)->GetContentPixel();
+    bufferType = CommonUtils::SwitchToEffectBuffType(unRefocusMap.get()->GetAllocatorType());
+    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::UNREFOCUS)->second->pixelmapType_,
+              EffectPixelmapType::UNREFOCUS);
+    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::UNREFOCUS)->second->bufferType_,
+              bufferType);
+    EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::UNREFOCUS)->second->addr_, nullptr);
+
+    std::shared_ptr<PixelMap> depthMap =
+        testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::DEPTH_MAP)->GetContentPixel();
+    bufferType = CommonUtils::SwitchToEffectBuffType(depthMap.get()->GetAllocatorType());
+    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::DEPTHMAP)->second->pixelmapType_,
+              EffectPixelmapType::DEPTHMAP);
+    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::DEPTHMAP)->second->bufferType_,
+              bufferType);
+    EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::DEPTHMAP)->second->addr_, nullptr);
+
+    std::shared_ptr<PixelMap> linearMap =
+        testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::LINEAR_MAP)->GetContentPixel();
+    bufferType = CommonUtils::SwitchToEffectBuffType(linearMap.get()->GetAllocatorType());
+    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::LINEAR)->second->pixelmapType_,
+              EffectPixelmapType::LINEAR);
+    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::LINEAR)->second->bufferType_,
+              bufferType);
+    EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::LINEAR)->second->addr_, nullptr);
+}
+
+HWTEST_F(TestUtils, CommonUtilsParsePicture002, TestSize.Level1)
+{
+    static std::unique_ptr<Picture> g_picture = CreatePictureByPath(TEST_IMAGE_PATH);
+    EXPECT_NE(g_picture, nullptr);
+    std::shared_ptr<EffectBuffer> testEffectBuffer = CreateEffectBufferByPicture(g_picture.get());
+    ErrorCode result = CommonUtils::ParsePicture(g_picture.get(), testEffectBuffer);
+    EXPECT_EQ(result, ErrorCode::SUCCESS);
 }
 }
 }

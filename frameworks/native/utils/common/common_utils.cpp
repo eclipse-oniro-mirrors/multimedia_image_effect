@@ -54,6 +54,7 @@ const std::unordered_map<PixelFormat, IEffectFormat> CommonUtils::pixelFmtToEffe
     { PixelFormat::RGBA_1010102, IEffectFormat::RGBA_1010102 },
     { PixelFormat::YCBCR_P010, IEffectFormat::YCBCR_P010 },
     { PixelFormat::YCRCB_P010, IEffectFormat::YCRCB_P010 },
+    { PixelFormat::RGBA_F16, IEffectFormat::RGBA_F16 },
 };
 
 const std::unordered_map<GraphicPixelFormat, IEffectFormat> CommonUtils::surfaceBufferFmtToEffectFmt_ = {
@@ -71,7 +72,23 @@ const std::unordered_map<AllocatorType, BufferType> CommonUtils::allocatorTypeTo
     { AllocatorType::SHARE_MEM_ALLOC, BufferType::SHARED_MEMORY },
 };
 
+const std::unordered_map<EffectPixelmapType, AuxiliaryPictureType> EffectPixelmapTypeToAuxPicType_ = {
+    { EffectPixelmapType::UNKNOWN, AuxiliaryPictureType::NONE },
+    { EffectPixelmapType::PRIMARY, AuxiliaryPictureType::NONE },
+    { EffectPixelmapType::GAINMAP, AuxiliaryPictureType::GAINMAP },
+    { EffectPixelmapType::DEPTHMAP, AuxiliaryPictureType::DEPTH_MAP },
+    { EffectPixelmapType::UNREFOCUS, AuxiliaryPictureType::UNREFOCUS_MAP },
+    { EffectPixelmapType::WATERMARK_CUT, AuxiliaryPictureType::NONE },
+    { EffectPixelmapType::LINEAR, AuxiliaryPictureType::LINEAR_MAP },
+};
+
 std::vector<std::string> FILE_TYPE_SUPPORT_TABLE = {"image/heic", "image/heif", "image/jpeg"};
+std::vector<EffectPixelmapType> AUX_MAP_TYPE_LIST = {
+    EffectPixelmapType::GAINMAP,
+    EffectPixelmapType::DEPTHMAP,
+    EffectPixelmapType::UNREFOCUS,
+    EffectPixelmapType::LINEAR,
+};
 
 template <class ValueType>
 ErrorCode ParseJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &json)
@@ -85,7 +102,7 @@ ErrorCode ParseJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &jso
     return ErrorCode::SUCCESS;
 }
 
-std::shared_ptr<ExtraInfo> CreateExtraInfo(PixelMap *pixelMap)
+std::shared_ptr<ExtraInfo> CreateExtraInfo(PixelMap* pixelMap)
 {
     BufferType bufferType = CommonUtils::SwitchToEffectBuffType(pixelMap->GetAllocatorType());
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
@@ -110,7 +127,7 @@ void CommonUtils::CopyBufferInfo(const BufferInfo& src, BufferInfo& dst)
     dst.surfaceBuffer_ = src.surfaceBuffer_;
     dst.fd_ = src.fd_;
     dst.pixelMap_ = src.pixelMap_;
-    dst.gainMapTex_ = src.gainMapTex_;
+    dst.tex_ = src.tex_;
     dst.addr_ = src.addr_;
 }
 
@@ -124,6 +141,21 @@ void CommonUtils::CopyExtraInfo(const ExtraInfo& src, ExtraInfo& dst)
     dst.picture = src.picture;
     dst.innerPixelMap = src.innerPixelMap;
     dst.innerPicture = src.innerPicture;
+}
+
+void CommonUtils::CopyAuxiliaryBufferInfos(const EffectBuffer *src, EffectBuffer *dst)
+{
+    if (src->auxiliaryBufferInfos == nullptr) {
+        EFFECT_LOGD("CopyAuxiliaryBufferInfos: src auxiliaryBufferInfos is null");
+        return;
+    }
+    dst->auxiliaryBufferInfos =
+        std::make_unique<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
+    for (const auto &entry : *src->auxiliaryBufferInfos) {
+        std::shared_ptr<BufferInfo> auxiliaryBufferInfo = std::make_shared<BufferInfo>();
+        CopyBufferInfo(*(entry.second), *auxiliaryBufferInfo);
+        dst->auxiliaryBufferInfos->emplace(entry.first, auxiliaryBufferInfo);
+    }
 }
 
 MetaDataMap CommonUtils::GetMetaData(SurfaceBuffer* surfaceBuffer)
@@ -187,8 +219,8 @@ ErrorCode CommonUtils::ParsePixelMapData(PixelMap *pixelMap, std::shared_ptr<Eff
     } else {
         bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
     }
-    bufferInfo->len_ = (formatType == IEffectFormat::RGBA8888 || formatType == IEffectFormat::RGBA_1010102) ?
-        bufferInfo->height_ * bufferInfo->rowStride_ :
+    bufferInfo->len_ = (formatType == IEffectFormat::RGBA8888 || formatType == IEffectFormat::RGBA_1010102 ||
+        formatType == IEffectFormat::RGBA_F16) ? bufferInfo->height_ * bufferInfo->rowStride_ :
         FormatHelper::CalculateSize(bufferInfo->rowStride_, bufferInfo->height_, formatType);
     bufferInfo->formatType_ = formatType;
     bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceName);
@@ -257,7 +289,7 @@ ErrorCode CommonUtils::ParseNativeWindowData(std::shared_ptr<EffectBuffer> &effe
 }
 
 ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
-    std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType, int64_t timestamp)
+    std::shared_ptr<EffectBuffer> &effectBuffer, const DataType &dataType, LOG_STRATEGY strategy, int64_t timestamp)
 {
     CHECK_AND_RETURN_RET_LOG(surfaceBuffer != nullptr, ErrorCode::ERR_INPUT_NULL, "surfaceBuffer is null!");
 
@@ -278,7 +310,8 @@ ErrorCode CommonUtils::ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer,
     extraInfo->timestamp = timestamp;
 
     effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, surfaceBuffer->GetVirAddr(), extraInfo);
-    EFFECT_LOGI("surfaceBuffer width=%{public}d, height=%{public}d, stride=%{public}d, format=%{public}d, "
+    EFFECT_LOGI_WITH_STRATEGY(strategy,
+        "surfaceBuffer width=%{public}d, height=%{public}d, stride=%{public}d, format=%{public}d, "
         "size=%{public}d, usage = %{public}llu, addr=%{private}p, colorSpace=%{public}d",
         surfaceBuffer->GetWidth(), surfaceBuffer->GetHeight(), surfaceBuffer->GetStride(), surfaceBuffer->GetFormat(),
         surfaceBuffer->GetSize(), static_cast<unsigned long long>(surfaceBuffer->GetUsage()),
@@ -635,14 +668,57 @@ bool CommonUtils::IsEnableCopyMetaData(int numBuffers, ...)
             va_end(args);
             return false;
         }
-        if (!bufferInfo->surfaceBuffer_) {
-            EFFECT_LOGD("IsEnableCopyMetaData: surfaceBuffer is nullptr!");
+        if (!bufferInfo->pixelMap_ || !bufferInfo->surfaceBuffer_) {
+            EFFECT_LOGD("IsEnableCopyMetaData: pixelMap or surfaceBuffer is nullptr!");
             va_end(args);
             return false;
         }
     }
     va_end(args);
     return true;
+}
+
+AuxiliaryPictureType SwitchToAuxiliaryPictureType(EffectPixelmapType pixelmapType)
+{
+    AuxiliaryPictureType auxPicType = AuxiliaryPictureType::NONE;
+
+    auto itr = EffectPixelmapTypeToAuxPicType_.find(pixelmapType);
+    if (itr != EffectPixelmapTypeToAuxPicType_.end()) {
+        auxPicType = itr->second;
+    }
+
+    return auxPicType;
+}
+
+std::shared_ptr<PixelMap> GetAuxiliaryPixelMap(Picture *picture, EffectPixelmapType auxiliaryPictureType)
+{
+    AuxiliaryPictureType auxPicType = SwitchToAuxiliaryPictureType(auxiliaryPictureType);
+    CHECK_AND_RETURN_RET_LOG(picture->HasAuxiliaryPicture(auxPicType), nullptr, "Auxiliary map:%{public}d not found.",
+        auxiliaryPictureType);
+
+    auto auxiliaryPicture = picture->GetAuxiliaryPicture(auxPicType);
+    CHECK_AND_RETURN_RET_LOG(auxiliaryPicture != nullptr, nullptr, "Get Auxiliary map:%{public}d failed.",
+        auxiliaryPictureType);
+    return auxiliaryPicture->GetContentPixel();
+}
+
+ErrorCode GetAuxiliaryEffectBuffer(Picture *picture, std::shared_ptr<EffectBuffer> &auxiliaryEffectBuffer,
+    EffectPixelmapType auxiliaryPictureType)
+{
+    std::shared_ptr<PixelMap> auxMap = GetAuxiliaryPixelMap(picture, auxiliaryPictureType);
+    
+    CHECK_AND_RETURN_RET_LOG(auxMap != nullptr, ErrorCode::ERR_AUXILIARY_MAP_NOT_FOUND,
+        "Get Auxiliary map:%{public}d failed.", auxiliaryPictureType);
+
+    ErrorCode errorCode = CommonUtils::LockPixelMap(auxMap.get(), auxiliaryEffectBuffer);
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode,
+        "ParsePicture: parse auxMap %{public}d fail! errorCode=%{public}d", auxiliaryPictureType, errorCode);
+
+    auxiliaryEffectBuffer->bufferInfo_->pixelmapType_ = auxiliaryPictureType;
+    auxiliaryEffectBuffer->bufferInfo_->bufferType_ = auxiliaryEffectBuffer->extraInfo_->bufferType;
+    auxiliaryEffectBuffer->bufferInfo_->addr_ = auxiliaryEffectBuffer->buffer_;
+
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode CommonUtils::ParsePicture(Picture *picture, std::shared_ptr<EffectBuffer> &effectBuffer)
@@ -662,25 +738,26 @@ ErrorCode CommonUtils::ParsePicture(Picture *picture, std::shared_ptr<EffectBuff
     effectBuffer->extraInfo_->dataType = DataType::PICTURE;
     effectBuffer->extraInfo_->picture = picture;
 
-    std::shared_ptr<PixelMap> gainMap = picture->GetGainmapPixelMap();
-    if (gainMap == nullptr) {
-        EFFECT_LOGD("CommonUtils::ParsePicture not contain gainmap!");
-        return ErrorCode::SUCCESS;
-    }
-
-    EFFECT_LOGD("CommonUtils::ParsePicture contain gainmap!");
-    std::shared_ptr<EffectBuffer> gainMapEffectBuffer;
-    errorCode = CommonUtils::LockPixelMap(gainMap.get(), gainMapEffectBuffer);
-    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode,
-        "ParsePicture: parse gainmap fail! errorCode=%{public}d", errorCode);
-
-    gainMapEffectBuffer->bufferInfo_->pixelmapType_ = EffectPixelmapType::GAINMAP;
-    gainMapEffectBuffer->bufferInfo_->bufferType_ = gainMapEffectBuffer->extraInfo_->bufferType;
-    gainMapEffectBuffer->bufferInfo_->addr_ = gainMapEffectBuffer->buffer_;
-
     effectBuffer->auxiliaryBufferInfos =
         std::make_shared<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
-    effectBuffer->auxiliaryBufferInfos->emplace(EffectPixelmapType::GAINMAP, gainMapEffectBuffer->bufferInfo_);
+
+    for (EffectPixelmapType auxMapType : AUX_MAP_TYPE_LIST) {
+        std::shared_ptr<EffectBuffer> auxMapEffectBuffer;
+        errorCode = GetAuxiliaryEffectBuffer(picture, auxMapEffectBuffer, auxMapType);
+        if (errorCode == ErrorCode::ERR_AUXILIARY_MAP_NOT_FOUND) {
+            EFFECT_LOGD("CommonUtils::ParsePicture not contain auxMap: %{public}d!", auxMapType);
+        } else if (errorCode == ErrorCode::SUCCESS) {
+            EFFECT_LOGD("CommonUtils::ParsePicture contain auxMap: %{public}d!", auxMapType);
+            if (auxMapType == EffectPixelmapType::GAINMAP &&
+                effectBuffer->bufferInfo_->formatType_ == IEffectFormat::RGBA8888) {
+                effectBuffer->bufferInfo_->hdrFormat_ = HdrFormat::HDR8_GAINMAP;
+                EFFECT_LOGD("CommonUtils::ParsePicture set HdrFormat: HDR8_GAINMAP");
+            }
+            effectBuffer->auxiliaryBufferInfos->emplace(auxMapType, auxMapEffectBuffer->bufferInfo_);
+        } else {
+            return errorCode;
+        }
+    }
 
     return ErrorCode::SUCCESS;
 }
@@ -803,7 +880,7 @@ ErrorCode ModifyYUVInfo(PixelMap *pixelMap, void *context, const MemoryInfo &mem
 }
 
 ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, PixelMap *pixelMap,
-    AllocatorType &allocatorType, bool isUpdateExif)
+    AllocatorType &allocatorType, bool isUpdateExif, const std::shared_ptr<EffectContext> &effectContext)
 {
     void *context = nullptr;
     const MemoryInfo &memoryInfo = memoryData->memoryInfo;
@@ -853,8 +930,9 @@ ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, P
 
     // update colorspace if need
     if (memoryInfo.bufferType == BufferType::DMA_BUFFER) {
+        EFFECT_LOGD("ModifyPixelMapPropertyInner: update colorspace");
         res = ColorSpaceHelper::UpdateMetadata(static_cast<SurfaceBuffer *>(memoryInfo.extra),
-            memoryInfo.bufferInfo.colorSpace_);
+            memoryInfo.bufferInfo.colorSpace_, effectContext);
         CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
             "ModifyPixelMapPropertyInner: UpdateMetadata fail! res=%{public}d", res);
     }
@@ -863,9 +941,10 @@ ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, P
 }
 
 ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
-    const std::shared_ptr<EffectMemoryManager> &memoryManager, bool isUpdateExif)
+    const std::shared_ptr<EffectContext> &context, bool isUpdateExif)
 {
     EFFECT_LOGI("ModifyPixelMapProperty enter!");
+    std::shared_ptr<EffectMemoryManager> memoryManager = context->memoryManager_;
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixel map is null");
     AllocatorType allocatorType = pixelMap->GetAllocatorType();
     BufferType bufferType = SwitchToEffectBuffType(allocatorType);
@@ -873,7 +952,7 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
     std::shared_ptr<Memory> allocMemory = memoryManager->GetAllocMemoryByAddr(buffer->buffer_);
     std::shared_ptr<MemoryData> memoryData;
     if (allocMemory != nullptr && allocMemory->memoryData_->memoryInfo.bufferType == bufferType) {
-        EFFECT_LOGD("ModifyPixelMapProperty reuse allocated memory. addr=%{public}p", buffer->buffer_);
+        EFFECT_LOGD("ModifyPixelMapProperty reuse allocated memory.");
         allocMemory->memoryData_->memoryInfo.isAutoRelease = false;
         memoryData = allocMemory->memoryData_;
     } else {
@@ -896,7 +975,7 @@ ErrorCode CommonUtils::ModifyPixelMapProperty(PixelMap *pixelMap, const std::sha
         MemcpyHelper::CopyData(buffer.get(), memoryData.get());
     }
 
-    return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType, isUpdateExif);
+    return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType, isUpdateExif, context);
 }
 
 ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
@@ -918,10 +997,11 @@ ErrorCode CommonUtils::ModifyPixelMapPropertyForTexture(PixelMap *pixelMap, cons
     };
     std::shared_ptr<MemoryData> memoryData = memory->Alloc(memoryInfo);
     CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, ErrorCode::ERR_ALLOC_MEMORY_FAIL, "Alloc fail!");
-    context->renderEnvironment_->ReadPixelsFromTex(buffer->tex, memoryData->data, buffer->bufferInfo_->width_,
-        buffer->bufferInfo_->height_, memoryData->memoryInfo.bufferInfo.rowStride_ / RGBA_BYTES_PER_PIXEL);
+    context->renderEnvironment_->ReadPixelsFromTex(buffer->bufferInfo_->tex_, memoryData->data,
+        buffer->bufferInfo_->width_, buffer->bufferInfo_->height_,
+        memoryData->memoryInfo.bufferInfo.rowStride_ / RGBA_BYTES_PER_PIXEL);
 
-    return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType, isUpdateExif);
+    return ModifyPixelMapPropertyInner(memoryData, pixelMap, allocatorType, isUpdateExif, context);
 }
 
 std::shared_ptr<ImageSource> CommonUtils::GetImageSourceFromPath(const std::string path)

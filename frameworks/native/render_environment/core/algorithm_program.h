@@ -26,7 +26,7 @@ namespace Media {
 namespace Effect {
 class AlgorithmProgram {
 public:
-    AlgorithmProgram(RenderContext *context, const std::string &vertex, const std::string &fragment);
+    AlgorithmProgram(const std::string &vertex, const std::string &fragment);
     ~AlgorithmProgram();
     void UpdateShader(const std::string &vertex, const std::string &fragment);
     void Bind();
@@ -41,7 +41,6 @@ public:
     RenderGeneralProgram *GetShader();
 private:
     RenderGeneralProgram *shader_ = nullptr;
-    RenderContext *context_ = nullptr;
     std::string vertexShaderCode_;
     std::string fragmentShaderCode_;
 };

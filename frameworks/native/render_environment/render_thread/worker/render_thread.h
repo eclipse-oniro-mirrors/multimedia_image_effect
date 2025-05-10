@@ -79,7 +79,7 @@ template <typename QUEUE> void RenderThread<QUEUE>::AddTask(const LocalTaskType 
     cvFull.wait(lk, [this]() { return (m_localMsgQueue->GetSize() < this->qSize) || (!m_isWorking); });
     if (m_isWorking) {
         if (overwrite) {
-            m_localMsgQueue->Remove([&task](LocalTaskType &t) { return GetTag(task) == GetTag(t); });
+            m_localMsgQueue->Remove([&task](LocalTaskType &localTask) { return GetTag(task) == GetTag(localTask); });
         }
         m_localMsgQueue->Push(task);
         lk.unlock();

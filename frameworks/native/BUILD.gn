@@ -51,6 +51,8 @@ ohos_shared_library("image_effect_impl") {
 
   stack_protector_ret = true
 
+  defines = []
+
   public_configs = [ ":image_effect_impl_public_config" ]
 
   include_dirs = [
@@ -69,11 +71,11 @@ ohos_shared_library("image_effect_impl") {
     "$image_effect_root_dir/frameworks/native/effect/base/effect_surface_adapter.cpp",
     "$image_effect_root_dir/frameworks/native/effect/base/external_loader.cpp",
     "$image_effect_root_dir/frameworks/native/effect/base/image_effect_inner.cpp",
-    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_converter.cpp",
+    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_processor.cpp",
     "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_helper.cpp",
     "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_manager.cpp",
     "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_strategy.cpp",
-    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/metadata_generator.cpp",
+    "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/metadata_processor.cpp",
     "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory.cpp",
     "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory_manager.cpp",
     "$image_effect_root_dir/frameworks/native/effect/pipeline/core/capability_negotiate.cpp",
@@ -110,7 +112,6 @@ ohos_shared_library("image_effect_impl") {
     "$image_effect_root_dir/frameworks/native/utils/common/effect_json_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/memcpy_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/common/string_helper.cpp",
-    "$image_effect_root_dir/frameworks/native/utils/common/vpe_helper.cpp",
     "$image_effect_root_dir/frameworks/native/utils/dfx/error_code.cpp",
     "$image_effect_root_dir/frameworks/native/utils/dfx/event_report.cpp",
     "$image_effect_root_dir/frameworks/native/utils/format/format_helper.cpp",
@@ -138,6 +139,10 @@ ohos_shared_library("image_effect_impl") {
     "qos_manager:qos",
   ]
 
+  if (image_effect_colorspace_convertor_enable) {
+    external_deps += [ "video_processing_engine:videoprocessingengine", ]
+    defines += [ "VPE_ENABLE" ]
+  }
   cflags_cc = [
     "-ffunction-sections",
     "-fdata-sections",

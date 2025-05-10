@@ -21,10 +21,9 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-AlgorithmProgram::AlgorithmProgram(RenderContext *context, const std::string &vertex, const std::string &fragment)
+AlgorithmProgram::AlgorithmProgram(const std::string &vertex, const std::string &fragment)
 {
-    context_ = context;
-    shader_ = new RenderGeneralProgram(context, vertex.c_str(), fragment.c_str());
+    shader_ = new RenderGeneralProgram(vertex.c_str(), fragment.c_str());
     shader_->Init();
     vertexShaderCode_ = vertex;
     fragmentShaderCode_ = fragment;
@@ -50,7 +49,7 @@ void AlgorithmProgram::UpdateShader(const std::string &vertex, const std::string
         delete shader_;
         shader_ = nullptr;
     }
-    shader_ = new RenderGeneralProgram(context_, vertex.c_str(), fragment.c_str());
+    shader_ = new RenderGeneralProgram(vertex.c_str(), fragment.c_str());
     shader_->Init();
     vertexShaderCode_ = vertex;
     fragmentShaderCode_ = fragment;

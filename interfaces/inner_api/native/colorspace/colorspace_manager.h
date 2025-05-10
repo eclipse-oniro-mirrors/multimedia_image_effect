@@ -20,6 +20,8 @@
 
 #include "colorspace_strategy.h"
 #include "image_effect_marco_define.h"
+#include "metadata_processor.h"
+#include "colorspace_processor.h"
 
 namespace OHOS {
 namespace Media {
@@ -41,8 +43,12 @@ public:
     ErrorCode ChooseColorSpace(const std::unordered_set<EffectColorSpace> &filtersSupportedColorSpace,
         const EffectColorSpace &srcRealColorSpace, EffectColorSpace &outputColorSpace);
     IMAGE_EFFECT_EXPORT void Deinit();
+    std::shared_ptr<ColorSpaceProcessor> GetColorSpaceProcessor();
+    std::shared_ptr<MetadataProcessor> GetMetaDataProcessor();
 private:
     std::shared_ptr<ColorSpaceStrategy> strategy_;
+    std::shared_ptr<MetadataProcessor> metadataGenerator_ = nullptr;
+    std::shared_ptr<ColorSpaceProcessor> colorSpaceConverter_ = nullptr;
 };
 } // namespace Effect
 } // namespace Media

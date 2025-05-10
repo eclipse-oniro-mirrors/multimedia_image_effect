@@ -148,8 +148,7 @@ std::shared_ptr<Memory> EffectMemoryManager::GetAllocMemoryByAddr(void *addr)
         }
 
         if (memory->memoryData_->data == addr) {
-            EFFECT_LOGD("addr is find! bufferType=%{public}d",
-                memory->memoryData_->memoryInfo.bufferType);
+            EFFECT_LOGD("addr is find! bufferType=%{public}d", memory->memoryData_->memoryInfo.bufferType);
             return memory;
         }
     }
