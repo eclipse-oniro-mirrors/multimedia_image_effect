@@ -92,7 +92,6 @@ public:
 
     std::shared_ptr<BufferInfo> bufferInfo_ = nullptr;
     void *buffer_ = nullptr;
-    RenderTexturePtr tex;  // bufferInfo
     std::shared_ptr<ExtraInfo> extraInfo_ = nullptr;
     std::shared_ptr<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>> auxiliaryBufferInfos = nullptr;
 };

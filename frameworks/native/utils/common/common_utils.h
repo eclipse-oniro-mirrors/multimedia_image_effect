@@ -56,6 +56,8 @@ public:
         IEffectFormat format);
     static ErrorCode ParsePath(std::string &path, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData,
         IEffectFormat format);
+    IMAGE_EFFECT_EXPORT static ErrorCode ParseTex(unsigned int textureId, unsigned int colorSpace,
+        std::shared_ptr<EffectBuffer> &effectBuffer);
     IMAGE_EFFECT_EXPORT static void UnlockPixelMap(const PixelMap *pixelMap);
     static ErrorCode ParseAnyAndAddToJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &result);
     static bool EndsWithJPG(const std::string &input);
@@ -71,6 +73,8 @@ public:
     static void UpdateImageExifInfo(Picture *picture);
     static ErrorCode ParsePicture(Picture *picture, std::shared_ptr<EffectBuffer> &effectBuffer);
     static bool IsEnableCopyMetaData(int numBuffers, ...);
+    IMAGE_EFFECT_EXPORT static void CopyTexture(const std::shared_ptr<EffectContext> &context, RenderTexturePtr input,
+        RenderTexturePtr output);
 
     static std::shared_ptr<ImageSource> GetImageSourceFromPath(std::string path);
 
@@ -117,11 +121,15 @@ public:
     static GraphicPixelFormat SwitchToGraphicPixelFormat(IEffectFormat formatType);
     static PixelFormat SwitchToPixelFormat(IEffectFormat formatType);
     static BufferType SwitchToEffectBuffType(AllocatorType allocatorType);
+    static PixelFormat SwitchGLFormatToPixelFormat(unsigned int formatType);
+    static IEffectFormat SwitchGLFormatToEffectFormat(unsigned int formatType);
 
 private:
     static const std::unordered_map<PixelFormat, IEffectFormat> pixelFmtToEffectFmt_;
     static const std::unordered_map<GraphicPixelFormat, IEffectFormat> surfaceBufferFmtToEffectFmt_;
     static const std::unordered_map<AllocatorType, BufferType> allocatorTypeToEffectBuffType_;
+    static const std::unordered_map<unsigned int, PixelFormat> glFmtToPixelFmt_;
+    static const std::unordered_map<unsigned int, IEffectFormat> glFmtToEffectFmt_;
 };
 } // namespace Effect
 } // namespace Media

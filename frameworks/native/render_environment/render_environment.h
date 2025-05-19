@@ -157,7 +157,7 @@ class RenderEnvironment {
 public:
     IMAGE_EFFECT_EXPORT RenderEnvironment() = default;
     IMAGE_EFFECT_EXPORT ~RenderEnvironment() = default;
-    IMAGE_EFFECT_EXPORT void Init();
+    IMAGE_EFFECT_EXPORT void Init(bool isCustomEnv = false);
     IMAGE_EFFECT_EXPORT void Prepare();
     void InitEngine(OHNativeWindow *window);
     void NotifyInputChanged();
@@ -205,6 +205,7 @@ public:
     IMAGE_EFFECT_EXPORT void DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBuffer *buffer,
         IEffectFormat format = IEffectFormat::RGBA8888);
     IMAGE_EFFECT_EXPORT void DrawFlipTex(RenderTexturePtr input, RenderTexturePtr output);
+    IMAGE_EFFECT_EXPORT void DrawTex(RenderTexturePtr input, RenderTexturePtr output);
     static std::shared_ptr<EffectBuffer> GenTexEffectBuffer(const std::shared_ptr<EffectBuffer>& input);
     IMAGE_EFFECT_EXPORT GLuint ConvertFromYUVToRGB(const EffectBuffer *source, IEffectFormat format);
     IMAGE_EFFECT_EXPORT void ConvertFromRGBToYUV(RenderTexturePtr input, IEffectFormat format, void *data);
@@ -222,6 +223,7 @@ private:
     int canvasHeight = 0;
     EGLStatus isEGLReady = EGLStatus::UNREADY;
     DataType outType_ = DataType::UNKNOWN;
+    bool isCustomEnv_ = false;
     bool needTerminate_ = false;
     void InitDefaultMeshMT(RenderParam *param);
     void InitDefaultShaderMT(RenderParam *param);

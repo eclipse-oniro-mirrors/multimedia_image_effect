@@ -38,10 +38,16 @@ struct SurfaceBufferInfo {
     int64_t timestamp_ = 0;
 };
 
+struct TextureInfo {
+    int32_t textureId_ = 0;
+    int32_t colorSpace_ = 0;
+};
+
 struct DataInfo {
     DataType dataType_ = DataType::UNKNOWN;
     PixelMap *pixelMap_ = nullptr;
     SurfaceBufferInfo surfaceBufferInfo_;
+    TextureInfo textureInfo_;
     std::string uri_;
     std::string path_;
     Picture *picture_ = nullptr;
@@ -106,6 +112,10 @@ public:
 
     IMAGE_EFFECT_EXPORT ErrorCode SetOutputPicture(Picture *picture);
 
+    IMAGE_EFFECT_EXPORT ErrorCode SetInputTexture(int32_t textureId, int32_t colorSpace);
+
+    IMAGE_EFFECT_EXPORT ErrorCode SetOutputTexture(int32_t textureId);
+
 protected:
     IMAGE_EFFECT_EXPORT virtual ErrorCode Render();
 
@@ -161,11 +171,15 @@ private:
         std::shared_ptr<ExifMetadata> &exifMetadata) const;
     ErrorCode GetImageInfoFromPicture(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
         std::shared_ptr<ExifMetadata> &exifMetadata) const;
+    ErrorCode GetImageInfoFromTexInfo(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat) const;
 
     void UpdateConsumerBuffersNumber();
     void UpdateCycleBuffersNumber();
 
     void SetPathToSink();
+
+    ErrorCode InitEffectBuffer(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
+        std::shared_ptr<EffectBuffer> &dstEffectBuffer, IEffectFormat format);
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal

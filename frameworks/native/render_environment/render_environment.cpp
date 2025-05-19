@@ -51,10 +51,16 @@ EGLStatus RenderEnvironment::GetEGLStatus() const
     return isEGLReady;
 }
 
-void RenderEnvironment::Init()
+void RenderEnvironment::Init(bool isCustomEnv)
 {
     EFFECT_TRACE_NAME("RenderEnvironment::Init()");
     EFFECT_LOGI("RenderEnvironment init enter!");
+    isCustomEnv_ = isCustomEnv;
+    if (isCustomEnv_) {
+        param_ = new RenderParam();
+        isEGLReady = EGLStatus::READY;
+        return;
+    }
     EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     needTerminate_ = true;
     if (eglInitialize(display, nullptr, nullptr) == EGL_FALSE) {
@@ -73,6 +79,12 @@ void RenderEnvironment::Init()
 void RenderEnvironment::Prepare()
 {
     EFFECT_TRACE_NAME("RenderEnvironment::Prepare()");
+    if (isCustomEnv_) {
+        InitDefaultShaderMT(param_);
+        InitDefaultMeshMT(param_);
+        param_->threadReady_ = true;
+        return;
+    }
     if (param_->context_->MakeCurrent(screenSurface_)) {
         param_->renderer_ = new RenderOpenglRenderer();
         InitDefaultShaderMT(param_);
@@ -151,6 +163,9 @@ void RenderEnvironment::SetNativeWindowColorSpace(EffectColorSpace colorSpace)
 
 bool RenderEnvironment::BeginFrame()
 {
+    if (isCustomEnv_) {
+        return true;
+    }
     return param_->context_->MakeCurrent(screenSurface_);
 }
 
@@ -168,8 +183,7 @@ bool RenderEnvironment::IsPrepared() const
 RenderTexturePtr RenderEnvironment::ReCreateTexture(RenderTexturePtr renderTex, int width, int height,
     bool isHdr10) const
 {
-    RenderTexturePtr tempTex = param_->resCache_->RequestTexture(width, height,
-                                                                 isHdr10 ? GL_RGB10_A2 : GL_RGBA8);
+    RenderTexturePtr tempTex = param_->resCache_->RequestTexture(width, height, isHdr10 ? GL_RGB10_A2 : GL_RGBA8);
     GLuint tempFbo = GLUtils::CreateFramebuffer(tempTex->GetName());
     RenderViewport vp(0, 0, renderTex->Width(), renderTex->Height());
 
@@ -184,8 +198,7 @@ bool RenderEnvironment::GetOrCreateTextureFromCache(RenderTexturePtr& renderTex,
 {
     renderTex = param_->resCache_->GetTexGlobalCache(texName);
     if (renderTex == nullptr || hasInputChanged) {
-        renderTex = param_->resCache_->RequestTexture(width, height,
-                                                      isHdr10 ? GL_RGB10_A2 : GL_RGBA8);
+        renderTex = param_->resCache_->RequestTexture(width, height, isHdr10 ? GL_RGB10_A2 : GL_RGBA8);
         param_->resCache_->AddTexGlobalCache(texName, renderTex);
         return true;
     }
@@ -266,6 +279,14 @@ void RenderEnvironment::DrawFlipTex(RenderTexturePtr input, RenderTexturePtr out
     GLuint tempFbo = GLUtils::CreateFramebuffer(output->GetName());
     RenderViewport vp(0, 0, input->Width(), input->Height());
     param_->renderer_->Draw(input->GetName(), tempFbo, param_->meshBaseFlip_, param_->shaderBase_, &vp, GL_TEXTURE_2D);
+    GLUtils::DeleteFboOnly(tempFbo);
+}
+
+void RenderEnvironment::DrawTex(RenderTexturePtr input, RenderTexturePtr output)
+{
+    GLuint tempFbo = GLUtils::CreateFramebuffer(output->GetName());
+    RenderViewport vp(0, 0, input->Width(), input->Height());
+    param_->renderer_->Draw(input->GetName(), tempFbo, param_->meshBase_, param_->shaderBase_, &vp, GL_TEXTURE_2D);
     GLUtils::DeleteFboOnly(tempFbo);
 }
 

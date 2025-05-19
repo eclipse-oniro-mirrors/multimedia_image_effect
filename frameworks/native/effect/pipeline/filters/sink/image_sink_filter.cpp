@@ -303,6 +303,18 @@ ErrorCode ModifyPictureForInnerPixelMap(PixelMap *pixelMap, EffectBuffer *src,
     return CommonUtils::ModifyPixelMapProperty(pixelMap, buffer, context, false);
 }
 
+ErrorCode ModifyTex(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
+    std::shared_ptr<EffectContext> &context)
+{
+    CHECK_AND_RETURN_RET_LOG(src->bufferInfo_->tex_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "ModifyTex: src tex is null!");
+    CHECK_AND_RETURN_RET_LOG(buffer->bufferInfo_->tex_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "ModifyTex: buffer tex is null!");
+    context->renderEnvironment_->DrawTex(buffer->bufferInfo_->tex_, src->bufferInfo_->tex_);
+    glFinish();
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ModifyPicture(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
@@ -421,6 +433,8 @@ ErrorCode ModifyDataInfo(EffectBuffer *src, const std::shared_ptr<EffectBuffer> 
             return ModifyInnerPicture(src, buffer, context);
         case DataType::PICTURE:
             return ModifyPicture(src, buffer, context);
+        case DataType::TEX:
+            return ModifyTex(src, buffer, context);
         default:
             return ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
     }
@@ -747,6 +761,16 @@ ErrorCode ImageSinkFilter::SaveInputData(EffectBuffer *src, const std::shared_pt
     }
 }
 
+ErrorCode CheckAndProcessOutTex(RenderTexturePtr dstTex, RenderTexturePtr srcTex)
+{
+    CHECK_AND_RETURN_RET_LOG(srcTex != nullptr, ErrorCode::ERR_INPUT_NULL, "ModifyTex srcTex is null");
+    CHECK_AND_RETURN_RET_LOG(dstTex != nullptr, ErrorCode::ERR_INPUT_NULL, "ModifyTex dstTex is null");
+    if (dstTex->Width() == 0 || dstTex->Height() == 0) {
+        GLUtils::CreateDefaultTexture(srcTex->Width(), srcTex->Height(), srcTex->Format(), dstTex->GetName());
+    }
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ImageSinkFilter::SavaOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &inputBuffer,
     std::shared_ptr<EffectBuffer> &outputBuffer, std::shared_ptr<EffectContext> &context)
 {
@@ -770,6 +794,12 @@ ErrorCode ImageSinkFilter::SavaOutputData(EffectBuffer *src, const std::shared_p
             return FillOutputData(inputBuffer, outputBuffer, context);
         case DataType::PICTURE:
             return FillPictureOutputData(src, inputBuffer, outputBuffer, context);
+        case DataType::TEX: {
+            ErrorCode ret = CheckAndProcessOutTex(outputBuffer->bufferInfo_->tex_, inputBuffer->bufferInfo_->tex_);
+            CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, ret,
+                "SavaOutputData: CheckAndProcessOutTex fail! ret=%{public}d", ret);
+            return ModifyTex(outputBuffer.get(), inputBuffer, context);
+        }
         default:
             return ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
     }
