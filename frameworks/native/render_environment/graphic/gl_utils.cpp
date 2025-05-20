@@ -56,6 +56,41 @@ GLuint GLUtils::CreateTexture2D(GLsizei width, GLsizei height, GLsizei levels, G
     return textureId;
 }
 
+void GLUtils::CreateDefaultTexture(GLsizei width, GLsizei height, GLenum internalFormat, GLuint textureId)
+{
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glTexStorage2D(GL_TEXTURE_2D, 1, internalFormat, width, height);
+    glBindTexture(GL_TEXTURE_2D, GL_NONE);
+    CheckError(__FILE__, __LINE__);
+}
+
+unsigned int GLUtils::GetTexWidth(GLuint texture)
+{
+    GLint textureWidth = 0;
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &textureWidth);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return textureWidth;
+}
+
+unsigned int GLUtils::GetTexHeight(GLuint texture)
+{
+    GLint textureHeight = 0;
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &textureHeight);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return textureHeight;
+}
+
+unsigned int GLUtils::GetTexFormat(GLuint texture)
+{
+    GLint textureFormat = 0;
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &textureFormat);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return textureFormat;
+}
+
 unsigned int GLUtils::CreateFramebuffer(unsigned int textureId)
 {
     GLuint fboId;

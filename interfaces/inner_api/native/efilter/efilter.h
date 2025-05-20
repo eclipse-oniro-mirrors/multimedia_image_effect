@@ -142,7 +142,7 @@ private:
         std::shared_ptr<EffectBuffer> &effectBuffer) const;
 
     ErrorCode UseTextureInput();
-    void InitContext(std::shared_ptr<EffectContext> &context, IPType &runningType);
+    void InitContext(std::shared_ptr<EffectContext> &context, IPType &runningType, bool isCustomEnv);
 };
 } // namespace Effect
 } // namespace Media

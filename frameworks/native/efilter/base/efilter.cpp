@@ -524,7 +524,7 @@ ErrorCode EFilter::CalculateEFilterIPType(IEffectFormat &formatType, IPType &ipT
 ErrorCode CreateDmaEffectBufferIfNeed(IPType runningType, EffectBuffer *current, EffectBuffer *src,
     std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &effectBuffer)
 {
-    if (runningType == IPType::CPU) {
+    if (runningType == IPType::CPU || src->extraInfo_->dataType == DataType::TEX) {
         return ErrorCode::SUCCESS;
     }
     if (runningType == IPType::GPU && current->extraInfo_->bufferType == BufferType::DMA_BUFFER) {
@@ -555,6 +555,9 @@ ErrorCode CreateDmaEffectBufferIfNeed(IPType runningType, EffectBuffer *current,
 ErrorCode EFilter::RenderWithGPU(std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &src,
     std::shared_ptr<EffectBuffer> &dst, bool needModifySource)
 {
+    if (src->extraInfo_->dataType == DataType::TEX) {
+        return Render(src.get(), dst.get(), context);
+    }
     if (context->renderEnvironment_->GetEGLStatus() != EGLStatus::READY) {
         context->renderEnvironment_->Init();
         context->renderEnvironment_->Prepare();
@@ -626,6 +629,9 @@ std::shared_ptr<EffectContext> CreateEffectContext(std::shared_ptr<EffectBuffer>
 ErrorCode CheckAndUpdateEffectBufferIfNeed(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectContext> &context,
     std::string &name, std::shared_ptr<EffectBuffer> &dst)
 {
+    if (src->bufferInfo_->tex_ != nullptr) {
+        return ErrorCode::SUCCESS;
+    }
     if (src->buffer_ == dst->buffer_) {
         dst = src;
     }
@@ -676,9 +682,13 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
 
     IPType runningType = IPType::DEFAULT;
     res = CalculateEFilterIPType(src->bufferInfo_->formatType_, runningType);
+    if (src->extraInfo_->dataType == DataType::TEX && runningType == IPType::CPU) {
+        return ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE;
+    }
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
         "Render CalculateEFilterIPType fail! name=%{public}s", name_.c_str());
-    InitContext(context, runningType);
+    bool isCustomEnv = src->extraInfo_->dataType == DataType::TEX;
+    InitContext(context, runningType, isCustomEnv);
     std::shared_ptr<EffectBuffer> input = nullptr;
     res = CreateDmaEffectBufferIfNeed(runningType, srcBuf, srcBuf, context, input);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
@@ -710,13 +720,13 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
     return ErrorCode::SUCCESS;
 }
 
-void EFilter::InitContext(std::shared_ptr<EffectContext> &context, IPType &runningType)
+void EFilter::InitContext(std::shared_ptr<EffectContext> &context, IPType &runningType, bool isCustomEnv)
 {
     context->ipType_ = runningType;
     context->memoryManager_->SetIPType(runningType);
 
     context->renderEnvironment_ = std::make_shared<RenderEnvironment>();
-    context->renderEnvironment_->Init();
+    context->renderEnvironment_->Init(isCustomEnv);
     context->renderEnvironment_->Prepare();
 }
 

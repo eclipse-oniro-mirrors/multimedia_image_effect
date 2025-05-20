@@ -66,6 +66,16 @@ const std::unordered_map<GraphicPixelFormat, IEffectFormat> CommonUtils::surface
     { GraphicPixelFormat::GRAPHIC_PIXEL_FMT_YCRCB_P010, IEffectFormat::YCRCB_P010 },
 };
 
+const std::unordered_map<GLenum, PixelFormat> CommonUtils::glFmtToPixelFmt_ = {
+    { GL_RGBA8, PixelFormat::RGBA_8888 },
+    { GL_RGB10_A2, PixelFormat::RGBA_1010102 },
+};
+
+const std::unordered_map<GLenum, IEffectFormat> CommonUtils::glFmtToEffectFmt_ = {
+    { GL_RGBA8, IEffectFormat::RGBA8888 },
+    { GL_RGB10_A2, IEffectFormat::RGBA_1010102 },
+};
+
 const std::unordered_map<AllocatorType, BufferType> CommonUtils::allocatorTypeToEffectBuffType_ = {
     { AllocatorType::HEAP_ALLOC, BufferType::HEAP_MEMORY },
     { AllocatorType::DMA_ALLOC, BufferType::DMA_BUFFER },
@@ -452,6 +462,34 @@ PixelFormat CommonUtils::SwitchToPixelFormat(IEffectFormat formatType)
     return pixelFormat;
 }
 
+IEffectFormat CommonUtils::SwitchGLFormatToEffectFormat(GLenum formatType)
+{
+    IEffectFormat effectFormat = IEffectFormat::DEFAULT;
+
+    for (const auto &itr : glFmtToEffectFmt_) {
+        if (itr.first == formatType) {
+            effectFormat = itr.second;
+            break;
+        }
+    }
+
+    return effectFormat;
+}
+
+PixelFormat CommonUtils::SwitchGLFormatToPixelFormat(GLenum formatType)
+{
+    PixelFormat pixelFormat = PixelFormat::UNKNOWN;
+
+    for (const auto &itr : glFmtToPixelFmt_) {
+        if (itr.first == formatType) {
+            pixelFormat = itr.second;
+            break;
+        }
+    }
+
+    return pixelFormat;
+}
+
 BufferType CommonUtils::SwitchToEffectBuffType(AllocatorType allocatorType)
 {
     BufferType bufferType = BufferType::DEFAULT;
@@ -649,6 +687,12 @@ void CommonUtils::UpdateImageExifInfo(Picture *picture)
     UpdateExifMetadata(picture->GetExifMetadata(), picture->GetMainPixel().get());
 }
 
+void CommonUtils::CopyTexture(const std::shared_ptr<EffectContext> &context, RenderTexturePtr input,
+    RenderTexturePtr output)
+{
+    context->renderEnvironment_->DrawTex(input, output);
+}
+
 bool CommonUtils::IsEnableCopyMetaData(int numBuffers, ...)
 {
     va_list args;
@@ -718,6 +762,27 @@ ErrorCode GetAuxiliaryEffectBuffer(Picture *picture, std::shared_ptr<EffectBuffe
     auxiliaryEffectBuffer->bufferInfo_->bufferType_ = auxiliaryEffectBuffer->extraInfo_->bufferType;
     auxiliaryEffectBuffer->bufferInfo_->addr_ = auxiliaryEffectBuffer->buffer_;
 
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode CommonUtils::ParseTex(unsigned int textureId, unsigned int colorSpace,
+    std::shared_ptr<EffectBuffer> &effectBuffer)
+{
+    EFFECT_LOGI("CommonUtils::ParseTex enter.");
+    IEffectFormat format = SwitchGLFormatToEffectFormat(GLUtils::GetTexFormat(textureId));
+    CHECK_AND_RETURN_RET_LOG(textureId != 0, ErrorCode::ERR_INPUT_NULL, "ParseTex: textureId is 0!");
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    bufferInfo->width_ = GLUtils::GetTexWidth(textureId);
+    bufferInfo->height_ = GLUtils::GetTexHeight(textureId);
+    bufferInfo->formatType_ = format;
+    bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(static_cast<ColorSpaceName>(colorSpace));
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
+    extraInfo->dataType = DataType::TEX;
+    extraInfo->bufferType = BufferType::DMA_BUFFER;
+    effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, nullptr, extraInfo);
+    effectBuffer->bufferInfo_->tex_ = std::make_shared<RenderTexture>(bufferInfo->width_, bufferInfo->height_,
+        GLUtils::GetTexFormat(textureId));
+    effectBuffer->bufferInfo_->tex_->SetName(textureId);
     return ErrorCode::SUCCESS;
 }
 

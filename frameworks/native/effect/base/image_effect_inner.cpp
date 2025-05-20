@@ -386,6 +386,56 @@ void AdjustEffectFormat(IEffectFormat& effectFormat) {
     }
 }
 
+ErrorCode ChooseGPU(const std::vector<std::shared_ptr<Capability>> &caps, IEffectFormat &effectFormat,
+    std::vector<IPType> &configIPTypes, bool isTexInput)
+{
+    IPType runningIPType = IPType::DEFAULT;
+    for (const auto &capability : caps) {
+        if (capability == nullptr || capability->pixelFormatCap_ == nullptr) {
+            continue;
+        }
+        AdjustEffectFormat(effectFormat);
+        std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
+        auto it = formats.find(effectFormat);
+        if (it == formats.end()) {
+            EFFECT_LOGE("effectFormat not support! effectFormat=%{public}d, name=%{public}s",
+                effectFormat, capability->name_.c_str());
+            return ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE;
+        }
+
+        std::vector<IPType> &ipTypes = it->second;
+        if (std::find(configIPTypes.begin(), configIPTypes.end(), IPType::GPU) != configIPTypes.end() &&
+            std::find(ipTypes.begin(), ipTypes.end(), IPType::GPU) != ipTypes.end()) {
+            runningIPType = IPType::GPU;
+        } else {
+            if (runningIPType == IPType::DEFAULT || isTexInput) {
+                return ErrorCode::ERR_UNSUPPORTED_IPTYPE_FOR_EFFECT;
+            }
+            return ErrorCode::SUCCESS;
+        }
+    }
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode ChooseCPU(const std::vector<std::shared_ptr<Capability>> &caps, IEffectFormat &effectFormat,
+    std::vector<IPType> &configIPTypes)
+{
+    for (const auto &capability : caps) {
+        if (capability == nullptr || capability->pixelFormatCap_ == nullptr) {
+            continue;
+        }
+        std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
+
+        auto it = formats.find(effectFormat);
+        if (it == formats.end()) {
+            EFFECT_LOGE("effectFormat not support! effectFormat=%{public}d, name=%{public}s",
+                effectFormat, capability->name_.c_str());
+            return ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE;
+        }
+    }
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     const std::shared_ptr<EffectContext> &context, const std::map<ConfigType, Plugin::Any> &config,
     IPType &runningIPType)
@@ -394,38 +444,17 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     GetConfigIPTypes(config, configIPTypes);
 
     runningIPType = IPType::DEFAULT;
-    IPType priorityIPType = IPType::GPU;
     IEffectFormat effectFormat = srcEffectBuffer->bufferInfo_->formatType_;
     const std::vector<std::shared_ptr<Capability>> &caps = context->capNegotiate_->GetCapabilityList();
-    for (const auto &capability : caps) {
-        if (capability == nullptr || capability->pixelFormatCap_ == nullptr) {
-            continue;
-        }
-        std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
-
-        if (runningIPType == IPType::GPU) {
-            AdjustEffectFormat(effectFormat);
-        }
-
-        auto it = formats.find(effectFormat);
-        if (it == formats.end()) {
-            EFFECT_LOGE("effectFormat not support! effectFormat=%{public}d, name=%{public}s",
-                effectFormat, capability->name_.c_str());
-            return ErrorCode::SUCCESS;
-        }
-
-        std::vector<IPType> &ipTypes = it->second;
-        if (std::find(configIPTypes.begin(), configIPTypes.end(), priorityIPType) != configIPTypes.end() &&
-            std::find(ipTypes.begin(), ipTypes.end(), priorityIPType) != ipTypes.end()) {
-            runningIPType = IPType::GPU;
-        } else {
-            if (runningIPType == IPType::DEFAULT) {
-                runningIPType = IPType::CPU;
-            }
-            return ErrorCode::SUCCESS;
-        }
+    bool isTextureInput = srcEffectBuffer->extraInfo_->dataType == DataType::TEX;
+    ErrorCode res = ChooseGPU(caps, effectFormat, configIPTypes, isTextureInput);
+    if (res != ErrorCode::SUCCESS) {
+        res = ChooseCPU(caps, effectFormat, configIPTypes);
+        runningIPType = IPType::CPU;
+    } else {
+        runningIPType = IPType::GPU;
     }
-
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ChooseIPType failed");
     return ErrorCode::SUCCESS;
 }
 
@@ -443,14 +472,15 @@ ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> pipeline, const Effe
 
     IPType runningIPType;
     res = ChooseIPType(effectParameters.srcEffectBuffer_, effectParameters.effectContext_, effectParameters.config_,
-                       runningIPType);
+        runningIPType);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("choose running ip type fail! res=%{public}d", res);
         return res;
     }
     if (effectParameters.effectContext_->renderEnvironment_->GetEGLStatus() != EGLStatus::READY
         && runningIPType == IPType::GPU) {
-        effectParameters.effectContext_->renderEnvironment_->Init();
+        bool isCustomEnv = effectParameters.srcEffectBuffer_->extraInfo_->dataType == DataType::TEX;
+        effectParameters.effectContext_->renderEnvironment_->Init(isCustomEnv);
         effectParameters.effectContext_->renderEnvironment_->Prepare();
     }
     effectParameters.effectContext_->ipType_ = runningIPType;
@@ -514,7 +544,8 @@ ErrorCode ImageEffect::Start()
         case DataType::SURFACE_BUFFER:
         case DataType::URI:
         case DataType::PATH:
-        case DataType::PICTURE: {
+        case DataType::PICTURE:
+        case DataType::TEX: {
             impl_->effectState_ = EffectState::RUNNING;
             ErrorCode res = this->Render();
             Stop();
@@ -661,6 +692,11 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
         "extra info is null! srcExtraInfo=%{public}d, dstExtraInfo=%{public}d",
         srcEffectBuffer->extraInfo_ == nullptr, dstEffectBuffer->extraInfo_ == nullptr);
 
+    if (dstEffectBuffer->bufferInfo_->tex_ != nullptr && dstEffectBuffer->bufferInfo_->tex_->Width() == 0
+        && dstEffectBuffer->bufferInfo_->tex_->Height() == 0) {
+        return ErrorCode::SUCCESS;
+    }
+
     // input and output type is same or not.
     DataType srcDataType = srcEffectBuffer->extraInfo_->dataType;
     DataType dtsDataType = dstEffectBuffer->extraInfo_->dataType;
@@ -687,6 +723,10 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
             ErrorCode::ERR_NOT_SUPPORT_DIFF_FORMAT,
             "not support different format. srcFormat=%{public}d, dstFormat=%{public}d",
             srcEffectBuffer->bufferInfo_->formatType_, dstEffectBuffer->bufferInfo_->formatType_);
+
+        if (srcDataType == DataType::TEX) {
+            return ErrorCode::SUCCESS;
+        }
 
         // color space is same or not.
         EffectColorSpace srcColorSpace = srcEffectBuffer->bufferInfo_->colorSpace_;
@@ -747,6 +787,19 @@ ErrorCode ImageEffect::GetImageInfoFromPicture(uint32_t &width, uint32_t &height
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode ImageEffect::GetImageInfoFromTexInfo(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat) const
+{
+    int32_t texId = inDateInfo_.textureInfo_.textureId_;
+    width = GLUtils::GetTexWidth(texId);
+    CHECK_AND_RETURN_RET_LOG(width > 0, ErrorCode::ERR_INVALID_TEXTURE, "input tex width is invalid");
+    height = GLUtils::GetTexHeight(texId);
+    CHECK_AND_RETURN_RET_LOG(height > 0, ErrorCode::ERR_INVALID_TEXTURE, "input tex height is invalid");
+    pixelFormat = CommonUtils::SwitchGLFormatToPixelFormat(GLUtils::GetTexFormat(texId));
+    CHECK_AND_RETURN_RET_LOG(pixelFormat != PixelFormat::UNKNOWN, ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE,
+        "input tex pixelFormat is invalid");
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelFormat &pixelFormat,
     std::shared_ptr<ExifMetadata> &exifMetadata)
 {
@@ -778,6 +831,11 @@ ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelForm
             CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode, "GetImageInfoFromPicture fail!");
             break;
         }
+        case DataType::TEX: {
+            errorCode = GetImageInfoFromTexInfo(width, height, pixelFormat);
+            CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, errorCode, "GetImageInfoFromTexInfo fail!");
+            break;
+        }
         case DataType::UNKNOWN:
             EFFECT_LOGE("dataType is unknown! DataType is not set!");
             return  ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
@@ -786,6 +844,23 @@ ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelForm
             return ErrorCode::ERR_UNSUPPORTED_DATA_TYPE;
     }
     return errorCode;
+}
+
+ErrorCode ImageEffect::InitEffectBuffer(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
+    std::shared_ptr<EffectBuffer> &dstEffectBuffer, IEffectFormat format)
+{
+    ErrorCode res = LockAll(srcEffectBuffer, dstEffectBuffer, format);
+    if (res != ErrorCode::SUCCESS) {
+        UnLockAll();
+        return res;
+    }
+
+    res = CheckToRenderPara(srcEffectBuffer, dstEffectBuffer);
+    if (res != ErrorCode::SUCCESS) {
+        UnLockAll();
+        return res;
+    }
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
@@ -848,17 +923,8 @@ ErrorCode ImageEffect::Render()
 
     std::shared_ptr<EffectBuffer> srcEffectBuffer = nullptr;
     std::shared_ptr<EffectBuffer> dstEffectBuffer = nullptr;
-    res = LockAll(srcEffectBuffer, dstEffectBuffer, format);
-    if (res != ErrorCode::SUCCESS) {
-        UnLockAll();
-        return res;
-    }
-
-    res = CheckToRenderPara(srcEffectBuffer, dstEffectBuffer);
-    if (res != ErrorCode::SUCCESS) {
-        UnLockAll();
-        return res;
-    }
+    res = InitEffectBuffer(srcEffectBuffer, dstEffectBuffer, format);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "init effectBuffer fail! res=%{puiblic}d", res);
 
     res = ConfigureFilters(srcEffectBuffer, dstEffectBuffer);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "configure filters fail! res=%{puiblic}d", res);
@@ -866,7 +932,8 @@ ErrorCode ImageEffect::Render()
     std::shared_ptr<EffectBuffer> outBuffer = dstEffectBuffer != nullptr ? dstEffectBuffer : srcEffectBuffer;
     impl_->effectContext_->renderEnvironment_->SetOutputType(outBuffer->extraInfo_->dataType);
     EffectParameters effectParameters(srcEffectBuffer, dstEffectBuffer, config_, impl_->effectContext_);
-    res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread, !impl_->isQosEnabled_);
+    bool isNeedCreateThread = !impl_->isQosEnabled_ && srcEffectBuffer->extraInfo_->dataType != DataType::TEX;
+    res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread, isNeedCreateThread);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("StartPipeline fail! res=%{public}d", res);
         UnLockAll();
@@ -980,29 +1047,6 @@ void ImageEffect::UpdateProducerSurfaceInfo()
         return;
     }
     toProducerSurface_->SetTransform(transform);
-}
-
-void ImageEffect::ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer)
-{
-    inDateInfo_.surfaceBufferInfo_.surfaceBuffer_ = buffer;
-    GraphicTransformType transform = impl_->surfaceAdapter_->GetTransform();
-    buffer->SetSurfaceBufferTransform(transform);
-    if (impl_->effectState_ == EffectState::RUNNING) {
-        impl_->effectContext_->renderEnvironment_->NotifyInputChanged();
-        this->Render();
-    } else {
-        auto task = std::make_shared<RenderTask<>>([buffer, this, transform]() {
-            if (impl_->effectContext_->renderEnvironment_->GetEGLStatus() != EGLStatus::READY) {
-                impl_->effectContext_->renderEnvironment_->Init();
-                impl_->effectContext_->renderEnvironment_->Prepare();
-            }
-            int tex = GLUtils::CreateTextureFromSurfaceBuffer(buffer);
-            impl_->effectContext_->renderEnvironment_->UpdateCanvas();
-            impl_->effectContext_->renderEnvironment_->DrawFrame(tex, transform);
-        }, COMMON_TASK_TAG, RequestTaskId());
-        m_renderThread->AddTask(task);
-        task->Wait();
-    }
 }
 
 void MemoryCopyForSurfaceBuffer(sptr<SurfaceBuffer> &buffer, OHOS::sptr<SurfaceBuffer> &outBuffer)
@@ -1487,7 +1531,6 @@ ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectB
         case DataType::SURFACE:
         case DataType::SURFACE_BUFFER:
             return CommonUtils::ParseSurfaceData(dataInfo.surfaceBufferInfo_.surfaceBuffer_, effectBuffer,
-
                 dataInfo.dataType_, strategy, dataInfo.surfaceBufferInfo_.timestamp_);
         case DataType::URI:
             return CommonUtils::ParseUri(dataInfo.uri_, effectBuffer, isOutputData, format);
@@ -1497,6 +1540,9 @@ ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectB
             return CommonUtils::ParseNativeWindowData(effectBuffer, dataInfo.dataType_);
         case DataType::PICTURE:
             return CommonUtils::ParsePicture(dataInfo.picture_, effectBuffer);
+        case DataType::TEX:
+            return CommonUtils::ParseTex(dataInfo.textureInfo_.textureId_, dataInfo.textureInfo_.colorSpace_,
+                effectBuffer);
         case DataType::UNKNOWN:
             EFFECT_LOGW("dataType is unknown! Data is not set!");
             return ErrorCode::ERR_NO_DATA;
@@ -1583,6 +1629,27 @@ ErrorCode ImageEffect::SetOutputPicture(Picture *picture)
     outDateInfo_.dataType_ = DataType::PICTURE;
     outDateInfo_.picture_ = picture;
 
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode ImageEffect::SetInputTexture(int32_t textureId, int32_t colorSpace)
+{
+    ClearDataInfo(inDateInfo_);
+    inDateInfo_.dataType_ = DataType::TEX;
+    CHECK_AND_RETURN_RET_LOG(textureId != 0, ErrorCode::ERR_INPUT_NULL,
+        "ImageEffect::SetInputTexture: picture is null!");
+    inDateInfo_.textureInfo_.textureId_ = textureId;
+    inDateInfo_.textureInfo_.colorSpace_ = colorSpace;
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode ImageEffect::SetOutputTexture(int32_t textureId)
+{
+    ClearDataInfo(outDateInfo_);
+    outDateInfo_.dataType_ = DataType::TEX;
+    CHECK_AND_RETURN_RET_LOG(textureId != 0, ErrorCode::ERR_INPUT_NULL,
+        "ImageEffect::SetInputTexture: picture is null!");
+    outDateInfo_.textureInfo_.textureId_ = textureId;
     return ErrorCode::SUCCESS;
 }
 

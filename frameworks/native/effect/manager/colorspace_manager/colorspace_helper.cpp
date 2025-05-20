@@ -68,6 +68,17 @@ static const std::unordered_map<EffectColorSpace, OH_NativeBuffer_ColorSpace> EF
     { EffectColorSpace::ADOBE_RGB, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_ADOBERGB_FULL },
 };
 
+static const std::unordered_set<EffectColorSpace> TEX_SUPPORT_COLORSPACE_SET = {
+    EffectColorSpace::SRGB,
+    EffectColorSpace::SRGB_LIMIT,
+    EffectColorSpace::DISPLAY_P3,
+    EffectColorSpace::DISPLAY_P3_LIMIT,
+    EffectColorSpace::BT2020_HLG,
+    EffectColorSpace::BT2020_HLG_LIMIT,
+    EffectColorSpace::BT2020_PQ,
+    EffectColorSpace::BT2020_PQ_LIMIT
+};
+
 static const std::unordered_set<HdrFormat> SUPPORT_HDR_FORMAT_SET = {
     HdrFormat::HDR10, HdrFormat::HDR8_GAINMAP
 };
@@ -76,6 +87,15 @@ bool ColorSpaceHelper::IsHdrColorSpace(EffectColorSpace colorSpace)
 {
     return colorSpace == EffectColorSpace::BT2020_HLG || colorSpace == EffectColorSpace::BT2020_HLG_LIMIT ||
         colorSpace == EffectColorSpace::BT2020_PQ || colorSpace == EffectColorSpace::BT2020_PQ_LIMIT;
+}
+
+bool IsTexSupportedColorSpace(EffectColorSpace colorSpace)
+{
+    auto it = TEX_SUPPORT_COLORSPACE_SET.find(colorSpace);
+    if (it != TEX_SUPPORT_COLORSPACE_SET.end()) {
+        return true;
+    }
+    return false;
 }
 
 EffectColorSpace ColorSpaceHelper::ConvertToEffectColorSpace(ColorSpaceName colorSpaceName)
@@ -293,6 +313,10 @@ ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const Effe
         return ErrorCode::SUCCESS;
     }
 
+    if (buffer->extraInfo_->dataType == DataType::TEX) {
+        return ErrorCode::ERR_COLORSPACE_NOT_SUPPORT_CONVERT;
+    }
+
     EFFECT_LOGI("ColorSpaceHelper::DecomposeHdrImage");
     std::shared_ptr<Memory> oldMemory = context->memoryManager_->GetMemoryByAddr(buffer->buffer_);
     std::shared_ptr<EffectBuffer> sdrImage = nullptr;
@@ -324,6 +348,10 @@ ErrorCode ColorSpaceHelper::ConvertColorSpace(std::shared_ptr<EffectBuffer> &src
 {
     EffectColorSpace colorSpace = srcBuffer->bufferInfo_->colorSpace_;
     EFFECT_LOGD("ConvertColorSpace: colorSpace=%{public}d", colorSpace);
+
+    if (srcBuffer->extraInfo_->dataType == DataType::TEX && !IsTexSupportedColorSpace(colorSpace)) {
+        return ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE;
+    }
 
     // If color space is none, it means that color space is not supported. But it still should return success,
     // because the real color space maybe defined as ColorSpaceName::CUSTOM in ExtDecoder::getGrColorSpace or

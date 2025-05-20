@@ -179,6 +179,7 @@ ohos_shared_library("image_effect") {
   ]
 
   sources = [
+    "$image_effect_root_dir/frameworks/native/efilter/custom/filter_delegate.cpp",
     "$image_effect_root_dir/frameworks/native/capi/image_effect.cpp",
     "$image_effect_root_dir/frameworks/native/capi/image_effect_filter.cpp",
     "$image_effect_root_dir/frameworks/native/capi/native_common_utils.cpp",

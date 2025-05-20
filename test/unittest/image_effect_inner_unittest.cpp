@@ -24,6 +24,7 @@
 #include "mock_picture.h"
 #include "mock_producer_surface.h"
 #include "external_loader.h"
+#include "color_space.h"
 
 using namespace testing::ext;
 using ::testing::_;
@@ -315,6 +316,53 @@ HWTEST_F(ImageEffectInnerUnittest, SetOutNativeWindow_002, TestSize.Level1)
     ASSERT_NE(result, ErrorCode::SUCCESS);
     delete nativeWindow;
     nativeWindow = nullptr;
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetInputTexture_001, TestSize.Level1)
+{
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+    ErrorCode result = imageEffect_->SetInputTexture(0, 0);
+    ASSERT_NE(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetInputTexture_002, TestSize.Level1)
+{
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+    ErrorCode result = imageEffect_->SetInputTexture(2, 0);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputTexture_001, TestSize.Level1)
+{
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+    ErrorCode result = imageEffect_->SetOutputTexture(0);
+    ASSERT_NE(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputTexture_002, TestSize.Level1)
+{
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+    ErrorCode result = imageEffect_->SetOutputTexture(2);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, RenderTexture_001, TestSize.Level1)
+{
+    std::shared_ptr<ImageEffect> imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
+    std::shared_ptr<RenderEnvironment> env = std::make_shared<RenderEnvironment>();
+    env->Init();
+    RenderTexturePtr inTex = env->RequestBuffer(1080, 1920);
+    RenderTexturePtr outTex = env->RequestBuffer(1080, 1920);
+    ErrorCode result = imageEffect_->SetInputTexture(inTex->GetName(), ColorManager::ColorSpaceName::SRGB);
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    result = imageEffect_->SetOutputTexture(outTex->GetName());
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
+    std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
+    Plugin::Any value = 70.f;
+    efilter->SetValue(KEY_FILTER_INTENSITY, value);
+    imageEffect_->AddEFilter(efilter);
+    result = imageEffect_->Start();
+    ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, ReplaceEFilter_001, TestSize.Level1)

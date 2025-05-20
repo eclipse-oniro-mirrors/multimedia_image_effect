@@ -107,7 +107,9 @@ ErrorCode UpdateInputBufferIfNeed(std::shared_ptr<EffectBuffer> &srcBuffer, std:
         return ErrorCode::SUCCESS;
     }
     context->renderEnvironment_->BeginFrame();
-    context->renderEnvironment_->GenTex(srcBuffer, buffer);
+    if (srcBuffer->bufferInfo_->tex_ == nullptr) {
+        context->renderEnvironment_->GenTex(srcBuffer, buffer);
+    }
     return ErrorCode::SUCCESS;
 }
 

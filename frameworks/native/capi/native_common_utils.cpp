@@ -286,11 +286,20 @@ void NativeCommonUtils::SwitchToEffectInfo(const OH_EffectFilterInfo *info,
 {
     CHECK_AND_RETURN_LOG(info != nullptr, "SwitchToEffectInfo: info is null!");
     effectInfo->category_ = Category::DEFAULT;
+    std::vector<IPType> types = {};
+    if (info->supportedBufferTypes.find(ImageEffect_BufferType::EFFECT_BUFFER_TYPE_PIXEL)
+        != info->supportedBufferTypes.end()) {
+        types.emplace_back(IPType::CPU);
+    }
+    if (info->supportedBufferTypes.find(ImageEffect_BufferType::EFFECT_BUFFER_TYPE_TEXTURE)
+        != info->supportedBufferTypes.end()) {
+        types.emplace_back(IPType::GPU);
+    }
     for (const auto &format: FORMAT_TABLE) {
         ImageEffect_Format ohFormat = format.second;
         if (ohFormat != ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN &&
             info->supportedFormats.find(ohFormat) != info->supportedFormats.end()) {
-            effectInfo->formats_.emplace(format.first, std::vector<IPType>{ IPType::CPU });
+            effectInfo->formats_.emplace(format.first, types);
         }
     }
 

@@ -30,6 +30,9 @@ public:
     static GLuint CreateTexture2D(GLsizei width, GLsizei height, GLsizei levels, GLenum internalFormat,
         GLint minFilter, GLint magFilter, GLint wrapS, GLint wrapT);
 
+    IMAGE_EFFECT_EXPORT
+    static void CreateDefaultTexture(GLsizei width, GLsizei height, GLenum internalFormat, GLuint textureId);
+
     IMAGE_EFFECT_EXPORT static unsigned int CreateFramebuffer(unsigned int textureId = 0);
 
     static unsigned int CreateFramebufferWithTarget(unsigned int textureId, GLenum target);
@@ -54,6 +57,12 @@ public:
     static GLuint CreateTextureFromImage(EGLImageKHR img);
 
     static GLuint CreateTextureFromSurfaceBuffer(SurfaceBuffer *buffer);
+
+    IMAGE_EFFECT_EXPORT static unsigned int GetTexWidth(GLuint texture);
+
+    IMAGE_EFFECT_EXPORT static unsigned int GetTexHeight(GLuint texture);
+
+    IMAGE_EFFECT_EXPORT static unsigned int GetTexFormat(GLuint texture);
 
     static void DestroyImage(EGLImageKHR img);
 
