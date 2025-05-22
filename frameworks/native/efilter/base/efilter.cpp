@@ -722,12 +722,18 @@ ErrorCode EFilter::RenderInner(std::shared_ptr<EffectBuffer> &src, std::shared_p
 
 void EFilter::InitContext(std::shared_ptr<EffectContext> &context, IPType &runningType, bool isCustomEnv)
 {
-    context->ipType_ = runningType;
-    context->memoryManager_->SetIPType(runningType);
-
+    context->memoryManager_ = std::make_shared<EffectMemoryManager>();
+    context->renderStrategy_ = std::make_shared<RenderStrategy>();
+    context->capNegotiate_ = std::make_shared<CapabilityNegotiate>();
     context->renderEnvironment_ = std::make_shared<RenderEnvironment>();
     context->renderEnvironment_->Init(isCustomEnv);
     context->renderEnvironment_->Prepare();
+    context->colorSpaceManager_ = std::make_shared<ColorSpaceManager>();
+    context->cacheNegotiate_ = std::make_shared<EFilterCacheNegotiate>();
+    context->metaInfoNegotiate_ = std::make_shared<EfilterMetaInfoNegotiate>();
+    context->ipType_ = runningType;
+    context->memoryManager_->SetIPType(runningType);
+
 }
 
 ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
