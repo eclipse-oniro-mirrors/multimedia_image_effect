@@ -130,6 +130,7 @@ ohos_shared_library("image_effect_impl") {
     "graphic_2d:color_manager",
     "graphic_2d:librender_service_client",
     "graphic_surface:surface",
+    "graphic_surface:sync_fence",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
