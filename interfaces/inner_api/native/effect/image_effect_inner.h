@@ -19,6 +19,10 @@
 #include <vector>
 #include <mutex>
 #include <unordered_set>
+#include <queue>
+#include <optional>
+#include <condition_variable>
+#include <utility>
 
 #include "any.h"
 #include "effect.h"
@@ -29,6 +33,8 @@
 #include "image_effect_marco_define.h"
 #include "render_thread.h"
 #include "picture.h"
+
+#define TIME_FOR_WAITING_BUFFER 2500
 
 namespace OHOS {
 namespace Media {
@@ -59,6 +65,111 @@ struct BufferProcessInfo {
     sptr<SyncFence> inBufferSyncFence_;
     sptr<SyncFence> outBufferSyncFence_;
     bool isSrcHebcData_ = false;
+};
+
+struct BufferEntry {
+    uint32_t seqNum_;
+    sptr<SurfaceBuffer> buffer_;
+    sptr<SyncFence> syncFence_;
+    int64_t timestamp_;
+};
+
+template <typename T>
+class ThreadSafeBufferQueue {
+public:
+    explicit ThreadSafeBufferQueue(size_t max_capacity = std::numeric_limits<size_t>::max())
+        : max_capacity_(std::max<size_t>(1, max_capacity)) {}
+
+    ThreadSafeBufferQueue(const ThreadSafeBufferQueue&) = delete;
+    ThreadSafeBufferQueue& operator=(const ThreadSafeBufferQueue&) = delete;
+
+    bool TryPush(T&& element, bool wait = true,
+        std::chrono::milliseconds timeout = std::chrono::milliseconds(TIME_FOR_WAITING_BUFFER))
+    {
+        std::unique_lock lock(mutex_);
+
+        if (!wait) {
+            return queue_.size() < max_capacity_ ? CommitPush(std::forward<T>(element), lock) : false;
+        }
+
+        if (!WaitForSpace(lock, timeout)) {
+            return false;
+        }
+
+        return CommitPush(std::forward<T>(element), lock);
+    }
+
+    std::optional<T> TryPop(bool wait = true, std::chrono::milliseconds timeout = std::chrono::milliseconds::zero())
+    {
+        std::unique_lock lock(mutex_);
+        if (!wait) {
+            return !queue_.empty() ? CommitPop(lock) : std::nullopt;
+        }
+
+        if (!WaitForData(lock, timeout)) {
+            return std::nullopt;
+        }
+
+        return CommitPop(lock);
+    }
+
+    size_t Size() const
+    {
+        std::lock_guard lock(mutex_);
+        return queue_.size();
+    }
+
+private:
+    template<typename Rep = int, typename Period = std::milli>
+    bool WaitForSpace(std::unique_lock<std::mutex>& lock, const std::chrono::duration<Rep, Period>& timeout)
+    {
+        if (timeout > std::chrono::duration<Rep, Period>::zero()) {
+            return not_full_cv_.wait_for(lock, timeout, [this] {
+                return queue_.size() < max_capacity_;
+            });
+        }
+        not_full_cv_.wait(lock, [this] {
+            return queue_.size() < max_capacity_;
+        });
+        return true;
+    }
+
+    template<typename Rep = int, typename Period = std::milli>
+    bool WaitForData(std::unique_lock<std::mutex>& lock, const std::chrono::duration<Rep, Period>& timeout)
+    {
+        if (timeout > std::chrono::duration<Rep, Period>::zero()) {
+            return not_empty_cv_.wait_for(lock, timeout, [this] {
+                return !queue_.empty();
+            });
+        }
+        not_empty_cv_.wait(lock, [this] {
+            return !queue_.empty();
+        });
+        return true;
+    }
+
+    bool CommitPush(T&& element, std::unique_lock<std::mutex>& lock)
+    {
+        queue_.emplace(std::forward<T>(element));
+        lock.unlock();
+        not_empty_cv_.notify_one();
+        return true;
+    }
+
+    std::optional<T> CommitPop(std::unique_lock<std::mutex>& lock)
+    {
+        T element = std::move(queue_.front());
+        queue_.pop();
+        lock.unlock();
+        not_full_cv_.notify_one();
+        return element;
+    }
+
+    mutable std::mutex mutex_;
+    std::queue<T> queue_;
+    std::condition_variable not_full_cv_;
+    std::condition_variable not_empty_cv_;
+    const size_t max_capacity_;
 };
 
 class ImageEffect : public Effect {
@@ -153,7 +264,8 @@ private:
 
     void ConsumerBufferWithGPU(sptr<SurfaceBuffer>& buffer);
     void OnBufferAvailableWithCPU();
-    bool RenderBuffer(sptr<SurfaceBuffer>& inBuffer, sptr<SurfaceBuffer>& outBuffer, int64_t& timestamp);
+    bool SubmitRenderTask(BufferEntry&& entry);
+    void RenderBuffer();
     GSError FlushBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& fence, bool isNeedAttach, bool sendFence,
         int64_t& timestamp);
     GSError ReleaseBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& fence);
@@ -207,6 +319,7 @@ private:
     std::atomic_ullong m_currentTaskId{0};
     bool needPreFlush_ = false;
     uint32_t failureCount_ = 0;
+    std::shared_ptr<ThreadSafeBufferQueue<BufferEntry>> bufferPool_;
 };
 } // namespace Effect
 } // namespace Media

@@ -1103,37 +1103,41 @@ void SetSurfaceBufferHebcAccessType(sptr<SurfaceBuffer> &buffer, V1_1::HebcAcces
     CHECK_AND_RETURN_LOG(res == 0, "SetSurfaceBufferHebcAccessType: SetMetadata fail! res=%{public}d", res);
 }
 
-bool ImageEffect::RenderBuffer(sptr<SurfaceBuffer> &inBuffer, sptr<SurfaceBuffer> &outBuffer, int64_t& timestamp)
+void SetSurfaceBufferRequestHebcAccessType(sptr<SurfaceBuffer> &buffer, V1_1::HebcAccessType hebcAccessType)
 {
-    std::vector<uint32_t> keys = {};
-    CHECK_AND_RETURN_RET_LOG(inBuffer != nullptr, true, "CopyMetaData: inBuffer is nullptr");
-    auto ret = inBuffer->ListMetadataKeys(keys);
-    CHECK_AND_RETURN_RET_LOG(ret == GSError::GSERROR_OK, true,
-        "CopyMetaData: ListMetadataKeys fail! res=%{public}d", ret);
-    for (uint32_t key : keys) {
-        std::vector<uint8_t> values;
-        ret = inBuffer->GetMetadata(key, values);
-        if (ret != 0) {
-            EFFECT_LOGE("GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-            continue;
-        }
-        ret = outBuffer->SetMetadata(key, values);
-        if (ret != 0) {
-            EFFECT_LOGE("SetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-            continue;
-        }
-    }
+    std::vector<uint8_t> values;
+    auto res = MetadataHelper::ConvertMetadataToVec(hebcAccessType, values);
+    CHECK_AND_RETURN_LOG(res == 0,
+        "SetSurfaceBufferRequestHebcAccessType: ConvertVecToMetadata fail! res=%{public}d", res);
+
+    V1_1::BufferHandleAttrKey key = V1_1::BufferHandleAttrKey::ATTRKEY_REQUEST_ACCESS_TYPE;
+    res = buffer->SetMetadata(key, values, false);
+    CHECK_AND_RETURN_LOG(res == 0,
+        "SetSurfaceBufferRequestHebcAccessType: SetMetadata fail! res=%{public}d", res);
+}
+
+void ImageEffect::RenderBuffer()
+{
+    auto entry = bufferPool_->TryPop(false);
+    CHECK_AND_RETURN_LOG(entry != std::nullopt, "ProcessRender: No available buffer in bufferPool!");
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
     inDateInfo_.surfaceBufferInfo_ = {
-        .surfaceBuffer_ = inBuffer,
-        .timestamp_ = timestamp,
+        .surfaceBuffer_ = entry->buffer_,
+        .timestamp_ = entry->timestamp_,
     };
     outDateInfo_.surfaceBufferInfo_ = {
-        .surfaceBuffer_ = outBuffer,
-        .timestamp_ = timestamp,
+        .surfaceBuffer_ = entry->buffer_,
+        .timestamp_ = entry->timestamp_,
     };
     impl_->effectContext_->renderEnvironment_->NotifyInputChanged();
-    ErrorCode res = this->Render();
-    return res != ErrorCode::SUCCESS;
+    this->Render();
+    if (impl_->effectContext_->logStrategy_ == LOG_STRATEGY::NORMAL) {
+        impl_->effectContext_->logStrategy_ = LOG_STRATEGY::LIMITED;
+    }
+
+    EFFECT_LOGD("ProcessRender: FlushBuffer: %{public}d", entry->buffer_->GetSeqNum());
+    auto ret = FlushBuffer(entry->buffer_, entry->syncFence_, true, true, entry->timestamp_);
+    CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK, "ProcessRender: FlushBuffer fail! ret=%{public}d", ret);
 }
 
 BufferRequestConfig ImageEffect::GetBufferRequestConfig(const sptr<SurfaceBuffer>& buffer)
@@ -1162,9 +1166,9 @@ GSError ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, sptr<SyncFenc
     };
 
     CHECK_AND_RETURN_RET_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT, GSERROR_NOT_INIT,
-        "ProcessRender: ImageEffect not exist.");
+        "FlushBuffer: ImageEffect not exist.");
     CHECK_AND_RETURN_RET_LOG(toProducerSurface_ != nullptr, GSERROR_NOT_INIT,
-        "ProcessRender: toProducerSurface is nullptr.");
+        "FlushBuffer: toProducerSurface is nullptr.");
 
     auto ret = GSError::GSERROR_OK;
     const sptr<SyncFence> invalidFence = SyncFence::InvalidFence();
@@ -1193,12 +1197,23 @@ GSError ImageEffect::ReleaseBuffer(sptr<OHOS::SurfaceBuffer> &buffer, sptr<OHOS:
     return ret;
 }
 
+bool ImageEffect::SubmitRenderTask(BufferEntry &&entry)
+{
+    bool success = bufferPool_->TryPush(std::move(entry));
+    EFFECT_LOGI("SubmitRenderTask: bufferPool size: %{public}d", (int)bufferPool_->Size());
+    CHECK_AND_RETURN_RET_LOG(m_renderThread, true, "SubmitRenderTask: m_renderThread is null!");
+    CHECK_AND_RETURN_RET_LOG(success, true, "SubmitRenderTask: bufferPool push failed!");
+
+    auto task = std::make_shared<RenderTask<>>([this]() {
+        RenderBuffer();
+    }, COMMON_TASK_TAG + 1, m_currentTaskId.fetch_add(1));
+    m_renderThread->AddTask(task);
+    return false;
+}
+
 void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNeedSwap, int64_t& timestamp)
 {
-    sptr<SurfaceBuffer> inBuffer = bufferProcessInfo.inBuffer_;
-    sptr<SurfaceBuffer> outBuffer = bufferProcessInfo.outBuffer_;
-    sptr<SyncFence> inBufferSyncFence = bufferProcessInfo.inBufferSyncFence_;
-    sptr<SyncFence> outBufferSyncFence = bufferProcessInfo.outBufferSyncFence_;
+    auto& [inBuffer, outBuffer, inBufferSyncFence, outBufferSyncFence, isSrcHebcData] = bufferProcessInfo;
 
     constexpr uint32_t waitForEver = -1;
     (void)inBufferSyncFence->Wait(waitForEver);
@@ -1211,9 +1226,9 @@ void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNe
 
     CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr, "ProcessRender: toProducerSurface is nullptr.");
     auto requestConfig = GetBufferRequestConfig(inBuffer);
-    auto ret = toProducerSurface_->RequestBuffer(outBuffer, outBufferSyncFence, requestConfig);
+    auto ret = toProducerSurface_->RequestAndDetachBuffer(outBuffer, outBufferSyncFence, requestConfig);
     if (ret != 0 || outBuffer == nullptr) {
-        EFFECT_LOGE("ProcessRender::RequestBuffer failed. %{public}d", ret);
+        EFFECT_LOGE("ProcessRender::RequestAndDetachBuffer failed. %{public}d", ret);
         return;
     }
     CHECK_AND_RETURN_LOG(inBuffer != nullptr && outBuffer != nullptr,
@@ -1221,33 +1236,30 @@ void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNe
     EFFECT_LOGD("ProcessRender: inBuffer: %{public}d, outBuffer: %{public}d",
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
-    (void)outBufferSyncFence->Wait(waitForEver);
+    ret = impl_->DetachConsumerSurfaceBuffer(inBuffer);
+    if (ret != GSError::GSERROR_OK) {
+        EFFECT_LOGE("ProcessRender: DetachConsumerSurfaceBuffer failed. %{public}d", ret);
+        ReleaseBuffer(inBuffer, inBufferSyncFence);
+        FlushBuffer(outBuffer, outBufferSyncFence, true, true, timestamp);
+        return;
+    }
 
-    SetSurfaceBufferHebcAccessType(outBuffer, bufferProcessInfo.isSrcHebcData_ ?
+    SetSurfaceBufferRequestHebcAccessType(outBuffer, V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
+    ret = impl_->AttachConsumerSurfaceBuffer(outBuffer);
+    if (ret != GSError::GSERROR_OK) {
+        EFFECT_LOGE("ProcessRender: AttachConsumerSurfaceBuffer failed. %{public}d", ret);
+    }
+
+    ret = ReleaseBuffer(outBuffer, outBufferSyncFence);
+    if (ret != GSError::GSERROR_OK) {
+        EFFECT_LOGE("ProcessRender: ReleaseConsumerSurfaceBuffer failed. %{public}d", ret);
+        impl_->DetachConsumerSurfaceBuffer(outBuffer);
+        return;
+    }
+
+    SetSurfaceBufferHebcAccessType(outBuffer, isSrcHebcData ?
         V1_1::HebcAccessType::HEBC_ACCESS_HW_ONLY : V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
-
-    isNeedSwap = RenderBuffer(inBuffer, outBuffer, timestamp);
-    if (isNeedSwap) return;
-
-    {
-        EFFECT_TRACE_BEGIN("ProcessRender: FlushCache");
-        (void)outBuffer->FlushCache();
-        EFFECT_TRACE_END();
-    }
-
-    if (impl_->effectContext_->logStrategy_ == LOG_STRATEGY::NORMAL) {
-        impl_->effectContext_->logStrategy_ = LOG_STRATEGY::LIMITED;
-    }
-
-    EFFECT_LOGD("ProcessRender: ReleaseBuffer: %{public}d, FlushBuffer: %{public}d",
-        inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
-
-    ret = impl_->ReleaseConsumerSurfaceBuffer(inBuffer, SyncFence::INVALID_FENCE);
-    CHECK_AND_PRINT_LOG(ret == GSError::GSERROR_OK,
-        "ProcessRender: ReleaseConsumerSurfaceBuffer failed. %{public}d", ret);
-
-    ret = FlushBuffer(outBuffer, outBufferSyncFence, false, false, timestamp);
-    CHECK_AND_RETURN_LOG(ret == GSError::GSERROR_OK, "ProcessRender: FlushBuffer failed. %{public}d", ret);
+    isNeedSwap = SubmitRenderTask({inBuffer->GetSeqNum(), inBuffer, inBufferSyncFence, timestamp});
 }
 
 void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64_t& timestamp)
@@ -1265,9 +1277,9 @@ void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64
         return;
     }
     CHECK_AND_RETURN_LOG(inBuffer != nullptr && outBuffer != nullptr,
-        "ProcessRender: inBuffer or outBuffer is nullptr");
+        "ProcessSwapBuffers: inBuffer or outBuffer is nullptr");
     // outBuffer requestAndDetached from XC
-    EFFECT_LOGD("ProcessRender: inBuffer: %{public}d, outBuffer: %{public}d",
+    EFFECT_LOGD("ProcessSwapBuffers: inBuffer: %{public}d, outBuffer: %{public}d",
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
     ret = impl_->DetachConsumerSurfaceBuffer(inBuffer);
@@ -1353,19 +1365,14 @@ void ImageEffect::ConsumerBufferAvailable()
 {
     CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
         "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
-    auto taskId = m_currentTaskId.fetch_add(1);
-    auto task = std::make_shared<RenderTask<>>([this] () {
-        if (!impl_->isQosEnabled_) {
-            OHOS::QOS::SetThreadQos(OHOS::QOS::QosLevel::QOS_USER_INTERACTIVE);
-            impl_->isQosEnabled_ = true;
-        }
-        std::unique_lock<std::mutex> lock(innerEffectMutex_);
-        CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
-            "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
-        OnBufferAvailableWithCPU();
-    }, 0, taskId);
-    m_renderThread->AddTask(task);
-    task->Wait();
+    if (!impl_->isQosEnabled_) {
+        OHOS::QOS::SetThreadQos(OHOS::QOS::QosLevel::QOS_USER_INTERACTIVE);
+        impl_->isQosEnabled_ = true;
+    }
+    std::unique_lock<std::mutex> lock(innerEffectMutex_);
+    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
+        "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
+    OnBufferAvailableWithCPU();
 }
 
 sptr<Surface> ImageEffect::GetInputSurface()
@@ -1390,6 +1397,12 @@ sptr<Surface> ImageEffect::GetInputSurface()
     if (impl_->surfaceAdapter_) {
         impl_->surfaceAdapter_->SetConsumerListener(std::move(consumerListener));
     }
+
+    int maxBufferPoolSize = std::max(fromProducerSurface_->GetQueueSize(),
+        impl_->surfaceAdapter_->GetProducerSurface()->GetQueueSize());
+    maxBufferPoolSize = std::min(maxBufferPoolSize, RENDER_QUEUE_SIZE);
+    EFFECT_LOGI("GetInputSurface: maxBufferPoolSize=%{public}d", maxBufferPoolSize);
+    bufferPool_ = std::make_shared<ThreadSafeBufferQueue<BufferEntry>>(maxBufferPoolSize);
 
     return fromProducerSurface_;
 }
