@@ -35,6 +35,7 @@ void ExternLoader::LoadExtSo()
     if (isExtLoad_) {
         return;
     }
+
     void *effectExtHandle = dlopen("libimage_effect_ext.so", RTLD_NOW);
     if (effectExtHandle == nullptr) {
         EFFECT_LOGE("EFilterFactory: dlopen libimage_effect_ext.so failed! dlerror=%{public}s", dlerror());
@@ -42,11 +43,47 @@ void ExternLoader::LoadExtSo()
         return;
     }
     EFFECT_LOGI("EFilterFactory: dlopen libimage_effect_ext.so success!");
-    initFunc_ = reinterpret_cast<InitModuleFunc>(dlsym(effectExtHandle, "Init"));
-    deinitFunc_ = reinterpret_cast<InitModuleFunc>(dlsym(effectExtHandle, "Deinit"));
-    initModuleFunc_ = reinterpret_cast<InitModuleFunc>(dlsym(effectExtHandle, "InitModule"));
-    deinitModuleFunc_ = reinterpret_cast<InitModuleFunc>(dlsym(effectExtHandle, "DeinitModule"));
-    isExtLoad_ = true;
+
+    bool allSymbolsLoaded = true;  // 用于跟踪所有符号是否加载成功
+
+    void* initFunc = dlsym(effectExtHandle, "Init");
+    if (!initFunc) {
+        EFFECT_LOGE("EFilterFactory: dlsym Init failed! dlerror=%{public}s", dlerror());
+        allSymbolsLoaded = false;
+    }
+
+    void* deinitFunc = dlsym(effectExtHandle, "Deinit");
+    if (!deinitFunc) {
+        EFFECT_LOGE("EFilterFactory: dlsym Deinit failed! dlerror=%{public}s", dlerror());
+        allSymbolsLoaded = false;
+    }
+
+    void* initModuleFunc = dlsym(effectExtHandle, "InitMoudle");
+    if (!initModuleFunc) {
+        EFFECT_LOGE("EFilterFactory: dlsym InitMoudle failed! dlerror=%{public}s", dlerror());
+        allSymbolsLoaded = false;
+    }
+
+    void* deinitModuleFunc = dlsym(effectExtHandle, "DeinitModule");
+    if (!deinitModuleFunc) {
+        EFFECT_LOGE("EFilterFactory: dlsym DeinitModule failed! dlerror=%{public}s", dlerror());
+        allSymbolsLoaded = false;
+    }
+
+    // 如果dlsym调用成功， 将临时指针赋值给类成员
+    if (allSymbolsLoaded) {
+        initFunc_ = reinterpret_cast<InitModuleFunc>(initFunc);
+        deinitFunc_ = reinterpret_cast<InitModuleFunc>(deinitFunc);
+        initModuleFunc_ = reinterpret_cast<InitModuleFunc>(initModuleFunc);
+        deinitModuleFunc_ = reinterpret_cast<InitModuleFunc>(deinitModuleFunc);
+        isExtLoad_ = true;
+    } else {
+        // 如果有任何dlsym调用失败， 关闭动态链接库
+        dlclose(effectExtHandle);
+        effectExtHandle = nullptr;
+        isExtLoad_ = false;
+        EFFECT_LOGE("EFilterFactory: LoadExtSo failed due to dlsym errors.");
+    }
 }
 
 bool ExternLoader::IsExtLoad() const
