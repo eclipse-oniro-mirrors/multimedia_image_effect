@@ -390,16 +390,17 @@ ErrorCode ChooseGPU(const std::vector<std::shared_ptr<Capability>> &caps, IEffec
     std::vector<IPType> &configIPTypes, bool isTexInput)
 {
     IPType runningIPType = IPType::DEFAULT;
+    IEffectFormat tempEffectFormat = effectFormat;
     for (const auto &capability : caps) {
         if (capability == nullptr || capability->pixelFormatCap_ == nullptr) {
             continue;
         }
-        AdjustEffectFormat(effectFormat);
+        AdjustEffectFormat(tempEffectFormat);
         std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
-        auto it = formats.find(effectFormat);
+        auto it = formats.find(tempEffectFormat);
         if (it == formats.end()) {
             EFFECT_LOGE("effectFormat not support! effectFormat=%{public}d, name=%{public}s",
-                effectFormat, capability->name_.c_str());
+                tempEffectFormat, capability->name_.c_str());
             return ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE;
         }
 
@@ -449,6 +450,7 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     bool isTextureInput = srcEffectBuffer->extraInfo_->dataType == DataType::TEX;
     ErrorCode res = ChooseGPU(caps, effectFormat, configIPTypes, isTextureInput);
     if (res != ErrorCode::SUCCESS) {
+        CHECK_AND_RETURN_RET_LOG(!isTextureInput, res, "ChooseIPType failed");
         res = ChooseCPU(caps, effectFormat, configIPTypes);
         runningIPType = IPType::CPU;
     } else {
@@ -672,25 +674,51 @@ ErrorCode ImageEffect::SetOutputPath(const std::string &path)
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode CheckPixelmapColorSpace(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
+    std::shared_ptr<EffectBuffer> &dstEffectBuffer)
+{
+    // the format for pixel map is same or not.
+    CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->bufferInfo_->formatType_ == dstEffectBuffer->bufferInfo_->formatType_,
+        ErrorCode::ERR_NOT_SUPPORT_DIFF_FORMAT,
+        "not support different format. srcFormat=%{public}d, dstFormat=%{public}d",
+        srcEffectBuffer->bufferInfo_->formatType_, dstEffectBuffer->bufferInfo_->formatType_);
+
+    if (srcEffectBuffer->extraInfo_->dataType == DataType::TEX) {
+        return ErrorCode::SUCCESS;
+    }
+
+    // color space is same or not.
+    EffectColorSpace srcColorSpace = srcEffectBuffer->bufferInfo_->colorSpace_;
+    EffectColorSpace dstColorSpace = dstEffectBuffer->bufferInfo_->colorSpace_;
+    bool isSrcHdr = ColorSpaceHelper::IsHdrColorSpace(srcColorSpace);
+    bool isDstHdr = ColorSpaceHelper::IsHdrColorSpace(dstColorSpace);
+    CHECK_AND_RETURN_RET_LOG(isSrcHdr == isDstHdr, ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
+        "not support different colorspace. src=%{public}d, dst=%{public}d", srcColorSpace, dstColorSpace);
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     std::shared_ptr<EffectBuffer> &dstEffectBuffer)
 {
     CHECK_AND_RETURN_RET_LOG(srcEffectBuffer != nullptr, ErrorCode::ERR_PARSE_FOR_EFFECT_BUFFER_FAIL,
         "invalid srcEffectBuffer");
+    CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->bufferInfo_ != nullptr, ErrorCode::ERR_BUFFER_INFO_NULL,
+        "buffer info is null! srcBufferInfo=%{public}d", srcEffectBuffer->bufferInfo_ == nullptr);
+    CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->extraInfo_ != nullptr, ErrorCode::ERR_EXTRA_INFO_NULL,
+        "extra info is null! srcExtraInfo=%{public}d", srcEffectBuffer->extraInfo_ == nullptr);
 
     // allow developers not to set the out parameter.
     if (dstEffectBuffer == nullptr) {
+        if (srcEffectBuffer->extraInfo_->dataType == DataType::TEX) {
+            return ErrorCode::ERR_NO_DST_TEX;
+        }
         return ErrorCode::SUCCESS;
     }
 
-    CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->bufferInfo_ != nullptr && dstEffectBuffer->bufferInfo_ != nullptr,
-        ErrorCode::ERR_BUFFER_INFO_NULL,
-        "buffer info is null! srcBufferInfo=%{public}d, dstBufferInfo=%{public}d",
-        srcEffectBuffer->bufferInfo_ == nullptr, dstEffectBuffer->bufferInfo_ == nullptr);
-    CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->extraInfo_ != nullptr && dstEffectBuffer->extraInfo_ != nullptr,
-        ErrorCode::ERR_EXTRA_INFO_NULL,
-        "extra info is null! srcExtraInfo=%{public}d, dstExtraInfo=%{public}d",
-        srcEffectBuffer->extraInfo_ == nullptr, dstEffectBuffer->extraInfo_ == nullptr);
+    CHECK_AND_RETURN_RET_LOG(dstEffectBuffer->bufferInfo_ != nullptr, ErrorCode::ERR_BUFFER_INFO_NULL,
+        "buffer info is null! srcBufferInfo=%{public}d", dstEffectBuffer->bufferInfo_ == nullptr);
+    CHECK_AND_RETURN_RET_LOG(dstEffectBuffer->extraInfo_ != nullptr, ErrorCode::ERR_EXTRA_INFO_NULL,
+        "extra info is null! dstExtraInfo=%{public}d", dstEffectBuffer->extraInfo_ == nullptr);
 
     if (dstEffectBuffer->bufferInfo_->tex_ != nullptr && dstEffectBuffer->bufferInfo_->tex_->Width() == 0
         && dstEffectBuffer->bufferInfo_->tex_->Height() == 0) {
@@ -716,25 +744,17 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     CHECK_AND_RETURN_RET_LOG(dataTypeCheckFunc(srcDataType, dtsDataType), ErrorCode::ERR_NOT_SUPPORT_DIFF_DATATYPE,
         "not supported dataType. srcDataType=%{public}d, dstDataType=%{public}d", srcDataType, dtsDataType);
 
+    if (srcEffectBuffer->bufferInfo_->tex_ != nullptr && dstEffectBuffer->bufferInfo_->tex_ != nullptr) {
+        unsigned int input = srcEffectBuffer->bufferInfo_->tex_->GetName();
+        unsigned int output = dstEffectBuffer->bufferInfo_->tex_->GetName();
+        if (input == output) {
+            return ErrorCode::ERR_INVALID_TEXTURE;
+        }
+    }
+
     // color space is same or not.
     if (srcDataType == DataType::PIXEL_MAP && dtsDataType != DataType::NATIVE_WINDOW) {
-        // the format for pixel map is same or not.
-        CHECK_AND_RETURN_RET_LOG(srcEffectBuffer->bufferInfo_->formatType_ == dstEffectBuffer->bufferInfo_->formatType_,
-            ErrorCode::ERR_NOT_SUPPORT_DIFF_FORMAT,
-            "not support different format. srcFormat=%{public}d, dstFormat=%{public}d",
-            srcEffectBuffer->bufferInfo_->formatType_, dstEffectBuffer->bufferInfo_->formatType_);
-
-        if (srcDataType == DataType::TEX) {
-            return ErrorCode::SUCCESS;
-        }
-
-        // color space is same or not.
-        EffectColorSpace srcColorSpace = srcEffectBuffer->bufferInfo_->colorSpace_;
-        EffectColorSpace dstColorSpace = dstEffectBuffer->bufferInfo_->colorSpace_;
-        bool isSrcHdr = ColorSpaceHelper::IsHdrColorSpace(srcColorSpace);
-        bool isDstHdr = ColorSpaceHelper::IsHdrColorSpace(dstColorSpace);
-        CHECK_AND_RETURN_RET_LOG(isSrcHdr == isDstHdr, ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
-            "not support different colorspace. src=%{public}d, dst=%{public}d", srcColorSpace, dstColorSpace);
+        return CheckPixelmapColorSpace(srcEffectBuffer, dstEffectBuffer);
     }
 
     return ErrorCode::SUCCESS;
@@ -1649,8 +1669,8 @@ ErrorCode ImageEffect::SetInputTexture(int32_t textureId, int32_t colorSpace)
 {
     ClearDataInfo(inDateInfo_);
     inDateInfo_.dataType_ = DataType::TEX;
-    CHECK_AND_RETURN_RET_LOG(textureId != 0, ErrorCode::ERR_INPUT_NULL,
-        "ImageEffect::SetInputTexture: picture is null!");
+    CHECK_AND_RETURN_RET_LOG(textureId > 0, ErrorCode::ERR_INPUT_NULL,
+        "ImageEffect::SetInputTexture: tex is invalid!");
     inDateInfo_.textureInfo_.textureId_ = textureId;
     inDateInfo_.textureInfo_.colorSpace_ = colorSpace;
     return ErrorCode::SUCCESS;
@@ -1660,8 +1680,8 @@ ErrorCode ImageEffect::SetOutputTexture(int32_t textureId)
 {
     ClearDataInfo(outDateInfo_);
     outDateInfo_.dataType_ = DataType::TEX;
-    CHECK_AND_RETURN_RET_LOG(textureId != 0, ErrorCode::ERR_INPUT_NULL,
-        "ImageEffect::SetInputTexture: picture is null!");
+    CHECK_AND_RETURN_RET_LOG(textureId > 0, ErrorCode::ERR_INPUT_NULL,
+        "ImageEffect::SetInputTexture: tex is invalid!");
     outDateInfo_.textureInfo_.textureId_ = textureId;
     return ErrorCode::SUCCESS;
 }

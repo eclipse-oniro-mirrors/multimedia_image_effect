@@ -775,7 +775,12 @@ ErrorCode CommonUtils::ParseTex(unsigned int textureId, unsigned int colorSpace,
     bufferInfo->width_ = GLUtils::GetTexWidth(textureId);
     bufferInfo->height_ = GLUtils::GetTexHeight(textureId);
     bufferInfo->formatType_ = format;
+    if (format == IEffectFormat::RGBA_1010102) {
+        bufferInfo->hdrFormat_ = HdrFormat::HDR10;
+    }
     bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(static_cast<ColorSpaceName>(colorSpace));
+    bufferInfo->rowStride_ = bufferInfo->width_;
+    bufferInfo->len_ = bufferInfo->width_ * bufferInfo->height_ * RGBA_BYTES_PER_PIXEL;
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = DataType::TEX;
     extraInfo->bufferType = BufferType::DMA_BUFFER;
