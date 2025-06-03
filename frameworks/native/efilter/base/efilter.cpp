@@ -629,7 +629,16 @@ std::shared_ptr<EffectContext> CreateEffectContext(std::shared_ptr<EffectBuffer>
 ErrorCode CheckAndUpdateEffectBufferIfNeed(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectContext> &context,
     std::string &name, std::shared_ptr<EffectBuffer> &dst)
 {
-    if (src->bufferInfo_->tex_ != nullptr) {
+    if (src->bufferInfo_->tex_ != nullptr && dst->bufferInfo_->tex_ != nullptr) {
+        unsigned int input = src->bufferInfo_->tex_->GetName();
+        unsigned int output = dst->bufferInfo_->tex_->GetName();
+        if (input == output) {
+            return ErrorCode::ERR_INVALID_TEXTURE;
+        }
+        ErrorCode res = ColorSpaceHelper::ConvertColorSpace(src, context);
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
+            "CheckAndUpdateEffectBufferIfNeed: ConvertColorSpace fail! res=%{public}d, name=%{public}s",
+            res, name.c_str());
         return ErrorCode::SUCCESS;
     }
     if (src->buffer_ == dst->buffer_) {
