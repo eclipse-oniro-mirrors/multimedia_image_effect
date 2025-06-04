@@ -37,7 +37,8 @@ enum class EventDataType {
     URI,
     SURFACE,
     SURFACE_BUFFER,
-    PICTURE
+    PICTURE,
+    TEX,
 };
 
 struct EventErrorInfo {

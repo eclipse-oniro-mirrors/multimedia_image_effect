@@ -389,6 +389,29 @@ ImageEffect_ErrorCode OH_EffectBufferInfo_GetTimestamp(OH_EffectBufferInfo *info
 }
 
 EFFECT_EXPORT
+ImageEffect_ErrorCode OH_EffectBufferInfo_SetTextureId(OH_EffectBufferInfo *info, int32_t textureId)
+{
+    CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "BufferInfoSetTextureId: input parameter info is null!");
+    EFFECT_LOGD("BufferInfoSetTextureId: TextureId=%{public}d", textureId);
+    CHECK_AND_RETURN_RET_LOG(textureId > 0, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "BufferInfoGetTextureId: input parameter textureId is invalid!");
+    info->textureId = textureId;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+}
+
+EFFECT_EXPORT
+ImageEffect_ErrorCode OH_EffectBufferInfo_GetTextureId(OH_EffectBufferInfo *info, int32_t *textureId)
+{
+    CHECK_AND_RETURN_RET_LOG(info != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "BufferInfoGetTextureId: input parameter info is null!");
+    CHECK_AND_RETURN_RET_LOG(textureId != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "BufferInfoGetTextureId: input parameter timestamp is null!");
+    *textureId = info->textureId;
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+}
+
+EFFECT_EXPORT
 ImageEffect_ErrorCode OH_EffectBufferInfo_Release(OH_EffectBufferInfo *info)
 {
     EFFECT_LOGD("Filter release buffer info.");
@@ -623,6 +646,37 @@ ImageEffect_ErrorCode OH_EffectFilter_Render(OH_EffectFilter *filter, OH_Pixelma
     CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_UNKNOWN,
         "FilterRender: filter render fail! errorCode:%{public}d", result);
 
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+}
+
+EFFECT_EXPORT
+ImageEffect_ErrorCode OH_EffectFilter_RenderWithTextureId(OH_EffectFilter *filter, int32_t inputTextureId,
+    int32_t outputTextureId, int32_t colorSpace)
+{
+    EFFECT_LOGI("Filter render with textureId.");
+    CHECK_AND_RETURN_RET_LOG(filter != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "FilterRender: input parameter filter is null!");
+    CHECK_AND_RETURN_RET_LOG(inputTextureId > 0, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "FilterRender: input parameter inputTextureId is invalid!");
+    CHECK_AND_RETURN_RET_LOG(outputTextureId > 0, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "FilterRender: input parameter outputTextureId is invalid!");
+    CHECK_AND_RETURN_RET_LOG(colorSpace > 0, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "FilterRender: input parameter outputTextureId is invalid!");
+    std::shared_ptr<EffectBuffer> inEffectBuffer = nullptr;
+    ErrorCode result = CommonUtils::ParseTex(inputTextureId, colorSpace, inEffectBuffer);
+    if (result != ErrorCode::SUCCESS || inEffectBuffer == nullptr) {
+        EFFECT_LOGE("FilterRender: parse input tex error! errorCode:%{public}d", result);
+        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
+    }
+    std::shared_ptr<EffectBuffer> outEffectBuffer = nullptr;
+    result = CommonUtils::ParseTex(outputTextureId, colorSpace, outEffectBuffer);
+    if (result != ErrorCode::SUCCESS || outEffectBuffer == nullptr) {
+        EFFECT_LOGE("FilterRender: parse output tex error! errorCode:%{public}d", result);
+        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
+    }
+    result = filter->filter_->Render(inEffectBuffer, outEffectBuffer);
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_UNKNOWN,
+        "FilterRender: filter render fail! errorCode:%{public}d", result);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
 
