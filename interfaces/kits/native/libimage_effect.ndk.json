@@ -84,6 +84,14 @@
     "name": "OH_EffectBufferInfo_GetTimestamp"
   },
   {
+    "first_introduced": "20",
+    "name": "OH_EffectBufferInfo_SetTextureId"
+  },
+  {
+    "first_introduced": "20",
+    "name": "OH_EffectBufferInfo_GetTextureId"
+  },
+  {
     "first_introduced": "12",
     "name": "OH_EffectBufferInfo_Release"
   },
@@ -118,6 +126,10 @@
   {
     "first_introduced": "12",
     "name": "OH_EffectFilter_Render"
+  },
+  {
+    "first_introduced": "20",
+    "name": "OH_EffectFilter_RenderWithTextureId"
   },
   {
     "first_introduced": "12",
@@ -210,6 +222,14 @@
   {
     "first_introduced": "13",
     "name": "OH_ImageEffect_SetOutputPicture"
+  },
+  {
+    "first_introduced": "20",
+    "name": "OH_ImageEffect_SetInputTextureId"
+  },
+  {
+    "first_introduced": "20",
+    "name": "OH_ImageEffect_SetOutputTextureId"
   },
   {
     "first_introduced": "12",

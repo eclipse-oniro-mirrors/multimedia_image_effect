@@ -540,6 +540,45 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputPicture(OH_ImageEffect *imageEffec
 }
 
 EFFECT_EXPORT
+ImageEffect_ErrorCode OH_ImageEffect_SetInputTextureId(OH_ImageEffect *imageEffect, int32_t textureId,
+    int32_t colorSpace)
+{
+    std::unique_lock<std::mutex> lock(effectMutex_);
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetInputTextureId: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(textureId > 0, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetInputTextureId: input parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(colorSpace >= 0, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetInputTextureId: input parameter imageEffect is null!");
+    ErrorCode errorCode = imageEffect->imageEffect_->SetInputTexture(textureId, colorSpace);
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
+        "SetInputTextureId: set output picture fail! errorCode=%{public}d", errorCode);
+    EventInfo eventInfo = {
+        .dataType = EventDataType::TEX,
+    };
+    EventReport::ReportHiSysEvent(INPUT_DATA_TYPE_STATISTIC, eventInfo);
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+}
+
+EFFECT_EXPORT
+ImageEffect_ErrorCode OH_ImageEffect_SetOutputTextureId(OH_ImageEffect *imageEffect, int32_t textureId)
+{
+    std::unique_lock<std::mutex> lock(effectMutex_);
+    CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetOutputTextureId: output parameter imageEffect is null!");
+    CHECK_AND_RETURN_RET_LOG(textureId > 0, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetOutputTextureId: output parameter imageEffect is null!");
+    ErrorCode errorCode = imageEffect->imageEffect_->SetOutputTexture(textureId);
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
+        "SetOutputTextureId: set output picture fail! errorCode=%{public}d", errorCode);
+    EventInfo eventInfo = {
+        .dataType = EventDataType::TEX,
+    };
+    EventReport::ReportHiSysEvent(OUTPUT_DATA_TYPE_STATISTIC, eventInfo);
+    return ImageEffect_ErrorCode::EFFECT_SUCCESS;
+}
+
+EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_Start(OH_ImageEffect *imageEffect)
 {
     std::unique_lock<std::mutex> lock(effectMutex_);
