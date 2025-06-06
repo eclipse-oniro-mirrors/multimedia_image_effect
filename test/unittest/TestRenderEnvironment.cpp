@@ -55,19 +55,20 @@ public:
         bufferInfo->len_ = LEN;
         bufferInfo->formatType_ = FORMATE_TYPE;
         bufferInfo->surfaceBuffer_ = nullptr;
-        void *addr = malloc(bufferInfo->len_);
+        addr = malloc(bufferInfo->len_);
 
         std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
         extraInfo->dataType = DataType::PIXEL_MAP;
         extraInfo->bufferType = BufferType::HEAP_MEMORY;
         effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, addr, extraInfo);
-
-        free(addr);
-        addr = nullptr;
     }
 
     void TearDown() override
     {
+        if (addr != nullptr) {
+	    free(addr);
+	    addr = nullptr;
+	}
         effectBuffer = nullptr;
         if (renderEnvironment == nullptr) {
             return;
@@ -75,7 +76,7 @@ public:
         renderEnvironment->ReleaseParam();
         renderEnvironment->Release();
     }
-
+    void *addr = nullptr;
     std::shared_ptr<EffectBuffer> effectBuffer;
     std::shared_ptr<RenderEnvironment> renderEnvironment;
 };
