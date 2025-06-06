@@ -1213,7 +1213,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectSingleFilterUnittest005, TestSize.L
         "ImageEffectSingleFilterUnittest005 OH_EffectFilter_SetValue failed";
 
     errorCode = OH_EffectFilter_Render(filter, pixelmapNative_, pixelmapNative_);
-    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) <<
         "ImageEffectSingleFilterUnittest005 OH_EffectFilter_Render failed";
 
     errorCode = OH_EffectFilter_Release(filter);
