@@ -66,8 +66,8 @@ public:
     void TearDown() override
     {
         if (addr != nullptr) {
-	    free(addr);
-	    addr = nullptr;
+            free(addr);
+            addr = nullptr;
         }
         effectBuffer = nullptr;
         if (renderEnvironment == nullptr) {
