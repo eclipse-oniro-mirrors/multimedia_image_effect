@@ -68,7 +68,7 @@ public:
         if (addr != nullptr) {
 	    free(addr);
 	    addr = nullptr;
-	}
+        }
         effectBuffer = nullptr;
         if (renderEnvironment == nullptr) {
             return;
