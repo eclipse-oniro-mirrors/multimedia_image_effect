@@ -689,6 +689,49 @@ HWTEST_F(TestUtils, JsonHelper004, TestSize.Level1) {
     std::string s = root2->ToString();
 }
 
+void SetAuxiliaryPicture(Picture *testPicture, std::shared_ptr<EffectBuffer>& testEffectBuffer) {
+    OHOS::sptrOHOS::SurfaceBuffer surfaceBuffer = SurfaceBuffer::Create();
+    std::shared_ptr auxiliaryPicture = AuxiliaryPicture::Create(surfaceBuffer,
+	AuxiliaryPictureType::GAINMAP);
+    testPicture->auxiliaryPictures_[AuxiliaryPictureType::GAINMAP] = auxiliaryPicture;
+    auto bf = std::make_shared();
+    bf->bufferType_ = BufferType::DMA_BUFFER;
+    bf->pixelmapType_ = EffectPixelmapType::GAINMAP;
+    std::shared_ptr address(malloc(0), free);
+    bf->addr_ = address.get();
+    (*(testEffectBuffer->auxiliaryBufferInfos))[EffectPixelmapType::GAINMAP] = bf;
+
+    OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer2 = SurfaceBuffer::Create();
+    std::shared_ptr<AuxiliaryPicture> auxiliaryPicture2 = AuxiliaryPicture::Create(surfaceBuffer2,
+        AuxiliaryPictureType::UNREFOCUS_MAP);
+    testPicture->auxiliaryPictures_[AuxiliaryPictureType::UNREFOCUS_MAP] = auxiliaryPicture2;
+    auto bf2 = std::make_shared<BufferInfo>();
+    bf2->bufferType_ = BufferType::DMA_BUFFER;
+    bf2->pixelmapType_ = EffectPixelmapType::UNREFOCUS;
+    bf2->addr_ = address.get();
+    (*(testEffectBuffer->auxiliaryBufferInfos))[EffectPixelmapType::UNREFOCUS] = bf2;
+
+    OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer3 = SurfaceBuffer::Create();
+    std::shared_ptr<AuxiliaryPicture> auxiliaryPicture3 = AuxiliaryPicture::Create(surfaceBuffer3,
+	AuxiliaryPictureType::DEPTH_MAP);
+    testPicture->auxiliaryPictures_[AuxiliaryPictureType::DEPTH_MAP] = auxiliaryPicture3;
+    auto bf3 = std::make_shared<BufferInfo>();
+    bf3->bufferType_ = BufferType::DMA_BUFFER;
+    bf3->pixelmapType_ = EffectPixelmapType::DEPTHMAP;
+    bf3->addr_ = address.get();
+    (*(testEffectBuffer->auxiliaryBufferInfos))[EffectPixelmapType::DEPTHMAP] = bf3;
+
+    OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer4 = SurfaceBuffer::Create();
+    std::shared_ptr<AuxiliaryPicture> auxiliaryPicture4 = AuxiliaryPicture::Create(surfaceBuffer4,
+        AuxiliaryPictureType::LINEAR_MAP);
+    testPicture->auxiliaryPictures_[AuxiliaryPictureType::LINEAR_MAP] = auxiliaryPicture4;
+    auto bf4 = std::make_shared<BufferInfo>();
+    bf4->bufferType_ = BufferType::DMA_BUFFER;
+    bf4->pixelmapType_ = EffectPixelmapType::LINEAR;
+    bf4->addr_ = address.get();
+    (*(testEffectBuffer->auxiliaryBufferInfos))[EffectPixelmapType::LINEAR] = bf4;
+}
+
 HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
 {
     static std::unique_ptr<Picture> g_picture = CreatePictureByPath(TEST_INCLUDE_AUX_PATH);
@@ -701,42 +744,7 @@ HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
     EXPECT_EQ(result, ErrorCode::SUCCESS);
     int n = testEffectBuffer->auxiliaryBufferInfos->size();
     if (n == 0) {
-        OHOS::sptrOHOS::SurfaceBuffer surfaceBuffer = SurfaceBuffer::Create();
-        std::shared_ptr auxiliaryPicture = AuxiliaryPicture::Create(surfaceBuffer, AuxiliaryPictureType::GAINMAP);
-        testPicture->auxiliaryPictures_[AuxiliaryPictureType::GAINMAP] = auxiliaryPicture;
-        auto bf = std::make_shared();
-        bf->bufferType_ = BufferType::DMA_BUFFER;
-        bf->pixelmapType_ = EffectPixelmapType::GAINMAP;
-        std::shared_ptr address(malloc(0), free);
-        bf->addr_ = address.get();
-        (*(testEffectBuffer->auxiliaryBufferInfos))[EffectPixelmapType::GAINMAP] = bf;
-
-        OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer2 = SurfaceBuffer::Create();
-        std::shared_ptr<AuxiliaryPicture> auxiliaryPicture2 = AuxiliaryPicture::Create(surfaceBuffer2, AuxiliaryPictureType::UNREFOCUS_MAP);
-        testPicture->auxiliaryPictures_[AuxiliaryPictureType::UNREFOCUS_MAP] = auxiliaryPicture2;
-        auto bf2 = std::make_shared<BufferInfo>();
-        bf2->bufferType_ = BufferType::DMA_BUFFER;
-        bf2->pixelmapType_ = EffectPixelmapType::UNREFOCUS;
-        bf2->addr_ = address.get();
-        (*(testEffectBuffer->auxiliaryBufferInfos))[EffectPixelmapType::UNREFOCUS] = bf2;
-
-        OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer3 = SurfaceBuffer::Create();
-        std::shared_ptr<AuxiliaryPicture> auxiliaryPicture3 = AuxiliaryPicture::Create(surfaceBuffer3, AuxiliaryPictureType::DEPTH_MAP);
-        testPicture->auxiliaryPictures_[AuxiliaryPictureType::DEPTH_MAP] = auxiliaryPicture3;
-        auto bf3 = std::make_shared<BufferInfo>();
-        bf3->bufferType_ = BufferType::DMA_BUFFER;
-        bf3->pixelmapType_ = EffectPixelmapType::DEPTHMAP;
-        bf3->addr_ = address.get();
-        (*(testEffectBuffer->auxiliaryBufferInfos))[EffectPixelmapType::DEPTHMAP] = bf3;
-
-        OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer4 = SurfaceBuffer::Create();
-        std::shared_ptr<AuxiliaryPicture> auxiliaryPicture4 = AuxiliaryPicture::Create(surfaceBuffer4, AuxiliaryPictureType::LINEAR_MAP);
-        testPicture->auxiliaryPictures_[AuxiliaryPictureType::LINEAR_MAP] = auxiliaryPicture4;
-        auto bf4 = std::make_shared<BufferInfo>();
-        bf4->bufferType_ = BufferType::DMA_BUFFER;
-        bf4->pixelmapType_ = EffectPixelmapType::LINEAR;
-        bf4->addr_ = address.get();
-        (*(testEffectBuffer->auxiliaryBufferInfos))[EffectPixelmapType::LINEAR] = bf4;
+        SetAuxiliaryPicture(testPicture, testEffectBuffer);
     }
     EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->size(), 4);
     EXPECT_EQ(testEffectBuffer->bufferInfo_->pixelmapType_, EffectPixelmapType::PRIMARY);
