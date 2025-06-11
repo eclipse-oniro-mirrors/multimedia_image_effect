@@ -692,12 +692,12 @@ HWTEST_F(TestUtils, JsonHelper004, TestSize.Level1) {
 void SetAuxiliaryPicture(Picture *testPicture, std::shared_ptr<EffectBuffer>& testEffectBuffer) {
     OHOS::sptrOHOS::SurfaceBuffer surfaceBuffer = SurfaceBuffer::Create();
     std::shared_ptr auxiliaryPicture = AuxiliaryPicture::Create(surfaceBuffer,
-	AuxiliaryPictureType::GAINMAP);
+        AuxiliaryPictureType::GAINMAP);
     testPicture->auxiliaryPictures_[AuxiliaryPictureType::GAINMAP] = auxiliaryPicture;
     auto bf = std::make_shared();
     bf->bufferType_ = BufferType::DMA_BUFFER;
     bf->pixelmapType_ = EffectPixelmapType::GAINMAP;
-    std::shared_ptr address(malloc(0), free);
+    std::shared_ptr<void> address(malloc(0), free);
     bf->addr_ = address.get();
     (*(testEffectBuffer->auxiliaryBufferInfos))[EffectPixelmapType::GAINMAP] = bf;
 
@@ -713,7 +713,7 @@ void SetAuxiliaryPicture(Picture *testPicture, std::shared_ptr<EffectBuffer>& te
 
     OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer3 = SurfaceBuffer::Create();
     std::shared_ptr<AuxiliaryPicture> auxiliaryPicture3 = AuxiliaryPicture::Create(surfaceBuffer3,
-	AuxiliaryPictureType::DEPTH_MAP);
+        AuxiliaryPictureType::DEPTH_MAP);
     testPicture->auxiliaryPictures_[AuxiliaryPictureType::DEPTH_MAP] = auxiliaryPicture3;
     auto bf3 = std::make_shared<BufferInfo>();
     bf3->bufferType_ = BufferType::DMA_BUFFER;
@@ -740,7 +740,6 @@ HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
     std::shared_ptr<EffectBuffer> testEffectBuffer = CreateEffectBufferByPicture(testPicture);
     EXPECT_NE(testEffectBuffer, nullptr);
     ErrorCode result = CommonUtils::ParsePicture(testPicture, testEffectBuffer);
-
     EXPECT_EQ(result, ErrorCode::SUCCESS);
     int n = testEffectBuffer->auxiliaryBufferInfos->size();
     if (n == 0) {
@@ -753,7 +752,6 @@ HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
     EXPECT_EQ(testEffectBuffer->extraInfo_->dataType, DataType::PICTURE);
     EXPECT_EQ(testEffectBuffer->extraInfo_->picture, testPicture);
     EXPECT_EQ(testEffectBuffer->bufferInfo_->hdrFormat_, HdrFormat::HDR8_GAINMAP);
-
     std::shared_ptr<PixelMap> gainMap =
         testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)->GetContentPixel();
     BufferType bufferType = CommonUtils::SwitchToEffectBuffType(gainMap.get()->GetAllocatorType());
@@ -762,7 +760,6 @@ HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
     EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP)->second->bufferType_,
               bufferType);
     EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP)->second->addr_, nullptr);
-
     std::shared_ptr<PixelMap> unRefocusMap =
         testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::UNREFOCUS_MAP)->GetContentPixel();
     bufferType = CommonUtils::SwitchToEffectBuffType(unRefocusMap.get()->GetAllocatorType());
@@ -771,7 +768,6 @@ HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
     EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::UNREFOCUS)->second->bufferType_,
               bufferType);
     EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::UNREFOCUS)->second->addr_, nullptr);
-
     std::shared_ptr<PixelMap> depthMap =
         testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::DEPTH_MAP)->GetContentPixel();
     bufferType = CommonUtils::SwitchToEffectBuffType(depthMap.get()->GetAllocatorType());
@@ -780,7 +776,6 @@ HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
     EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::DEPTHMAP)->second->bufferType_,
               bufferType);
     EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::DEPTHMAP)->second->addr_, nullptr);
-
     std::shared_ptr<PixelMap> linearMap =
         testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::LINEAR_MAP)->GetContentPixel();
     bufferType = CommonUtils::SwitchToEffectBuffType(linearMap.get()->GetAllocatorType());
