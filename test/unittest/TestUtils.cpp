@@ -690,8 +690,8 @@ HWTEST_F(TestUtils, JsonHelper004, TestSize.Level1) {
 }
 
 void SetAuxiliaryPicture(Picture *testPicture, std::shared_ptr<EffectBuffer>& testEffectBuffer) {
-    OHOS::sptrOHOS::SurfaceBuffer surfaceBuffer = SurfaceBuffer::Create();
-    std::shared_ptr auxiliaryPicture = AuxiliaryPicture::Create(surfaceBuffer,
+    OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
+    std::shared_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(surfaceBuffer,
         AuxiliaryPictureType::GAINMAP);
     testPicture->auxiliaryPictures_[AuxiliaryPictureType::GAINMAP] = auxiliaryPicture;
     auto bf = std::make_shared<BufferInfo>();
