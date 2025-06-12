@@ -694,7 +694,7 @@ void SetAuxiliaryPicture(Picture *testPicture, std::shared_ptr<EffectBuffer>& te
     std::shared_ptr auxiliaryPicture = AuxiliaryPicture::Create(surfaceBuffer,
         AuxiliaryPictureType::GAINMAP);
     testPicture->auxiliaryPictures_[AuxiliaryPictureType::GAINMAP] = auxiliaryPicture;
-    auto bf = std::make_shared();
+    auto bf = std::make_shared<BufferInfo>();
     bf->bufferType_ = BufferType::DMA_BUFFER;
     bf->pixelmapType_ = EffectPixelmapType::GAINMAP;
     (*(testEffectBuffer->auxiliaryBufferInfos))[EffectPixelmapType::GAINMAP] = bf;
