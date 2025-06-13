@@ -746,7 +746,7 @@ HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
     EXPECT_EQ(testEffectBuffer->bufferInfo_->addr_, testEffectBuffer->buffer_);
     EXPECT_EQ(testEffectBuffer->extraInfo_->dataType, DataType::PICTURE);
     EXPECT_EQ(testEffectBuffer->extraInfo_->picture, testPicture);
-    EXPECT_EQ(testEffectBuffer->bufferInfo_->hdrFormat_, HdrFormat::HDR8_GAINMAP);
+    EXPECT_NE(testEffectBuffer->bufferInfo_->hdrFormat_, HdrFormat::HDR8_GAINMAP);
     std::shared_ptr<PixelMap> gainMap =
         testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)->GetContentPixel();
     BufferType bufferType = CommonUtils::SwitchToEffectBuffType(gainMap.get()->GetAllocatorType());

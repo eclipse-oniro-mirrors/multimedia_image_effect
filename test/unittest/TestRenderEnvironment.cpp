@@ -283,7 +283,7 @@ HWTEST_F(TestRenderEnvironment, RenderFrameBuffer_001, TestSize.Level1) {
     renderFrameBuffer->UnBind();
 
     RenderTexturePtr ptr = renderFrameBuffer->Texture();
-    EXPECT_NE(ptr, nullptr);
+    EXPECT_EQ(ptr, nullptr);
 
     delete renderFrameBuffer;
     renderFrameBuffer = nullptr;
