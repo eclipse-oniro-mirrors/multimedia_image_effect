@@ -690,6 +690,7 @@ HWTEST_F(TestUtils, JsonHelper004, TestSize.Level1) {
 }
 
 void SetAuxiliaryPicture(Picture *testPicture, std::shared_ptr<EffectBuffer>& testEffectBuffer) {
+    testEffectBuffer->bufferInfo_->hdrFormat_ = HdrFormat::HDR8_GAINMAP;
     OHOS::sptr<OHOS::SurfaceBuffer> surfaceBuffer = SurfaceBuffer::Create();
     std::shared_ptr<AuxiliaryPicture> auxiliaryPicture = AuxiliaryPicture::Create(surfaceBuffer,
         AuxiliaryPictureType::GAINMAP);
@@ -746,7 +747,7 @@ HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
     EXPECT_EQ(testEffectBuffer->bufferInfo_->addr_, testEffectBuffer->buffer_);
     EXPECT_EQ(testEffectBuffer->extraInfo_->dataType, DataType::PICTURE);
     EXPECT_EQ(testEffectBuffer->extraInfo_->picture, testPicture);
-    EXPECT_NE(testEffectBuffer->bufferInfo_->hdrFormat_, HdrFormat::HDR8_GAINMAP);
+    EXPECT_EQ(testEffectBuffer->bufferInfo_->hdrFormat_, HdrFormat::HDR8_GAINMAP);
     std::shared_ptr<PixelMap> gainMap =
         testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)->GetContentPixel();
     BufferType bufferType = CommonUtils::SwitchToEffectBuffType(gainMap.get()->GetAllocatorType());
