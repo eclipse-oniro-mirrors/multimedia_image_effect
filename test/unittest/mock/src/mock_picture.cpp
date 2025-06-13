@@ -34,9 +34,10 @@ MockPicture::MockPicture()
     mockGainmapAuxiliaryPicture_->content_ = mockGainmapPixelMap_;
     auxiliaryPictures_.emplace(AuxiliaryPictureType::GAINMAP, mockGainmapAuxiliaryPicture_);
 
-    exifMetadata_ = std::make_shared<ExifMetadata>();
-    exifMetadata_->SetValue(IMAGE_LENGTH, std::to_string(mainPixelMap_->GetHeight()));
-    exifMetadata_->SetValue(IMAGE_WIDTH, std::to_string(mainPixelMap_->GetWidth()));
+    auto exifMetadata = std::make_shared<ExifMetadata>();
+    exifMetadata->SetValue(IMAGE_LENGTH, std::to_string(mainPixelMap_->GetHeight()));
+    exifMetadata->SetValue(IMAGE_WIDTH, std::to_string(mainPixelMap_->GetWidth()));
+    SetExifMetadata(exifMetadata);
 }
 } // namespace Effect
 } // namespace Media
