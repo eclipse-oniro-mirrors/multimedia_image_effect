@@ -271,6 +271,7 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment008, TestSize.Level1) {
 }
 
 HWTEST_F(TestRenderEnvironment, RenderFrameBuffer_001, TestSize.Level1) {
+    renderEnvironment->param_->resCache_ = new ResourceCache();
     ResourceCache *ceCache = renderEnvironment->GetResourceCache();
     RenderFrameBuffer *renderFrameBuffer = new RenderFrameBuffer(ceCache, WIDTH, HEIGHT);
     EXPECT_EQ(glGetError(), GL_NO_ERROR);
@@ -283,7 +284,7 @@ HWTEST_F(TestRenderEnvironment, RenderFrameBuffer_001, TestSize.Level1) {
     renderFrameBuffer->UnBind();
 
     RenderTexturePtr ptr = renderFrameBuffer->Texture();
-    EXPECT_EQ(ptr, nullptr);
+    EXPECT_NE(ptr, nullptr);
 
     delete renderFrameBuffer;
     renderFrameBuffer = nullptr;
