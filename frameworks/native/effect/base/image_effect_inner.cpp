@@ -386,77 +386,47 @@ void AdjustEffectFormat(IEffectFormat& effectFormat) {
     }
 }
 
-ErrorCode ChooseGPU(const std::vector<std::shared_ptr<Capability>> &caps, IEffectFormat &effectFormat,
-    std::vector<IPType> &configIPTypes, bool isTexInput)
-{
-    IPType runningIPType = IPType::DEFAULT;
-    IEffectFormat tempEffectFormat = effectFormat;
-    for (const auto &capability : caps) {
-        if (capability == nullptr || capability->pixelFormatCap_ == nullptr) {
-            continue;
-        }
-        AdjustEffectFormat(tempEffectFormat);
-        std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
-        auto it = formats.find(tempEffectFormat);
-        if (it == formats.end()) {
-            EFFECT_LOGE("effectFormat not support! effectFormat=%{public}d, name=%{public}s",
-                tempEffectFormat, capability->name_.c_str());
-            return ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE;
-        }
-
-        std::vector<IPType> &ipTypes = it->second;
-        if (std::find(configIPTypes.begin(), configIPTypes.end(), IPType::GPU) != configIPTypes.end() &&
-            std::find(ipTypes.begin(), ipTypes.end(), IPType::GPU) != ipTypes.end()) {
-            runningIPType = IPType::GPU;
-        } else {
-            if (runningIPType == IPType::DEFAULT || isTexInput) {
-                return ErrorCode::ERR_UNSUPPORTED_IPTYPE_FOR_EFFECT;
-            }
-            return ErrorCode::SUCCESS;
-        }
-    }
-    return ErrorCode::SUCCESS;
-}
-
-ErrorCode ChooseCPU(const std::vector<std::shared_ptr<Capability>> &caps, IEffectFormat &effectFormat,
-    std::vector<IPType> &configIPTypes)
-{
-    for (const auto &capability : caps) {
-        if (capability == nullptr || capability->pixelFormatCap_ == nullptr) {
-            continue;
-        }
-        std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
-
-        auto it = formats.find(effectFormat);
-        if (it == formats.end()) {
-            EFFECT_LOGE("effectFormat not support! effectFormat=%{public}d, name=%{public}s",
-                effectFormat, capability->name_.c_str());
-            return ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE;
-        }
-    }
-    return ErrorCode::SUCCESS;
-}
-
 ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     const std::shared_ptr<EffectContext> &context, const std::map<ConfigType, Plugin::Any> &config,
     IPType &runningIPType)
 {
     std::vector<IPType> configIPTypes;
     GetConfigIPTypes(config, configIPTypes);
+    bool isTextureInput = srcEffectBuffer->extraInfo_->dataType == DataType::TEX;
 
-    runningIPType = IPType::DEFAULT;
+    runningIPType = isTextureInput ? IPType::GPU : IPType::DEFAULT;
+    IPType priorityIPType = IPType::GPU;
     IEffectFormat effectFormat = srcEffectBuffer->bufferInfo_->formatType_;
     const std::vector<std::shared_ptr<Capability>> &caps = context->capNegotiate_->GetCapabilityList();
-    bool isTextureInput = srcEffectBuffer->extraInfo_->dataType == DataType::TEX;
-    ErrorCode res = ChooseGPU(caps, effectFormat, configIPTypes, isTextureInput);
-    if (res != ErrorCode::SUCCESS) {
-        CHECK_AND_RETURN_RET_LOG(!isTextureInput, res, "ChooseIPType failed");
-        res = ChooseCPU(caps, effectFormat, configIPTypes);
-        runningIPType = IPType::CPU;
-    } else {
-        runningIPType = IPType::GPU;
+    for (const auto &capability : caps) {
+        if (capability == nullptr || capability->pixelFormatCap_ == nullptr) {
+            continue;
+        }
+        std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
+
+        if (runningIPType == IPType::GPU && !isTextureInput) {
+            AdjustEffectFormat(effectFormat);
+        }
+
+        auto it = formats.find(effectFormat);
+        if (it == formats.end()) {
+            EFFECT_LOGE("effectFormat not support! effectFormat=%{public}d, name=%{public}s",
+                effectFormat, capability->name_.c_str());
+            return isTextureInput ? ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE : ErrorCode::SUCCESS;
+        }
+
+        std::vector<IPType> &ipTypes = it->second;
+        if (std::find(configIPTypes.begin(), configIPTypes.end(), priorityIPType) != configIPTypes.end() &&
+            std::find(ipTypes.begin(), ipTypes.end(), priorityIPType) != ipTypes.end()) {
+            runningIPType = IPType::GPU;
+        } else {
+            if (runningIPType == IPType::DEFAULT) {
+                runningIPType = IPType::CPU;
+            }
+            return isTextureInput ? ErrorCode::ERR_UNSUPPORTED_IPTYPE_FOR_EFFECT : ErrorCode::SUCCESS;
+        }
     }
-    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ChooseIPType failed");
+
     return ErrorCode::SUCCESS;
 }
 
