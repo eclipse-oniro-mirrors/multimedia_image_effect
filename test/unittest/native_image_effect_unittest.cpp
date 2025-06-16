@@ -1315,7 +1315,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest003, TestSize.Level1
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    int32_t ipType = 1;
+    int32_t ipType = 2;
     ImageEffect_Any runningType;
     runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
     runningType.dataValue.int32Value = ipType;
@@ -1355,7 +1355,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest004, TestSize.Level1
     errorCode = OH_ImageEffect_SetInputNativeBuffer(imageEffect, nativeBuffer);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
-    int32_t ipType = 1;
+    int32_t ipType = 2;
     ImageEffect_Any runningType;
     runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
     runningType.dataValue.int32Value = ipType;
