@@ -1681,6 +1681,172 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectPicture002, TestSize.Level1)
     ASSERT_EQ(OH_ImageEffect_SetOutputPicture(imageEffectPtr.get(), pictureNative.get()),
         ImageEffect_ErrorCode::EFFECT_SUCCESS);
 }
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect with texture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect with texture
+ */
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectTexture001, TestSize.Level1)
+{
+    std::shared_ptr<RenderEnvironment> renderEnv = std::make_shared<RenderEnvironment>();
+    renderEnv->Init();
+    renderEnv->BeginFrame();
+ 
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+    std::shared_ptr<OH_ImageEffect> imageEffectPtr(imageEffect, [](OH_ImageEffect *imageEffect) {
+        if (imageEffect != nullptr) {
+            OH_ImageEffect_Release(imageEffect);
+        }
+    });
+
+    std::shared_ptr<RenderTexture> input = renderEnv->RequestBuffer(1920, 1080, GL_RGBA8);
+    ASSERT_NE(OH_ImageEffect_SetInputTextureId(nullptr, input->GetName(), ColorManager::ColorSpaceName::SRGB),
+        ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_NE(OH_ImageEffect_SetInputTextureId(imageEffect, 0, ColorManager::ColorSpaceName::SRGB),
+        ImageEffect_ErrorCode::EFFECT_SUCCESS);
+ 
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, OH_EFFECT_CONTRAST_FILTER);
+    ASSERT_NE(filter, nullptr);
+ 
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+ 
+    ASSERT_EQ(OH_ImageEffect_SetInputTextureId(imageEffectPtr.get(), input->GetName(),
+        ColorManager::ColorSpaceName::SRGB), ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    // start with input
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+ 
+    // start with in and out(input equal to output)
+    errorCode = OH_ImageEffect_SetOutputTextureId(imageEffect, input->GetName());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+ 
+    // start with in and out
+    std::shared_ptr<RenderTexture> output = renderEnv->RequestBuffer(1920, 1080, GL_RGBA8);
+    errorCode = OH_ImageEffect_SetOutputTextureId(imageEffect, output->GetName());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    renderEnv->Release();
+    renderEnv->ReleaseParam();
+    renderEnv = nullptr;
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect with texture for abnormal input paramters.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect with texture for abnormal input paramters
+ */
+
+HWTEST_F(NativeImageEffectUnittest, OHImageEffectTexture002, TestSize.Level1)
+{
+    std::shared_ptr<RenderEnvironment> renderEnv = std::make_shared<RenderEnvironment>();
+    renderEnv->Init();
+    renderEnv->BeginFrame();
+ 
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr);
+    std::shared_ptr<OH_ImageEffect> imageEffectPtr(imageEffect, [](OH_ImageEffect *imageEffect) {
+        if (imageEffect != nullptr) {
+            OH_ImageEffect_Release(imageEffect);
+        }
+    });
+
+    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, OH_EFFECT_CONTRAST_FILTER);
+    ASSERT_NE(filter, nullptr);
+ 
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    std::shared_ptr<RenderTexture> output = renderEnv->RequestBuffer(1920, 1080, GL_RGBA8);
+    errorCode = OH_ImageEffect_SetOutputTextureId(imageEffect, output->GetName());
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    std::shared_ptr<RenderTexture> input = renderEnv->RequestBuffer(1920, 1080, GL_RGBA8);
+    ASSERT_EQ(OH_ImageEffect_SetInputTextureId(imageEffectPtr.get(), input->GetName(),
+        ColorManager::ColorSpaceName::ADOBE_RGB), ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    std::shared_ptr<RenderTexture> input_err = renderEnv->RequestBuffer(1920, 1080, GL_RGB16F);
+    ASSERT_EQ(OH_ImageEffect_SetInputTextureId(imageEffectPtr.get(), input_err->GetName(),
+        ColorManager::ColorSpaceName::SRGB), ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_ImageEffect_Start(imageEffect);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    renderEnv->Release();
+    renderEnv->ReleaseParam();
+    renderEnv = nullptr;
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_EFilter with texture.
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_EFilter with texture
+ */
+
+HWTEST_F(NativeImageEffectUnittest, OHEffectFilterRenderWithTexture001, TestSize.Level1)
+{
+    std::shared_ptr<RenderEnvironment> renderEnv = std::make_shared<RenderEnvironment>();
+    renderEnv->Init();
+    renderEnv->BeginFrame();
+    OH_EffectFilter *filter = OH_EffectFilter_Create(OH_EFFECT_CONTRAST_FILTER);
+    ASSERT_NE(filter, nullptr);
+    ImageEffect_Any value;
+    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
+    value.dataValue.floatValue = 100.f;
+    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_EffectFilter_RenderWithTextureId(filter, 0, 0, ColorManager::ColorSpaceName::SRGB);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    std::shared_ptr<RenderTexture> input = renderEnv->RequestBuffer(1920, 1080, GL_RGBA8);
+    std::shared_ptr<RenderTexture> output = renderEnv->RequestBuffer(1920, 1080, GL_RGBA8);
+    errorCode = OH_EffectFilter_RenderWithTextureId(filter, input->GetName(), input->GetName(),
+        ColorManager::ColorSpaceName::SRGB);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_EffectFilter_RenderWithTextureId(filter, input->GetName(), output->GetName(),
+        ColorManager::ColorSpaceName::ADOBE_RGB);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    std::shared_ptr<RenderTexture> input_error = renderEnv->RequestBuffer(1920, 1080, GL_RGB16F);
+    errorCode = OH_EffectFilter_RenderWithTextureId(filter, input_error->GetName(), output->GetName(),
+        ColorManager::ColorSpaceName::SRGB);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+
+    errorCode = OH_EffectFilter_RenderWithTextureId(filter, input->GetName(), output->GetName(),
+        ColorManager::ColorSpaceName::SRGB);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    errorCode = OH_EffectFilter_Release(filter);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    renderEnv->Release();
+    renderEnv->ReleaseParam();
+    renderEnv = nullptr;
+}
+
 } // namespace Test
 } // namespace Effect
 } // namespace Media

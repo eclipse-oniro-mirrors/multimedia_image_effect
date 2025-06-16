@@ -2551,6 +2551,90 @@ HWTEST_F(ImageEffectCApiUnittest, OH_ImageEffect_GetFilter002, TestSize.Level1)
     GTEST_LOG_(INFO) << "OH_ImageEffect_GetFilter002 success! result: " << filter;
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OH_ImageEffect_GetFilter002 END";
 }
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputTextureId with correct parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputTextureId with correct parameter
+ */
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetInputTextureId001, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputTextureId001 start";
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr) << "OHImageEffectSetInputTextureId001 OH_ImageEffect_Create failed";
+
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputTextureId(imageEffect, 1, 1);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetInputTextureId failed";
+
+    GTEST_LOG_(INFO) << "OHImageEffectSetInputTextureId001 success! result: " << errorCode;
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputTextureId001 END";
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetInputTextureId with invalid texture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetInputTextureId with invalid texture
+ */
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetInputTextureId002, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputTextureId002 start";
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr) << "OHImageEffectSetInputTextureId002 OH_ImageEffect_Create failed";
+
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetInputTextureId(imageEffect, 0, 1);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetInputTextureId failed";
+
+    GTEST_LOG_(INFO) << "OHImageEffectSetInputTextureId002 success! result: " << errorCode;
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetInputTextureId002 END";
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputTextureId with correct parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputTextureId with correct parameter
+ */
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputTextureId001, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputTextureId001 start";
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr) << "OHImageEffectSetOutputTextureId001 OH_ImageEffect_Create failed";
+
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputTextureId(imageEffect, 1);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputTextureId failed";
+
+    GTEST_LOG_(INFO) << "OHImageEffectSetOutputTextureId001 success! result: " << errorCode;
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputTextureId001 END";
+}
+
+/**
+ * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_SetOutputTextureId with invalid texture
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_SetOutputTextureId with invalid texture
+ */
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectSetOutputTextureId002, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputTextureId002 start";
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr) << "OHImageEffectSetOutputTextureId002 OH_ImageEffect_Create failed";
+
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_SetOutputTextureId(imageEffect, 0);
+    ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_SetOutputTextureId failed";
+
+    GTEST_LOG_(INFO) << "OHImageEffectSetOutputTextureId002 success! result: " << errorCode;
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectSetOutputTextureId002 END";
+}
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
