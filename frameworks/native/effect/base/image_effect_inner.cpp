@@ -667,6 +667,20 @@ ErrorCode CheckPixelmapColorSpace(std::shared_ptr<EffectBuffer> &srcEffectBuffer
     return ErrorCode::SUCCESS;
 }
 
+static bool dataTypeCheckFunc(DataType srcDataType, DataType dstDataType) {
+    if (srcDataType == dstDataType) {
+        return true;
+    }
+    std::vector<std::pair<DataType, DataType>> extraSupportTab = {
+        { DataType::PIXEL_MAP, DataType::NATIVE_WINDOW },
+        { DataType::PICTURE, DataType::NATIVE_WINDOW },
+    };
+    return extraSupportTab.end() != std::find_if(extraSupportTab.begin(), extraSupportTab.end(),
+        [&srcDataType, &dstDataType](const std::pair<DataType, DataType> &data) {
+        return data.first == srcDataType && data.second == dstDataType;
+    });
+};
+
 ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     std::shared_ptr<EffectBuffer> &dstEffectBuffer)
 {
@@ -698,19 +712,6 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     // input and output type is same or not.
     DataType srcDataType = srcEffectBuffer->extraInfo_->dataType;
     DataType dtsDataType = dstEffectBuffer->extraInfo_->dataType;
-    std::function<bool(DataType, DataType)> dataTypeCheckFunc = [](DataType srcDataType, DataType dstDataType) {
-        if (srcDataType == dstDataType) {
-            return true;
-        }
-        std::vector<std::pair<DataType, DataType>> extraSupportTab = {
-            { DataType::PIXEL_MAP, DataType::NATIVE_WINDOW },
-            { DataType::PICTURE, DataType::NATIVE_WINDOW },
-        };
-        return extraSupportTab.end() != std::find_if(extraSupportTab.begin(), extraSupportTab.end(),
-            [&srcDataType, &dstDataType](const std::pair<DataType, DataType> &data) {
-            return data.first == srcDataType && data.second == dstDataType;
-        });
-    };
     CHECK_AND_RETURN_RET_LOG(dataTypeCheckFunc(srcDataType, dtsDataType), ErrorCode::ERR_NOT_SUPPORT_DIFF_DATATYPE,
         "not supported dataType. srcDataType=%{public}d, dstDataType=%{public}d", srcDataType, dtsDataType);
 

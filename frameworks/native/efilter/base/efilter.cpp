@@ -742,7 +742,6 @@ void EFilter::InitContext(std::shared_ptr<EffectContext> &context, IPType &runni
     context->metaInfoNegotiate_ = std::make_shared<EfilterMetaInfoNegotiate>();
     context->ipType_ = runningType;
     context->memoryManager_->SetIPType(runningType);
-
 }
 
 ErrorCode EFilter::Render(std::shared_ptr<EffectBuffer> &src, std::shared_ptr<EffectBuffer> &dst)
