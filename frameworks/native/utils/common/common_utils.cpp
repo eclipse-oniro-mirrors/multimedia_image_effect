@@ -40,7 +40,7 @@ namespace {
     const std::string PIXEL_Y_DIMENSION = "PixelYDimension";
     const int32_t TIME_MAX = 64;
     const int32_t YUV_PLANE_COUNT = 2;
-    const int32_t YUV_HALF_HEIGHT = 2;
+    const int32_t YUV_HALF = 2;
     const int32_t P010_BYTES_PIXEL = 2;
 }
 
@@ -839,9 +839,9 @@ void ProcessYUVInfo(PixelMap *pixelMap, const SurfaceBuffer *sBuffer, const OH_N
     YUVDataInfo info;
     info.imageSize = { width, height };
     info.yWidth = static_cast<uint32_t>(width);
-    info.uvWidth = static_cast<uint32_t>(width);
+    info.uvWidth = static_cast<uint32_t>(width / YUV_HALF);
     info.yHeight = static_cast<uint32_t>(height);
-    info.uvHeight = static_cast<uint32_t>(height);
+    info.uvHeight = static_cast<uint32_t>(height / YUV_HALF);
     if (planes->planeCount >= YUV_PLANE_COUNT) {
         int32_t pixelFmt = sBuffer->GetFormat();
         int uvPlaneOffset = (pixelFmt == GRAPHIC_PIXEL_FMT_YCBCR_420_SP ||
@@ -926,9 +926,9 @@ ErrorCode ModifyYUVInfo(PixelMap *pixelMap, void *context, const MemoryInfo &mem
         YUVDataInfo info;
         info.imageSize = { width, height};
         info.yWidth = static_cast<uint32_t>(width);
-        info.uvWidth = static_cast<uint32_t>(width);
+        info.uvWidth = static_cast<uint32_t>(width / YUV_HALF);
         info.yHeight = static_cast<uint32_t>(height);
-        info.uvHeight = static_cast<uint32_t>(height / YUV_HALF_HEIGHT);
+        info.uvHeight = static_cast<uint32_t>(height / YUV_HALF);
 
         info.yStride = info.yWidth;
         info.uvStride = info.uvWidth;
