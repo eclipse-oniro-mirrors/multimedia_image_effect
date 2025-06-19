@@ -614,6 +614,7 @@ ImageEffect_ErrorCode OH_ImageEffect_Release(OH_ImageEffect *imageEffect)
 {
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Release: input parameter imageEffect is null!");
+    EFFECT_LOGI("Release imageEffect.");
     delete imageEffect;
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }

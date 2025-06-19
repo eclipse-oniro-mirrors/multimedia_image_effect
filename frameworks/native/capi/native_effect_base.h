@@ -23,6 +23,7 @@
 #include "efilter.h"
 #include "image_effect_inner.h"
 #include "image_effect_filter.h"
+#include "effect_log.h"
 
 struct OH_EffectFilter {
     std::shared_ptr<OHOS::Media::Effect::EFilter> filter_ = nullptr;
@@ -41,6 +42,7 @@ struct OH_ImageEffect {
     std::vector<std::pair<OH_EffectFilter *, std::string>> filters_;
     ~OH_ImageEffect()
     {
+        EFFECT_LOGI("OH_ImageEffect release enter");
         if (saveJson != nullptr) {
             delete[] saveJson;
             saveJson = nullptr;
@@ -52,6 +54,7 @@ struct OH_ImageEffect {
             }
         }
         filters_.clear();
+        EFFECT_LOGI("OH_ImageEffect release end");
     }
 };
 
