@@ -315,6 +315,7 @@ private:
     class Impl;
     std::shared_ptr<Impl> impl_;
     std::mutex innerEffectMutex_;
+    std::mutex consumerListenerMutex_;
     RenderThread<> *m_renderThread{ nullptr };
     std::atomic_ullong m_currentTaskId{0};
     bool needPreFlush_ = false;

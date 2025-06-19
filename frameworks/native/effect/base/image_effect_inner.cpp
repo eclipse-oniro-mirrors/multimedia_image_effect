@@ -1191,7 +1191,7 @@ GSError ImageEffect::ReleaseBuffer(sptr<OHOS::SurfaceBuffer> &buffer, sptr<OHOS:
 bool ImageEffect::SubmitRenderTask(BufferEntry &&entry)
 {
     bool success = bufferPool_->TryPush(std::move(entry));
-    EFFECT_LOGI("SubmitRenderTask: bufferPool size: %{public}d", (int)bufferPool_->Size());
+    EFFECT_LOGD("SubmitRenderTask: bufferPool size: %{public}d", (int)bufferPool_->Size());
     CHECK_AND_RETURN_RET_LOG(m_renderThread, true, "SubmitRenderTask: m_renderThread is null!");
     CHECK_AND_RETURN_RET_LOG(success, true, "SubmitRenderTask: bufferPool push failed!");
 
@@ -1360,7 +1360,7 @@ void ImageEffect::ConsumerBufferAvailable()
         OHOS::QOS::SetThreadQos(OHOS::QOS::QosLevel::QOS_USER_INTERACTIVE);
         impl_->isQosEnabled_ = true;
     }
-    std::unique_lock<std::mutex> lock(innerEffectMutex_);
+    std::unique_lock<std::mutex> lock(consumerListenerMutex_);
     CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
         "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
     OnBufferAvailableWithCPU();
