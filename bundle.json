@@ -35,7 +35,9 @@
         "hisysevent",
         "libexif",
         "qos_manager",
-        "video_processing_engine"
+        "video_processing_engine",
+        "media_foundation",
+        "skia"
       ],
       "third_party": [
         "egl",

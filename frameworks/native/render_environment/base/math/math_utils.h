@@ -18,11 +18,11 @@
 
 #include <utility>
 
-#include <glm/geometric.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/matrix_transform_2d.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/trigonometric.hpp>
+#include "samples/RhythmGame/third_party/glm/geometric.hpp"
+#include "samples/RhythmGame/third_party/glm/gtc/matrix_transform.hpp"
+#include "samples/RhythmGame/third_party/glm/gtx/matrix_transform_2d.hpp"
+#include "samples/RhythmGame/third_party/glm/gtc/type_ptr.hpp"
+#include "samples/RhythmGame/third_party/glm/trigonometric.hpp"
 
 #include "render_vector.h"
 #include "render_matrix.h"
