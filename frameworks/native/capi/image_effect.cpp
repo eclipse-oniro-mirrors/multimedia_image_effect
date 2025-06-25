@@ -678,7 +678,8 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
         std::shared_ptr<IFilterDelegate> filterDelegate = EFilterFactory::Instance()->GetDelegate(name);
         if (filterDelegate != nullptr) {
             auto *filter = static_cast<OH_EffectFilter *>(filterDelegate->Restore(effect));
-            CHECK_AND_CONTINUE_LOG(filter != nullptr, "Restore: filter restore fail! name=%{public}s", name.c_str());
+            CHECK_AND_RETURN_RET_LOG(filter != nullptr, nullptr, "Restore: filter restore fail! name=%{public}s",
+                name.c_str());
             filter->isCreatedBySystem_ = true;
             ohImageEffect->imageEffect_->AddEFilter(filter->filter_);
             ohImageEffect->filters_.emplace_back(filter, filter->filter_->GetName());
@@ -687,7 +688,8 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
 
         std::unique_ptr<OH_EffectFilter> nativeEFilter = std::make_unique<OH_EffectFilter>();
         std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Restore(name, effect, nativeEFilter.get());
-        CHECK_AND_CONTINUE_LOG(efilter != nullptr, "Restore: efilter restore fail! name=%{public}s", name.c_str());
+        CHECK_AND_RETURN_RET_LOG(efilter != nullptr, nullptr, "Restore: efilter restore fail! name=%{public}s",
+            name.c_str());
         nativeEFilter->filter_ = efilter;
         nativeEFilter->isCreatedBySystem_ = true;
         ohImageEffect->filters_.emplace_back(nativeEFilter.release(), efilter->GetName());
