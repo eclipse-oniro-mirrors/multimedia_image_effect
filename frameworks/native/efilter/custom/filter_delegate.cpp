@@ -62,7 +62,7 @@ bool FilterDelegate::Render(void *efilter, EffectBuffer *src, std::shared_ptr<Ef
     std::unique_ptr<OH_EffectBufferInfo> srcBuffer = std::make_unique<OH_EffectBufferInfo>();
     srcBuffer->addr = src->buffer_;
     if (src->bufferInfo_->tex_ != nullptr) {
-        srcBuffer->textureId = src->bufferInfo_->tex_->GetName();
+        srcBuffer->textureId = static_cast<int32_t>(src->bufferInfo_->tex_->GetName());
     }
 
     srcBuffer->width = static_cast<int32_t>(src->bufferInfo_->width_);
