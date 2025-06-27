@@ -50,8 +50,9 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     uint32_t dst_width = dst->bufferInfo_->width_;
     uint32_t dst_height = dst->bufferInfo_->height_;
 
-    if(dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE || src->bufferInfo_->len_ < width*height*RGBA_SIZE 
-    || dst->bufferInfo_->len_ < src->bufferInfo_->len_) {
+     if(dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
+       src->bufferInfo_->len_ < width*height*RGBA_SIZE ||
+       dst->bufferInfo_->len_ < src->bufferInfo_->len_) {
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
     }
 
