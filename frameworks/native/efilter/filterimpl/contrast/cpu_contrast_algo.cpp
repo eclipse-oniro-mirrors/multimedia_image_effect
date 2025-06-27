@@ -36,6 +36,16 @@ constexpr double PI = 3.14159265;
 constexpr uint32_t ALGORITHM_PARAMTER_FACTOR = 2;
 const int RGBA_SIZE = 4;
 
+ErrorCode CheckdBufferInfolen(EffectBuffer *src, EffectBuffer *dst) const
+{
+     if (dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
+       src->bufferInfo_->len_ < width*height*RGBA_SIZE ||
+       dst->bufferInfo_->len_ < src->bufferInfo_->len_) {
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
 {
@@ -50,9 +60,7 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     uint32_t dst_width = dst->bufferInfo_->width_;
     uint32_t dst_height = dst->bufferInfo_->height_;
 
-     if (dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
-       src->bufferInfo_->len_ < width*height*RGBA_SIZE ||
-       dst->bufferInfo_->len_ < src->bufferInfo_->len_) {
+    if (CheckdBufferInfolen(src, dst) != ErrorCode::SUCCESS) {
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
     }
 
@@ -83,7 +91,10 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
             for (uint32_t i = 0; i < BYTES_PER_INT; ++i) {
                 uint32_t srcIndex = srcRowStride * y + x * BYTES_PER_INT + i;
                 uint32_t dstIndex = dstRowStride * y + x * BYTES_PER_INT + i;
-                if (dstIndex > dst->bufferInfo_->len_ || srcIndex > src->bufferInfo_->len_) {
+                if (dstIndex > dst->bufferInfo_->len_) {
+                    return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+                }
+                if (srcIndex > src->bufferInfo_->len_) {
                     return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
                 }
                 dstRgb[dstIndex] = (i == RGBA_ALPHA_INDEX) ? srcRgb[srcIndex] : lut[srcRgb[srcIndex]];
