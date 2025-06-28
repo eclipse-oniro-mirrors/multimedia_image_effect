@@ -34,7 +34,7 @@ constexpr uint32_t BYTES_PER_INT = 4;
 constexpr uint32_t RGBA_ALPHA_INDEX = 3;
 const int RGBA_SIZE = 4;
 
-ErrorCode CheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint32_t src_width, uint32_t src_height)
+ErrorCode BrightnessCheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint32_t src_width, uint32_t src_height)
 {
     uint32_t dst_width = dst->bufferInfo_->width_;
     uint32_t dst_height = dst->bufferInfo_->height_;
@@ -70,7 +70,7 @@ ErrorCode CpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
     uint32_t width = src->bufferInfo_->width_;
     uint32_t height = src->bufferInfo_->height_;
 
-    if (CheckBufferInfolen(src, dst, width, height) != ErrorCode::SUCCESS) {
+    if (BrightnessCheckBufferInfolen(src, dst, width, height) != ErrorCode::SUCCESS) {
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
     }
 

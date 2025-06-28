@@ -36,7 +36,7 @@ constexpr double PI = 3.14159265;
 constexpr uint32_t ALGORITHM_PARAMTER_FACTOR = 2;
 const int RGBA_SIZE = 4;
 
-ErrorCode CheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint32_t src_width, uint32_t src_height)
+ErrorCode ContrastCheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint32_t src_width, uint32_t src_height)
 {
     uint32_t dst_width = dst->bufferInfo_->width_;
     uint32_t dst_height = dst->bufferInfo_->height_;
@@ -61,7 +61,7 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     uint32_t width = src->bufferInfo_->width_;
     uint32_t height = src->bufferInfo_->height_;
 
-    if (CheckBufferInfolen(src, dst, width, height) != ErrorCode::SUCCESS) {
+    if (ContrastCheckBufferInfolen(src, dst, width, height) != ErrorCode::SUCCESS) {
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
     }
 
