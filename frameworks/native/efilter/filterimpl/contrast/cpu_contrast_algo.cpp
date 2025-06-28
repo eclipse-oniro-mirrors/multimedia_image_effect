@@ -93,14 +93,9 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
             for (uint32_t i = 0; i < BYTES_PER_INT; ++i) {
                 uint32_t srcIndex = srcRowStride * y + x * BYTES_PER_INT + i;
                 uint32_t dstIndex = dstRowStride * y + x * BYTES_PER_INT + i;
-                (dstIndex > dst->bufferInfo_->len_ || srcIndex > src->bufferInfo_->len_) ?
-                IsIndexValid = ErrorCode::ERR_INVALID_PARAMETER_VALUE :
-                (dstRgb[dstIndex] = (i == RGBA_ALPHA_INDEX) ? srcRgb[srcIndex] : lut[srcRgb[srcIndex]]);
+                dstRgb[dstIndex] = (i == RGBA_ALPHA_INDEX) ? srcRgb[srcIndex] : lut[srcRgb[srcIndex]];
             }
         }
-    }
-    if (IsIndexValid != ErrorCode::SUCCESS) {
-        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
     }
     return ErrorCode::SUCCESS;
 }
