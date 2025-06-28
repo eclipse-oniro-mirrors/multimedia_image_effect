@@ -38,6 +38,7 @@ ErrorCode CheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint32_t src_
 {
     uint32_t dst_width = dst->bufferInfo_->width_;
     uint32_t dst_height = dst->bufferInfo_->height_;
+    
     if (dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
        src->bufferInfo_->len_ < src_width*src_height*RGBA_SIZE ||
        dst->bufferInfo_->len_ < src->bufferInfo_->len_) {
@@ -50,8 +51,8 @@ ErrorCode CheckIndex(EffectBuffer *src, EffectBuffer *dst, uint32_t dstIndex, ui
 {
     if (dstIndex > dst->bufferInfo_->len_ || srcIndex > src->bufferInfo_->len_) {
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
     return ErrorCode::SUCCESS;
-}
 }
 
 float CpuBrightnessAlgo::ParseBrightness(std::map<std::string, Plugin::Any> &value)
@@ -77,7 +78,7 @@ ErrorCode CpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
     uint32_t width = src->bufferInfo_->width_;
     uint32_t height = src->bufferInfo_->height_;
 
-    if (CheckdBufferInfolen(src, dst, width, height) != ErrorCode::SUCCESS) {
+    if (CheckBufferInfolen(src, dst, width, height) != ErrorCode::SUCCESS) {
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
     }
 
@@ -109,8 +110,8 @@ ErrorCode CpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
             for (uint32_t i = 0; i < BYTES_PER_INT; ++i) {
                 uint32_t srcIndex = srcRowStride * y + x * BYTES_PER_INT + i;
                 uint32_t dstIndex = dstRowStride * y + x * BYTES_PER_INT + i;
-                CheckIndex(src, dst, dstIndex, srcIndex) == ErrorCode::SUCCESS ? 
-                (dstRgb[dstIndex] = (i == RGBA_ALPHA_INDEX) ? srcRgb[srcIndex] : lut[srcRgb[srcIndex]]) : 
+                CheckIndex(src, dst, dstIndex, srcIndex) == ErrorCode::SUCCESS ?
+                (dstRgb[dstIndex] = (i == RGBA_ALPHA_INDEX) ? srcRgb[srcIndex] : lut[srcRgb[srcIndex]]) :
                 return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
             }
         }
