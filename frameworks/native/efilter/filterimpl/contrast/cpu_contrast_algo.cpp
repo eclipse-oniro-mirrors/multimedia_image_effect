@@ -96,6 +96,7 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
             }
         }
     }
+    
     return ErrorCode::SUCCESS;
 }
 
