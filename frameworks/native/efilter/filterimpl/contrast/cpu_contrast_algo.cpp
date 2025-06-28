@@ -49,7 +49,7 @@ ErrorCode CheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint32_t src_
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode CheckIndex(EffectBuffer *src, EffectBuffer *dst, uint32_t dstIndex, uint32_t srcIndex)
+ErrorCode CheckIndexs(EffectBuffer *src, EffectBuffer *dst, uint32_t dstIndex, uint32_t srcIndex)
 {
     if (dstIndex > dst->bufferInfo_->len_ || srcIndex > src->bufferInfo_->len_) {
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
@@ -95,13 +95,13 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     uint32_t dstRowStride = dst->bufferInfo_->rowStride_;
 
 #pragma omp parallel for default(none) shared(height, width, dstRgb, srcRgb, lut, srcRowStride, dstRowStride)
+    ErrorCode IsIndexValid = ErrorCode::SUCCESS;
     for (uint32_t y = 0; y < height; ++y) {
         for (uint32_t x = 0; x < width; ++x) {
             for (uint32_t i = 0; i < BYTES_PER_INT; ++i) {
                 uint32_t srcIndex = srcRowStride * y + x * BYTES_PER_INT + i;
                 uint32_t dstIndex = dstRowStride * y + x * BYTES_PER_INT + i;
-                ErrorCode IsIndexValid = ErrorCode::SUCCESS;
-                CheckIndex(src, dst, dstIndex, srcIndex) == ErrorCode::SUCCESS ?
+                CheckIndexs(src, dst, dstIndex, srcIndex) == ErrorCode::SUCCESS ?
                 (dstRgb[dstIndex] = (i == RGBA_ALPHA_INDEX) ? srcRgb[srcIndex] : lut[srcRgb[srcIndex]]) :
                 IsIndexValid = ErrorCode::ERR_INVALID_PARAMETER_VALUE;
             }
