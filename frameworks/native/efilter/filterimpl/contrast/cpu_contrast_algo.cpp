@@ -49,14 +49,6 @@ ErrorCode CheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint32_t src_
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode CheckIndexs(EffectBuffer *src, EffectBuffer *dst, uint32_t dstIndex, uint32_t srcIndex)
-{
-    if (dstIndex > dst->bufferInfo_->len_ || srcIndex > src->bufferInfo_->len_) {
-        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
-    }
-    return ErrorCode::SUCCESS;
-}
-
 ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
 {
@@ -101,9 +93,9 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
             for (uint32_t i = 0; i < BYTES_PER_INT; ++i) {
                 uint32_t srcIndex = srcRowStride * y + x * BYTES_PER_INT + i;
                 uint32_t dstIndex = dstRowStride * y + x * BYTES_PER_INT + i;
-                CheckIndexs(src, dst, dstIndex, srcIndex) == ErrorCode::SUCCESS ?
-                (dstRgb[dstIndex] = (i == RGBA_ALPHA_INDEX) ? srcRgb[srcIndex] : lut[srcRgb[srcIndex]]) :
-                IsIndexValid = ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+                (dstIndex > dst->bufferInfo_->len_ || srcIndex > src->bufferInfo_->len_) ?
+                IsIndexValid = ErrorCode::ERR_INVALID_PARAMETER_VALUE :
+                (dstRgb[dstIndex] = (i == RGBA_ALPHA_INDEX) ? srcRgb[srcIndex] : lut[srcRgb[srcIndex]]);
             }
         }
     }
