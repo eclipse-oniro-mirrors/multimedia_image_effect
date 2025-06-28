@@ -118,7 +118,7 @@ ErrorCode CpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
         }
     }
     if (IsIndexValid != ErrorCode::SUCCESS) {
-        return IsIndexValid;
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
     }
     return ErrorCode::SUCCESS;
 }
