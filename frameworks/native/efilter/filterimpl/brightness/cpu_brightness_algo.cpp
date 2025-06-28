@@ -106,7 +106,6 @@ ErrorCode CpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
             }
         }
     }
-    
     return ErrorCode::SUCCESS;
 }
 
