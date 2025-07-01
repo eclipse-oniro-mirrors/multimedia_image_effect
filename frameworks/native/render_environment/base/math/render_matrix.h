@@ -16,9 +16,9 @@
 #ifndef RENDERMATRIX_H
 #define RENDERMATRIX_H
 
-#include "glm/mat2x2.hpp"
-#include "glm/mat3x3.hpp"
-#include "glm/mat4x4.hpp"
+#include "samples/RhythmGame/third_party/glm/mat2x2.hpp"
+#include "samples/RhythmGame/third_party/glm/mat3x3.hpp"
+#include "samples/RhythmGame/third_party/glm/mat4x4.hpp"
 
 namespace OHOS {
 namespace Media {

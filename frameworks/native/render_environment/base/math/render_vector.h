@@ -18,9 +18,9 @@
 
 #define GLM_FORCE_XYZW_ONLY
 
-#include "glm/vec2.hpp"
-#include "glm/vec3.hpp"
-#include "glm/vec4.hpp"
+#include "samples/RhythmGame/third_party/glm/vec2.hpp"
+#include "samples/RhythmGame/third_party/glm/vec3.hpp"
+#include "samples/RhythmGame/third_party/glm/vec4.hpp"
 
 namespace OHOS {
 namespace Media {

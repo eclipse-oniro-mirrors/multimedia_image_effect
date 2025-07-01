@@ -37,7 +37,6 @@ config("image_effect_impl_public_config") {
     "$image_effect_root_dir/frameworks/native/render_environment/render_thread/queue",
     "$image_effect_root_dir/frameworks/native/render_environment/render_thread/task",
     "$image_effect_root_dir/frameworks/native/render_environment/render_thread/worker",
-    "//foundation/multimedia/media_foundation/engine/include",
   ]
 
   defines = [
@@ -62,7 +61,6 @@ ohos_shared_library("image_effect_impl") {
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast",
     "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop",
     "$image_effect_root_dir/frameworks/native/utils/common",
-    "//third_party/skia/third_party/externals/oboe/samples/RhythmGame/third_party",
   ]
 
   sources = [
@@ -138,6 +136,8 @@ ohos_shared_library("image_effect_impl") {
     "libexif:libexif",
     "napi:ace_napi",
     "qos_manager:qos",
+    "media_foundation:histreamer_plugin_base",
+    "skia:skia_canvaskit",
   ]
 
   if (image_effect_colorspace_convertor_enable) {
@@ -200,6 +200,7 @@ ohos_shared_library("image_effect") {
     "image_framework:picture",
     "image_framework:pixelmap",
     "napi:ace_napi",
+    "media_foundation:histreamer_plugin_base",
   ]
 
   cflags_cc = [

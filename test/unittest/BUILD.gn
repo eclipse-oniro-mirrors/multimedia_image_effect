@@ -82,8 +82,6 @@ ohos_unittest("image_effect_unittest") {
   deps = [
     "$image_effect_root_dir/frameworks/native:image_effect",
     "$image_effect_root_dir/frameworks/native:image_effect_impl",
-    "//third_party/googletest:gmock_main",
-    "//third_party/googletest:gtest_main",
   ]
 
   external_deps = [
@@ -103,6 +101,9 @@ ohos_unittest("image_effect_unittest") {
     "ipc:ipc_single",
     "napi:ace_napi",
     "libexif:libexif",
+    "googletest:gmock_main",
+    "googletest:gtest_main",
+    "media_foundation:histreamer_plugin_base",
   ]
 
   use_exceptions = true
