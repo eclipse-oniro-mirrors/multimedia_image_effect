@@ -323,6 +323,7 @@ EFFECT_EXPORT
 ImageEffect_ErrorCode OH_ImageEffect_SetOutputSurface(OH_ImageEffect *imageEffect, NativeWindow *nativeWindow)
 {
     std::unique_lock<std::mutex> lock(effectMutex_);
+    EFFECT_LOGI("effectMutex_ acquired successfully.");
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "SetOutputSurface: input parameter imageEffect is null!");
     CHECK_AND_RETURN_RET_LOG(nativeWindow != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -333,6 +334,7 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputSurface(OH_ImageEffect *imageEffec
         EFFECT_LOGE("SetOutputSurface: set output surface fail! errorCode=%{public}d", errorCode);
         return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
     }
+    EFFECT_LOGI("SetOutputSurface: set output surface success!.");
 
     EventInfo eventInfo = {
         .dataType = EventDataType::SURFACE,
