@@ -333,9 +333,8 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputSurface(OH_ImageEffect *imageEffec
     if (errorCode != ErrorCode::SUCCESS) {
         EFFECT_LOGE("SetOutputSurface: set output surface fail! errorCode=%{public}d", errorCode);
         return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
-    } else {
-        EFFECT_LOGI("SetOutputSurface: set output surface success!.");
     }
+    EFFECT_LOGI("SetOutputSurface: set output surface success!.");
 
     EventInfo eventInfo = {
         .dataType = EventDataType::SURFACE,
