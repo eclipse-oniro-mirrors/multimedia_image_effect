@@ -160,6 +160,17 @@ std::string GetErrorName(ErrorCode code);
     } while (0)
 #endif
 
+#ifndef FALSE_RETURN_VOID_MSG_E
+#define FALSE_RETURN_VOID_MSG_E(exec, fmt, args...) \
+    do {                                            \
+        bool returnValue = (exec);                  \
+        if (!returnValue) {                         \
+            EFFECT_LOGE(fmt, ##args);               \
+            return;                                 \
+        }                                           \
+    } while (0)
+#endif
+
 #ifndef FAIL_RETURN
 #define FAIL_RETURN(exec)                                                                            \
     do {                                                                                             \
