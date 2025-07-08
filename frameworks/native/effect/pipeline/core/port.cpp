@@ -152,11 +152,13 @@ std::shared_ptr<Port> OutPort::GetPeerPort()
 
 void OutPort::Negotiate(const std::shared_ptr<Capability> &capability, std::shared_ptr<EffectContext> &context)
 {
+    FALSE_RETURN_VOID_MSG_E(nextPort_ != nullptr, "nextPort_ is null!");
     nextPort_->Negotiate(capability, context);
 }
 
 ErrorCode OutPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::shared_ptr<EffectContext> &context)
 {
+    FALSE_RETURN_MSG_E(nextPort_ != nullptr, ErrorCode::ERR_PIPELINE_INVALID_FILTER_PORT, "nextPort_ is null!");
     return nextPort_->PushData(buffer, context);
 }
 
