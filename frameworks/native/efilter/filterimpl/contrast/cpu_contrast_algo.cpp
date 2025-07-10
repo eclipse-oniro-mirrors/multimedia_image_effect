@@ -34,6 +34,20 @@ constexpr uint32_t BYTES_PER_INT = 4;
 constexpr uint32_t RGBA_ALPHA_INDEX = 3;
 constexpr double PI = 3.14159265;
 constexpr uint32_t ALGORITHM_PARAMTER_FACTOR = 2;
+const int RGBA_SIZE = 4;
+
+ErrorCode ContrastCheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint32_t src_width, uint32_t src_height)
+{
+    uint32_t dst_width = dst->bufferInfo_->width_;
+    uint32_t dst_height = dst->bufferInfo_->height_;
+    
+    if (dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
+       src->bufferInfo_->len_ < src_width*src_height*RGBA_SIZE ||
+       dst->bufferInfo_->len_ < src->bufferInfo_->len_) {
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
+    return ErrorCode::SUCCESS;
+}
 
 ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
@@ -46,6 +60,10 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
 
     uint32_t width = src->bufferInfo_->width_;
     uint32_t height = src->bufferInfo_->height_;
+
+    if (ContrastCheckBufferInfolen(src, dst, width, height) != ErrorCode::SUCCESS) {
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
 
     float eps = ESP;
     if (fabs(contrast) < eps) {
