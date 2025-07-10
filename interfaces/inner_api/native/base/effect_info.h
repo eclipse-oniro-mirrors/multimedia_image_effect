@@ -49,6 +49,7 @@ enum class Category : uint32_t {
 };
 
 enum class EffectColorSpace : uint32_t {
+    NOT_SUPPORTED = UINT32_MAX,
     DEFAULT = 0,
     SRGB,
     DISPLAY_P3,
@@ -59,7 +60,6 @@ enum class EffectColorSpace : uint32_t {
     DISPLAY_P3_LIMIT,
     BT2020_HLG_LIMIT,
     BT2020_PQ_LIMIT,
-    BT2020_SRGB,
 };
 
 enum class HdrFormat : uint32_t {

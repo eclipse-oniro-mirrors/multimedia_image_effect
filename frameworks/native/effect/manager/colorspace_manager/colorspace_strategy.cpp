@@ -34,6 +34,7 @@ static const std::unordered_map<EffectColorSpace, EffectColorSpace> COLORSPACE_C
     { EffectColorSpace::BT2020_PQ, EffectColorSpace::BT2020_PQ },
     { EffectColorSpace::BT2020_PQ_LIMIT, EffectColorSpace::BT2020_PQ_LIMIT },
     { EffectColorSpace::ADOBE_RGB, EffectColorSpace::DISPLAY_P3 },
+    { EffectColorSpace::NOT_SUPPORTED, EffectColorSpace::NOT_SUPPORTED },
 };
 
 static const std::unordered_map<EffectColorSpace, EffectColorSpace> COLORSPACE_HDR_CONVERTER_MAP = {
@@ -111,7 +112,7 @@ ErrorCode ChooseColorSpaceInner(const EffectColorSpace &srcRealColorSpace,
     auto it = COLORSPACE_HDR_CONVERTER_MAP.find(srcRealColorSpace);
     if (it == COLORSPACE_HDR_CONVERTER_MAP.end()) {
         EFFECT_LOGE("ChooseColorSpaceInner: colorSpace[%{public}d] not support convert.", srcRealColorSpace);
-        return ErrorCode::ERR_COLORSPACE_NOT_SUPPORT_CONVERT;
+        return ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE;
     }
 
     outputColorSpace = it->second;

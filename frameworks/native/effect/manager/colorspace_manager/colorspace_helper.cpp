@@ -42,7 +42,7 @@ static const std::unordered_map<EffectColorSpace, ColorSpaceName> EFFECT_TO_COLO
     { EffectColorSpace::BT2020_PQ, ColorSpaceName::BT2020_PQ },
     { EffectColorSpace::BT2020_PQ_LIMIT, ColorSpaceName::BT2020_PQ_LIMIT },
     { EffectColorSpace::ADOBE_RGB, ColorSpaceName::ADOBE_RGB },
-    { EffectColorSpace::BT2020_SRGB, ColorSpaceName::DISPLAY_BT2020_SRGB },
+    { EffectColorSpace::NOT_SUPPORTED, ColorSpaceName::DISPLAY_BT2020_SRGB },
 };
 
 static const std::unordered_map<EffectColorSpace, CM_ColorSpaceType> EFFECT_TO_GRAPHIC_COLORSPACE_MAP = {
@@ -370,10 +370,6 @@ ErrorCode ColorSpaceHelper::ConvertColorSpace(std::shared_ptr<EffectBuffer> &src
     EffectColorSpace chosenColorSpace = EffectColorSpace::DEFAULT;
     res = context->colorSpaceManager_->ChooseColorSpace(
         context->filtersSupportedColorSpace_, colorSpace, chosenColorSpace);
-    if (srcBuffer->extraInfo_->dataType == DataType::PIXEL_MAP && chosenColorSpace == EffectColorSpace::DEFAULT) {
-        EFFECT_LOGD("Colorspace (%{public}d) is not supported for PIXELMAP.", colorSpace);
-        return ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE;
-    }
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ConvertColorSpace: ChooseColorSpace fail! "
         "res=%{public}d, colorSpace=%{public}d", res, colorSpace);
 
