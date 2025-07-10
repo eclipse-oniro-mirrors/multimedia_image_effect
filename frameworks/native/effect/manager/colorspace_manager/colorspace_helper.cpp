@@ -42,6 +42,7 @@ static const std::unordered_map<EffectColorSpace, ColorSpaceName> EFFECT_TO_COLO
     { EffectColorSpace::BT2020_PQ, ColorSpaceName::BT2020_PQ },
     { EffectColorSpace::BT2020_PQ_LIMIT, ColorSpaceName::BT2020_PQ_LIMIT },
     { EffectColorSpace::ADOBE_RGB, ColorSpaceName::ADOBE_RGB },
+    { EffectColorSpace::BT2020_SRGB, ColorSpaceName::DISPLAY_BT2020_SRGB },
 };
 
 static const std::unordered_map<EffectColorSpace, CM_ColorSpaceType> EFFECT_TO_GRAPHIC_COLORSPACE_MAP = {
@@ -352,6 +353,9 @@ ErrorCode ColorSpaceHelper::ConvertColorSpace(std::shared_ptr<EffectBuffer> &src
     if (srcBuffer->extraInfo_->dataType == DataType::TEX && !IsTexSupportedColorSpace(colorSpace)) {
         return ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE;
     }
+    if (srcBuffer->extraInfo_->dataType == DataType::PIXEL_MAP && colorSpace == EffectColorSpace::BT2020_SRGB) {
+        return ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE;
+    }
 
     // If color space is none, it means that color space is not supported. But it still should return success,
     // because the real color space maybe defined as ColorSpaceName::CUSTOM in ExtDecoder::getGrColorSpace or
@@ -389,7 +393,7 @@ void ColorSpaceHelper::TryFixGainmapHdrMetadata(sptr<SurfaceBuffer> &gainmapSptr
             __func__, gainmapDynamicMetadata.size());
         return;
     }
- 
+
     HDRVividExtendMetadata extendMetadata = {};
     int32_t memCpyRes = memcpy_s(&extendMetadata.metaISO, sizeof(ISOMetadata),
         gainmapDynamicMetadata.data(), gainmapDynamicMetadata.size());
