@@ -323,10 +323,12 @@ ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const Effe
     ErrorCode res = context->colorSpaceManager_->GetColorSpaceProcessor()->ProcessHdrImage(buffer.get(), sdrImage);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "DecomposeHdrImageIfNeed: ProcessHdrImage fail! "
         "res=%{public}d, colorSpace=%{public}d, chosenColorSpace=%{public}d", res, colorSpace, chosenColorSpace);
-    CHECK_AND_RETURN_RET_LOG(sdrImage != nullptr && sdrImage->extraInfo_ != nullptr, ErrorCode::ERR_INPUT_NULL,
-        "DecomposeHdrImageIfNeed: sdrImage is null or extraInfo of sdrImage is null!"
-        "sdrImage=%{public}d, sdrImage->extraInfo_=%{public}d", sdrImage == nullptr, sdrImage->extraInfo_ == nullptr);
-
+    CHECK_AND_RETURN_RET_LOG(sdrImage != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "DecomposeHdrImageIfNeed: sdrImage is null, sdrImage=%{public}d", sdrImage == nullptr);
+    CHECK_AND_RETURN_RET_LOG(sdrImage->extraInfo_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "DecomposeHdrImageIfNeed: extraInfo of sdrImage is null!, sdrImage->extraInfo_=%{public}d",
+        sdrImage->extraInfo_ == nullptr);
+        
     context->memoryManager_->RemoveMemory(oldMemory);
     std::shared_ptr<MemoryData> memoryData = context->colorSpaceManager_->GetColorSpaceProcessor()
         ->GetMemoryData(sdrImage->bufferInfo_->surfaceBuffer_);

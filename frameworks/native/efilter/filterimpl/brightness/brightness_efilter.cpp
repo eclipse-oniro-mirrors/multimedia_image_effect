@@ -120,6 +120,8 @@ ErrorCode BrightnessEFilter::SetValue(const std::string &key, Plugin::Any &value
 ErrorCode BrightnessEFilter::Restore(const EffectJsonPtr &values)
 {
     // If the developer does not set parameters, the function returns a failure, but it is a normal case.
+    CHECK_AND_RETURN_RET_LOG(values != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "BrightnessEFilter::Restore values is null, filter=%{public}s", name_.c_str());
     if (!values->HasElement(Parameter::KEY_INTENSITY)) {
         EFFECT_LOGW("not set value! key=%{public}s", Parameter::KEY_INTENSITY.c_str());
         return ErrorCode::SUCCESS;
