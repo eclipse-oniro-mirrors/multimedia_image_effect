@@ -42,6 +42,7 @@ static const std::unordered_map<EffectColorSpace, ColorSpaceName> EFFECT_TO_COLO
     { EffectColorSpace::BT2020_PQ, ColorSpaceName::BT2020_PQ },
     { EffectColorSpace::BT2020_PQ_LIMIT, ColorSpaceName::BT2020_PQ_LIMIT },
     { EffectColorSpace::ADOBE_RGB, ColorSpaceName::ADOBE_RGB },
+    { EffectColorSpace::NOT_SUPPORTED, ColorSpaceName::DISPLAY_BT2020_SRGB },
 };
 
 static const std::unordered_map<EffectColorSpace, CM_ColorSpaceType> EFFECT_TO_GRAPHIC_COLORSPACE_MAP = {
@@ -391,7 +392,7 @@ void ColorSpaceHelper::TryFixGainmapHdrMetadata(sptr<SurfaceBuffer> &gainmapSptr
             __func__, gainmapDynamicMetadata.size());
         return;
     }
- 
+
     HDRVividExtendMetadata extendMetadata = {};
     int32_t memCpyRes = memcpy_s(&extendMetadata.metaISO, sizeof(ISOMetadata),
         gainmapDynamicMetadata.data(), gainmapDynamicMetadata.size());

@@ -49,6 +49,7 @@ enum class Category : uint32_t {
 };
 
 enum class EffectColorSpace : uint32_t {
+    NOT_SUPPORTED = UINT32_MAX,
     DEFAULT = 0,
     SRGB,
     DISPLAY_P3,
