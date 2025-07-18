@@ -26,38 +26,60 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
+// Type alias for initialization function
 using InitFunc = void (*)();
+// Type alias for deinitialization function
 using DeinitFunc = void (*)();
+// Type alias for module initialization function
 using InitModuleFunc = void (*)();
+// Type alias for module deinitialization function
 using DeinitModuleFunc = void (*)();
+
+// Class responsible for loading and managing external shared libraries
 class ExternLoader {
 public:
     ~ExternLoader() = default;
 
+    // Returns a singleton instance of ExternLoader
     IMAGE_EFFECT_EXPORT static ExternLoader *Instance();
 
+    // Checks if the external library is loaded
     IMAGE_EFFECT_EXPORT bool IsExtLoad() const;
 
+    // Loads the external shared library
     IMAGE_EFFECT_EXPORT void LoadExtSo();
 
+    // Retrieves the initialization function
     InitFunc GetInitFunc() const;
+    // Retrieves the deinitialization function
     DeinitFunc GetDeinitFunc() const;
+    // Retrieves the module initialization function
     InitModuleFunc GetInitModuleFunc() const;
+    // Retrieves the module deinitialization function
     DeinitModuleFunc GetDeinitModuleFunc() const;
 
+    // Initializes the external library
     void InitExt();
 private:
     ExternLoader() = default;
 
+    // Pointer to the initialization function
     InitFunc initFunc_ = nullptr;
+    // Pointer to the deinitialization function
     DeinitFunc deinitFunc_ = nullptr;
+    // Pointer to the module initialization function
     InitModuleFunc initModuleFunc_ = nullptr;
+    // Pointer to the module deinitialization function
     DeinitModuleFunc deinitModuleFunc_ = nullptr;
 
+    // Atomic flag indicating if the external library is loaded
     std::atomic<bool> isExtLoad_ = false;
+    // Atomic flag indicating if the external library has been initialized
     std::atomic<bool> hasInitExt_ = false;
 
+    // Mutex for synchronizing loading of the external shared library
     std::mutex loadExtSo_;
+    // Mutex for synchronizing initialization of the external shared library
     std::mutex initExtSo_;
 };
 } // namespace Effect

@@ -25,16 +25,24 @@
 #include "image_effect_filter.h"
 #include "effect_log.h"
 
+/**
+ * @struct OH_EffectFilter
+ * @brief Structure representing an effect filter.
+ */
 struct OH_EffectFilter {
-    std::shared_ptr<OHOS::Media::Effect::EFilter> filter_ = nullptr;
-    void SetParameter(const std::string &key, OHOS::Media::Plugin::Any &param);
+    std::shared_ptr<OHOS::Media::Effect::EFilter> filter_ = nullptr; // Shared pointer to EFilter object
+    void SetParameter(const std::string &key, OHOS::Media::Plugin::Any &param); // Sets a filter parameter
     OHOS::Media::Effect::ErrorCode GetParameter(const std::string &key, OHOS::Media::Plugin::Any &param);
-    void RemoveParameter(const std::string &key);
-    bool isCreatedBySystem_ = false;
+    void RemoveParameter(const std::string &key); // Removes a filter parameter
+    bool isCreatedBySystem_ = false; // Flag indicating if the filter was created by the system
 private:
-    std::unordered_map<std::string, OHOS::Media::Plugin::Any&> params_;
+    std::unordered_map<std::string, OHOS::Media::Plugin::Any&> params_; // Map of filter parameters
 };
 
+/**
+ * @struct OH_ImageEffect
+ * @brief Structure representing an image effect.
+ */
 struct OH_ImageEffect {
     OH_ImageEffect() = default;
     std::shared_ptr<OHOS::Media::Effect::ImageEffect> imageEffect_ = nullptr;
@@ -58,6 +66,10 @@ struct OH_ImageEffect {
     }
 };
 
+/**
+ * @struct OH_EffectFilterInfo
+ * @brief Structure representing information about an effect filter.
+ */
 struct OH_EffectFilterInfo {
     OH_EffectFilterInfo() = default;
     IMAGE_EFFECT_EXPORT ~OH_EffectFilterInfo();
@@ -71,6 +83,10 @@ struct OH_EffectFilterInfo {
     uint32_t formatArraySize = 0;
 };
 
+/**
+ * @struct OH_EffectBufferInfo
+ * @brief Structure representing information about an effect buffer.
+ */
 struct OH_EffectBufferInfo {
     void *addr = nullptr;
     int32_t width = 0;
