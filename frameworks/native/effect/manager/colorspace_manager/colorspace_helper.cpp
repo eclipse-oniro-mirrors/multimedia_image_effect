@@ -55,6 +55,7 @@ static const std::unordered_map<EffectColorSpace, CM_ColorSpaceType> EFFECT_TO_G
     { EffectColorSpace::BT2020_PQ, CM_ColorSpaceType::CM_BT2020_PQ_FULL },
     { EffectColorSpace::BT2020_PQ_LIMIT, CM_ColorSpaceType::CM_BT2020_PQ_LIMIT },
     { EffectColorSpace::ADOBE_RGB, CM_ColorSpaceType::CM_ADOBERGB_FULL },
+    { EffectColorSpace::NOT_SUPPORTED, CM_ColorSpaceType::CM_DISPLAY_BT2020_SRGB },
 };
 
 static const std::unordered_map<EffectColorSpace, OH_NativeBuffer_ColorSpace> EFFECT_TO_NATIVE_BUFFER_COLORSPACE_MAP = {
@@ -67,6 +68,7 @@ static const std::unordered_map<EffectColorSpace, OH_NativeBuffer_ColorSpace> EF
     { EffectColorSpace::BT2020_PQ, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_PQ_FULL },
     { EffectColorSpace::BT2020_PQ_LIMIT, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_BT2020_PQ_LIMIT },
     { EffectColorSpace::ADOBE_RGB, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_ADOBERGB_FULL },
+    { EffectColorSpace::NOT_SUPPORTED, OH_NativeBuffer_ColorSpace::OH_COLORSPACE_DISPLAY_BT2020_SRGB },
 };
 
 static const std::unordered_set<EffectColorSpace> TEX_SUPPORT_COLORSPACE_SET = {
