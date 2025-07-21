@@ -27,25 +27,74 @@ public:
 
     virtual ~Effect() = default;
 
+    /**
+     * Adds an EFilter to the collection.
+     *
+     * @param efilter The EFilter to be added, provided as a shared pointer.
+     * This function does not return any value.
+     */
     virtual void AddEFilter(const std::shared_ptr<EFilter> &efilter);
 
+    /**
+     * Virtual function to insert an EFilter at a specified index.
+     * @param efilter A shared pointer to the EFilter object to be inserted.
+     * @param index The position at which the EFilter should be inserted.
+     * @return ErrorCode indicating the result of the operation.
+     */
     virtual ErrorCode InsertEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index);
 
+    /**
+     * Removes the specified EFilter from the collection.
+     *
+     * @param efilter The EFilter to be removed.
+     */
     virtual void RemoveEFilter(const std::shared_ptr<EFilter> &efilter);
 
+    /**
+     * Removes an EFilter at a specified index.
+     *
+     * @param index The position of the EFilter to be removed.
+     * @return ErrorCode indicating the result of the operation.
+     */
     virtual ErrorCode RemoveEFilter(uint32_t index);
 
+    /**
+     * Replaces an EFilter at a specified index with a new EFilter.
+     *
+     * @param efilter A shared pointer to the new EFilter object.
+     * @param index The position at which the new EFilter should replace the old one.
+     * @return ErrorCode indicating the result of the operation.
+     */
     virtual ErrorCode ReplaceEFilter(const std::shared_ptr<EFilter> &efilter, uint32_t index);
 
+    /**
+     * Virtual function to start the effect processing.
+     * Must be implemented by derived classes.
+     *
+     * @return ErrorCode indicating the result of the operation.
+     */
     virtual ErrorCode Start() = 0;
 
+    /**
+     * Virtual function to save the effect configuration.
+     * Must be implemented by derived classes.
+     *
+     * @param res A reference to a shared pointer for storing the result in JSON format.
+     * @return ErrorCode indicating the result of the operation.
+     */
     virtual ErrorCode Save(EffectJsonPtr &res) = 0;
 
+    /**
+     * Retrieves the collection of EFilters.
+     *
+     * @return A reference to a vector containing shared pointers to EFilter objects.
+     */
     std::vector<std::shared_ptr<EFilter>> &GetEFilters()
     {
         return efilters_;
     }
 protected:
+    // Collection of EFilters
     std::vector<std::shared_ptr<EFilter>> efilters_;
 };
 } // namespace Effect
