@@ -56,6 +56,8 @@ public:
     static void ReportEventStartFailed(ImageEffect_ErrorCode errorCode, const char *errorMsg);
 
     static ImageEffect_ErrorCode ConvertStartResult(ErrorCode errorCode);
+
+    static ImageEffect_ErrorCode ConvertRenderResult(ErrorCode errorCode);
 };
 } // namespace Effect
 } // namespace Media

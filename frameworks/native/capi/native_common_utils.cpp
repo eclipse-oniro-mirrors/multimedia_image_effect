@@ -59,6 +59,10 @@ static const std::map<ErrorCode, ImageEffect_ErrorCode> ERRORCODE_TABLE = {
     { ErrorCode::ERR_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE, ImageEffect_ErrorCode::EFFECT_COLOR_SPACE_NOT_MATCH },
 };
 
+static const std::map<ErrorCode, ImageEffect_ErrorCode> ERRORCODE_TABLE_RENDER = {
+    { ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE, ImageEffect_ErrorCode::EFFECT_INPUT_OUTPUT_NOT_SUPPORTED },
+};
+
 template <class ValueType>
 ErrorCode AnyCastOHAny(const Plugin::Any &any, ImageEffect_DataType &ohDataType, ImageEffect_DataType ohDataTypeValue,
     ValueType &value)
@@ -343,6 +347,15 @@ ImageEffect_ErrorCode NativeCommonUtils::ConvertStartResult(ErrorCode errorCode)
 {
     auto iter = ERRORCODE_TABLE.find(errorCode);
     if (iter == ERRORCODE_TABLE.end()) {
+        return ImageEffect_ErrorCode::EFFECT_UNKNOWN;
+    }
+    return iter->second;
+}
+
+ImageEffect_ErrorCode NativeCommonUtils::ConvertRenderResult(ErrorCode errorCode)
+{
+    auto iter = ERRORCODE_TABLE_RENDER.find(errorCode);
+    if (iter == ERRORCODE_TABLE_RENDER.end()) {
         return ImageEffect_ErrorCode::EFFECT_UNKNOWN;
     }
     return iter->second;

@@ -611,7 +611,7 @@ ImageEffect_ErrorCode OH_EffectFilter_Render(OH_EffectFilter *filter, OH_Pixelma
     if (filter->filter_->IsTextureInput()) {
         std::shared_ptr<EffectBuffer> tempEffectBuffer = nullptr;
         ErrorCode res = filter->filter_->Render(tempEffectBuffer, tempEffectBuffer);
-        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_UNKNOWN,
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, NativeCommonUtils::ConvertRenderResult(res),
             "FilterRender: filter render fail! errorCode:%{public}d", res);
         return ImageEffect_ErrorCode::EFFECT_SUCCESS;
     }
@@ -643,7 +643,7 @@ ImageEffect_ErrorCode OH_EffectFilter_Render(OH_EffectFilter *filter, OH_Pixelma
     result = filter->filter_->Render(inEffectBuffer, outEffectBuffer);
     CommonUtils::UnlockPixelMap(input);
     CommonUtils::UnlockPixelMap(output);
-    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_UNKNOWN,
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, NativeCommonUtils::ConvertRenderResult(result),
         "FilterRender: filter render fail! errorCode:%{public}d", result);
 
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
@@ -675,7 +675,7 @@ ImageEffect_ErrorCode OH_EffectFilter_RenderWithTextureId(OH_EffectFilter *filte
         return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
     }
     result = filter->filter_->Render(inEffectBuffer, outEffectBuffer);
-    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_UNKNOWN,
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, NativeCommonUtils::ConvertRenderResult(result),
         "FilterRender: filter render fail! errorCode:%{public}d", result);
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
