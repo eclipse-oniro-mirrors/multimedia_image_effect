@@ -130,6 +130,8 @@ public:
      * @return The converted ImageEffect_ErrorCode.
      */
     static ImageEffect_ErrorCode ConvertStartResult(ErrorCode errorCode);
+
+    static ImageEffect_ErrorCode ConvertRenderResult(ErrorCode errorCode);
 };
 } // namespace Effect
 } // namespace Media
