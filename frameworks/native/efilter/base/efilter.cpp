@@ -107,6 +107,8 @@ ErrorCode EFilter::PreRender(IEffectFormat &format)
 std::shared_ptr<PixelFormatCap> GetPixelFormatCap(std::string &name)
 {
     std::shared_ptr<PixelFormatCap> pixelFormatCap = std::make_shared<PixelFormatCap>();
+    CHECK_AND_RETURN_RET_LOG(pixelFormatCap != nullptr, pixelFormatCap,
+        "GetPixelFormatCap: PixelFormatCap fail! name=%{public}s", name.c_str());
     std::shared_ptr<EffectInfo> effectInfo = EFilterFactory::Instance()->GetEffectInfo(name);
     if (effectInfo == nullptr) {
         EFFECT_LOGE("GetPixelFormatCap: GetEffectInfo fail! name=%{public}s", name.c_str());

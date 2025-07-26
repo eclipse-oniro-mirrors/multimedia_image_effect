@@ -39,6 +39,7 @@ static std::vector<std::shared_ptr<ImageEffect_FilterNames>> sOHFilterNames;
 
 void OH_EffectFilter::SetParameter(const std::string &key, Plugin::Any &param)
 {
+    CHECK_AND_RETURN_LOG(!key.empty(), "SetParameter: key is empty!");
     params_.erase(key);
     params_.emplace(key, param);
 }
