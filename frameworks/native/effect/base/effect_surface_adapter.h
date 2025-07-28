@@ -50,6 +50,12 @@ public:
     bool CheckEffectSurface() const;
 
     /**
+     * Retrieves the consumer surface.
+     * @return Smart pointer to the consumer surface.
+     */
+    IMAGE_EFFECT_EXPORT sptr<IConsumerSurface> GetConsumerSurface();
+
+    /**
      * Acquires a consumer surface buffer.
      * @param buffer Smart pointer to the surface buffer.
      * @param syncFence Smart pointer to the sync fence.

@@ -96,6 +96,19 @@ bool EffectSurfaceAdapter::CheckEffectSurface() const
     return effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT;
 }
 
+sptr<IConsumerSurface> EffectSurfaceAdapter::GetConsumerSurface()
+{
+    if (receiverConsumerSurface_) {
+        return receiverConsumerSurface_;
+    }
+
+    if (Initialize() != ErrorCode::SUCCESS) {
+        return nullptr;
+    }
+
+    return receiverConsumerSurface_;
+}
+
 GSError EffectSurfaceAdapter::AcquireConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& syncFence,
     int64_t& timestamp, OHOS::Rect& damages) const
 {
