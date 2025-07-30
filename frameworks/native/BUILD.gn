@@ -37,6 +37,7 @@ config("image_effect_impl_public_config") {
     "$image_effect_root_dir/frameworks/native/render_environment/render_thread/queue",
     "$image_effect_root_dir/frameworks/native/render_environment/render_thread/task",
     "$image_effect_root_dir/frameworks/native/render_environment/render_thread/worker",
+    "//foundation/multimedia/image_effect/frameworks/native/capi/"
   ]
 
   defines = [
