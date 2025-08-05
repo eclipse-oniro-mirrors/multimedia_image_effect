@@ -72,6 +72,7 @@ public:
     void CreatePipeline(std::vector<std::shared_ptr<EFilter>> &efilters);
 
     bool CheckEffectSurface() const;
+    sptr<IConsumerSurface> GetConsumerSurface() const;
     GSError AcquireConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& syncFence,
         int64_t& timestamp, OHOS::Rect& damages) const;
     GSError ReleaseConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer, const sptr<SyncFence>& syncFence) const;
@@ -136,6 +137,13 @@ bool ImageEffect::Impl::CheckEffectSurface() const
     CHECK_AND_RETURN_RET_LOG(surfaceAdapter_ != nullptr, false, "Impl::CheckEffectSurface: surfaceAdapter is nullptr");
 
     return surfaceAdapter_->CheckEffectSurface();
+}
+
+sptr<IConsumerSurface> ImageEffect::Impl::GetConsumerSurface() const
+{
+    CHECK_AND_RETURN_RET_LOG(surfaceAdapter_, nullptr, "Impl::GetConsumerSurface: surfaceAdapter is nullptr");
+
+    return surfaceAdapter_->GetConsumerSurface();
 }
 
 GSError ImageEffect::Impl::AcquireConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& syncFence,
@@ -1208,6 +1216,7 @@ void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNe
 
     constexpr uint32_t waitForEver = -1;
     (void)inBufferSyncFence->Wait(waitForEver);
+    CHECK_AND_RETURN_LOG(inBuffer, "ProcessRender: inBuffer is nullptr!");
 
     {
         EFFECT_TRACE_BEGIN("ProcessRender: InvalidateCache");
@@ -1222,8 +1231,6 @@ void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNe
         EFFECT_LOGE("ProcessRender::RequestAndDetachBuffer failed. %{public}d", ret);
         return;
     }
-    CHECK_AND_RETURN_LOG(inBuffer != nullptr && outBuffer != nullptr,
-        "ProcessRender: inBuffer or outBuffer is nullptr");
     EFFECT_LOGD("ProcessRender: inBuffer: %{public}d, outBuffer: %{public}d",
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
@@ -1248,7 +1255,7 @@ void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNe
         return;
     }
 
-    SetSurfaceBufferHebcAccessType(outBuffer, isSrcHebcData ?
+    SetSurfaceBufferHebcAccessType(inBuffer, isSrcHebcData ?
         V1_1::HebcAccessType::HEBC_ACCESS_HW_ONLY : V1_1::HebcAccessType::HEBC_ACCESS_CPU_ACCESS);
     isNeedSwap = SubmitRenderTask({inBuffer->GetSeqNum(), inBuffer, inBufferSyncFence, timestamp});
 }
@@ -1389,11 +1396,14 @@ sptr<Surface> ImageEffect::GetInputSurface()
         impl_->surfaceAdapter_->SetConsumerListener(std::move(consumerListener));
     }
 
-    int maxBufferPoolSize = std::max(fromProducerSurface_->GetQueueSize(),
-        impl_->surfaceAdapter_->GetProducerSurface()->GetQueueSize());
-    maxBufferPoolSize = std::min(maxBufferPoolSize, RENDER_QUEUE_SIZE);
-    EFFECT_LOGI("GetInputSurface: maxBufferPoolSize=%{public}d", maxBufferPoolSize);
-    bufferPool_ = std::make_shared<ThreadSafeBufferQueue<BufferEntry>>(maxBufferPoolSize);
+    auto consumerSurface = impl_->GetConsumerSurface();
+    if (fromProducerSurface_ && consumerSurface) {
+        int maxBufferPoolSize = std::max((int)fromProducerSurface_->GetQueueSize(),
+            (int)consumerSurface->GetQueueSize());
+        maxBufferPoolSize = std::min(maxBufferPoolSize, RENDER_QUEUE_SIZE);
+        EFFECT_LOGD("GetInputSurface: maxBufferPoolSize=%{public}d", maxBufferPoolSize);
+        bufferPool_ = std::make_shared<ThreadSafeBufferQueue<BufferEntry>>(maxBufferPoolSize);
+    }
 
     return fromProducerSurface_;
 }

@@ -530,7 +530,7 @@ void CreateGainMapIfNeed(int width, int height, std::shared_ptr<EffectBuffer> &b
     CHECK_AND_RETURN_LOG(errorCode == ErrorCode::SUCCESS,
         "CreateGainMapIfNeed: LockPixelMap fail! errorCode=%{public}d", errorCode);
     gainMapEffectBuffer->bufferInfo_->pixelmapType_ = EffectPixelmapType::GAINMAP;
-    gainMapEffectBuffer->bufferInfo_->bufferType_ = gainMapEffectBuffer->bufferInfo_->bufferType_;
+    gainMapEffectBuffer->bufferInfo_->bufferType_ = gainMapEffectBuffer->extraInfo_->bufferType;
     gainMapEffectBuffer->bufferInfo_->addr_ = gainMapEffectBuffer->buffer_;
     buffer->auxiliaryBufferInfos->emplace(EffectPixelmapType::GAINMAP, gainMapEffectBuffer->bufferInfo_);
 }
