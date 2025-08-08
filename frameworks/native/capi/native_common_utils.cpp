@@ -64,10 +64,10 @@ static const std::map<ErrorCode, ImageEffect_ErrorCode> ERRORCODE_TABLE_RENDER =
 };
 
 template <class ValueType>
-ErrorCode AnyCastOHAny(const Plugin::Any &any, ImageEffect_DataType &ohDataType, ImageEffect_DataType ohDataTypeValue,
+ErrorCode AnyCastOHAny(const Any &any, ImageEffect_DataType &ohDataType, ImageEffect_DataType ohDataTypeValue,
     ValueType &value)
 {
-    auto result = Plugin::AnyCast<ValueType>(&any);
+    auto result = AnyCast<ValueType>(&any);
     if (result == nullptr) {
         return ErrorCode::ERR_ANY_CAST_TYPE_NOT_MATCH;
     }
@@ -76,7 +76,7 @@ ErrorCode AnyCastOHAny(const Plugin::Any &any, ImageEffect_DataType &ohDataType,
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode NativeCommonUtils::ParseOHAny(const ImageEffect_Any *value, Plugin::Any &any)
+ErrorCode NativeCommonUtils::ParseOHAny(const ImageEffect_Any *value, Any &any)
 {
     switch (value->dataType) {
         case ImageEffect_DataType::EFFECT_DATA_TYPE_INT32:
@@ -107,7 +107,7 @@ ErrorCode NativeCommonUtils::ParseOHAny(const ImageEffect_Any *value, Plugin::An
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode NativeCommonUtils::SwitchToOHAny(const Plugin::Any &any, ImageEffect_Any *value)
+ErrorCode NativeCommonUtils::SwitchToOHAny(const Any &any, ImageEffect_Any *value)
 {
     CHECK_AND_RETURN_RET(AnyCastOHAny(any, value->dataType, ImageEffect_DataType::EFFECT_DATA_TYPE_INT32,
         value->dataValue.int32Value) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
