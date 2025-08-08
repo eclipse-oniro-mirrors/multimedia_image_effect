@@ -37,14 +37,14 @@ namespace {
 
 static std::vector<std::shared_ptr<ImageEffect_FilterNames>> sOHFilterNames;
 
-void OH_EffectFilter::SetParameter(const std::string &key, Plugin::Any &param)
+void OH_EffectFilter::SetParameter(const std::string &key, Any &param)
 {
     CHECK_AND_RETURN_LOG(!key.empty(), "SetParameter: key is empty!");
     params_.erase(key);
     params_.emplace(key, param);
 }
 
-ErrorCode OH_EffectFilter::GetParameter(const std::string &key, Plugin::Any &param)
+ErrorCode OH_EffectFilter::GetParameter(const std::string &key, Any &param)
 {
     auto it = params_.find(key);
     if (it == params_.end()) {
@@ -453,7 +453,7 @@ ImageEffect_ErrorCode OH_EffectFilter_SetValue(OH_EffectFilter *filter, const ch
         "FilterSetValue: input parameter value is null!");
     EFFECT_LOGD("Effect filter set value. key=%{public}s", key);
 
-    Plugin::Any any;
+    Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(value, any);
     if (result != ErrorCode::SUCCESS) {
         EFFECT_LOGE("FilterSetValue: parse any fail! result=%{public}d, dataType=%{public}d", result, value->dataType);
@@ -490,7 +490,7 @@ ImageEffect_ErrorCode OH_EffectFilter_GetValue(OH_EffectFilter *nativeEFilter, c
         return ImageEffect_ErrorCode::EFFECT_SUCCESS;
     }
 
-    Plugin::Any any;
+    Any any;
     ErrorCode result = nativeEFilter->filter_->GetValue(key, any);
     if (result != ErrorCode::SUCCESS) {
         EFFECT_LOGE("FilterGetValue: get value fail! result=%{public}d, key=%{public}s", result, key);
