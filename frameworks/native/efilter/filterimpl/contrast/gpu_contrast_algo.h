@@ -40,13 +40,13 @@ using ContrastFilterDataPtr = std::shared_ptr<ContrastFilterData>;
 class GpuContrastAlgo {
 public:
     IMAGE_EFFECT_EXPORT
-    ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+    ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Any> &value,
         const std::shared_ptr<EffectContext> &context);
     ErrorCode Release();
     ErrorCode Init();
     void Render(GLenum target, RenderTexturePtr tex);
 private:
-    float ParseContrast(std::map<std::string, Plugin::Any> &value);
+    float ParseContrast(std::map<std::string, Any> &value);
     ContrastFilterDataPtr renderEffectData_;
     void PreDraw(GLenum target);
     void PostDraw(GLenum target);

@@ -306,7 +306,7 @@ ImageEffect_ErrorCode OH_ImageEffect_Configure(OH_ImageEffect *imageEffect, cons
     CHECK_AND_RETURN_RET_LOG(value != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
         "Configure: input parameter value is null!");
 
-    Plugin::Any any;
+    Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(value, any);
     CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_PARAM_ERROR,
         "Configure: parse oh any fail! result=%{public}d, key=%{public}s, dataType=%{public}d",
