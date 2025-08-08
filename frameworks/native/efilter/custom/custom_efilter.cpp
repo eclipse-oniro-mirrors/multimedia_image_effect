@@ -44,7 +44,7 @@ ErrorCode CustomEFilter::Render(EffectBuffer *buffer, std::shared_ptr<EffectCont
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode CustomEFilter::SetValue(const std::string &key, Plugin::Any &value)
+ErrorCode CustomEFilter::SetValue(const std::string &key, Any &value)
 {
     CHECK_AND_RETURN_RET_LOG(delegate_ != nullptr, ErrorCode::ERR_INPUT_NULL, "delegate_ is null");
     if (!delegate_->SetValue(handler_, key, value)) {
@@ -74,7 +74,7 @@ ErrorCode CustomEFilter::Restore(const EffectJsonPtr &value)
         return ErrorCode::ERR_CUSTOM_EFILTER_RESTORE_FAIL;
     }
 
-    std::map<std::string, Plugin::Any> filterValues = filter->GetValues();
+    std::map<std::string, Any> filterValues = filter->GetValues();
     for (auto &filterValue : filterValues) {
         SetValue(filterValue.first, filterValue.second);
     }

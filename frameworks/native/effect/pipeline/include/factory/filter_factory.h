@@ -57,7 +57,7 @@ public:
     std::shared_ptr<T> CreateFilterWithType(const std::string &filterName, const std::string &aliasName)
     {
         auto filter = CreateFilter(filterName, aliasName);
-        auto typedFilter = Plugin::ReinterpretPointerCast<T>(filter);
+        auto typedFilter = ReinterpretPointerCast<T>(filter);
         return typedFilter;
     }
 

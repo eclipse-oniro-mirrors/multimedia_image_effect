@@ -40,9 +40,9 @@ bool FilterDelegate::Render(void *efilter, EffectBuffer *src, EffectBuffer *dst,
     OH_EffectFilter *ohEFilter = (OH_EffectFilter *)efilter;
     CHECK_AND_RETURN_RET_LOG(ohEFilter != nullptr && ohEFilter->filter_ != nullptr, false,
         "FilterDelegateRender: filter is null!");
-    Plugin::Any param = true;
+    Any param = true;
     ohEFilter->SetParameter(PARA_RENDER_WITH_SRC_AND_DST, param);
-    Plugin::Any any = context;
+    Any any = context;
     ohEFilter->SetParameter(PARA_RENDER_INFO, any);
 
     if (src->extraInfo_->dataType != DataType::TEX) {
@@ -75,9 +75,9 @@ bool FilterDelegate::Render(void *efilter, EffectBuffer *src, std::shared_ptr<Ef
     CHECK_AND_RETURN_RET_LOG(ohEFilter != nullptr && ohEFilter->filter_ != nullptr, false,
         "FilterDelegateRender: filter is null!");
 
-    Plugin::Any any = src;
+    Any any = src;
     ohEFilter->SetParameter(PARA_SRC_EFFECT_BUFFER, any);
-    Plugin::Any parameter = context;
+    Any parameter = context;
     ohEFilter->SetParameter(PARA_RENDER_INFO, parameter);
 
     OH_EffectFilterDelegate_PushData pushData = [](OH_EffectFilter *filter, OH_EffectBufferInfo *dst) {
@@ -90,7 +90,7 @@ bool FilterDelegate::Render(void *efilter, EffectBuffer *src, std::shared_ptr<Ef
     return res;
 }
 
-bool FilterDelegate::SetValue(void *efilter, const std::string &key, const Plugin::Any &value)
+bool FilterDelegate::SetValue(void *efilter, const std::string &key, const Any &value)
 {
     EFFECT_LOGD("FilterDelegate SetValue.");
     std::unique_ptr<ImageEffect_Any> ohValue = std::make_unique<ImageEffect_Any>();
@@ -130,12 +130,12 @@ void FilterDelegate::PushData(OH_EffectFilter *filter, OH_EffectBufferInfo *dst)
 {
     CHECK_AND_RETURN_LOG(dst != nullptr && filter != nullptr && filter->filter_ != nullptr,
         "FilterDelegatePushData: filter is null!");
-    Plugin::Any param;
+    Any param;
     if (filter->GetParameter(PARA_RENDER_WITH_SRC_AND_DST, param) == ErrorCode::SUCCESS) {
         return;
     }
 
-    Plugin::Any value;
+    Any value;
     ErrorCode res = filter->GetParameter(PARA_SRC_EFFECT_BUFFER, value);
     CHECK_AND_RETURN_LOG(res == ErrorCode::SUCCESS, "FilterDelegatePushData: get param fail! key=%{public}s",
         PARA_SRC_EFFECT_BUFFER);
@@ -154,24 +154,24 @@ void FilterDelegate::PushData(OH_EffectFilter *filter, OH_EffectBufferInfo *dst)
     if (dst->addr == src->buffer_ && src->extraInfo_->dataType != DataType::TEX) {
         std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(src->bufferInfo_,
             dst->addr, src->extraInfo_);
-        Plugin::Any any;
+        Any any;
         res = filter->GetParameter(PARA_RENDER_INFO, any);
         CHECK_AND_RETURN_LOG(res == ErrorCode::SUCCESS, "FilterDelegatePushData: get param fail! key=%{public}s",
             PARA_RENDER_INFO);
 
-        auto &context = Plugin::AnyCast<std::shared_ptr<EffectContext> &>(any);
+        auto &context = AnyCast<std::shared_ptr<EffectContext> &>(any);
         filter->filter_->PushData(effectBuffer.get(), context);
         return;
     }
 
     std::shared_ptr<EffectBuffer> effectBuffer = GenDstEffectBuffer(dst, src);
 
-    Plugin::Any any;
+    Any any;
     res = filter->GetParameter(PARA_RENDER_INFO, any);
     CHECK_AND_RETURN_LOG(res == ErrorCode::SUCCESS, "FilterDelegatePushData: get param fail! key=%{public}s",
         PARA_RENDER_INFO);
 
-    auto &context = Plugin::AnyCast<std::shared_ptr<EffectContext> &>(any);
+    auto &context = AnyCast<std::shared_ptr<EffectContext> &>(any);
     filter->filter_->PushData(effectBuffer.get(), context);
 }
 

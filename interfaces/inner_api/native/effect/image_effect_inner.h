@@ -201,7 +201,7 @@ public:
     IMAGE_EFFECT_EXPORT virtual ErrorCode SetOutNativeWindow(OHNativeWindow *nativeWindow);
     IMAGE_EFFECT_EXPORT sptr<Surface> GetInputSurface();
 
-    IMAGE_EFFECT_EXPORT virtual ErrorCode Configure(const std::string &key, const Plugin::Any &value);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode Configure(const std::string &key, const Any &value);
 
     IMAGE_EFFECT_EXPORT void Stop();
 
@@ -306,7 +306,7 @@ private:
         { IPType::CPU, IPType::GPU },
     };
 
-    std::map<ConfigType, Plugin::Any> config_ = { { ConfigType::IPTYPE, ipType_ } };
+    std::map<ConfigType, Any> config_ = { { ConfigType::IPTYPE, ipType_ } };
 
     EffectJsonPtr extraInfo_ = nullptr;
 

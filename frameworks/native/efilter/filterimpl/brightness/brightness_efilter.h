@@ -39,7 +39,7 @@ public:
 
     ErrorCode Render(EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context) override;
 
-    ErrorCode SetValue(const std::string &key, Plugin::Any &value) override;
+    ErrorCode SetValue(const std::string &key, Any &value) override;
 
     ErrorCode Restore(const EffectJsonPtr &values) override;
 
@@ -48,7 +48,7 @@ public:
     ErrorCode PreRender(IEffectFormat &format) override;
 private:
     using ApplyFunc =
-        std::function<ErrorCode(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+        std::function<ErrorCode(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Any> &value,
             std::shared_ptr<EffectContext> &context)>;
 
     static std::shared_ptr<EffectInfo> info_;

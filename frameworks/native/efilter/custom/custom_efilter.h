@@ -41,7 +41,7 @@ public:
 
     ErrorCode Render(EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context) override;
 
-    ErrorCode SetValue(const std::string &key, Plugin::Any &value) override;
+    ErrorCode SetValue(const std::string &key, Any &value) override;
 
     ErrorCode Save(EffectJsonPtr &res) override;
 

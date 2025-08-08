@@ -182,14 +182,14 @@ GSError ImageEffect::Impl::AttachConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buff
 
 struct EffectParameters {
     EffectParameters(std::shared_ptr<EffectBuffer> &srcEffectBuffer, std::shared_ptr<EffectBuffer> &dstEffectBuffer,
-        std::map<ConfigType, Plugin::Any> &config, std::shared_ptr<EffectContext> &effectContext)
+        std::map<ConfigType, Any> &config, std::shared_ptr<EffectContext> &effectContext)
         : srcEffectBuffer_(std::move(srcEffectBuffer)),
           dstEffectBuffer_(std::move(dstEffectBuffer)),
           config_(std::move(config)),
           effectContext_(std::move(effectContext)) {};
     std::shared_ptr<EffectBuffer> &&srcEffectBuffer_;
     std::shared_ptr<EffectBuffer> &&dstEffectBuffer_;
-    std::map<ConfigType, Plugin::Any> &&config_;
+    std::map<ConfigType, Any> &&config_;
     std::shared_ptr<EffectContext> &&effectContext_;
 };
 
@@ -364,7 +364,7 @@ ErrorCode ConfigSinkFilter(std::shared_ptr<ImageSinkFilter> &sinkFilter, std::sh
     return ErrorCode::SUCCESS;
 }
 
-void GetConfigIPTypes(const std::map<ConfigType, Plugin::Any> &config, std::vector<IPType> &configIPTypes)
+void GetConfigIPTypes(const std::map<ConfigType, Any> &config, std::vector<IPType> &configIPTypes)
 {
     auto it = config.find(ConfigType::IPTYPE);
     if (it == config.end()) {
@@ -395,7 +395,7 @@ void AdjustEffectFormat(IEffectFormat& effectFormat) {
 }
 
 ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
-    const std::shared_ptr<EffectContext> &context, const std::map<ConfigType, Plugin::Any> &config,
+    const std::shared_ptr<EffectContext> &context, const std::map<ConfigType, Any> &config,
     IPType &runningIPType)
 {
     std::vector<IPType> configIPTypes;
@@ -1426,7 +1426,7 @@ ErrorCode ImageEffect::SetOutNativeWindow(OHNativeWindow *nativeWindow)
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode ImageEffect::Configure(const std::string &key, const Plugin::Any &value)
+ErrorCode ImageEffect::Configure(const std::string &key, const Any &value)
 {
     if (FUNCTION_FLUSH_SURFACE_BUFFER.compare(key) == 0) {
         EFFECT_LOGI("ImageEffect Configure FlushCache");

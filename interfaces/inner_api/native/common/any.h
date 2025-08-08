@@ -16,6 +16,6 @@
 #ifndef IMAGE_EFFECT_ANY_H
 #define IMAGE_EFFECT_ANY_H
 
-#include "plugin/common/any.h"
+#include "meta/any.h"
 
 #endif // IMAGE_EFFECT_ANY_H

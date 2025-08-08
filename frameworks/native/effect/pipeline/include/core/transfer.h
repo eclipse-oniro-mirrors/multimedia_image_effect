@@ -41,7 +41,7 @@ enum struct EventType : uint32_t {
 struct Event {
     std::string srcFilter;
     EventType type;
-    Media::Plugin::Any param;
+    Media::Any param;
 };
 
 /**

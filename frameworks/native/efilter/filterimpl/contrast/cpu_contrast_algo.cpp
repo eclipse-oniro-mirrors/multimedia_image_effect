@@ -50,7 +50,7 @@ ErrorCode ContrastCheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint3
 }
 
 ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
-    std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
+    std::map<std::string, Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("CpuContrastAlgo::OnApplyRGBA8888 enter!");
     CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL, "input para is null!");
@@ -105,7 +105,7 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
 }
 
 ErrorCode CpuContrastAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst,
-    std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
+    std::map<std::string, Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("CpuContrastAlgo::OnApplyYUVNV21 enter!");
     CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL, "input para is null!");
@@ -161,7 +161,7 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst,
 }
 
 ErrorCode CpuContrastAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst,
-    std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
+    std::map<std::string, Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_TRACE_NAME("CpuContrastAlgo::OnApplyYUVNV12");
     EFFECT_LOGI("CpuContrastAlgo::OnApplyYUVNV12 enter!");
@@ -218,7 +218,7 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst,
     return ErrorCode::SUCCESS;
 }
 
-float CpuContrastAlgo::ParseContrast(std::map<std::string, Plugin::Any> &value)
+float CpuContrastAlgo::ParseContrast(std::map<std::string, Any> &value)
 {
     float contrast = 0.f;
     ErrorCode res = CommonUtils::GetValue("FilterIntensity", value, contrast);

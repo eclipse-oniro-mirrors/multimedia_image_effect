@@ -89,13 +89,13 @@ public:
     {
         res->Put("name", name_);
         EffectJsonPtr jsonValues = EffectJsonHelper::CreateObject();
-        Plugin::Any any;
+        Any any;
         auto it = values_.find(Test::KEY_FILTER_INTENSITY);
         if (it == values_.end()) {
             return ErrorCode::ERR_UNKNOWN;
         }
 
-        auto value = Plugin::AnyCast<void *>(&it->second);
+        auto value = AnyCast<void *>(&it->second);
         if (value == nullptr) {
             return ErrorCode::ERR_UNKNOWN;
         }

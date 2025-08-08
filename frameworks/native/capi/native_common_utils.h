@@ -34,22 +34,22 @@ namespace Effect {
 class NativeCommonUtils {
 public:
     /**
-     * Parses an ImageEffect_Any object and converts it to Plugin::Any.
+     * Parses an ImageEffect_Any object and converts it to Any.
      *
      * @param value The input ImageEffect_Any object.
-     * @param any The output Plugin::Any object.
+     * @param any The output Any object.
      * @return ErrorCode indicating the result of the operation.
      */
-    static ErrorCode ParseOHAny(const ImageEffect_Any *value, Plugin::Any &any);
+    static ErrorCode ParseOHAny(const ImageEffect_Any *value, Any &any);
 
     /**
-     * Converts a Plugin::Any object to an ImageEffect_Any object.
+     * Converts a Any object to an ImageEffect_Any object.
      *
-     * @param any The input Plugin::Any object.
+     * @param any The input Any object.
      * @param value The output ImageEffect_Any object.
      * @return ErrorCode indicating the result of the operation.
      */
-    static ErrorCode SwitchToOHAny(const Plugin::Any &any, ImageEffect_Any *value);
+    static ErrorCode SwitchToOHAny(const Any &any, ImageEffect_Any *value);
 
     /**
      * Converts an IEffectFormat object to an ImageEffect_Format object.

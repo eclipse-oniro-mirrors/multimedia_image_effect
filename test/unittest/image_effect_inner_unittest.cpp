@@ -113,7 +113,7 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_001, TestSize.Level1)
     InSequence s;
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
     imageEffect_->AddEFilter(efilter);
-    Plugin::Any value = 200.f;
+    Any value = 200.f;
     efilter->SetValue(KEY_FILTER_INTENSITY, value);
     ErrorCode result = imageEffect_->SetInputPixelMap(mockPixelMap_);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -125,7 +125,7 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_002, TestSize.Level1)
 {
     InSequence s;
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
-    Plugin::Any value = 200.f;
+    Any value = 200.f;
     efilter->SetValue(KEY_FILTER_INTENSITY, value);
     std::shared_ptr<EffectBuffer> src = std::make_shared<EffectBuffer>(
         effectBuffer_->bufferInfo_, effectBuffer_->buffer_, effectBuffer_->extraInfo_);
@@ -138,7 +138,7 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_003, TestSize.Level1)
 {
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
     imageEffect_->AddEFilter(efilter);
-    Plugin::Any value = 100.f;
+    Any value = 100.f;
     efilter->SetValue(KEY_FILTER_INTENSITY, value);
     ErrorCode result = imageEffect_->SetInputPixelMap(mockPixelMap_);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -155,7 +155,7 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_004, TestSize.Level1)
     uint32_t x1 = static_cast<uint32_t>(mockPixelMap_->GetWidth() / CROP_FACTOR);
     uint32_t y1 = static_cast<uint32_t>(mockPixelMap_->GetHeight() / CROP_FACTOR);
     uint32_t areaInfo[] = { 0, 0, x1, y1};
-    Plugin::Any value = static_cast<void *>(areaInfo);
+    Any value = static_cast<void *>(areaInfo);
     efilter->SetValue(KEY_FILTER_REGION, value);
     ErrorCode result = imageEffect_->SetInputPixelMap(mockPixelMap_);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -172,7 +172,7 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_005, TestSize.Level1)
     uint32_t x1 = static_cast<uint32_t>(mockPixelMap_->GetWidth() / CROP_FACTOR);
     uint32_t y1 = static_cast<uint32_t>(mockPixelMap_->GetHeight() / CROP_FACTOR);
     uint32_t areaInfo[] = { 0, 0, x1, y1};
-    Plugin::Any value = static_cast<void *>(areaInfo);
+    Any value = static_cast<void *>(areaInfo);
     efilter->SetValue(KEY_FILTER_REGION, value);
     ErrorCode result = imageEffect_->SetInputPixelMap(mockPixelMap_);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
@@ -358,7 +358,7 @@ HWTEST_F(ImageEffectInnerUnittest, RenderTexture_001, TestSize.Level1)
     result = imageEffect_->SetOutputTexture(outTex->GetName());
     ASSERT_EQ(result, ErrorCode::SUCCESS);
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
-    Plugin::Any value = 70.f;
+    Any value = 70.f;
     efilter->SetValue(KEY_FILTER_INTENSITY, value);
     imageEffect_->AddEFilter(efilter);
     result = imageEffect_->Start();

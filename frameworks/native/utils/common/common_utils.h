@@ -59,7 +59,7 @@ public:
     IMAGE_EFFECT_EXPORT static ErrorCode ParseTex(unsigned int textureId, unsigned int colorSpace,
         std::shared_ptr<EffectBuffer> &effectBuffer);
     IMAGE_EFFECT_EXPORT static void UnlockPixelMap(const PixelMap *pixelMap);
-    static ErrorCode ParseAnyAndAddToJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &result);
+    static ErrorCode ParseAnyAndAddToJson(const std::string &key, Any &any, EffectJsonPtr &result);
     static bool EndsWithJPG(const std::string &input);
     static bool EndsWithHEIF(const std::string &input);
     static ErrorCode ModifyPixelMapProperty(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer,
@@ -78,9 +78,9 @@ public:
 
     static std::shared_ptr<ImageSource> GetImageSourceFromPath(std::string path);
 
-    template <class ValueType> static ErrorCode ParseAny(Plugin::Any any, ValueType &value)
+    template <class ValueType> static ErrorCode ParseAny(Any any, ValueType &value)
     {
-        auto result = Plugin::AnyCast<ValueType>(&any);
+        auto result = AnyCast<ValueType>(&any);
         if (result == nullptr) {
             EFFECT_LOGE("value type is not match!");
             return ErrorCode::ERR_ANY_CAST_TYPE_NOT_MATCH;
@@ -92,7 +92,7 @@ public:
     }
 
     template <class ValueType>
-    static ErrorCode GetValue(const std::string &key, std::map<std::string, Plugin::Any> &valueMap, ValueType &value)
+    static ErrorCode GetValue(const std::string &key, std::map<std::string, Any> &valueMap, ValueType &value)
     {
         auto it = valueMap.find(key);
         if (it == valueMap.end()) {
@@ -100,7 +100,7 @@ public:
             return ErrorCode::ERR_NO_VALUE_KEY;
         }
 
-        auto result = Plugin::AnyCast<ValueType>(&it->second);
+        auto result = AnyCast<ValueType>(&it->second);
         if (result == nullptr) {
             EFFECT_LOGE("value type is not match! key=%{public}s", key.c_str());
             return ErrorCode::ERR_ANY_CAST_TYPE_NOT_MATCH;

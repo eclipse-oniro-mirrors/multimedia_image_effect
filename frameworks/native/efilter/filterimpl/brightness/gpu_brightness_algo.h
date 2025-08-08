@@ -40,13 +40,13 @@ using BrightnessFilterDataPtr = std::shared_ptr<BrightnessFilterData>;
 class GpuBrightnessAlgo {
 public:
     IMAGE_EFFECT_EXPORT
-    ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+    ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Any> &value,
         const std::shared_ptr<EffectContext> &context);
     ErrorCode Release();
     ErrorCode Init();
     void Render(GLenum target, RenderTexturePtr tex);
 private:
-    float ParseBrightness(std::map<std::string, Plugin::Any> &value);
+    float ParseBrightness(std::map<std::string, Any> &value);
     BrightnessFilterDataPtr renderEffectData_;
     void PreDraw(GLenum target);
     void PostDraw(GLenum target);

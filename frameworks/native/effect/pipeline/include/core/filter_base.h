@@ -66,12 +66,12 @@ public:
 
     IMAGE_EFFECT_EXPORT ErrorCode Start() override;
 
-    ErrorCode SetParameter(int32_t key, const Media::Plugin::Any &value) override
+    ErrorCode SetParameter(int32_t key, const Media::Any &value) override
     {
         return ErrorCode::ERR_UNIMPLEMENTED;
     }
 
-    ErrorCode GetParameter(int32_t key, Media::Plugin::Any &value) override
+    ErrorCode GetParameter(int32_t key, Media::Any &value) override
     {
         return ErrorCode::ERR_UNIMPLEMENTED;
     }

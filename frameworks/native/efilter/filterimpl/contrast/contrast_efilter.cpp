@@ -47,7 +47,7 @@ ContrastEFilter::ContrastEFilter(const std::string &name) : EFilter(name)
             {
                 {
                     IEffectFormat::RGBA8888,
-                    [this](EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+                    [this](EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Any> &value,
                         std::shared_ptr<EffectContext> &context)
                         { return gpuContrastAlgo_->OnApplyRGBA8888(src, dst, value, context); }
                 },
@@ -93,14 +93,14 @@ ErrorCode ContrastEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::sha
     return formatIter->second(src, dst, values_, context);
 }
 
-ErrorCode ContrastEFilter::SetValue(const std::string &key, Plugin::Any &value)
+ErrorCode ContrastEFilter::SetValue(const std::string &key, Any &value)
 {
     if (Parameter::KEY_INTENSITY.compare(key) != 0) {
         EFFECT_LOGE("key is not support! key=%{public}s", key.c_str());
         return ErrorCode::ERR_UNSUPPORTED_VALUE_KEY;
     }
 
-    auto contrastPtr = Plugin::AnyCast<float>(&value);
+    auto contrastPtr = AnyCast<float>(&value);
     if (contrastPtr == nullptr) {
         EFFECT_LOGE("the type is not float! key=%{public}s", key.c_str());
         return ErrorCode::ERR_ANY_CAST_TYPE_NOT_FLOAT;
@@ -128,7 +128,7 @@ ErrorCode ContrastEFilter::Restore(const EffectJsonPtr &values)
     if (contrast < Parameter::INTENSITY_RANGE[0] || contrast > Parameter::INTENSITY_RANGE[1]) {
         return ErrorCode::ERR_VALUE_OUT_OF_RANGE;
     }
-    Plugin::Any any = contrast;
+    Any any = contrast;
     return SetValue(Parameter::KEY_INTENSITY, any);
 }
 
