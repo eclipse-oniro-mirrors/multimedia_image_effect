@@ -34,12 +34,12 @@ public:
 
     virtual ErrorCode SetSource(const std::shared_ptr<EffectBuffer> &source, std::shared_ptr<EffectContext> &context);
 
-    ErrorCode SetParameter(int32_t key, const Media::Plugin::Any &value) override
+    ErrorCode SetParameter(int32_t key, const Media::Any &value) override
     {
         return FilterBase::SetParameter(key, value);
     }
 
-    ErrorCode GetParameter(int32_t key, Media::Plugin::Any &value) override
+    ErrorCode GetParameter(int32_t key, Media::Any &value) override
     {
         return FilterBase::GetParameter(key, value);
     }
