@@ -115,10 +115,10 @@ HWTEST_F(TestUtils, NativeCommonUtilsParseOHAny001, TestSize.Level1) {
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
     value.dataValue.int32Value = 123;
-    Plugin::Any any;
+    Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(&value, any);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
-    int actualValue = Plugin::AnyCast<int>(any);
+    int actualValue = AnyCast<int>(any);
     ASSERT_EQ(actualValue, 123);
 }
 
@@ -126,10 +126,10 @@ HWTEST_F(TestUtils, NativeCommonUtilsParseOHAny002, TestSize.Level1) {
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
     value.dataValue.floatValue = 123.45f;
-    Plugin::Any any;
+    Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(&value, any);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
-    float actualValue = Plugin::AnyCast<float>(any);
+    float actualValue = AnyCast<float>(any);
     ASSERT_EQ(actualValue, 123.45f);
 }
 
@@ -137,10 +137,10 @@ HWTEST_F(TestUtils, NativeCommonUtilsParseOHAny003, TestSize.Level1) {
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_DOUBLE;
     value.dataValue.doubleValue = 123.45;
-    Plugin::Any any;
+    Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(&value, any);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
-    double actualValue = Plugin::AnyCast<double>(any);
+    double actualValue = AnyCast<double>(any);
     ASSERT_EQ(actualValue, 123.45);
 }
 
@@ -148,35 +148,35 @@ HWTEST_F(TestUtils, NativeCommonUtilsParseOHAny004, TestSize.Level1) {
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_CHAR;
     value.dataValue.charValue = 'A';
-    Plugin::Any any;
+    Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(&value, any);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
-    ASSERT_EQ(Plugin::AnyCast<char>(any), 'A');
+    ASSERT_EQ(AnyCast<char>(any), 'A');
 }
 
 HWTEST_F(TestUtils, NativeCommonUtilsParseOHAny005, TestSize.Level1) {
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_LONG;
     value.dataValue.longValue = 123456789L;
-    Plugin::Any any;
+    Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(&value, any);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
-    ASSERT_EQ(Plugin::AnyCast<long>(any), 123456789L);
+    ASSERT_EQ(AnyCast<long>(any), 123456789L);
 }
 
 HWTEST_F(TestUtils, NativeCommonUtilsParseOHAny006, TestSize.Level1) {
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_PTR;
     value.dataValue.ptrValue = (void*)0x12345678;
-    Plugin::Any any;
+    Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(&value, any);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
-    ASSERT_EQ(Plugin::AnyCast<void*>(any), reinterpret_cast<void*>(0x12345678));
+    ASSERT_EQ(AnyCast<void*>(any), reinterpret_cast<void*>(0x12345678));
 }
 
 HWTEST_F(TestUtils, NativeCommonUtilsParseOHAny007, TestSize.Level1) {
     ImageEffect_Any value;
-    Plugin::Any any;
+    Any any;
     ErrorCode result = NativeCommonUtils::ParseOHAny(&value, any);
     ASSERT_NE(result, ErrorCode::SUCCESS);
 }
@@ -185,47 +185,47 @@ HWTEST_F(TestUtils, NativeCommonUtilsParseOHAny008, TestSize.Level1) {
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_BOOL;
     value.dataValue.boolValue = true;
-    Plugin::Any any;
+    Any any;
     EXPECT_EQ(NativeCommonUtils::ParseOHAny(&value, any), ErrorCode::SUCCESS);
 }
 
 HWTEST_F(TestUtils, NativeCommonUtilsSwitchToOHAny001, TestSize.Level1) {
-    Plugin::Any any = 10.0;
+    Any any = 10.0;
     ImageEffect_Any value;
     value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_DOUBLE;
     ErrorCode result = NativeCommonUtils::SwitchToOHAny(any, &value);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
     EXPECT_DOUBLE_EQ(value.dataValue.doubleValue, 10.0);
 
-    Plugin::Any anyChar = 'a';
+    Any anyChar = 'a';
     ImageEffect_Any valueChar;
     valueChar.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_CHAR;
     result = NativeCommonUtils::SwitchToOHAny(anyChar, &valueChar);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
     EXPECT_EQ(valueChar.dataValue.charValue, 'a');
 
-    Plugin::Any anyLong = 10L;
+    Any anyLong = 10L;
     ImageEffect_Any valueLong;
     valueLong.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_LONG;
     result = NativeCommonUtils::SwitchToOHAny(anyLong, &valueLong);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
     EXPECT_EQ(valueLong.dataValue.longValue, 10L);
 
-    Plugin::Any anyPtr = (void*)10;
+    Any anyPtr = (void*)10;
     ImageEffect_Any valuePtr;
     valuePtr.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_PTR;
     result = NativeCommonUtils::SwitchToOHAny(anyPtr, &valuePtr);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
     EXPECT_EQ(valuePtr.dataValue.ptrValue, (void*)10);
 
-    Plugin::Any anyBool = true;
+    Any anyBool = true;
     ImageEffect_Any valueBool;
     valueBool.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_BOOL;
     result = NativeCommonUtils::SwitchToOHAny(anyBool, &valueBool);
     EXPECT_EQ(result, ErrorCode::SUCCESS);
     EXPECT_EQ(valueBool.dataValue.boolValue, true);
 
-    Plugin::Any anyUnknown = std::string("Unsupported");
+    Any anyUnknown = std::string("Unsupported");
     ImageEffect_Any valueUnknown;
     valueUnknown.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_UNKNOWN;
     result = NativeCommonUtils::SwitchToOHAny(anyUnknown, &valueUnknown);
@@ -282,7 +282,7 @@ HWTEST_F(TestUtils, JsonHelper001, TestSize.Level1) {
 
 HWTEST_F(TestUtils, NativeCommonUtilsParseJson001, TestSize.Level1) {
     std::string key = "test_key";
-    Plugin::Any any = nullptr;
+    Any any = nullptr;
     Json *json = nullptr;
     EffectJsonPtr result = std::make_shared<EffectJson>(json);
     ErrorCode ret = CommonUtils::ParseAnyAndAddToJson(key, any, result);

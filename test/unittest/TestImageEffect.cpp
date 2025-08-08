@@ -49,7 +49,7 @@ public:
         return true;
     }
 
-    bool SetValue(void *efilter, const std::string &key, const Plugin::Any &value) override
+    bool SetValue(void *efilter, const std::string &key, const Any &value) override
     {
         return true;
     }
@@ -63,7 +63,7 @@ public:
     void *Restore(const EffectJsonPtr &values) override
     {
         filter_ = EFilterFactory::Instance()->Create(CUSTOM_TEST_EFILTER);
-        Plugin::Any brightness = values->GetFloat("brightness");
+        Any brightness = values->GetFloat("brightness");
         filter_->SetValue("brightness", brightness);
         return filter_.get();
     }
@@ -148,7 +148,7 @@ HWTEST_F(TestImageEffect, Start001, TestSize.Level1)
 {
     std::shared_ptr<ImageEffect> imageEffect = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(BRIGHTNESS_EFILTER);
-    Plugin::Any value = 100.f;
+    Any value = 100.f;
     ErrorCode result = efilter->SetValue(KEY_FILTER_INTENSITY, value);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
     imageEffect->AddEFilter(efilter);
@@ -367,16 +367,16 @@ HWTEST_F(TestImageEffect, Restore001, TestSize.Level1)
     std::vector<std::shared_ptr<EFilter>> efilters = imageEffect->GetEFilters();
     ASSERT_EQ(efilters.size(), 2);
     ASSERT_STREQ(efilters.at(0)->GetName().c_str(), BRIGHTNESS_EFILTER);
-    Plugin::Any value;
+    Any value;
     ASSERT_EQ(efilters.at(0)->GetValue(KEY_FILTER_INTENSITY, value), ErrorCode::SUCCESS);
-    auto brightnessRatio = Plugin::AnyCast<float>(&value);
+    auto brightnessRatio = AnyCast<float>(&value);
     ASSERT_NE(brightnessRatio, nullptr);
     ASSERT_FLOAT_EQ(*brightnessRatio, 100.f);
 
-    Plugin::Any any;
+    Any any;
     ASSERT_STREQ(efilters.at(1)->GetName().c_str(), CONTRAST_EFILTER);
     ASSERT_EQ(efilters.at(1)->GetValue(KEY_FILTER_INTENSITY, any), ErrorCode::SUCCESS);
-    auto contrastRatio = Plugin::AnyCast<float>(&any);
+    auto contrastRatio = AnyCast<float>(&any);
     ASSERT_NE(contrastRatio, nullptr);
     ASSERT_FLOAT_EQ(*contrastRatio, 50.f);
 }
@@ -396,9 +396,9 @@ HWTEST_F(TestImageEffect, Restore002, TestSize.Level1)
     std::vector<std::shared_ptr<EFilter>> efilters = imageEffect->GetEFilters();
     ASSERT_EQ(efilters.size(), 2);
     ASSERT_STREQ(efilters.at(0)->GetName().c_str(), "CustomTestEFilter");
-    Plugin::Any value;
+    Any value;
     ASSERT_EQ(efilters.at(0)->GetValue("brightness", value), ErrorCode::SUCCESS);
-    auto brightness = Plugin::AnyCast<float>(&value);
+    auto brightness = AnyCast<float>(&value);
     ASSERT_NE(brightness, nullptr);
     ASSERT_FLOAT_EQ(*brightness, 60.f);
 
@@ -439,7 +439,7 @@ HWTEST_F(TestImageEffect, Surface001, TestSize.Level1)
     imageEffect_->ConsumerBufferAvailable();
 
     std::shared_ptr<EFilter> contrastEFilter = EFilterFactory::Instance()->Create(CONTRAST_EFILTER);
-    Plugin::Any value = 50.f;
+    Any value = 50.f;
     result = contrastEFilter->SetValue(KEY_FILTER_INTENSITY, value);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
     imageEffect_->AddEFilter(contrastEFilter);

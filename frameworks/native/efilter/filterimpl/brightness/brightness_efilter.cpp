@@ -48,7 +48,7 @@ BrightnessEFilter::BrightnessEFilter(const std::string &name) : EFilter(name)
             {
                 {
                     IEffectFormat::RGBA8888,
-                    [this](EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+                    [this](EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Any> &value,
                         std::shared_ptr<EffectContext> &context)
                         { return gpuBrightnessAlgo_->OnApplyRGBA8888(src, dst, value, context); }
                 },
@@ -94,14 +94,14 @@ ErrorCode BrightnessEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::s
     return formatIter->second(src, dst, values_, context);
 }
 
-ErrorCode BrightnessEFilter::SetValue(const std::string &key, Plugin::Any &value)
+ErrorCode BrightnessEFilter::SetValue(const std::string &key, Any &value)
 {
     if (Parameter::KEY_INTENSITY.compare(key) != 0) {
         EFFECT_LOGE("key is not support! key=%{public}s", key.c_str());
         return ErrorCode::ERR_UNSUPPORTED_VALUE_KEY;
     }
 
-    auto brightnessPtr = Plugin::AnyCast<float>(&value);
+    auto brightnessPtr = AnyCast<float>(&value);
     if (brightnessPtr == nullptr) {
         EFFECT_LOGE("the type is not float! key=%{public}s", key.c_str());
         return ErrorCode::ERR_ANY_CAST_TYPE_NOT_FLOAT;
@@ -131,7 +131,7 @@ ErrorCode BrightnessEFilter::Restore(const EffectJsonPtr &values)
     if (brightness < Parameter::INTENSITY_RANGE[0] || brightness > Parameter::INTENSITY_RANGE[1]) {
         return ErrorCode::ERR_VALUE_OUT_OF_RANGE;
     }
-    Plugin::Any any = brightness;
+    Any any = brightness;
     return SetValue(Parameter::KEY_INTENSITY, any);
 }
 

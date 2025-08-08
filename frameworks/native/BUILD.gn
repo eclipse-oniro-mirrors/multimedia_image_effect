@@ -137,7 +137,7 @@ ohos_shared_library("image_effect_impl") {
     "libexif:libexif",
     "napi:ace_napi",
     "qos_manager:qos",
-    "media_foundation:histreamer_plugin_base",
+    "media_foundation:media_foundation",
     "skia:skia_canvaskit",
   ]
 
