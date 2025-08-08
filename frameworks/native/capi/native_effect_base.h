@@ -31,12 +31,12 @@
  */
 struct OH_EffectFilter {
     std::shared_ptr<OHOS::Media::Effect::EFilter> filter_ = nullptr; // Shared pointer to EFilter object
-    void SetParameter(const std::string &key, OHOS::Media::Plugin::Any &param); // Sets a filter parameter
-    OHOS::Media::Effect::ErrorCode GetParameter(const std::string &key, OHOS::Media::Plugin::Any &param);
+    void SetParameter(const std::string &key, OHOS::Media::Any &param); // Sets a filter parameter
+    OHOS::Media::Effect::ErrorCode GetParameter(const std::string &key, OHOS::Media::Any &param);
     void RemoveParameter(const std::string &key); // Removes a filter parameter
     bool isCreatedBySystem_ = false; // Flag indicating if the filter was created by the system
 private:
-    std::unordered_map<std::string, OHOS::Media::Plugin::Any&> params_; // Map of filter parameters
+    std::unordered_map<std::string, OHOS::Media::Any&> params_; // Map of filter parameters
 };
 
 /**
