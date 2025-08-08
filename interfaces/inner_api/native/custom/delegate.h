@@ -38,7 +38,7 @@ public:
     IMAGE_EFFECT_EXPORT
     virtual bool Render(void *efilter, EffectBuffer *src, std::shared_ptr<EffectContext> &context) = 0;
 
-    IMAGE_EFFECT_EXPORT virtual bool SetValue(void *efilter, const std::string &key, const Plugin::Any &value) = 0;
+    IMAGE_EFFECT_EXPORT virtual bool SetValue(void *efilter, const std::string &key, const Any &value) = 0;
 
     IMAGE_EFFECT_EXPORT virtual bool Save(void *efilter, EffectJsonPtr &res) = 0;
 

@@ -28,17 +28,17 @@ namespace Media {
 namespace Effect {
 class CpuContrastAlgo {
 public:
-    static ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+    static ErrorCode OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Any> &value,
         std::shared_ptr<EffectContext> &context);
 
-    static ErrorCode OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+    static ErrorCode OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Any> &value,
         std::shared_ptr<EffectContext> &context);
 
-    static ErrorCode OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Plugin::Any> &value,
+    static ErrorCode OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst, std::map<std::string, Any> &value,
         std::shared_ptr<EffectContext> &context);
 
 private:
-    static float ParseContrast(std::map<std::string, Plugin::Any> &value);
+    static float ParseContrast(std::map<std::string, Any> &value);
 };
 } // namespace Effect
 } // namespace Media

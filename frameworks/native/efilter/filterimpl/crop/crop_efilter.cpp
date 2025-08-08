@@ -45,7 +45,7 @@ struct Region {
     int32_t height;
 };
 
-void CalculateCropRegion(int32_t srcWidth, int32_t srcHeight, std::map<std::string, Plugin::Any> &values,
+void CalculateCropRegion(int32_t srcWidth, int32_t srcHeight, std::map<std::string, Any> &values,
     Region *region)
 {
     AreaInfo areaInfo = { 0, 0, srcWidth, srcHeight };

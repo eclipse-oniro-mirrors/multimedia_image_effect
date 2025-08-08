@@ -41,7 +41,7 @@ public:
 
     bool Render(void *efilter, EffectBuffer *src, std::shared_ptr<EffectContext> &context) override;
 
-    bool SetValue(void *efilter, const std::string &key, const Plugin::Any &value) override;
+    bool SetValue(void *efilter, const std::string &key, const Any &value) override;
 
     bool Save(void *efilter, EffectJsonPtr &res) override;
 

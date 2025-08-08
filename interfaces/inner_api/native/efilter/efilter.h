@@ -51,9 +51,9 @@ public:
     IMAGE_EFFECT_EXPORT
     virtual ErrorCode Render(EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context) = 0;
 
-    IMAGE_EFFECT_EXPORT virtual ErrorCode SetValue(const std::string &key, Plugin::Any &value);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode SetValue(const std::string &key, Any &value);
 
-    IMAGE_EFFECT_EXPORT virtual ErrorCode GetValue(const std::string &key, Plugin::Any &value);
+    IMAGE_EFFECT_EXPORT virtual ErrorCode GetValue(const std::string &key, Any &value);
 
     IMAGE_EFFECT_EXPORT virtual ErrorCode Save(EffectJsonPtr &res);
 
@@ -72,7 +72,7 @@ public:
 
     IMAGE_EFFECT_EXPORT ErrorCode PushData(EffectBuffer *buffer, std::shared_ptr<EffectContext> &context);
 
-    std::map<std::string, Plugin::Any> &GetValues()
+    std::map<std::string, Any> &GetValues()
     {
         return values_;
     }
@@ -104,7 +104,7 @@ public:
 protected:
     ErrorCode CalculateEFilterIPType(IEffectFormat &formatType, IPType &ipType);
 
-    std::map<std::string, Plugin::Any> values_;
+    std::map<std::string, Any> values_;
 
     std::shared_ptr<EFilterCacheConfig> cacheConfig_ = nullptr;
 

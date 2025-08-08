@@ -52,9 +52,9 @@ public:
 
     virtual ErrorCode Start() = 0;
 
-    virtual ErrorCode SetParameter(int32_t key, const Plugin::Any &value) = 0;
+    virtual ErrorCode SetParameter(int32_t key, const Any &value) = 0;
 
-    virtual ErrorCode GetParameter(int32_t key, Plugin::Any &value) = 0;
+    virtual ErrorCode GetParameter(int32_t key, Any &value) = 0;
 
     virtual void UnlinkPrevFilters() = 0;
 

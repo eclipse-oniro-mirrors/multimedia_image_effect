@@ -52,7 +52,7 @@ ErrorCode EFilter::ProcessConfig(const std::string &key)
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode EFilter::SetValue(const std::string &key, Plugin::Any &value)
+ErrorCode EFilter::SetValue(const std::string &key, Any &value)
 {
     auto it = values_.find(key);
     if (it == values_.end()) {
@@ -63,7 +63,7 @@ ErrorCode EFilter::SetValue(const std::string &key, Plugin::Any &value)
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode EFilter::GetValue(const std::string &key, Plugin::Any &value)
+ErrorCode EFilter::GetValue(const std::string &key, Any &value)
 {
     if (key.empty()) {
         return ErrorCode::ERR_INPUT_NULL;
