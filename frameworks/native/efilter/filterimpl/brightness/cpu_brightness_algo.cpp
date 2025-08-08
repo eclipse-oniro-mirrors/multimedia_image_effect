@@ -47,7 +47,7 @@ ErrorCode BrightnessCheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uin
     return ErrorCode::SUCCESS;
 }
 
-float CpuBrightnessAlgo::ParseBrightness(std::map<std::string, Plugin::Any> &value)
+float CpuBrightnessAlgo::ParseBrightness(std::map<std::string, Any> &value)
 {
     float brightness = 0.f;
     ErrorCode res = CommonUtils::GetValue("FilterIntensity", value, brightness);
@@ -59,7 +59,7 @@ float CpuBrightnessAlgo::ParseBrightness(std::map<std::string, Plugin::Any> &val
 }
 
 ErrorCode CpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
-    std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
+    std::map<std::string, Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_LOGI("CpuBrightnessAlgo::OnApplyRGBA8888 enter!");
     CHECK_AND_RETURN_RET_LOG(src != nullptr && dst != nullptr, ErrorCode::ERR_INPUT_NULL, "input para is null!");
@@ -114,7 +114,7 @@ ErrorCode CpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
 }
 
 ErrorCode CpuBrightnessAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst,
-    std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
+    std::map<std::string, Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_TRACE_NAME("CpuBrightnessAlgo::OnApplyYUVNV21");
     EFFECT_LOGI("CpuBrightnessAlgo::OnApplyYUVNV21 enter!");
@@ -173,7 +173,7 @@ ErrorCode CpuBrightnessAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst
 }
 
 ErrorCode CpuBrightnessAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst,
-    std::map<std::string, Plugin::Any> &value, std::shared_ptr<EffectContext> &context)
+    std::map<std::string, Any> &value, std::shared_ptr<EffectContext> &context)
 {
     EFFECT_TRACE_NAME("CpuBrightnessAlgo::OnApplyYUVNV12");
     EFFECT_LOGI("CpuBrightnessAlgo::OnApplyYUVNV12 enter!");

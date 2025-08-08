@@ -106,9 +106,9 @@ std::vector<int32_t> HDR_P010_LIST = {
 };
 
 template <class ValueType>
-ErrorCode ParseJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &json)
+ErrorCode ParseJson(const std::string &key, Any &any, EffectJsonPtr &json)
 {
-    auto result = Plugin::AnyCast<ValueType>(&any);
+    auto result = AnyCast<ValueType>(&any);
     if (result == nullptr) {
         return ErrorCode::ERR_ANY_CAST_TYPE_NOT_MATCH;
     }
@@ -512,7 +512,7 @@ void CommonUtils::UnlockPixelMap(const PixelMap *pixelMap)
     EFFECT_LOGI("UnlockPixelMap!");
 }
 
-ErrorCode CommonUtils::ParseAnyAndAddToJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &result)
+ErrorCode CommonUtils::ParseAnyAndAddToJson(const std::string &key, Any &any, EffectJsonPtr &result)
 {
     CHECK_AND_RETURN_RET(ParseJson<float>(key, any, result) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
     CHECK_AND_RETURN_RET(ParseJson<int32_t>(key, any, result) != ErrorCode::SUCCESS, ErrorCode::SUCCESS);
