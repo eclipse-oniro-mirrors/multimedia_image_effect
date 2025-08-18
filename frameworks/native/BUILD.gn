@@ -185,6 +185,7 @@ ohos_shared_library("image_effect") {
     "$image_effect_root_dir/frameworks/native/capi/image_effect.cpp",
     "$image_effect_root_dir/frameworks/native/capi/image_effect_filter.cpp",
     "$image_effect_root_dir/frameworks/native/capi/native_common_utils.cpp",
+    "$image_effect_root_dir/frameworks/native/utils/common/any.cpp",
   ]
 
   use_exceptions = true
