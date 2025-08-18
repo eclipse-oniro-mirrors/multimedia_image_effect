@@ -1280,6 +1280,7 @@ void ImageEffect::ProcessSwapBuffers(BufferProcessInfo& bufferProcessInfo, int64
     EFFECT_LOGD("ProcessSwapBuffers: inBuffer: %{public}d, outBuffer: %{public}d",
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
+    CHECK_AND_RETURN_LOG(impl_ != nullptr, "ProcessSwapBuffers: impl_ is nullptr");
     ret = impl_->DetachConsumerSurfaceBuffer(inBuffer);
     if (ret != GSError::GSERROR_OK) {
         EFFECT_LOGE("ProcessSwapBuffers: DetachConsumerSurfaceBuffer failed. %{public}d", ret);
