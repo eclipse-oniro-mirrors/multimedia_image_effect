@@ -72,6 +72,11 @@ const std::unordered_map<AllocatorType, BufferType> CommonUtils::allocatorTypeTo
 
 std::vector<std::string> FILE_TYPE_SUPPORT_TABLE = {"image/heic", "image/heif", "image/jpeg"};
 
+std::vector<int32_t> HDR_P010_LIST = {
+    GRAPHIC_PIXEL_FMT_YCBCR_P010,
+    GRAPHIC_PIXEL_FMT_YCRCB_P010,
+};
+
 template <class ValueType>
 ErrorCode ParseJson(const std::string &key, Plugin::Any &any, EffectJsonPtr &json)
 {
@@ -578,6 +583,12 @@ ErrorCode CommonUtils::ParsePicture(Picture *picture, std::shared_ptr<EffectBuff
     return ErrorCode::SUCCESS;
 }
 
+bool IsYuvP010(int32_t pixelFmt)
+{
+    auto it = std::find(HDR_P010_LIST.begin(), HDR_P010_LIST.end(), pixelFmt);
+    return it != HDR_P010_LIST.end();
+}
+
 void ProcessYUVInfo(PixelMap *pixelMap, const SurfaceBuffer *sBuffer, const OH_NativeBuffer_Planes *planes)
 {
     int32_t width = sBuffer->GetWidth();
@@ -590,12 +601,15 @@ void ProcessYUVInfo(PixelMap *pixelMap, const SurfaceBuffer *sBuffer, const OH_N
     info.uvHeight = static_cast<uint32_t>(height / YUV_HALF);
     if (planes->planeCount >= YUV_PLANE_COUNT) {
         int32_t pixelFmt = sBuffer->GetFormat();
+        bool isYuvP010 = IsYuvP010(pixelFmt);
         int uvPlaneOffset = (pixelFmt == GRAPHIC_PIXEL_FMT_YCBCR_420_SP ||
             pixelFmt == GRAPHIC_PIXEL_FMT_YCBCR_P010) ? 1 : 2;
-        info.yStride = planes->planes[0].columnStride;
-        info.uvStride = planes->planes[uvPlaneOffset].columnStride;
-        info.yOffset = planes->planes[0].offset;
-        info.uvOffset = planes->planes[uvPlaneOffset].offset;
+        info.yStride = isYuvP010 ? (planes->planes[0].columnStride / YUV_HALF) : planes->planes[0].columnStride;
+        info.uvStride = isYuvP010 ? (planes->planes[uvPlaneOffset].columnStride / YUV_HALF) :
+            (planes->planes[uvPlaneOffset].columnStride);
+        info.yOffset = isYuvP010 ? (planes->planes[0].offset / YUV_HALF) : (planes->planes[0].offset);
+        info.uvOffset =
+            isYuvP010 ? (planes->planes[uvPlaneOffset].offset / YUV_HALF) : (planes->planes[uvPlaneOffset].offset);
         pixelMap->SetImageYUVInfo(info);
     }
 }
@@ -666,7 +680,7 @@ ErrorCode ModifyYUVInfo(PixelMap *pixelMap, void *context, const MemoryInfo &mem
 {
     CHECK_AND_RETURN_RET_LOG(context != nullptr, ErrorCode::ERR_INPUT_NULL, "handle yuv info, context is null.");
     SurfaceBuffer *sBuffer = reinterpret_cast<SurfaceBuffer *>(context);
-    if (memoryInfo.bufferType == BufferType::SHARED_MEMORY) {
+    if (memoryInfo.bufferType == BufferType::SHARED_MEMORY || memoryInfo.bufferType == BufferType::HEAP_MEMORY) {
         int32_t width = memoryInfo.bufferInfo.width_;
         int32_t height = memoryInfo.bufferInfo.height_;
         YUVDataInfo info;
