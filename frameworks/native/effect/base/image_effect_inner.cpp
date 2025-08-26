@@ -83,7 +83,7 @@ private:
     void InitEffectContext();
 
 public:
-    std::unique_ptr<EffectSurfaceAdapter> surfaceAdapter_;
+    sptr<EffectSurfaceAdapter> surfaceAdapter_;
     std::shared_ptr<PipelineCore> pipeline_;
     std::shared_ptr<ImageSourceFilter> srcFilter_;
     std::shared_ptr<ImageSinkFilter> sinkFilter_;
@@ -242,7 +242,9 @@ ImageEffect::~ImageEffect()
         EFFECT_LOGE("ImageEffect::SwapBuffers attach fail %{public}d times", failureCount_);
     }
     imageEffectFlag_ = DESTRUCTOR_IMAGE_EFFECT_CONSTANT;
-    impl_->surfaceAdapter_ = nullptr;
+    if (impl_->surfaceAdapter_) {
+        impl_->surfaceAdapter_->Destroy();
+    }
     m_renderThread->ClearTask();
     auto task = std::make_shared<RenderTask<>>([this]() { this->DestroyEGLEnv(); }, COMMON_TASK_TAG,
         RequestTaskId());
@@ -1019,7 +1021,7 @@ ErrorCode ImageEffect::SetOutputSurface(sptr<Surface>& surface)
     toProducerSurface_ = surface;
 
     if (impl_->surfaceAdapter_ == nullptr) {
-        impl_->surfaceAdapter_ = std::make_unique<EffectSurfaceAdapter>();
+        impl_->surfaceAdapter_ = sptr<EffectSurfaceAdapter>::MakeSptr();
     }
     impl_->surfaceAdapter_->SetOutputSurfaceDefaultUsage(toProducerSurface_->GetDefaultUsage());
 
@@ -1382,7 +1384,7 @@ sptr<Surface> ImageEffect::GetInputSurface()
     }
 
     if (impl_->surfaceAdapter_ == nullptr) {
-        impl_->surfaceAdapter_ = std::make_unique<EffectSurfaceAdapter>();
+        impl_->surfaceAdapter_ = sptr<EffectSurfaceAdapter>::MakeSptr();
     }
 
     if (impl_->surfaceAdapter_) {
@@ -1419,7 +1421,7 @@ ErrorCode ImageEffect::SetOutNativeWindow(OHNativeWindow *nativeWindow)
     outDateInfo_.dataType_ = DataType::NATIVE_WINDOW;
     impl_->effectContext_->renderEnvironment_->InitEngine(nativeWindow);
     if (impl_->surfaceAdapter_ == nullptr) {
-        impl_->surfaceAdapter_ = std::make_unique<EffectSurfaceAdapter>();
+        impl_->surfaceAdapter_ = sptr<EffectSurfaceAdapter>::MakeSptr();
     }
     impl_->surfaceAdapter_->SetOutputSurfaceDefaultUsage(toProducerSurface_->GetDefaultUsage());
 

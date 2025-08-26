@@ -32,7 +32,7 @@ using ConsumerBufferAvailable = std::function<void()>;
 /**
  * Adapter class for image effect surface operation.
  */
-class EffectSurfaceAdapter : public IBufferConsumerListenerClazz {
+class EffectSurfaceAdapter : public IBufferConsumerListener {
 public:
     IMAGE_EFFECT_EXPORT EffectSurfaceAdapter();
     IMAGE_EFFECT_EXPORT ~EffectSurfaceAdapter();
@@ -42,6 +42,12 @@ public:
      * @return Smart pointer to the producer surface.
      */
     IMAGE_EFFECT_EXPORT sptr<Surface> GetProducerSurface();
+
+    /**
+     * Retrieves the receiver surface.
+     * @return Smart pointer to the receiver surface.
+     */
+    IMAGE_EFFECT_EXPORT sptr<IConsumerSurface> GetReceiverSurface();
 
     /**
      * Checks if the effect surface is valid.
@@ -136,6 +142,11 @@ public:
      */
     void OnCleanCache(uint32_t* bufSeqNum) override;
     // Implementation of IBufferConsumerListener interface end
+
+    /**
+     * Deconstructor.
+     */
+    void Destroy();
 
 private:
     /**

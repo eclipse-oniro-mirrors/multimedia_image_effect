@@ -33,13 +33,7 @@ EffectSurfaceAdapter::EffectSurfaceAdapter()
 
 EffectSurfaceAdapter::~EffectSurfaceAdapter()
 {
-    if (receiverConsumerSurface_) {
-        GSError result = receiverConsumerSurface_->UnregisterConsumerListener();
-        EFFECT_LOGI("EffectSurfaceAdapter::~EffectSurfaceAdapter UnregisterConsumerListener. result=%{public}d",
-            result);
-        effectSurfaceFlag_ = DESTRUCTOR_EFFECT_SURFACE_CONSTANT;
-        receiverConsumerSurface_ = nullptr;
-    }
+    Destroy();
 }
 
 ErrorCode EffectSurfaceAdapter::Initialize()
@@ -63,9 +57,6 @@ ErrorCode EffectSurfaceAdapter::Initialize()
         return ErrorCode::ERR_IMAGE_EFFECT_RECEIVER_INIT_FAILED;
     }
 
-    // register consumer listener
-    receiverConsumerSurface_->RegisterConsumerListener(this);
-
     auto surfaceUtils = SurfaceUtils::GetInstance();
     auto ret = surfaceUtils->Add(fromProducerSurface_->GetUniqueId(), fromProducerSurface_);
     if (ret != SurfaceError::SURFACE_ERROR_OK) {
@@ -80,15 +71,26 @@ ErrorCode EffectSurfaceAdapter::Initialize()
 
 sptr<Surface> EffectSurfaceAdapter::GetProducerSurface()
 {
-    if (fromProducerSurface_) {
-        return fromProducerSurface_;
-    }
+    CHECK_AND_RETURN_RET_LOG(!fromProducerSurface_, fromProducerSurface_,
+        "EffectSurfaceAdapter::GetProducerSurface producerSurface exists.");
 
-    if (Initialize() != ErrorCode::SUCCESS) {
-        return nullptr;
-    }
+    auto ret = Initialize();
+    CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, nullptr,
+        "EffectSurfaceAdapter::GetProducerSurface Initialize failed.");
 
     return fromProducerSurface_;
+}
+
+sptr<IConsumerSurface> EffectSurfaceAdapter::GetReceiverSurface()
+{
+    CHECK_AND_RETURN_RET_LOG(!receiverConsumerSurface_, receiverConsumerSurface_,
+        "EffectSurfaceAdapter::GetReceiverSurface consumerSurface exists.");
+
+    auto ret = Initialize();
+    CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, nullptr,
+        "EffectSurfaceAdapter::GetReceiverSurface Initialize failed.");
+
+    return receiverConsumerSurface_;
 }
 
 bool EffectSurfaceAdapter::CheckEffectSurface() const
@@ -102,9 +104,9 @@ sptr<IConsumerSurface> EffectSurfaceAdapter::GetConsumerSurface()
         return receiverConsumerSurface_;
     }
 
-    if (Initialize() != ErrorCode::SUCCESS) {
-        return nullptr;
-    }
+    auto ret = Initialize();
+    CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, nullptr,
+        "EffectSurfaceAdapter::GetConsumerSurface Initialize failed.");
 
     return receiverConsumerSurface_;
 }
@@ -190,6 +192,17 @@ void EffectSurfaceAdapter::OnGoBackground() {}
 void EffectSurfaceAdapter::OnCleanCache(uint32_t* bufSeqNum)
 {
     (void)bufSeqNum;
+}
+
+void EffectSurfaceAdapter::Destroy()
+{
+    if (receiverConsumerSurface_) {
+        GSError result = receiverConsumerSurface_->UnregisterConsumerListener();
+        EFFECT_LOGI("EffectSurfaceAdapter::Destroy UnregisterConsumerListener. result=%{public}d",
+            result);
+        effectSurfaceFlag_ = DESTRUCTOR_EFFECT_SURFACE_CONSTANT;
+        receiverConsumerSurface_ = nullptr;
+    }
 }
 }
 }
