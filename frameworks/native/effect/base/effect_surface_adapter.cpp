@@ -81,14 +81,14 @@ sptr<Surface> EffectSurfaceAdapter::GetProducerSurface()
     return fromProducerSurface_;
 }
 
-sptr<IConsumerSurface> EffectSurfaceAdapter::GetReceiverSurface()
+sptr<IConsumerSurface> EffectSurfaceAdapter::GetConsumerSurface()
 {
     CHECK_AND_RETURN_RET_LOG(!receiverConsumerSurface_, receiverConsumerSurface_,
-        "EffectSurfaceAdapter::GetReceiverSurface consumerSurface exists.");
+        "EffectSurfaceAdapter::GetConsumerSurface consumerSurface exists.");
 
     auto ret = Initialize();
     CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, nullptr,
-        "EffectSurfaceAdapter::GetReceiverSurface Initialize failed.");
+        "EffectSurfaceAdapter::GetConsumerSurface Initialize failed.");
 
     return receiverConsumerSurface_;
 }
@@ -96,19 +96,6 @@ sptr<IConsumerSurface> EffectSurfaceAdapter::GetReceiverSurface()
 bool EffectSurfaceAdapter::CheckEffectSurface() const
 {
     return effectSurfaceFlag_ == STRUCT_EFFECT_SURFACE_CONSTANT;
-}
-
-sptr<IConsumerSurface> EffectSurfaceAdapter::GetConsumerSurface()
-{
-    if (receiverConsumerSurface_) {
-        return receiverConsumerSurface_;
-    }
-
-    auto ret = Initialize();
-    CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, nullptr,
-        "EffectSurfaceAdapter::GetConsumerSurface Initialize failed.");
-
-    return receiverConsumerSurface_;
 }
 
 GSError EffectSurfaceAdapter::AcquireConsumerSurfaceBuffer(sptr<SurfaceBuffer>& buffer, sptr<SyncFence>& syncFence,

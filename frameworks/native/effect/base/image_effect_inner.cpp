@@ -1397,6 +1397,10 @@ sptr<Surface> ImageEffect::GetInputSurface()
 
     if (impl_->surfaceAdapter_) {
         impl_->surfaceAdapter_->SetConsumerListener(std::move(consumerListener));
+        // register consumer listener
+        auto receiverConsumerSurface = impl_->surfaceAdapter_->GetConsumerSurface();
+        sptr<IBufferConsumerListener> listener = impl_->surfaceAdapter_;
+        receiverConsumerSurface->RegisterConsumerListener(listener);
     }
 
     auto consumerSurface = impl_->GetConsumerSurface();
