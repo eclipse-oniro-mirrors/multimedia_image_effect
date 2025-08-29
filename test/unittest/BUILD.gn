@@ -14,7 +14,7 @@
 import("//build/test.gni")
 import("//foundation/multimedia/image_effect/config.gni")
 
-module_output_path = "image_effect/image_effect_unittest"
+module_output_path = "image_effect/image_effect/test"
 
 base_include_dirs = [
   "$image_effect_root_dir/interfaces/inner_api/native/memory",
@@ -104,6 +104,7 @@ ohos_unittest("image_effect_unittest") {
     "libexif:libexif",
     "googletest:gmock_main",
     "googletest:gtest_main",
+    "media_foundation:media_foundation",
   ]
 
   use_exceptions = true
