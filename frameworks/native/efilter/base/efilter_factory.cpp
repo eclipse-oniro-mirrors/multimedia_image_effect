@@ -79,8 +79,16 @@ std::shared_ptr<EFilter> EFilterFactory::Restore(const std::string &name, const 
     std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Create(name, handler);
     CHECK_AND_RETURN_RET_LOG(efilter != nullptr, nullptr, "Restore: create filter fail! name=%{public}s", name.c_str());
     CHECK_AND_RETURN_RET_LOG(root->HasElement("values"), efilter, "[values] not exist!");
-
     const EffectJsonPtr values = root->GetElement("values");
+    uint32_t editDataVersion = 1;
+    uint32_t filterVersion = 1;
+    ErrorCode ret = efilter->GetEditDataVersion(values, editDataVersion);
+    CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, nullptr,
+        "Restore: GetEditDataVersion fail! name=%{public}s", name.c_str());
+    ret = efilter->GetFilterVersion(filterVersion);
+    CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, nullptr,
+        "Restore: GetFilterVersion fail! name=%{public}s", name.c_str());
+    CHECK_AND_RETURN_RET_LOG(filterVersion >= editDataVersion, nullptr, "Filter version is too low, Restore failed!");
     CHECK_AND_RETURN_RET_LOG(efilter->Restore(values) == ErrorCode::SUCCESS, efilter, "values restore fail!");
     return efilter;
 }
