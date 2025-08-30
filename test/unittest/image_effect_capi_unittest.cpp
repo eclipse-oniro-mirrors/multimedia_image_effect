@@ -2073,6 +2073,30 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectRestore003, TestSize.Level1)
 
 /**
  * Feature: ImageEffect
+ * Function: Test OH_ImageEffect_Restore with empty parameter
+ * SubFunction: NA
+ * FunctionPoints: NA
+ * EnvConditions: NA
+ * CaseDescription: Test OH_ImageEffect_Restore with empty parameter
+ */
+HWTEST_F(ImageEffectCApiUnittest, OHImageEffectRestore004, TestSize.Level1)
+{
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectRestore004 start";
+
+    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
+    ASSERT_NE(imageEffect, nullptr) << "OH_ImageEffect_Restore failed";
+    char *imageEffectInfo = nullptr;
+    ImageEffect_ErrorCode errorCode = OH_ImageEffect_Save(imageEffect, &imageEffectInfo);
+    EXPECT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS) << "OH_ImageEffect_Restore failed";
+    imageEffect = OH_ImageEffect_Restore(nullptr);
+    EXPECT_EQ(imageEffect, nullptr) << "OH_ImageEffect_Restore failed";
+
+    GTEST_LOG_(INFO) << "OHImageEffectRestore004 success! result: " << errorCode;
+    GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: OHImageEffectRestore004 END";
+}
+
+/**
+ * Feature: ImageEffect
  * Function: Test OH_ImageEffect_SetOutputSurface with normal parameter
  * SubFunction: NA
  * FunctionPoints: NA

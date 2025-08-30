@@ -101,6 +101,13 @@ public:
 
     IMAGE_EFFECT_EXPORT
     virtual bool IsTextureInput();
+
+    IMAGE_EFFECT_EXPORT
+    virtual ErrorCode GetEditDataVersion(const EffectJsonPtr& values, uint32_t &editDataVersion);
+ 
+    IMAGE_EFFECT_EXPORT
+    virtual ErrorCode GetFilterVersion(uint32_t &filterVersion);
+
 protected:
     ErrorCode CalculateEFilterIPType(IEffectFormat &formatType, IPType &ipType);
 

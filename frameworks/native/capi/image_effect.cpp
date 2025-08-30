@@ -690,8 +690,7 @@ OH_ImageEffect *OH_ImageEffect_Restore(const char *info)
 
         std::unique_ptr<OH_EffectFilter> nativeEFilter = std::make_unique<OH_EffectFilter>();
         std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Restore(name, effect, nativeEFilter.get());
-        CHECK_AND_RETURN_RET_LOG(efilter != nullptr, nullptr, "Restore: efilter restore fail! name=%{public}s",
-            name.c_str());
+        CHECK_AND_RETURN_RET_LOG(efilter != nullptr, nullptr, "efilter restore fail! name=%{public}s", name.c_str());
         nativeEFilter->filter_ = efilter;
         nativeEFilter->isCreatedBySystem_ = true;
         ohImageEffect->filters_.emplace_back(nativeEFilter.release(), efilter->GetName());

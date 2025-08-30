@@ -787,6 +787,20 @@ ErrorCode EFilter::CancelCache()
     return ReleaseCache();
 }
 
+ErrorCode EFilter::GetEditDataVersion(const EffectJsonPtr& values, uint32_t &editDataVersion)
+{
+    EFFECT_LOGI("EFilter::GetEditDataVersion in, default editDataVersion set to 1.");
+    editDataVersion = 1;
+    return ErrorCode::SUCCESS;
+}
+ 
+ErrorCode EFilter::GetFilterVersion(uint32_t &filterVersion)
+{
+    EFFECT_LOGI("EFilter::GetFilterVersion in, default filterVersion set to 1.");
+    filterVersion = 1;
+    return ErrorCode::SUCCESS;
+}
+
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
