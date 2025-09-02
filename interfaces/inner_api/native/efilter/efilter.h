@@ -133,6 +133,9 @@ private:
     static std::shared_ptr<EffectBuffer> CreateEffectBufferFromTexture(const std::shared_ptr<EffectBuffer> &buffer,
         const std::shared_ptr<EffectContext> &context);
 
+    static std::shared_ptr<EffectBuffer> CreateEffectBufferFromTexture(void *addr,
+        const std::shared_ptr<EffectBuffer> &buffer, const std::shared_ptr<EffectContext> &context);
+
     std::shared_ptr<EffectBuffer> ConvertFromGPU2CPU(const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source);
 

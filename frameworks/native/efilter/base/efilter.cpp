@@ -283,6 +283,41 @@ std::shared_ptr<EffectBuffer> EFilter::CreateEffectBufferFromTexture(const std::
     return effectBuffer;
 }
 
+std::shared_ptr<EffectBuffer> EFilter::CreateEffectBufferFromTexture(void *addr,
+    const std::shared_ptr<EffectBuffer> &buffer, const std::shared_ptr<EffectContext> &context)
+{
+    EFFECT_LOGD("EFilter::CreateGainMapBufferFromTexture");
+    auto texture = buffer->bufferInfo_->tex_;
+    MemoryInfo memInfo = {
+        .bufferInfo = {
+            .width_ = texture->Width(),
+            .height_ = texture->Height(),
+            .len_ = FormatHelper::CalculateSize(texture->Width(), texture->Height(), IEffectFormat::RGBA8888),
+            .formatType_ = IEffectFormat::RGBA8888,
+        },
+        .bufferType = BufferType::DMA_BUFFER,
+    };
+
+    MemoryData* memoryData = context->memoryManager_->AllocMemory(addr, memInfo);
+    CHECK_AND_RETURN_RET_LOG(memoryData != nullptr, buffer, "Alloc new memory fail!");
+
+    MemoryInfo& allocMemInfo = memoryData->memoryInfo;
+    auto bufferInfo = std::make_shared<BufferInfo>();
+    CommonUtils::CopyBufferInfo(allocMemInfo.bufferInfo, *bufferInfo);
+    auto extraInfo = std::make_shared<ExtraInfo>();
+    CommonUtils::CopyExtraInfo(*buffer->extraInfo_, *extraInfo);
+    extraInfo->bufferType = allocMemInfo.bufferType;
+    bufferInfo->surfaceBuffer_ = static_cast<SurfaceBuffer*>(allocMemInfo.extra);
+
+    auto effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
+    context->renderEnvironment_->ConvertTextureToBuffer(texture, effectBuffer.get());
+    bufferInfo->surfaceBuffer_->InvalidateCache();
+    effectBuffer->extraInfo_->dataType = DataType::SURFACE_BUFFER;
+    effectBuffer->extraInfo_->bufferType = BufferType::DMA_BUFFER;
+
+    return effectBuffer;
+}
+
 std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context, std::shared_ptr<EffectBuffer> &source)
 {
@@ -303,7 +338,7 @@ std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<
 
     auto gainMapBufferInfo = gainMapBufferInfoIt->second;
     auto tmpGainMapBuffer = std::make_shared<EffectBuffer>(gainMapBufferInfo, nullptr, input->extraInfo_);
-    auto gainMapBuffer = CreateEffectBufferFromTexture(tmpGainMapBuffer, context);
+    auto gainMapBuffer = CreateEffectBufferFromTexture(input->buffer_, tmpGainMapBuffer, context);
     if (!gainMapBuffer) return source;
 
     gainMapBuffer->bufferInfo_->pixelmapType_ = EffectPixelmapType::GAINMAP;
