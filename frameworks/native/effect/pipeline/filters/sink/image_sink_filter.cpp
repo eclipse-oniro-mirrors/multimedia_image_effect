@@ -968,7 +968,7 @@ BufferRequestConfig ImageSinkFilter::CreateBaseBufferConfig(int32_t width, int32
         .height = height,
         .strideAlignment = 0x8, // set 0x8 as default value to alloc SurfaceBufferImpl
         .format = format,
-        .usage = BUFFER_USAGE_CPU_READ | BUFFER_USAGE_CPU_WRITE
+        .usage = BUFFER_USAGE_CPU_READ
                | BUFFER_USAGE_MEM_DMA | BUFFER_USAGE_MEM_MMZ_CACHE,
         .timeout = 0,
         .colorGamut = colorGamut,
