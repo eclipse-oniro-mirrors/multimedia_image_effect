@@ -1472,7 +1472,7 @@ HWTEST_F(ImageEffectCApiUnittest, OHImageEffectRelease002, TestSize.Level1)
  * EnvConditions: NA
  * CaseDescription: Test ImageEffectStandardFilter with normal parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest001, TestSize.Level1)
+HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest001, TestSize.Level0)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectStandardFilterUnittest001 start";
     InSequence s;
@@ -1528,7 +1528,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest001, TestSize
  * CaseDescription: Test ImageEffectStandardFilter submethod OH_ImageEffect_AddFilter with not exist OH_EffectFilter
  * parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest002, TestSize.Level1)
+HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest002, TestSize.Level0)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectStandardFilterUnittest002 start";
     InSequence s;
@@ -1573,7 +1573,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest002, TestSize
  * EnvConditions: NA
  * CaseDescription: Test ImageEffectStandardFilter submethod OH_EffectFilter_SetValue with not exist key parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest003, TestSize.Level1)
+HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest003, TestSize.Level0)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectStandardFilterUnittest003 start";
     InSequence s;
@@ -1618,7 +1618,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest003, TestSize
  * EnvConditions: NA
  * CaseDescription: Test ImageEffectStandardFilter submethod OH_ImageEffect_Start with empty parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest004, TestSize.Level1)
+HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest004, TestSize.Level0)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectStandardFilterUnittest004 start";
     InSequence s;
@@ -1663,7 +1663,7 @@ HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest004, TestSize
  * EnvConditions: NA
  * CaseDescription: Test ImageEffectStandardFilter submethod OH_ImageEffect_Release with empty parameter
  */
-HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest005, TestSize.Level1)
+HWTEST_F(ImageEffectCApiUnittest, ImageEffectStandardFilterUnittest005, TestSize.Level0)
 {
     GTEST_LOG_(INFO) << "ImageEffectCApiUnittest: ImageEffectStandardFilterUnittest005 start";
     InSequence s;
