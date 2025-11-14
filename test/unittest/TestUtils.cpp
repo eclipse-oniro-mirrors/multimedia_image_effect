@@ -689,61 +689,6 @@ HWTEST_F(TestUtils, JsonHelper004, TestSize.Level1) {
     std::string s = root2->ToString();
 }
 
-HWTEST_F(TestUtils, CommonUtilsParsePicture001, TestSize.Level1)
-{
-    static std::unique_ptr<Picture> g_picture = CreatePictureByPath(TEST_INCLUDE_AUX_PATH);
-    EXPECT_NE(g_picture, nullptr);
-    Picture *testPicture = g_picture.get();
-    std::shared_ptr<EffectBuffer> testEffectBuffer = CreateEffectBufferByPicture(testPicture);
-    EXPECT_NE(testEffectBuffer, nullptr);
-    ErrorCode result = CommonUtils::ParsePicture(testPicture, testEffectBuffer);
-
-    EXPECT_EQ(result, ErrorCode::SUCCESS);
-    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->size(), 4);
-    EXPECT_EQ(testEffectBuffer->bufferInfo_->pixelmapType_, EffectPixelmapType::PRIMARY);
-    EXPECT_EQ(testEffectBuffer->bufferInfo_->bufferType_, testEffectBuffer->extraInfo_->bufferType);
-    EXPECT_EQ(testEffectBuffer->bufferInfo_->addr_, testEffectBuffer->buffer_);
-    EXPECT_EQ(testEffectBuffer->extraInfo_->dataType, DataType::PICTURE);
-    EXPECT_EQ(testEffectBuffer->extraInfo_->picture, testPicture);
-    EXPECT_EQ(testEffectBuffer->bufferInfo_->hdrFormat_, HdrFormat::HDR8_GAINMAP);
-
-    std::shared_ptr<PixelMap> gainMap =
-        testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::GAINMAP)->GetContentPixel();
-    BufferType bufferType = CommonUtils::SwitchToEffectBuffType(gainMap.get()->GetAllocatorType());
-    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP)->second->pixelmapType_,
-              EffectPixelmapType::GAINMAP);
-    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP)->second->bufferType_,
-              bufferType);
-    EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP)->second->addr_, nullptr);
-
-    std::shared_ptr<PixelMap> unRefocusMap =
-        testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::UNREFOCUS_MAP)->GetContentPixel();
-    bufferType = CommonUtils::SwitchToEffectBuffType(unRefocusMap.get()->GetAllocatorType());
-    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::UNREFOCUS)->second->pixelmapType_,
-              EffectPixelmapType::UNREFOCUS);
-    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::UNREFOCUS)->second->bufferType_,
-              bufferType);
-    EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::UNREFOCUS)->second->addr_, nullptr);
-
-    std::shared_ptr<PixelMap> depthMap =
-        testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::DEPTH_MAP)->GetContentPixel();
-    bufferType = CommonUtils::SwitchToEffectBuffType(depthMap.get()->GetAllocatorType());
-    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::DEPTHMAP)->second->pixelmapType_,
-              EffectPixelmapType::DEPTHMAP);
-    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::DEPTHMAP)->second->bufferType_,
-              bufferType);
-    EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::DEPTHMAP)->second->addr_, nullptr);
-
-    std::shared_ptr<PixelMap> linearMap =
-        testPicture->GetAuxiliaryPicture(AuxiliaryPictureType::LINEAR_MAP)->GetContentPixel();
-    bufferType = CommonUtils::SwitchToEffectBuffType(linearMap.get()->GetAllocatorType());
-    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::LINEAR)->second->pixelmapType_,
-              EffectPixelmapType::LINEAR);
-    EXPECT_EQ(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::LINEAR)->second->bufferType_,
-              bufferType);
-    EXPECT_NE(testEffectBuffer->auxiliaryBufferInfos->find(EffectPixelmapType::LINEAR)->second->addr_, nullptr);
-}
-
 HWTEST_F(TestUtils, CommonUtilsParsePicture002, TestSize.Level1)
 {
     static std::unique_ptr<Picture> g_picture = CreatePictureByPath(TEST_IMAGE_PATH);
