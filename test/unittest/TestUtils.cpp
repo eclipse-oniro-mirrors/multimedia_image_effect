@@ -42,7 +42,6 @@ namespace Effect {
 namespace Test {
 
 static const std::string TAG = "ParsePictureTest";
-constexpr char TEST_INCLUDE_AUX_PATH[] = "/data/test/resource/camera_efilter_test.jpg";
 constexpr char TEST_IMAGE_PATH[] = "/data/test/resource/image_effect_1k_test1.jpg";
 
 static std::unique_ptr<Picture> CreatePictureByPath(std::string imagePath)
