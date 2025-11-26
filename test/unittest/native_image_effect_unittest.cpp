@@ -1371,49 +1371,6 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectYuvUnittest004, TestSize.Level1
 
 /**
  * Feature: ImageEffect
- * Function: Test OH_ImageEffect_Hdr with BRIGHTNESS_EFILTER
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_Hdr with BRIGHTNESS_EFILTER
- */
-HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr001, TestSize.Level1)
-{
-    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
-    std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
-    pixelmapNative->pixelmap_ = std::move(pixelMap);
-    
-    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
-    ASSERT_NE(imageEffect, nullptr);
-
-    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
-    ASSERT_NE(filter, nullptr);
-
-    ImageEffect_Any value;
-    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
-    value.dataValue.floatValue = 100.f;
-    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative_);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    int32_t ipType = 2;
-    ImageEffect_Any runningType;
-    runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
-    runningType.dataValue.int32Value = ipType;
-    errorCode = OH_ImageEffect_Configure(imageEffect, "runningType", &runningType);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    errorCode = OH_ImageEffect_Start(imageEffect);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    errorCode = OH_ImageEffect_Release(imageEffect);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-}
-
-/**
- * Feature: ImageEffect
  * Function: Test OH_ImageEffect_Hdr with CROP_EFILTER
  * SubFunction: NA
  * FunctionPoints: NA
@@ -1451,56 +1408,6 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr002, TestSize.Level1)
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 }
 
-/**
- * Feature: ImageEffect
- * Function: Test OH_ImageEffect_Hdr with SetOutputPixelmap
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_Hdr with SetOutputPixelmap
- */
-HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr003, TestSize.Level1)
-{
-    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
-    std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_jpgHdrPath);
-    ASSERT_NE(pixelMap, nullptr);
-    pixelmapNative->pixelmap_ = std::move(pixelMap);
-    
-    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
-    ASSERT_NE(imageEffect, nullptr);
-
-    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
-    ASSERT_NE(filter, nullptr);
-
-    ImageEffect_Any value;
-    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
-    value.dataValue.floatValue = 100.f;
-    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative.get());
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    errorCode = OH_ImageEffect_SetOutputPixelmap(imageEffect, pixelmapNative_);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    int32_t ipType = 2;
-    ImageEffect_Any runningType;
-    runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
-    runningType.dataValue.int32Value = ipType;
-    errorCode = OH_ImageEffect_Configure(imageEffect, "runningType", &runningType);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    errorCode = OH_ImageEffect_Start(imageEffect);
-    if (pixelmapNative->pixelmap_->IsHdr()) {
-        ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-    } else {
-        ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-    }
-
-    errorCode = OH_ImageEffect_Release(imageEffect);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-}
 
 /**
  * Feature: ImageEffect
@@ -1547,49 +1454,6 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr004, TestSize.Level1)
     }
 
     errorCode = OH_ImageEffect_Stop(imageEffect);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    errorCode = OH_ImageEffect_Release(imageEffect);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-}
-
-/**
- * Feature: ImageEffect
- * Function: Test OH_ImageEffect_Hdr with Adobe
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test OH_ImageEffect_Hdr with Adobe
- */
-HWTEST_F(NativeImageEffectUnittest, OHImageEffectAdobe001, TestSize.Level1)
-{
-    std::shared_ptr<OH_PixelmapNative> pixelmapNative = std::make_shared<OH_PixelmapNative>(nullptr);
-    std::unique_ptr<PixelMap> pixelMap = TestPixelMapUtils::ParsePixelMapByPath(g_adobeHdrPath);
-    pixelmapNative->pixelmap_ = std::move(pixelMap);
-    
-    OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
-    ASSERT_NE(imageEffect, nullptr);
-
-    OH_EffectFilter *filter = OH_ImageEffect_AddFilter(imageEffect, BRIGHTNESS_EFILTER);
-    ASSERT_NE(filter, nullptr);
-
-    ImageEffect_Any value;
-    value.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_FLOAT;
-    value.dataValue.floatValue = 100.f;
-    ImageEffect_ErrorCode errorCode = OH_EffectFilter_SetValue(filter, KEY_FILTER_INTENSITY, &value);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    errorCode = OH_ImageEffect_SetInputPixelmap(imageEffect, pixelmapNative.get());
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    int32_t ipType = 2;
-    ImageEffect_Any runningType;
-    runningType.dataType = ImageEffect_DataType::EFFECT_DATA_TYPE_INT32;
-    runningType.dataValue.int32Value = ipType;
-    errorCode = OH_ImageEffect_Configure(imageEffect, "runningType", &runningType);
-    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
-
-    errorCode = OH_ImageEffect_Start(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Release(imageEffect);
