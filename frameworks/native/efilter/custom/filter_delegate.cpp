@@ -85,6 +85,15 @@ bool FilterDelegate::Render(void *efilter, EffectBuffer *src, std::shared_ptr<Ef
     };
 
     bool res = ohDelegate_->render((OH_EffectFilter *)efilter, srcBuffer.get(), pushData);
+    BufferType bufferType = src->bufferInfo_->bufferType_;
+    if (bufferType == BufferType::DMA_BUFFER) {
+        auto pixelMap = src->bufferInfo_->pixelMap_;
+        if (pixelMap && pixelMap->GetFd()) {
+            src->bufferInfo_->surfaceBuffer_ = reinterpret_cast<SurfaceBuffer *>(pixelMap->GetFd());
+        }
+        FlushCacheIfNeed(src);
+    }
+
     ohEFilter->RemoveParameter(PARA_SRC_EFFECT_BUFFER);
     ohEFilter->RemoveParameter(PARA_RENDER_INFO);
     return res;
@@ -196,6 +205,16 @@ std::shared_ptr<EffectBuffer> FilterDelegate::GenDstEffectBuffer(const OH_Effect
         extraInfo->dataType = DataType::TEX;
     }
     return effectBuffer;
+}
+
+void FilterDelegate::FlushCacheIfNeed(EffectBuffer *src)
+{
+    CHECK_AND_RETURN_LOG(src->extraInfo_, "FlushCacheIfNeed: extraInfo is nullptr");
+    auto dataType = src->extraInfo_->dataType;
+    CHECK_AND_RETURN(dataType != DataType::TEX);
+    CHECK_AND_RETURN_LOG(src->bufferInfo_ && src->bufferInfo_->surfaceBuffer_,
+        "FlushCacheIfNeed: bufferInfo or surfaceBuffer is nullptr");
+    (void)src->bufferInfo_->surfaceBuffer_->FlushCache();
 }
 } // namespace Effect
 } // namespace Media

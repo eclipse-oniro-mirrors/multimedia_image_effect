@@ -55,6 +55,8 @@ private:
     const ImageEffect_FilterDelegate *ohDelegate_;
 
     static std::shared_ptr<EffectBuffer> GenDstEffectBuffer(const OH_EffectBufferInfo *dst, const EffectBuffer *src);
+
+    static void FlushCacheIfNeed(EffectBuffer *src);
 };
 } // namespace Effect
 } // namespace Media
