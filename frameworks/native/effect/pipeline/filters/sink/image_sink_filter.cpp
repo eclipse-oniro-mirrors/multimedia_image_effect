@@ -909,6 +909,16 @@ ErrorCode ImageSinkFilter::TextureRenderFlow(RenderTexturePtr texture, BufferReq
     const auto seqNum = outBuffer->GetSeqNum();
     auto it = texureCacheSeqs_.find(seqNum);
     if (it == texureCacheSeqs_.end()) {
+        bufferQueueSize_ = bufferQueueSize_ == 0 ? toXComponentSurface_->GetQueueSize() : bufferQueueSize_;
+        if (texureCacheSeqs_.size() == bufferQueueSize_) {
+            for (auto it = texureCacheSeqs_.begin(); it != texureCacheSeqs_.end(); ++it) {
+                auto textureCacheSeq = it->second;
+                GLUtils::DestroyImage(textureCacheSeq.eglImage_);
+                GLUtils::DeleteTexture(textureCacheSeq.texId_);
+                GLUtils::DestroySyncKHR(textureCacheSeq.eglSync_);
+            }
+            texureCacheSeqs_.clear();
+        }
         EGLDisplay display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
         EGLImageKHR outputImg = GLUtils::CreateEGLImage(display, outBuffer);
         CHECK_AND_RETURN_RET_LOG(outputImg != EGL_NO_IMAGE_KHR, ErrorCode::ERR_GL_DRAW_FAILED,
