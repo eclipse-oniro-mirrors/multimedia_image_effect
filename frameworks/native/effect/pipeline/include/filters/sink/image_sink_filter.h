@@ -124,6 +124,7 @@ private:
     sptr<Surface> toXComponentSurface_;
     std::unordered_map<uint32_t, TextureCacheSeq> texureCacheSeqs_;
     sptr<SurfaceBuffer> hdrSurfaceBuffer_ = nullptr;
+    int bufferQueueSize_ = 0;
 };
 } // namespace Effect
 } // namespace Media
