@@ -103,7 +103,7 @@ public:
     void SetUp() override
     {
         mockPixelMap_ = new MockPixelMap();
-        imageEffect_ = new ImageEffect();
+        imageEffect_ = std::make_unique<ImageEffect>(IMAGE_EFFECT_NAME);
         ExternLoader::Instance()->InitExt();
         EFilterFactory::Instance()->functions_.clear();
         EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
@@ -115,11 +115,9 @@ public:
     {
         delete mockPixelMap_;
         mockPixelMap_ = nullptr;
-        delete imageEffect_;
-        imageEffect_ = nullptr;
     }
     PixelMap *mockPixelMap_ = nullptr;
-    ImageEffect *imageEffect_ = nullptr;
+    std::shared_ptr<OHOS::Media::Effect::ImageEffect> imageEffect_ = nullptr;
 };
 
 HWTEST_F(TestImageEffect, AddEfilter001, TestSize.Level1)

@@ -1391,8 +1391,13 @@ sptr<Surface> ImageEffect::GetInputSurface()
         fromProducerSurface_ = impl_->surfaceAdapter_->GetProducerSurface();
     }
 
-    auto consumerListener = [this]() {
-        return ConsumerBufferAvailable();
+    auto weak_this = std::weak_ptr<ImageEffect>(shared_from_this());
+    auto consumerListener = [weak_this]() {
+        if (auto self = weak_this.lock()) {
+            return self->ConsumerBufferAvailable();
+        }
+        EFFECT_LOGE("ImageEffect has released.");
+        return;
     };
 
     if (impl_->surfaceAdapter_) {
