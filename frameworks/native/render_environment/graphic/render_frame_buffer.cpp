@@ -27,7 +27,6 @@ RenderFrameBuffer::RenderFrameBuffer(ResourceCache *cache, int width, int height
 {
     CHECK_AND_RETURN_LOG(cache != nullptr && texture_ != nullptr,
         "RenderFrameBuffer struct fail, ctx or cache or texture_ is null.");
-    
     cache_ = cache;
     fboId_ = GLUtils::CreateFramebuffer(texture_->GetName());
     GLUtils::CheckError(__FILE_NAME__, __LINE__);
