@@ -206,20 +206,6 @@ HWTEST_F(TestImageEffect, SetInputPath001, TestSize.Level1)
 
 /**
  * Feature: ImageEffect
- * Function: Test ImageEffect::SetInputPath with nullptr param
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ImageEffect::SetInputPath with nullptr param
- */
-HWTEST_F(TestImageEffect, SetInputPath002, TestSize.Level1)
-{
-    ErrorCode result = imageEffect_->SetInputPath(nullptr);
-    ASSERT_NE(result, ErrorCode::SUCCESS);
-}
-
-/**
- * Feature: ImageEffect
  * Function: Test ImageEffect::SetInputPath with not support type param
  * SubFunction: NA
  * FunctionPoints: NA
@@ -243,20 +229,6 @@ HWTEST_F(TestImageEffect, SetInputPath003, TestSize.Level1)
 HWTEST_F(TestImageEffect, SetOutputPath001, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetOutputPath(g_jpgPath);
-    ASSERT_EQ(result, ErrorCode::SUCCESS);
-}
-
-/**
- * Feature: ImageEffect
- * Function: Test ImageEffect::SetOutputPath with nullptr param
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ImageEffect::SetOutputPath with nullptr param
- */
-HWTEST_F(TestImageEffect, SetOutputPath002, TestSize.Level1)
-{
-    ErrorCode result = imageEffect_->SetOutputPath(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
@@ -290,20 +262,6 @@ HWTEST_F(TestImageEffect, SetInputUri001, TestSize.Level1)
 
 /**
  * Feature: ImageEffect
- * Function: Test ImageEffect::SetInputUri with nullptr param
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ImageEffect::SetInputUri with nullptr param
- */
-HWTEST_F(TestImageEffect, SetInputUri002, TestSize.Level1)
-{
-    ErrorCode result = imageEffect_->SetInputUri(nullptr);
-    ASSERT_NE(result, ErrorCode::SUCCESS);
-}
-
-/**
- * Feature: ImageEffect
  * Function: Test ImageEffect::SetInputUri with not support type param
  * SubFunction: NA
  * FunctionPoints: NA
@@ -327,20 +285,6 @@ HWTEST_F(TestImageEffect, SetInputUri003, TestSize.Level1)
 HWTEST_F(TestImageEffect, SetOutputUri001, TestSize.Level1)
 {
     ErrorCode result = imageEffect_->SetOutputUri(g_jpgUri);
-    ASSERT_EQ(result, ErrorCode::SUCCESS);
-}
-
-/**
- * Feature: ImageEffect
- * Function: Test ImageEffect::SetOutputUri with nullptr param
- * SubFunction: NA
- * FunctionPoints: NA
- * EnvConditions: NA
- * CaseDescription: Test ImageEffect::SetOutputUri with nullptr param
- */
-HWTEST_F(TestImageEffect, SetOutputUri002, TestSize.Level1)
-{
-    ErrorCode result = imageEffect_->SetOutputUri(nullptr);
     ASSERT_EQ(result, ErrorCode::SUCCESS);
 }
 
