@@ -187,7 +187,7 @@ void FilterDelegate::PushData(OH_EffectFilter *filter, OH_EffectBufferInfo *dst)
 std::shared_ptr<EffectBuffer> FilterDelegate::GenDstEffectBuffer(const OH_EffectBufferInfo *dst,
     const EffectBuffer *src)
 {
-    std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
+    std::shared_ptr<BufferInfo> bufferInfo = std::make_shared<BufferInfo>();
     bufferInfo->width_ = static_cast<uint32_t>(dst->width);
     bufferInfo->height_ = static_cast<uint32_t>(dst->height);
     bufferInfo->rowStride_ = static_cast<uint32_t>(dst->rowSize);
@@ -195,7 +195,7 @@ std::shared_ptr<EffectBuffer> FilterDelegate::GenDstEffectBuffer(const OH_Effect
     bufferInfo->len_ =
         FormatHelper::CalculateDataRowCount(bufferInfo->height_, bufferInfo->formatType_) * bufferInfo->rowStride_;
     bufferInfo->surfaceBuffer_ = nullptr;
-    std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
+    std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
     *extraInfo = *src->extraInfo_;
     extraInfo->bufferType = BufferType::DEFAULT;
     std::shared_ptr<EffectBuffer> effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, dst->addr, extraInfo);
