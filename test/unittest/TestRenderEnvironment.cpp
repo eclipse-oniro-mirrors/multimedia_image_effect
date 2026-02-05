@@ -61,13 +61,14 @@ public:
         extraInfo->dataType = DataType::PIXEL_MAP;
         extraInfo->bufferType = BufferType::HEAP_MEMORY;
         effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, addr, extraInfo);
-
-        free(addr);
-        addr = nullptr;
     }
 
     void TearDown() override
     {
+        if (effectBuffer && effectBuffer->buffer_) {
+            free(effectBuffer->buffer_);
+            effectBuffer->buffer_ = nullptr;
+        }
         effectBuffer = nullptr;
         if (renderEnvironment == nullptr) {
             return;
