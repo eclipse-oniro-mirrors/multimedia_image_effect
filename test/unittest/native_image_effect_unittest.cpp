@@ -1406,7 +1406,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr001, TestSize.Level1)
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);
-    EXPECT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Release(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
@@ -1495,7 +1495,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectHdr003, TestSize.Level1)
     if (pixelmapNative->pixelmap_->IsHdr()) {
         ASSERT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
     } else {
-        EXPECT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+        ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
     }
 
     errorCode = OH_ImageEffect_Release(imageEffect);
@@ -1590,7 +1590,7 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectAdobe001, TestSize.Level1)
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Start(imageEffect);
-    EXPECT_NE(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
+    ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
 
     errorCode = OH_ImageEffect_Release(imageEffect);
     ASSERT_EQ(errorCode, ImageEffect_ErrorCode::EFFECT_SUCCESS);
