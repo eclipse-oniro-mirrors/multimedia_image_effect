@@ -31,6 +31,9 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
+
+struct DataInfo;
+
 class EFilter : public EFilterBase {
 public:
     class Parameter {
@@ -56,6 +59,8 @@ public:
     IMAGE_EFFECT_EXPORT virtual ErrorCode GetValue(const std::string &key, Any &value);
 
     IMAGE_EFFECT_EXPORT virtual ErrorCode Save(EffectJsonPtr &res);
+
+    IMAGE_EFFECT_EXPORT virtual ErrorCode CheckValue(DataInfo &value);
 
     IMAGE_EFFECT_EXPORT virtual ErrorCode Restore(const EffectJsonPtr &values) = 0;
 
