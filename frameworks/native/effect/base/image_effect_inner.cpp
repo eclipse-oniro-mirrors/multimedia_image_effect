@@ -994,6 +994,37 @@ std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
     return imageEffect;
 }
 
+ErrorCode ImageEffect::Load(std::string &info)
+{
+    EFFECT_TRACE_NAME("ImageEffect::Load");
+    const EffectJsonPtr root = EffectJsonHelper::ParseJsonData(info);
+    CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), ErrorCode::ERR_INPUT_NULL, "Load: imageInfo is null");
+    const EffectJsonPtr &imageInfo = root->GetElement("imageEffect");
+    CHECK_AND_RETURN_RET_LOG(imageInfo != nullptr, ErrorCode::ERR_INPUT_NULL, "Load: imageInfo is null!");
+    CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("name"), ErrorCode::ERR_INPUT_NULL,
+        "Load: imageEffect no name");
+    std::string effectName = imageInfo->GetString("name");
+    CHECK_AND_RETURN_RET_LOG(!effectName.empty(), ErrorCode::ERR_INPUT_NULL,
+        "Load: imageEffect get name failed");
+
+    CHECK_AND_RETURN_RET_LOG(imageInfo->HasElement("filters"), ErrorCode::ERR_INPUT_NULL,
+        "Load: imageEffect no filters");
+    std::vector<EffectJsonPtr> efiltersInfo = imageInfo->GetArray("filters");
+    CHECK_AND_RETURN_RET_LOG(!efiltersInfo.empty(), ErrorCode::ERR_INPUT_NULL, "Load: filters not array");
+
+    for (auto &efilterInfo : efiltersInfo) {
+        std::string name = efilterInfo->GetString("name");
+        CHECK_AND_CONTINUE_LOG(!name.empty(), "Load: [name] not exist");
+        std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Restore(name, efilterInfo, nullptr);
+        CHECK_AND_RETURN_RET_LOG(efilter != nullptr, ErrorCode::ERR_INPUT_NULL,
+            "Load: efilter restore fail! name=%{public}s", name.c_str());
+        CHECK_AND_RETURN_RET_LOG(efilter->CheckValue(inDateInfo_) == ErrorCode::SUCCESS,
+            ErrorCode::ERR_INPUT_NULL, "Load: efilter restore fail! name=%{public}s", name.c_str());
+        this->AddEFilter(efilter);
+    }
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ImageEffect::SetOutputPixelMap(PixelMap* pixelMap)
 {
     std::unique_lock<std::mutex> lock(innerEffectMutex_);

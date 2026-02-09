@@ -192,6 +192,8 @@ public:
 
     IMAGE_EFFECT_EXPORT ErrorCode Save(EffectJsonPtr &res) override;
 
+    IMAGE_EFFECT_EXPORT ErrorCode Load(std::string &info);
+
     IMAGE_EFFECT_EXPORT static std::shared_ptr<ImageEffect> Restore(std::string &info);
 
     IMAGE_EFFECT_EXPORT virtual ErrorCode SetOutputPixelMap(PixelMap *pixelMap);

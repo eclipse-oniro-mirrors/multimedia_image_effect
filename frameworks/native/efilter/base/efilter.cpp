@@ -99,6 +99,11 @@ ErrorCode EFilter::Save(EffectJsonPtr &res)
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode EFilter::CheckValue(DataInfo &value)
+{
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode EFilter::PreRender(IEffectFormat &format)
 {
     return ErrorCode::SUCCESS;
