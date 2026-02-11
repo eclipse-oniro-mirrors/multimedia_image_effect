@@ -59,6 +59,7 @@ enum class EffectState {
 
 const int STRUCT_IMAGE_EFFECT_CONSTANT = 1;
 const int DESTRUCTOR_IMAGE_EFFECT_CONSTANT = 2;
+const int QUALITY_MAX_CONSTANT = 100;
 const std::string FUNCTION_FLUSH_SURFACE_BUFFER = "flushSurfaceBuffer";
 
 class ImageEffect::Impl {
@@ -603,7 +604,7 @@ ErrorCode ImageEffect::SetInputUri(const std::string &uri)
 
 ErrorCode ImageEffect::SetDefaultQuality(int32_t quality)
 {
-    CHECK_AND_RETURN_RET_LOG((quality >= 0 && quality <= 100),
+    CHECK_AND_RETURN_RET_LOG((quality >= 0 && quality <= QUALITY_MAX_CONSTANT),
         ErrorCode::ERR_INVALID_PARAMETER_VALUE,
         "quality out of range. quality=%{public}d", quality);
     
@@ -1528,7 +1529,7 @@ void ImageEffect::ClearDataInfo(DataInfo &dataInfo)
     dataInfo.surfaceBufferInfo_.timestamp_ = 0;
     dataInfo.uri_ = "";
     dataInfo.path_ = "";
-    dataInfo.quality = 100;
+    dataInfo.quality = QUALITY_MAX_CONSTANT;
 }
 
 bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
