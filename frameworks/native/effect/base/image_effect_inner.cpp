@@ -889,11 +889,11 @@ ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectB
 
     std::shared_ptr<ImageSinkFilter> &sinkFilter = impl_->sinkFilter_;
 
-    if (outDateInfo_dataType_ == DataType::UNKNOWN) {
-        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, inDateInfo_quality_);
+    if (outDateInfo_.dataType_ == DataType::UNKNOWN) {
+        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, inDateInfo_.quality_);
     }
     else {
-        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, outDateInfo_quality_);
+        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, outDateInfo_.quality_);
     }
 
     if (res != ErrorCode::SUCCESS) {
