@@ -48,7 +48,7 @@ public:
         void* eglSync_;
     };
 
-    virtual ErrorCode SetSink(const std::shared_ptr<EffectBuffer> &sink);
+    virtual ErrorCode SetSink(const std::shared_ptr<EffectBuffer> &sink, int32_t quality);
 
     void DestoryTexureCache();
 
@@ -121,6 +121,7 @@ public:
 private:
     void OnEvent(const Event &event) override {}
 
+    int32_t quality_ = 100;
     sptr<Surface> toXComponentSurface_;
     std::unordered_map<uint32_t, TextureCacheSeq> texureCacheSeqs_;
     sptr<SurfaceBuffer> hdrSurfaceBuffer_ = nullptr;

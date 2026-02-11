@@ -354,11 +354,12 @@ ErrorCode ConfigSourceFilter(std::shared_ptr<ImageSourceFilter> &srcFilter, std:
 }
 
 ErrorCode ConfigSinkFilter(std::shared_ptr<ImageSinkFilter> &sinkFilter, std::shared_ptr<EffectBuffer> &sinkBuffer,
-    sptr<Surface> &toXComponentSurface)
+    sptr<Surface> &toXComponentSurface,
+    int32_t quality)
 {
     CHECK_AND_RETURN_RET_LOG(sinkFilter != nullptr, ErrorCode::ERR_INPUT_NULL, "sinkFilter is null");
 
-    ErrorCode res = sinkFilter->SetSink(sinkBuffer);
+    ErrorCode res = sinkFilter->SetSink(sinkBuffer, quality);
     FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "set sink fail! res=%{public}d", res);
     res = sinkFilter->SetXComponentSurface(toXComponentSurface);
     FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "SetRenderSurface fail! res=%{public}d", res);
@@ -600,6 +601,16 @@ ErrorCode ImageEffect::SetInputUri(const std::string &uri)
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode ImageEffect::SetDefaultQuality(int32_t quality)
+{
+    CHECK_AND_RETURN_RET_LOG((quality >= 0 && quality <= 100),
+        ErrorCode::ERR_INVALID_PARAMETER_VALUE,
+        "quality out of range. quality=%{public}d", quality);
+    
+    defaultQuality_ = quality;
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ImageEffect::SetOutputUri(const std::string &uri)
 {
     EFFECT_LOGD("ImageEffect::SetOutputUri");
@@ -616,6 +627,7 @@ ErrorCode ImageEffect::SetOutputUri(const std::string &uri)
     ClearDataInfo(outDateInfo_);
     outDateInfo_.dataType_ = DataType::URI;
     outDateInfo_.uri_ = std::move(uri);
+    outDateInfo_.quality_ = defaultQuality_;
 
     return ErrorCode::SUCCESS;
 }
@@ -630,6 +642,7 @@ ErrorCode ImageEffect::SetInputPath(const std::string &path)
     ClearDataInfo(inDateInfo_);
     inDateInfo_.dataType_ = DataType::PATH;
     inDateInfo_.path_ = std::move(path);
+    inDateInfo_.quality_ = defaultQuality_;
 
     return ErrorCode::SUCCESS;
 }
@@ -874,7 +887,14 @@ ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectB
     }
 
     std::shared_ptr<ImageSinkFilter> &sinkFilter = impl_->sinkFilter_;
-    res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_);
+
+    if (outDateInfo_dataType_ == DataType::UNKNOWN){
+        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, inDateInfo_quality_);
+    }
+    else{
+        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, outDateInfo_quality_);
+    }
+
     if (res != ErrorCode::SUCCESS) {
         UnLockAll();
         return res;
@@ -1508,6 +1528,7 @@ void ImageEffect::ClearDataInfo(DataInfo &dataInfo)
     dataInfo.surfaceBufferInfo_.timestamp_ = 0;
     dataInfo.uri_ = "";
     dataInfo.path_ = "";
+    dataInfo.quality = 100;
 }
 
 bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)

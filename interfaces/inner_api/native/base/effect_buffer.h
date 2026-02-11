@@ -94,6 +94,7 @@ public:
     void *buffer_ = nullptr;
     std::shared_ptr<ExtraInfo> extraInfo_ = nullptr;
     std::shared_ptr<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>> auxiliaryBufferInfos = nullptr;
+    int32_t quality_ = 100;
 };
 } // namespace Effect
 } // namespace Media

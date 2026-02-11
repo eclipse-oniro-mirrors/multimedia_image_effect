@@ -587,6 +587,71 @@ HWTEST_F(ImageEffectInnerUnittest, PushData_001, TestSize.Level1)
     context->cacheNegotiate_->hasUsedCache_ = true;
     res = efilter->PushData("test", src, context);
     EXPECT_NE(res, ErrorCode::SUCCESS);
+
+HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_SetPathQuality_001, TestSize.Level1)
+{
+    const std::string inputpath = "/data/test/resource/image_effect_1k_test1.jpg"
+    const std::string outputpath = "/data/test/resource/test1.jpg"
+
+    int32_t targetQuality = 90;
+    ErrorCode res = imageEffect_->SetDefaultQuality(targetQuality);
+    ASSERT_EQ(ErrorCode::SUCCESS, res);
+
+    res = imageEffect_->SetInputPath(inputpath);
+    ASSERT_EQ(ErrorCode::SUCCESS, res);
+
+    res = imageEffect_->SetOutputPath(outputpath);
+    ASSERT_EQ(ErrorCode::SUCCESS, res);
+
+    EFFECT_LOGI("Test completed: Quality Set to %{public}d", targetQuality);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetDefaultQuality_Validation_001, TestSize.Level0)
+{
+   EXPECT_EQ(imageEffect_->SetDefaultQuality(0), ErrorCode::SUCCESS);
+   EXPECT_EQ(imageEffect_->SetDefaultQuality(50), ErrorCode::SUCCESS);
+   EXPECT_EQ(imageEffect_->SetDefaultQuality(100), ErrorCode::SUCCESS);
+   EXPECT_EQ(imageEffect_->SetDefaultQuality(-1), ErrorCode::ERR_INVALID_PARAMETER_VALUE);
+   EXPECT_EQ(imageEffect_->SetDefaultQuality(101), ErrorCode::ERR_INVALID_PARAMETER_VALUE);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetOutputPath_Format_Check_001, TestSize.Level0)
+{
+   EXPECT_EQ(imageEffect_->SetOutputPath("output.jpg"), ErrorCode::SUCCESS);
+   EXPECT_EQ(imageEffect_->SetOutputPath("output.heif"), ErrorCode::SUCCESS);
+   EXPECT_EQ(imageEffect_->SetOutputPath("output.bmp"), ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT);
+   EXPECT_EQ(imageEffect_->SetOutputPath(""), ErrorCode::SUCCESS);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_QualityRouting_001, TestSize.Level1)
+{
+   imageEffect_->AddEFilter(std::shared_ptr<EFilter>(EFilter_));
+
+   imageEffect_->SetDefaultQuality(85);
+   imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
+   (void)imageEffect_->Render();
+
+   imageEffect_->SetDefaultQuality(70);
+   imageEffect_->SetOutputPath("test1.jpg");
+   (void)imageEffect_->Render();
+}
+
+HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_InputPriority_001, TestSize.Level1)
+{
+   imageEffect_->AddEFilter(std::shared_ptr<EFilter>(EFilter_));
+   imageEffect_->SetDefaultQuality(90);
+   imageEffect_->SetInputUri("/data/test/resource/image_effect_1k_test1.jpg");
+   (void)imageEffect_->Render();
+}
+
+HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_EmptyFilter_001, TestSize.Level1)
+{
+   imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
+   ErrorCode res = imageEffect_->Render();
+   EXPECT_EQ(res, ErrorCode::ERR_NOT_FILTERS_WITH_RENDER);
+}
+
+
 }
 } // namespace Effect
 } // namespace Media
