@@ -57,6 +57,7 @@ struct DataInfo {
     std::string uri_;
     std::string path_;
     Picture *picture_ = nullptr;
+    int32_t quality_ = 100;
 };
 
 struct BufferProcessInfo {
