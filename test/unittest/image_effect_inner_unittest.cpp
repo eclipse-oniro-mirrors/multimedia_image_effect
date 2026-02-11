@@ -652,7 +652,6 @@ HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_EmptyFilter_001, TestSize.Le
     EXPECT_EQ(res, ErrorCode::ERR_NOT_FILTERS_WITH_RENDER);
 }
 
-
 }
 } // namespace Effect
 } // namespace Media
