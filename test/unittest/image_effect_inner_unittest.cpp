@@ -591,8 +591,8 @@ HWTEST_F(ImageEffectInnerUnittest, PushData_001, TestSize.Level1)
 
 HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_SetPathQuality_001, TestSize.Level1)
 {
-    const std::string inputpath = "/data/test/resource/image_effect_1k_test1.jpg"
-    const std::string outputpath = "/data/test/resource/test1.jpg"
+    const std::string inputpath = "/data/test/resource/image_effect_1k_test1.jpg";
+    const std::string outputpath = "/data/test/resource/test1.jpg";
 
     int32_t targetQuality = 90;
     ErrorCode res = imageEffect_->SetDefaultQuality(targetQuality);
@@ -626,7 +626,7 @@ HWTEST_F(ImageEffectInnerUnittest, SetOutputPath_Format_Check_001, TestSize.Leve
 
 HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_QualityRouting_001, TestSize.Level1)
 {
-    imageEffect_->AddEFilter(std::shared_ptr<EFilter>(EFilter_));
+    imageEffect_->AddEFilter(std::shared_ptr<EFilter>(efilter_));
 
     imageEffect_->SetDefaultQuality(85);
     imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
@@ -639,7 +639,7 @@ HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_QualityRouting_001, TestSize
 
 HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_InputPriority_001, TestSize.Level1)
 {
-    imageEffect_->AddEFilter(std::shared_ptr<EFilter>(EFilter_));
+    imageEffect_->AddEFilter(std::shared_ptr<EFilter>(efilter_));
     imageEffect_->SetDefaultQuality(90);
     imageEffect_->SetInputUri("/data/test/resource/image_effect_1k_test1.jpg");
     (void)imageEffect_->Render();
@@ -652,7 +652,6 @@ HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_EmptyFilter_001, TestSize.Le
     EXPECT_EQ(res, ErrorCode::ERR_NOT_FILTERS_WITH_RENDER);
 }
 
-}
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
