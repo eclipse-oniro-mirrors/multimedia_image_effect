@@ -1529,7 +1529,7 @@ void ImageEffect::ClearDataInfo(DataInfo &dataInfo)
     dataInfo.surfaceBufferInfo_.timestamp_ = 0;
     dataInfo.uri_ = "";
     dataInfo.path_ = "";
-    dataInfo.quality = QUALITY_MAX_CONSTANT;
+    dataInfo.quality_ = QUALITY_MAX_CONSTANT;
 }
 
 bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
