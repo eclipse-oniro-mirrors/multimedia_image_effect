@@ -86,8 +86,8 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     uint32_t srcRowStride = src->bufferInfo_->rowStride_;
     uint32_t dstRowStride = dst->bufferInfo_->rowStride_;
     
-    if (srcRowStride * height + width * BYTES_PER_INT + BYTES_PER_INT >  dst->bufferInfo_->len_ ||
-    dstRowStride * height + width * BYTES_PER_INT + BYTES_PER_INT > src->bufferInfo_->len_) {
+    if (srcRowStride * (height - 1) + (width - 1) * BYTES_PER_INT + BYTES_PER_INT >  dst->bufferInfo_->len_ ||
+    dstRowStride * (height - 1) + (width - 1) * BYTES_PER_INT + BYTES_PER_INT > src->bufferInfo_->len_) {
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
     }
 #pragma omp parallel for default(none) shared(height, width, dstRgb, srcRgb, lut, srcRowStride, dstRowStride)
