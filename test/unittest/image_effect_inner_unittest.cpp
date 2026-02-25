@@ -589,69 +589,134 @@ HWTEST_F(ImageEffectInnerUnittest, PushData_001, TestSize.Level1)
     EXPECT_NE(res, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_SetPathQuality_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, SetOutputPath_Quality_001, TestSize.Level1)
 {
-    const std::string inputpath = "/data/test/resource/image_effect_1k_test1.jpg";
-    const std::string outputpath = "/data/test/resource/test1.jpg";
-
-    int32_t targetQuality = 90;
-    ErrorCode res = imageEffect_->SetDefaultQuality(targetQuality);
+    int32_t quality = 75;
+    ErrorCode res = imageEffect_->SetDefaultQuality(quality);
     ASSERT_EQ(ErrorCode::SUCCESS, res);
-
-    res = imageEffect_->SetInputPath(inputpath);
-    ASSERT_EQ(ErrorCode::SUCCESS, res);
-
-    res = imageEffect_->SetOutputPath(outputpath);
-    ASSERT_EQ(ErrorCode::SUCCESS, res);
-
-    EFFECT_LOGI("Test completed: Quality Set to %{public}d", targetQuality);
+    
+    res = imageEffect_->SetOutputPath("/data/test/resource/output.jpg");
+    EXPECT_EQ(res, ErrorCode::SUCCESS);
+    EXPECT_EQ(imageEffect_->outDateInfo_.quality_, quality);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetDefaultQuality_Validation_001, TestSize.Level0)
+HWTEST_F(ImageEffectInnerUnittest, SetOutputPath_Empty_Quality_001, TestSize.Level1)
+{
+    imageEffect_->SetDefaultQuality(80);
+    imageEffect_->SetOutputPath("/data/test/resource/output.jpg");
+    EXPECT_EQ(imageEffect_->outDateInfo_.quality_, 80);
+    
+    imageEffect_->SetOutputPath("");
+    EXPECT_EQ(imageEffect_->outDateInfo_.quality_, 100);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetInputPath_Quality_001, TestSize.Level1)
+{
+    int32_t quality = 85;
+    ErrorCode res = imageEffect_->SetDefaultQuality(quality);
+    ASSERT_EQ(ErrorCode::SUCCESS, res);
+    
+    res = imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
+    EXPECT_EQ(res, ErrorCode::SUCCESS);
+    EXPECT_EQ(imageEffect_->inDateInfo_.quality_, quality);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, Quality_Persistence_001, TestSize.Level1)
+{
+    imageEffect_->SetDefaultQuality(60);
+    imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
+    EXPECT_EQ(imageEffect_->inDateInfo_.quality_, 60);
+    
+    imageEffect_->SetDefaultQuality(90);
+    imageEffect_->SetOutputPath("/data/test/resource/output.jpg");
+    EXPECT_EQ(imageEffect_->outDateInfo_.quality_, 90);
+    EXPECT_EQ(imageEffect_->inDateInfo_.quality_, 60);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, SetDefaultQuality_Boundary_Stress_001, TestSize.Level0)
 {
     EXPECT_EQ(imageEffect_->SetDefaultQuality(0), ErrorCode::SUCCESS);
-    EXPECT_EQ(imageEffect_->SetDefaultQuality(50), ErrorCode::SUCCESS);
+    EXPECT_EQ(imageEffect_->SetDefaultQuality(1), ErrorCode::SUCCESS);
+    EXPECT_EQ(imageEffect_->SetDefaultQuality(99), ErrorCode::SUCCESS);
     EXPECT_EQ(imageEffect_->SetDefaultQuality(100), ErrorCode::SUCCESS);
+    
     EXPECT_EQ(imageEffect_->SetDefaultQuality(-1), ErrorCode::ERR_INVALID_PARAMETER_VALUE);
     EXPECT_EQ(imageEffect_->SetDefaultQuality(101), ErrorCode::ERR_INVALID_PARAMETER_VALUE);
+    EXPECT_EQ(imageEffect_->SetDefaultQuality(INT32_MIN), ErrorCode::ERR_INVALID_PARAMETER_VALUE);
+    EXPECT_EQ(imageEffect_->SetDefaultQuality(INT32_MAX), ErrorCode::ERR_INVALID_PARAMETER_VALUE);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, SetOutputPath_Format_Check_001, TestSize.Level0)
+HWTEST_F(ImageEffectInnerUnittest, Quality_Format_Combination_001, TestSize.Level1)
 {
+    imageEffect_->SetDefaultQuality(95);
+    
     EXPECT_EQ(imageEffect_->SetOutputPath("output.jpg"), ErrorCode::SUCCESS);
-    EXPECT_EQ(imageEffect_->SetOutputPath("output.heif"), ErrorCode::SUCCESS);
-    EXPECT_EQ(imageEffect_->SetOutputPath("output.bmp"), ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT);
-    EXPECT_EQ(imageEffect_->SetOutputPath(""), ErrorCode::SUCCESS);
+    EXPECT_EQ(imageEffect_->outDateInfo_.quality_, 95);
+    
+    EXPECT_EQ(imageEffect_->SetOutputPath("output.heic"), ErrorCode::SUCCESS);
+    EXPECT_EQ(imageEffect_->outDateInfo_.quality_, 95);
+    
+    EXPECT_EQ(imageEffect_->SetOutputPath("output.jpeg"), ErrorCode::SUCCESS);
+    EXPECT_EQ(imageEffect_->outDateInfo_.quality_, 95);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_QualityRouting_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, Quality_Reset_After_Clear_001, TestSize.Level1)
 {
-    imageEffect_->AddEFilter(std::shared_ptr<EFilter>(efilter_));
-
-    imageEffect_->SetDefaultQuality(85);
-    imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
-    (void)imageEffect_->Render();
-
     imageEffect_->SetDefaultQuality(70);
-    imageEffect_->SetOutputPath("test1.jpg");
-    (void)imageEffect_->Render();
+    imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
+    EXPECT_EQ(imageEffect_->inDateInfo_.quality_, 70);
+    
+    ImageEffect::ClearDataInfo(imageEffect_->inDateInfo_);
+    EXPECT_EQ(imageEffect_->inDateInfo_.quality_, 100);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_InputPriority_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, Quality_Multiple_Filters_001, TestSize.Level1)
 {
     imageEffect_->AddEFilter(std::shared_ptr<EFilter>(efilter_));
-    imageEffect_->SetDefaultQuality(90);
-    imageEffect_->SetInputUri("/data/test/resource/image_effect_1k_test1.jpg");
-    (void)imageEffect_->Render();
+    std::shared_ptr<EFilter> contrastFilter = EFilterFactory::Instance()->Create(CONTRAST_EFILTER);
+    imageEffect_->AddEFilter(contrastFilter);
+    
+    imageEffect_->SetDefaultQuality(65);
+    imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
+    imageEffect_->SetOutputPath("output.jpg");
+    
+    ErrorCode res = imageEffect_->Start();
+    EXPECT_EQ(res, ErrorCode::SUCCESS);
 }
 
-HWTEST_F(ImageEffectInnerUnittest, ConfigureFilters_EmptyFilter_001, TestSize.Level1)
+HWTEST_F(ImageEffectInnerUnittest, Quality_Output_Priority_001, TestSize.Level1)
+{
+    imageEffect_->AddEFilter(std::shared_ptr<EFilter>(efilter_));
+    
+    imageEffect_->SetDefaultQuality(50);
+    imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
+    EXPECT_EQ(imageEffect_->inDateInfo_.quality_, 50);
+    
+    imageEffect_->SetDefaultQuality(80);
+    imageEffect_->SetOutputPath("/data/test/resource/output.jpg");
+    EXPECT_EQ(imageEffect_->outDateInfo_.quality_, 80);
+}
+
+HWTEST_F(ImageEffectInnerUnittest, Quality_Default_Value_001, TestSize.Level0)
 {
     imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
-    ErrorCode res = imageEffect_->Render();
-    EXPECT_EQ(res, ErrorCode::ERR_NOT_FILTERS_WITH_RENDER);
+    EXPECT_EQ(imageEffect_->inDateInfo_.quality_, 100);
+    
+    imageEffect_->SetOutputPath("output.jpg");
+    EXPECT_EQ(imageEffect_->outDateInfo_.quality_, 100);
 }
 
+HWTEST_F(ImageEffectInnerUnittest, Quality_HEIC_Fallback_001, TestSize.Level1)
+{
+    imageEffect_->AddEFilter(std::shared_ptr<EFilter>(efilter_));
+    
+    imageEffect_->SetDefaultQuality(88);
+    imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
+    imageEffect_->SetOutputPath("output.heic");
+    
+    ErrorCode res = imageEffect_->Start();
+    EXPECT_EQ(res, ErrorCode::SUCCESS);
+}
 } // namespace Effect
 } // namespace Media
 } // namespace OHOS
