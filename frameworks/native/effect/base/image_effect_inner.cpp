@@ -602,16 +602,6 @@ ErrorCode ImageEffect::SetInputUri(const std::string &uri)
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode ImageEffect::SetDefaultQuality(int32_t quality)
-{
-    CHECK_AND_RETURN_RET_LOG((quality >= 0 && quality <= QUALITY_MAX_CONSTANT),
-        ErrorCode::ERR_INVALID_PARAMETER_VALUE,
-        "quality out of range. quality=%{public}d", quality);
-    
-    defaultQuality_ = quality;
-    return ErrorCode::SUCCESS;
-}
-
 ErrorCode ImageEffect::SetOutputUri(const std::string &uri)
 {
     EFFECT_LOGD("ImageEffect::SetOutputUri");
@@ -628,8 +618,17 @@ ErrorCode ImageEffect::SetOutputUri(const std::string &uri)
     ClearDataInfo(outDateInfo_);
     outDateInfo_.dataType_ = DataType::URI;
     outDateInfo_.uri_ = std::move(uri);
-    outDateInfo_.quality_ = defaultQuality_;
 
+    return ErrorCode::SUCCESS;
+}
+
+ErrorCode ImageEffect::SetDefaultQuality(int32_t quality)
+{
+    CHECK_AND_RETURN_RET_LOG((quality >= 0 && quality <= QUALITY_MAX_CONSTANT),
+        ErrorCode::ERR_INVALID_PARAMETER_VALUE,
+        "quality out of range. quality=%{public}d", quality);
+    
+    defaultQuality_ = quality;
     return ErrorCode::SUCCESS;
 }
 
@@ -664,6 +663,7 @@ ErrorCode ImageEffect::SetOutputPath(const std::string &path)
     ClearDataInfo(outDateInfo_);
     outDateInfo_.dataType_ = DataType::PATH;
     outDateInfo_.path_ = std::move(path);
+    outDateInfo_.quality_ = defaultQuality_;
 
     return ErrorCode::SUCCESS;
 }
