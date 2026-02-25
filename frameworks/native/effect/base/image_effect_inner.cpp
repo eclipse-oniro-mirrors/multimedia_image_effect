@@ -355,8 +355,7 @@ ErrorCode ConfigSourceFilter(std::shared_ptr<ImageSourceFilter> &srcFilter, std:
 }
 
 ErrorCode ConfigSinkFilter(std::shared_ptr<ImageSinkFilter> &sinkFilter, std::shared_ptr<EffectBuffer> &sinkBuffer,
-    sptr<Surface> &toXComponentSurface,
-    int32_t quality)
+    sptr<Surface> &toXComponentSurface, int32_t quality)
 {
     CHECK_AND_RETURN_RET_LOG(sinkFilter != nullptr, ErrorCode::ERR_INPUT_NULL, "sinkFilter is null");
 
@@ -891,8 +890,7 @@ ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectB
 
     if (outDateInfo_.dataType_ == DataType::UNKNOWN) {
         res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, inDateInfo_.quality_);
-    }
-    else {
+    } else {
         res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, outDateInfo_.quality_);
     }
 
