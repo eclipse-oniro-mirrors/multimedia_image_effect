@@ -57,6 +57,7 @@ struct DataInfo {
     std::string uri_;
     std::string path_;
     Picture *picture_ = nullptr;
+    int32_t quality_ = 100;
 };
 
 struct BufferProcessInfo {
@@ -215,6 +216,8 @@ public:
 
     IMAGE_EFFECT_EXPORT ErrorCode SetOutputUri(const std::string &uri);
 
+    IMAGE_EFFECT_EXPORT ErrorCode SetDefaultQuality(int32_t quality);
+
     IMAGE_EFFECT_EXPORT ErrorCode SetInputPath(const std::string &path);
 
     IMAGE_EFFECT_EXPORT ErrorCode SetOutputPath(const std::string &path);
@@ -261,6 +264,8 @@ private:
 
     void ExtInitModule();
     void ExtDeinitModule();
+
+    int32_t defaultQuality_ = 100;
 
     unsigned long int RequestTaskId();
 

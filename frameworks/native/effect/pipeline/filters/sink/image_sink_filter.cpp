@@ -35,10 +35,11 @@ REGISTER_FILTER_FACTORY(ImageSinkFilter);
 constexpr int SINGLE_BUFFER = 1;
 constexpr int DOUBLE_BUFFER = 2;
 
-ErrorCode ImageSinkFilter::SetSink(const std::shared_ptr<EffectBuffer> &sink)
+ErrorCode ImageSinkFilter::SetSink(const std::shared_ptr<EffectBuffer> &sink, int32_t quality)
 {
-    EFFECT_LOGD("SetSink entered.");
+    EFFECT_LOGD("SetSink entered. quality = %{public}d", quality);
     sinkBuffer_ = sink;
+    quality_ = quality;
     return ErrorCode::SUCCESS;
 }
 
@@ -677,11 +678,13 @@ ErrorCode ImageSinkFilter::PackToFile(const std::string &path, const std::shared
         .format = encodedFormat,
         .desiredDynamicRange = EncodeDynamicRange::AUTO,
         .needsPackProperties = true,
+        .quality = static_cast<int32_t>(quality_),
     };
     if (encodedFormat == "image/heic" || encodedFormat == "image/heif") {
         result = StartImagePacking(imagePacker, path, option);
         if (result != ErrorCode::SUCCESS) {
             option.format = "image/jpeg";
+            option.quality = static_cast<int32_t>(quality_);
             result = StartImagePacking(imagePacker, path, option);
             CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL,
                 "StartPacking fail! result=%{public}d, format=%{public}s", result, option.format.c_str());
