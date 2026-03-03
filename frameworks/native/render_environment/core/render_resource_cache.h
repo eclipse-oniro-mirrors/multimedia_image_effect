@@ -36,11 +36,17 @@ using RenderEffectBasePtr = std::shared_ptr<RenderEffectBase>;
 constexpr int TEX_WIDTH_TAG_POS = 48;
 constexpr int TEX_HEIGHT_TAG_POS = 32;
 constexpr int RESIZE_RATE = 2;
+static bool isRelease = false;
 
 class ResourceCache {
 public:
+    ResourceCache()
+    {
+        isRelease = false;
+    }
     ~ResourceCache()
     {
+        isRelease = true;
         texReleaseFlag = true;
         DeleteAllShader();
         DeleteAllMesh();
@@ -178,6 +184,14 @@ public:
 private:
     void RecycleTexture(RenderTexture *tex)
     {
+        if (isRelease) {
+            if (tex) {
+                tex->Release();
+                delete tex;
+            }
+            return;
+        }
+        
         UINT64 tag = GetTexTag(tex->Width(), tex->Height(), tex->Format());
         auto func = [this](RenderTexture *p) {
             if (texReleaseFlag && p) {
