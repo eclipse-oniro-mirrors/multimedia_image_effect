@@ -248,7 +248,6 @@ EGLImageKHR GLUtils::CreateEGLImage(EGLDisplay display, SurfaceBuffer *buffer)
     if (img == EGL_NO_IMAGE_KHR) {
         EGLint error = eglGetError();
         EFFECT_LOGE("CreateEGLImage Error: %{public}d", error);
-        eglTerminate(display);
     }
     CheckError(__FILE__, __LINE__);
     DestroyNativeWindowBuffer(nBuffer);
