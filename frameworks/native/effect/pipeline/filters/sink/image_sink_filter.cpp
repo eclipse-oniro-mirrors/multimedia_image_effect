@@ -677,8 +677,8 @@ ErrorCode ImageSinkFilter::PackToFile(const std::string &path, const std::shared
     PackOption option = {
         .format = encodedFormat,
         .desiredDynamicRange = EncodeDynamicRange::AUTO,
-        .needsPackProperties = true,
         .quality = static_cast<int32_t>(quality_),
+        .needsPackProperties = true,
     };
     if (encodedFormat == "image/heic" || encodedFormat == "image/heif") {
         result = StartImagePacking(imagePacker, path, option);
