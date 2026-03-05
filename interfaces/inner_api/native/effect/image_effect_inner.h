@@ -173,7 +173,7 @@ private:
     const size_t max_capacity_;
 };
 
-class ImageEffect : public Effect {
+class ImageEffect : public Effect, public std::enable_shared_from_this<ImageEffect> {
 public:
     IMAGE_EFFECT_EXPORT ImageEffect(const char *name = nullptr);
     IMAGE_EFFECT_EXPORT ~ImageEffect();
