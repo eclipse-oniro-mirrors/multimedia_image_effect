@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 Huawei Device Co., Ltd.
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include "effect_buffer.h"
 #include "any.h"
 #include "effect_context.h"
+#include "securec.h"
 
 using namespace testing::ext;
 using namespace OHOS::Media::Effect;
@@ -26,6 +27,9 @@ namespace OHOS {
 namespace Media {
 namespace Effect {
 namespace Test {
+constexpr uint32_t BYTES_PER_INT = 4;
+constexpr uint8_t DEFAULT_PIXEL_VALUE = 128;
+
 class TestCpuContrastAlgo : public testing::Test {
 public:
     TestCpuContrastAlgo() = default;
@@ -47,7 +51,13 @@ protected:
         bufferInfo->rowStride_ = rowStride;
         
         void* buffer = malloc(len);
-        memset(buffer, 128, len);
+        if (buffer != nullptr) {
+            errno_t result = memset_s(buffer, len, DEFAULT_PIXEL_VALUE, len);
+            if (result != 0) {
+                free(buffer);
+                return nullptr;
+            }
+        }
         
         auto extraInfo = std::make_shared<ExtraInfo>();
         
@@ -69,10 +79,10 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888001, TestSize.Level1)
 {
     uint32_t width = 100;
     uint32_t height = 100;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * 4);
-    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
+    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     
     std::map<std::string, Any> value;
     value["FilterIntensity"] = 50.0f;
@@ -90,9 +100,9 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888002, TestSize.Level1)
 {
     uint32_t width = 100;
     uint32_t height = 100;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     EffectBuffer* dst = nullptr;
     
     std::map<std::string, Any> value;
@@ -110,10 +120,10 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888003, TestSize.Level1)
 {
     uint32_t width = 100;
     uint32_t height = 100;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
     EffectBuffer* src = nullptr;
-    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     
     std::map<std::string, Any> value;
     value["FilterIntensity"] = 50.0f;
@@ -130,10 +140,10 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888004, TestSize.Level1)
 {
     uint32_t width = 100;
     uint32_t height = 100;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, len - 1, width * 4);
-    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, len - 1, width * BYTES_PER_INT);
+    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     
     std::map<std::string, Any> value;
     value["FilterIntensity"] = 50.0f;
@@ -151,10 +161,10 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888005, TestSize.Level1)
 {
     uint32_t width = 100;
     uint32_t height = 100;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * 4);
-    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
+    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     
     std::map<std::string, Any> value;
     value["FilterIntensity"] = 0.0f;
@@ -172,9 +182,9 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888006, TestSize.Level1)
 {
     uint32_t width = 100;
     uint32_t height = 100;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     EffectBuffer* dst = src;
     
     std::map<std::string, Any> value;
@@ -192,10 +202,10 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888007, TestSize.Level1)
 {
     uint32_t width = 100;
     uint32_t height = 100;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * 4);
-    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
+    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     
     std::map<std::string, Any> value;
     value["FilterIntensity"] = 0.000001f;
@@ -213,11 +223,11 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888008, TestSize.Level1)
 {
     uint32_t width = 100;
     uint32_t height = 100;
-    uint32_t rowStride = width * 4;
-    uint32_t len = rowStride * (height - 1) + (width - 1) * 4 + 4 - 1;
+    uint32_t rowStride = width * BYTES_PER_INT;
+    uint32_t len = rowStride * (height - 1) + (width - 1) * BYTES_PER_INT + BYTES_PER_INT - 1;
     
     EffectBuffer* src = CreateEffectBuffer(width, height, len, rowStride);
-    EffectBuffer* dst = CreateEffectBuffer(width, height, width * height * 4, width * 4);
+    EffectBuffer* dst = CreateEffectBuffer(width, height, width * height * BYTES_PER_INT, width * BYTES_PER_INT);
     
     std::map<std::string, Any> value;
     value["FilterIntensity"] = 50.0f;
@@ -235,10 +245,10 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888009, TestSize.Level1)
 {
     uint32_t width = 100;
     uint32_t height = 100;
-    uint32_t rowStride = width * 4;
-    uint32_t len = rowStride * (height - 1) + (width - 1) * 4 + 4 - 1;
+    uint32_t rowStride = width * BYTES_PER_INT;
+    uint32_t len = rowStride * (height - 1) + (width - 1) * BYTES_PER_INT + BYTES_PER_INT - 1;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, width * height * 4, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, width * height * BYTES_PER_INT, width * BYTES_PER_INT);
     EffectBuffer* dst = CreateEffectBuffer(width, height, len, rowStride);
     
     std::map<std::string, Any> value;
@@ -257,10 +267,10 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888010, TestSize.Level1)
 {
     uint32_t width = 10;
     uint32_t height = 10;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * 4);
-    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
+    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     
     std::map<std::string, Any> value;
     value["FilterIntensity"] = 100.0f;
@@ -278,10 +288,10 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888011, TestSize.Level1)
 {
     uint32_t width = 10;
     uint32_t height = 10;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * 4);
-    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
+    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     
     std::map<std::string, Any> value;
     value["FilterIntensity"] = -50.0f;
@@ -299,10 +309,10 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888012, TestSize.Level1)
 {
     uint32_t width = 10;
     uint32_t height = 10;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * 4);
-    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
+    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     
     std::map<std::string, Any> value;
     
@@ -319,10 +329,10 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888013, TestSize.Level1)
 {
     uint32_t width = 1;
     uint32_t height = 1;
-    uint32_t len = width * height * 4;
+    uint32_t len = width * height * BYTES_PER_INT;
     
-    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * 4);
-    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * 4);
+    EffectBuffer* src = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
+    EffectBuffer* dst = CreateEffectBuffer(width, height, len, width * BYTES_PER_INT);
     
     std::map<std::string, Any> value;
     value["FilterIntensity"] = 50.0f;
