@@ -376,7 +376,7 @@ HWTEST_F(TestCpuContrastAlgo, OnApplyRGBA8888013, TestSize.Level1)
     ReleaseEffectBuffer(dst);
 }
 
-} 
-} 
-} 
+}
+}
+}
 }
