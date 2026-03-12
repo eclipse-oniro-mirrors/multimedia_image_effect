@@ -35,6 +35,7 @@ base_sources = [
   "$image_effect_root_dir/frameworks/native/effect/pipeline/core/pipeline_core.cpp",
   "$image_effect_root_dir/frameworks/native/effect/pipeline/core/port.cpp",
   "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop/crop_efilter.cpp",
+  "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast/cpu_contrast_algo.cpp",
   "$image_effect_root_dir/frameworks/native/utils/common/common_utils.cpp",
   "$image_effect_root_dir/frameworks/native/utils/common/effect_json_helper.cpp",
   "$image_effect_root_dir/frameworks/native/utils/common/any.cpp",
@@ -62,6 +63,7 @@ ohos_unittest("image_effect_unittest") {
   sources = base_sources
 
   sources += [
+    "$image_effect_root_dir/test/unittest/TestCpuContrastAlgo.cpp",
     "$image_effect_root_dir/test/unittest/TestEffectColorSpaceManager.cpp",
     "$image_effect_root_dir/test/unittest/TestEffectMemoryManager.cpp",
     "$image_effect_root_dir/test/unittest/TestEffectPipeline.cpp",
