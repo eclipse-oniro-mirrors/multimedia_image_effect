@@ -774,21 +774,21 @@ ErrorCode CheckAndProcessOutTex(RenderTexturePtr dstTex, RenderTexturePtr srcTex
     return ErrorCode::SUCCESS;
 }
 
-ErrorCode ImageSinkFilter::SavaOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &inputBuffer,
+ErrorCode ImageSinkFilter::SaveOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &inputBuffer,
     std::shared_ptr<EffectBuffer> &outputBuffer, std::shared_ptr<EffectContext> &context)
 {
-    EFFECT_LOGD("SavaOutputData: outputBuffer dataType=%{public}d", outputBuffer->extraInfo_->dataType);
+    EFFECT_LOGD("SaveOutputData: outputBuffer dataType=%{public}d", outputBuffer->extraInfo_->dataType);
     switch (outputBuffer->extraInfo_->dataType) {
         case DataType::URI: {
             ErrorCode ret = ModifyInnerPicture(src, inputBuffer, context);
             CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, ret,
-                "SavaOutputData: Uri ModifyInnerPicture fail! ret=%{public}d", ret);
+                "SaveOutputData: Uri ModifyInnerPicture fail! ret=%{public}d", ret);
             return SaveUrlData(outputBuffer->extraInfo_->uri, src->extraInfo_->innerPicture);
         }
         case DataType::PATH: {
             ErrorCode ret = ModifyInnerPicture(src, inputBuffer, context);
             CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, ret,
-                "SavaOutputData: Path ModifyInnerPicture fail! ret=%{public}d", ret);
+                "SaveOutputData: Path ModifyInnerPicture fail! ret=%{public}d", ret);
             return SavePathData(outputBuffer->extraInfo_->path, src->extraInfo_->innerPicture);
         }
         case DataType::PIXEL_MAP:
@@ -800,7 +800,7 @@ ErrorCode ImageSinkFilter::SavaOutputData(EffectBuffer *src, const std::shared_p
         case DataType::TEX: {
             ErrorCode ret = CheckAndProcessOutTex(outputBuffer->bufferInfo_->tex_, inputBuffer->bufferInfo_->tex_);
             CHECK_AND_RETURN_RET_LOG(ret == ErrorCode::SUCCESS, ret,
-                "SavaOutputData: CheckAndProcessOutTex fail! ret=%{public}d", ret);
+                "SaveOutputData: CheckAndProcessOutTex fail! ret=%{public}d", ret);
             return ModifyTex(outputBuffer.get(), inputBuffer, context);
         }
         default:
@@ -834,11 +834,11 @@ ErrorCode ImageSinkFilter::SaveData(const std::shared_ptr<EffectBuffer> &inputBu
         auto extraInfo = src->extraInfo_;
         auto bufferInfo = src->bufferInfo_;
         auto metaData = CommonUtils::GetMetaData(bufferInfo->surfaceBuffer_);
-        res = SavaOutputData(src, inputBuffer, outputBuffer, context);
+        res = SaveOutputData(src, inputBuffer, outputBuffer, context);
         CommonUtils::SetMetaData(metaData, reinterpret_cast<SurfaceBuffer*>(
             outputBuffer->bufferInfo_->pixelMap_->GetFd()));
     } else {
-        res = SavaOutputData(src, inputBuffer, outputBuffer, context);
+        res = SaveOutputData(src, inputBuffer, outputBuffer, context);
     }
     return res;
 }
