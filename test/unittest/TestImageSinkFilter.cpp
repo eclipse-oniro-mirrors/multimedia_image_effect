@@ -51,7 +51,7 @@ public:
 
     void SetUp() override
     {
-        const ::testing::TestInfo* test_info = 
+        const ::testing::TestInfo* test_info =
             ::testing::UnitTest::GetInstance()->current_test_info();
         EFFECT_LOGI("Running test: %{public}s start", test_info->name());
         imageSinkFilter_ = std::make_shared<ImageSinkFilter>(FILTER_NAME);
@@ -60,7 +60,7 @@ public:
 
     void TearDown() override
     {
-        const ::testing::TestInfo* test_info = 
+        const ::testing::TestInfo* test_info =
             ::testing::UnitTest::GetInstance()->current_test_info();
         EFFECT_LOGI("Running test: %{public}s end", test_info->name());
         imageSinkFilter_ = nullptr;
