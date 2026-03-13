@@ -57,6 +57,7 @@ struct DataInfo {
     std::string uri_;
     std::string path_;
     Picture *picture_ = nullptr;
+    int32_t quality_ = 100;
 };
 
 struct BufferProcessInfo {
@@ -172,7 +173,7 @@ private:
     const size_t max_capacity_;
 };
 
-class ImageEffect : public Effect {
+class ImageEffect : public Effect, public std::enable_shared_from_this<ImageEffect> {
 public:
     IMAGE_EFFECT_EXPORT ImageEffect(const char *name = nullptr);
     IMAGE_EFFECT_EXPORT ~ImageEffect();
@@ -214,6 +215,8 @@ public:
     IMAGE_EFFECT_EXPORT ErrorCode SetInputUri(const std::string &uri);
 
     IMAGE_EFFECT_EXPORT ErrorCode SetOutputUri(const std::string &uri);
+
+    IMAGE_EFFECT_EXPORT ErrorCode SetDefaultQuality(int32_t quality);
 
     IMAGE_EFFECT_EXPORT ErrorCode SetInputPath(const std::string &path);
 
@@ -261,6 +264,8 @@ private:
 
     void ExtInitModule();
     void ExtDeinitModule();
+
+    int32_t defaultQuality_ = 100;
 
     unsigned long int RequestTaskId();
 

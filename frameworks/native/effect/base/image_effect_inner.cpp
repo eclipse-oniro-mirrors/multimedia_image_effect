@@ -59,6 +59,7 @@ enum class EffectState {
 
 const int STRUCT_IMAGE_EFFECT_CONSTANT = 1;
 const int DESTRUCTOR_IMAGE_EFFECT_CONSTANT = 2;
+const int QUALITY_MAX_CONSTANT = 100;
 const std::string FUNCTION_FLUSH_SURFACE_BUFFER = "flushSurfaceBuffer";
 
 class ImageEffect::Impl {
@@ -354,11 +355,11 @@ ErrorCode ConfigSourceFilter(std::shared_ptr<ImageSourceFilter> &srcFilter, std:
 }
 
 ErrorCode ConfigSinkFilter(std::shared_ptr<ImageSinkFilter> &sinkFilter, std::shared_ptr<EffectBuffer> &sinkBuffer,
-    sptr<Surface> &toXComponentSurface)
+    sptr<Surface> &toXComponentSurface, int32_t quality)
 {
     CHECK_AND_RETURN_RET_LOG(sinkFilter != nullptr, ErrorCode::ERR_INPUT_NULL, "sinkFilter is null");
 
-    ErrorCode res = sinkFilter->SetSink(sinkBuffer);
+    ErrorCode res = sinkFilter->SetSink(sinkBuffer, quality);
     FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "set sink fail! res=%{public}d", res);
     res = sinkFilter->SetXComponentSurface(toXComponentSurface);
     FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "SetRenderSurface fail! res=%{public}d", res);
@@ -620,6 +621,16 @@ ErrorCode ImageEffect::SetOutputUri(const std::string &uri)
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode ImageEffect::SetDefaultQuality(int32_t quality)
+{
+    CHECK_AND_RETURN_RET_LOG((quality >= 0 && quality <= QUALITY_MAX_CONSTANT),
+        ErrorCode::ERR_INVALID_PARAMETER_VALUE,
+        "quality out of range. quality=%{public}d", quality);
+    
+    defaultQuality_ = quality;
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ImageEffect::SetInputPath(const std::string &path)
 {
     EFFECT_LOGD("ImageEffect::SetInputPath");
@@ -630,6 +641,7 @@ ErrorCode ImageEffect::SetInputPath(const std::string &path)
     ClearDataInfo(inDateInfo_);
     inDateInfo_.dataType_ = DataType::PATH;
     inDateInfo_.path_ = std::move(path);
+    inDateInfo_.quality_ = defaultQuality_;
 
     return ErrorCode::SUCCESS;
 }
@@ -650,6 +662,7 @@ ErrorCode ImageEffect::SetOutputPath(const std::string &path)
     ClearDataInfo(outDateInfo_);
     outDateInfo_.dataType_ = DataType::PATH;
     outDateInfo_.path_ = std::move(path);
+    outDateInfo_.quality_ = defaultQuality_;
 
     return ErrorCode::SUCCESS;
 }
@@ -874,7 +887,13 @@ ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectB
     }
 
     std::shared_ptr<ImageSinkFilter> &sinkFilter = impl_->sinkFilter_;
-    res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_);
+
+    if (outDateInfo_.dataType_ == DataType::UNKNOWN) {
+        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, inDateInfo_.quality_);
+    } else {
+        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, outDateInfo_.quality_);
+    }
+
     if (res != ErrorCode::SUCCESS) {
         UnLockAll();
         return res;
@@ -1422,8 +1441,13 @@ sptr<Surface> ImageEffect::GetInputSurface()
         fromProducerSurface_ = impl_->surfaceAdapter_->GetProducerSurface();
     }
 
-    auto consumerListener = [this]() {
-        return ConsumerBufferAvailable();
+    auto weak_this = std::weak_ptr<ImageEffect>(shared_from_this());
+    auto consumerListener = [weak_this]() {
+        if (auto self = weak_this.lock()) {
+            return self->ConsumerBufferAvailable();
+        }
+        EFFECT_LOGE("ImageEffect has released.");
+        return;
     };
 
     if (impl_->surfaceAdapter_) {
@@ -1508,6 +1532,7 @@ void ImageEffect::ClearDataInfo(DataInfo &dataInfo)
     dataInfo.surfaceBufferInfo_.timestamp_ = 0;
     dataInfo.uri_ = "";
     dataInfo.path_ = "";
+    dataInfo.quality_ = QUALITY_MAX_CONSTANT;
 }
 
 bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
