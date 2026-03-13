@@ -110,7 +110,7 @@ public:
     ErrorCode SaveInputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &buffer,
         std::shared_ptr<EffectContext> &context);
 
-    ErrorCode SavaOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &inputBuffer,
+    ErrorCode SaveOutputData(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &inputBuffer,
         std::shared_ptr<EffectBuffer> &outputBuffer, std::shared_ptr<EffectContext> &context);
 
     ErrorCode SaveData(const std::shared_ptr<EffectBuffer> &inputBuffer, std::shared_ptr<EffectBuffer> &outputBuffer,
