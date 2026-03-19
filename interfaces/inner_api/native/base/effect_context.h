@@ -42,6 +42,7 @@ public:
     std::shared_ptr<EfilterMetaInfoNegotiate> metaInfoNegotiate_;
 
     IPType ipType_ = IPType::DEFAULT;
+    IPType configIpType_ = IPType::DEFAULT;
     std::unordered_set<EffectColorSpace> filtersSupportedColorSpace_;
     std::unordered_set<HdrFormat> filtersSupportedHdrFormat_;
     LOG_STRATEGY logStrategy_ = LOG_STRATEGY::NORMAL;

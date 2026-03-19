@@ -328,6 +328,7 @@ private:
     bool needPreFlush_ = false;
     uint32_t failureCount_ = 0;
     std::shared_ptr<ThreadSafeBufferQueue<BufferEntry>> bufferPool_;
+    int32_t configIpType_ = 0;
 };
 } // namespace Effect
 } // namespace Media

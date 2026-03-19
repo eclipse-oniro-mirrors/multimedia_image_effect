@@ -169,6 +169,9 @@ void FilterDelegate::PushData(OH_EffectFilter *filter, OH_EffectBufferInfo *dst)
             PARA_RENDER_INFO);
 
         auto &context = AnyCast<std::shared_ptr<EffectContext> &>(any);
+        if (context->configIpType_ == IPType::CPU) {
+            FlushCacheForce(effectBuffer.get());
+        }
         filter->filter_->PushData(effectBuffer.get(), context);
         return;
     }
@@ -214,6 +217,14 @@ void FilterDelegate::FlushCacheIfNeed(EffectBuffer *src)
     CHECK_AND_RETURN(dataType != DataType::TEX);
     CHECK_AND_RETURN_LOG(src->bufferInfo_ && src->bufferInfo_->surfaceBuffer_,
         "FlushCacheIfNeed: bufferInfo or surfaceBuffer is nullptr");
+    (void)src->bufferInfo_->surfaceBuffer_->FlushCache();
+}
+
+void FilterDelegate::FlushCacheForce(EffectBuffer *src)
+{
+    CHECK_AND_RETURN_LOG(src->extraInfo_, "FlushCacheForce: extraInfo is nullptr");
+    CHECK_AND_RETURN_LOG(src->bufferInfo_ && src->bufferInfo_->surfaceBuffer_,
+        "FlushCacheForce: bufferInfo or surfaceBuffer is nullptr");
     (void)src->bufferInfo_->surfaceBuffer_->FlushCache();
 }
 } // namespace Effect

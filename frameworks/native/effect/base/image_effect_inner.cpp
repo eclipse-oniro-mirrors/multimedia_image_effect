@@ -925,7 +925,7 @@ ErrorCode ImageEffect::Render()
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "set image info fail! res = %{public}d", res);
     IEffectFormat format = CommonUtils::SwitchToEffectFormat(pixelFormat);
     impl_->effectContext_->exifMetadata_ = exifMetadata;
-
+    impl_->effectContext_->configIpType_ = static_cast<IPType>(configIpType_);
     std::shared_ptr<ImageSourceFilter> &sourceFilter = impl_->srcFilter_;
     sourceFilter->SetNegotiateParameter(width, height, format, impl_->effectContext_);
 
@@ -1508,6 +1508,7 @@ ErrorCode ImageEffect::Configure(const std::string &key, const Any &value)
             ErrorCode result = CommonUtils::ParseAny(value, runningType);
             CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, result,
                 "parse any fail! expect type is uint32_t! key=%{public}s", key.c_str());
+            configIpType_ = runningType;
             auto it = std::find_if(runningTypeTab_.begin(), runningTypeTab_.end(),
                 [&runningType](const std::pair<int32_t, std::vector<IPType>> &item) {
                     return item.first == runningType;
