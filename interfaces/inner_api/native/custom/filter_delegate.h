@@ -57,6 +57,8 @@ private:
     static std::shared_ptr<EffectBuffer> GenDstEffectBuffer(const OH_EffectBufferInfo *dst, const EffectBuffer *src);
 
     static void FlushCacheIfNeed(EffectBuffer *src);
+
+    static void FlushCacheForce(EffectBuffer *src);
 };
 } // namespace Effect
 } // namespace Media
