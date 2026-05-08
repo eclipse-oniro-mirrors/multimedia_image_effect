@@ -546,7 +546,7 @@ ImageEffect_FilterNames *OH_EffectFilter_LookupFilters(const char *key)
     std::shared_ptr<ImageEffect_FilterNames> filterNames = std::make_shared<ImageEffect_FilterNames>();
     filterNames->size = matchEFilter.size();
     if (filterNames->size != 0) {
-        const char **buffer = (const char **)malloc(matchEFilter.size() * sizeof(const char *));
+        const char **buffer = static_cast<const char **>(malloc(matchEFilter.size() * sizeof(const char *)));
         if (buffer != nullptr) {
             for (size_t i = 0; i < matchEFilter.size(); i++) {
                 buffer[i] = matchEFilter[i];

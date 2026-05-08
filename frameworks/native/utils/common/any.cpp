@@ -24,15 +24,15 @@ const BaseTypesMap &GetBaseTypesMap()
 {
     static const BaseTypesMap baseTypeMap([]() {
         BaseTypesMap typeMap;
-        Any defaultBool = (bool)true;
+        Any defaultBool = static_cast<bool>(true);
         typeMap[std::string(defaultBool.TypeName())] = AnyValueType::BOOL;
-        Any defaultInt32 = (int32_t)0;
+        Any defaultInt32 = static_cast<int32_t>(0);
         typeMap[std::string(defaultInt32.TypeName())] = AnyValueType::INT32_T;
-        Any defaultInt64 = (int64_t)0;
+        Any defaultInt64 = static_cast<int64_t>(0);
         typeMap[std::string(defaultInt64.TypeName())] = AnyValueType::INT64_T;
-        Any defaultFoalt = (float)0.0;
+        Any defaultFoalt = static_cast<float>(0.0);
         typeMap[std::string(defaultFoalt.TypeName())] = AnyValueType::FLOAT;
-        Any defaultDouble = (double)0.0;
+        Any defaultDouble = static_cast<double>(0.0);
         typeMap[std::string(defaultDouble.TypeName())] = AnyValueType::DOUBLE;
         Any defaultString = std::string();
         typeMap[std::string(defaultString.TypeName())] = AnyValueType::STRING;
