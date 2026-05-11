@@ -745,7 +745,9 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::GenTexEffectBuffer(const std::s
     extraInfo->dataType = DataType::TEX;
 
     auto out = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
-    if (bufferInfo->hdrFormat_ != HdrFormat::HDR8_GAINMAP) return out;
+    if (bufferInfo->hdrFormat_ != HdrFormat::HDR8_GAINMAP) {
+        return out;
+    }
 
     if (input->auxiliaryBufferInfos != nullptr) {
         out->auxiliaryBufferInfos = std::make_shared<std::unordered_map<
