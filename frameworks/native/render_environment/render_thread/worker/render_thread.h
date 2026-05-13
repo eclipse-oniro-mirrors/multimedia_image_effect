@@ -18,6 +18,7 @@
 
 #include <thread>
 #include <type_traits>
+#include <shared_mutex>
 
 #include "render_work_itf.h"
 #include "render_queue_itf.h"
@@ -41,6 +42,7 @@ public:
     virtual void ClearTask() override;
     virtual void Start() override;
     virtual void Stop() override;
+    void WaitTaskFinished();
 
 protected:
     virtual void Run() override;
@@ -50,12 +52,16 @@ protected:
     volatile bool m_isStopped = true;
 
     std::mutex cvMutex;
+    std::shared_mutex taskMutex_;
     std::condition_variable cvFull;
     std::condition_variable cvEmpty;
     std::function<void()> idleTask;
 
     std::thread *t{ nullptr };
     size_t qSize;
+
+private:
+    void InternalWait();
 };
 
 template <typename QUEUE>
@@ -135,6 +141,7 @@ template <typename QUEUE> void RenderThread<QUEUE>::Run()
         if (cvRet) {
             LocalTaskType task;
             bool ret = m_localMsgQueue->Pop(task);
+            std::shared_lock<std::shared_mutex> lock(taskMutex_);
             lk.unlock();
             cvFull.notify_one();
             if (ret) {
@@ -144,6 +151,33 @@ template <typename QUEUE> void RenderThread<QUEUE>::Run()
             lk.unlock();
             idleTask();
         }
+    }
+};
+
+template <typename QUEUE>
+void RenderThread<QUEUE>::WaitTaskFinished()
+{
+    if (m_isWorking) {
+        InternalWait();
+
+        // Wait again to ensure the condition is met.
+        InternalWait();
+    }
+};
+
+template <typename QUEUE>
+void RenderThread<QUEUE>::InternalWait()
+{
+    {
+        std::unique_lock<std::mutex> lk(cvMutex);
+        cvFull.wait_for(lk, std::chrono::milliseconds(TIME_FOR_WAITING_TASK),
+            [this]() {
+                return (m_localMsgQueue->GetSize() == 0);
+            });
+    }
+
+    {
+        std::unique_lock<std::shared_mutex> lock(taskMutex_);
     }
 };
 #endif // IM_RENDER_THREAD_H

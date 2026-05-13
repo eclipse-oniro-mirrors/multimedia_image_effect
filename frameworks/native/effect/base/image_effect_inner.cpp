@@ -384,7 +384,8 @@ void GetConfigIPTypes(const std::map<ConfigType, Any> &config, std::vector<IPTyp
     configIPTypes = { IPType::CPU, IPType::GPU };
 }
 
-void AdjustEffectFormat(IEffectFormat& effectFormat) {
+void AdjustEffectFormat(IEffectFormat& effectFormat)
+{
     switch (effectFormat) {
         case IEffectFormat::RGBA_1010102:
         case IEffectFormat::YCBCR_P010:
@@ -555,7 +556,15 @@ void ImageEffect::Stop()
         impl_->surfaceAdapter_->ConsumerRequestCpuAccess(false);
     }
     impl_->effectContext_->logStrategy_ = LOG_STRATEGY::NORMAL;
+    if (inDateInfo_.dataType_ == DataType::SURFACE && IncludeCameraColorFilter()) {
+        EFFECT_LOGD("ImageEffect::Stop in wait tasks.");
+        lock.unlock();
+
+        m_renderThread->WaitTaskFinished();
+    }
     impl_->effectContext_->memoryManager_->ClearMemory();
+
+    EFFECT_LOGD("ImageEffect::Stop end.");
 }
 
 ErrorCode ImageEffect::SetInputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer)
@@ -690,7 +699,8 @@ ErrorCode CheckPixelmapColorSpace(std::shared_ptr<EffectBuffer> &srcEffectBuffer
     return ErrorCode::SUCCESS;
 }
 
-static bool dataTypeCheckFunc(DataType srcDataType, DataType dstDataType) {
+static bool dataTypeCheckFunc(DataType srcDataType, DataType dstDataType)
+{
     if (srcDataType == dstDataType) {
         return true;
     }
@@ -878,7 +888,8 @@ ErrorCode ImageEffect::InitEffectBuffer(std::shared_ptr<EffectBuffer> &srcEffect
 }
 
 ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectBuffer,
-    std::shared_ptr<EffectBuffer> dstEffectBuffer) {
+    std::shared_ptr<EffectBuffer> dstEffectBuffer)
+{
     std::shared_ptr<ImageSourceFilter> &sourceFilter = impl_->srcFilter_;
     ErrorCode res = ConfigSourceFilter(sourceFilter, srcEffectBuffer, impl_->effectContext_);
     if (res != ErrorCode::SUCCESS) {
@@ -1776,6 +1787,15 @@ void ImageEffect::UpdateCycleBuffersNumber()
         cycleBuffersNumber);
     setCycleBuffersNumber_ = true;
     return;
+}
+
+bool ImageEffect::IncludeCameraColorFilter()
+{
+    CHECK_AND_RETURN_RET_LOG(impl_, false,
+        "ImageEffect::IncludeCameraColorFilter: impl_ is nullptr!");
+    CHECK_AND_RETURN_RET_LOG(impl_->pipeline_, false,
+        "ImageEffect::IncludeCameraColorFilter: impl_->pipeline_ is nullptr!");
+    return impl_->pipeline_->IncludeCameraColorFilter();
 }
 } // namespace Effect
 } // namespace Media
