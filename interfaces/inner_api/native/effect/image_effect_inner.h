@@ -232,6 +232,8 @@ public:
 
     IMAGE_EFFECT_EXPORT ErrorCode SetOutputTexture(int32_t textureId);
 
+    bool IncludeCameraColorFilter();
+
 protected:
     IMAGE_EFFECT_EXPORT virtual ErrorCode Render();
 

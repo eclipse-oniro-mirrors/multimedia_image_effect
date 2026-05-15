@@ -45,12 +45,22 @@ public:
 
     ErrorCode LinkPorts(std::shared_ptr<OutPort> outPort, std::shared_ptr<InPort> inPort) override;
 
+    bool IncludeCameraColorFilter();
+
 private:
     void InitFilters(const std::vector<Filter *> &filters);
 
     FilterState state_{ FilterState::CREATED };
 
     std::vector<Filter *> filters_{};
+
+    // This is a workaround plan; A comprehensive repair solution will be required afterward.
+    // All eFilters that real-time rendering in ImageEffect pipeline through Surface
+    // must be added to this whitelist which will wait for the rendering task to complete in Stop method.
+    const std::vector<std::string> colorFilters_ = {
+        "Natural", "Classic", "Moody", "Blossom", "Fair", "Pink", "CustomAcquireBufferEFilter",
+        "KidwatchFunnyPhotoEFilter", "CustomAcquireBufferForRecordFilter", "KidwatchEFilter", "CustomEFilter"
+    };
 
     std::vector<Filter *> filtersToRemove_{};
 
