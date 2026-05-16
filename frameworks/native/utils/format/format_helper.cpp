@@ -96,7 +96,8 @@ uint32_t FormatHelper::CalculateRowStride(uint32_t width, IEffectFormat format)
 
 uint32_t FormatHelper::CalculateSize(uint32_t width, uint32_t height, IEffectFormat format)
 {
-    return CalculateDataRowCount(height, format) * CalculateRowStride(width, format);
+    return static_cast<uint32_t>(static_cast<int64_t>(CalculateDataRowCount(height, format)) *
+        static_cast<int64_t>(CalculateRowStride(width, format)));
 }
 
 std::unordered_set<IEffectFormat> FormatHelper::GetAllSupportedFormats()
