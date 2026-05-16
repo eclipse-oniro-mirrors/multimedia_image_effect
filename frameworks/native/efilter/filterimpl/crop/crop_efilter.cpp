@@ -164,7 +164,7 @@ ErrorCode CropEFilter::CropToOutputBuffer(EffectBuffer *src, std::shared_ptr<Eff
 
     EFFECT_LOGI("CropEFilter cropLeft=%{public}d, cropTop=%{public}d, cropWidth=%{public}d, cropHeight=%{public}d",
         cropLeft, cropTop, cropWidth, cropHeight);
-    CHECK_AND_RETURN_RET_LOG(std::number_limits<uint32_t>::max() / cropWidth > cropHeight * PIXEL_BYTES,
+    CHECK_AND_RETURN_RET_LOG(std::numeric_limits<uint32_t>::max() / cropWidth > cropHeight * PIXEL_BYTES,
         ErrorCode::ERR_INVALID_PARAMETER_VALUE, "huge cropSize!");
 
     MemoryInfo allocMemInfo = {
