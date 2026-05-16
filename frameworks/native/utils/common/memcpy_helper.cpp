@@ -58,7 +58,7 @@ void MemcpyHelper::CopyData(CopyInfo &src, CopyInfo &dst)
     uint32_t dstRowCount = FormatHelper::CalculateDataRowCount(dstInfo.height_, dstInfo.formatType_);
     uint32_t rowCount = srcRowCount > dstRowCount ? dstRowCount : srcRowCount;
     uint32_t count = srcRowStride > dstRowStride ? dstRowStride : srcRowStride;
-    if (rowCount * dstRowStride > dstBufferLen || rowCount * srcRowStride > srcBufferLen) {
+    if (rowCount > dstBufferLen / dstRowStride|| rowCount > srcBufferLen / srcRowStride) {
         EFFECT_LOGE("Out of buffer available range! Copy fail! srcH=%{public}d, srcFormat=%{public}d, "
             "srcStride=%{public}d, srcLen=%{public}d, dstH=%{public}d, dstFormat=%{public}d, dstStride=%{public}d, "
             "dstLen=%{public}d", srcInfo.height_, srcInfo.formatType_, srcInfo.rowStride_, srcInfo.len_,
