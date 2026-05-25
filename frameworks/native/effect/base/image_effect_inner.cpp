@@ -57,8 +57,6 @@ enum class EffectState {
     RUNNING,
 };
 
-const int STRUCT_IMAGE_EFFECT_CONSTANT = 1;
-const int DESTRUCTOR_IMAGE_EFFECT_CONSTANT = 2;
 const int QUALITY_MAX_CONSTANT = 100;
 const std::string FUNCTION_FLUSH_SURFACE_BUFFER = "flushSurfaceBuffer";
 
@@ -213,7 +211,7 @@ const std::unordered_map<int32_t, std::vector<IPType>> runningTypeTab_{
 
 ImageEffect::ImageEffect(const char *name)
 {
-    imageEffectFlag_ = STRUCT_IMAGE_EFFECT_CONSTANT;
+    imageEffectFlag_.store(STRUCT_IMAGE_EFFECT_CONSTANT, std::memory_order_release);
     impl_ = std::make_shared<Impl>();
     if (name != nullptr) {
         name_ = name;
@@ -242,7 +240,7 @@ ImageEffect::~ImageEffect()
     if (failureCount_ > 0) {
         EFFECT_LOGE("ImageEffect::SwapBuffers attach fail %{public}d times", failureCount_);
     }
-    imageEffectFlag_ = DESTRUCTOR_IMAGE_EFFECT_CONSTANT;
+    imageEffectFlag_.store(DESTRUCTOR_IMAGE_EFFECT_CONSTANT, std::memory_order_release);
     if (impl_->surfaceAdapter_) {
         impl_->surfaceAdapter_->Destroy();
     }
@@ -1227,8 +1225,8 @@ GSError ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, sptr<SyncFenc
         .timestamp = timestamp,
     };
 
-    CHECK_AND_RETURN_RET_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT, GSERROR_NOT_INIT,
-        "FlushBuffer: ImageEffect not exist.");
+    CHECK_AND_RETURN_RET_LOG(imageEffectFlag_.load(std::memory_order_acquire) == STRUCT_IMAGE_EFFECT_CONSTANT,
+        GSERROR_NOT_INIT, "FlushBuffer: ImageEffect not exist.");
     CHECK_AND_RETURN_RET_LOG(toProducerSurface_ != nullptr, GSERROR_NOT_INIT,
         "FlushBuffer: toProducerSurface is nullptr.");
 
@@ -1425,14 +1423,15 @@ void ImageEffect::OnBufferAvailableWithCPU()
 
 void ImageEffect::ConsumerBufferAvailable()
 {
-    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
+    CHECK_AND_RETURN_LOG(imageEffectFlag_.load(std::memory_order_acquire) == STRUCT_IMAGE_EFFECT_CONSTANT,
         "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
+    CHECK_AND_RETURN_LOG(impl_, "ConsumerBufferAvailable: impl_ is nullptr");
     if (!impl_->isQosEnabled_) {
         OHOS::QOS::SetThreadQos(OHOS::QOS::QosLevel::QOS_USER_INTERACTIVE);
         impl_->isQosEnabled_ = true;
     }
     std::unique_lock<std::mutex> lock(consumerListenerMutex_);
-    CHECK_AND_RETURN_LOG(imageEffectFlag_ == STRUCT_IMAGE_EFFECT_CONSTANT,
+    CHECK_AND_RETURN_LOG(imageEffectFlag_.load(std::memory_order_acquire) == STRUCT_IMAGE_EFFECT_CONSTANT,
         "ImageEffect::ConsumerBufferAvailable ImageEffect not exist.");
     OnBufferAvailableWithCPU();
 }
@@ -1443,7 +1442,7 @@ sptr<Surface> ImageEffect::GetInputSurface()
     if (fromProducerSurface_ != nullptr) {
         return fromProducerSurface_;
     }
-
+    CHECK_AND_RETURN_RET_LOG(impl_, fromProducerSurface_, "GetInputSurface, impl_ is nullptr");
     if (impl_->surfaceAdapter_ == nullptr) {
         impl_->surfaceAdapter_ = sptr<EffectSurfaceAdapter>::MakeSptr();
     }
