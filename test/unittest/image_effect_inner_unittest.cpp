@@ -25,6 +25,8 @@
 #include "mock_producer_surface.h"
 #include "external_loader.h"
 #include "color_space.h"
+#include <algorithm>
+// "//base/startup/init/interfaces/innerkits/syspara:libsyspara",
 
 using namespace testing::ext;
 using ::testing::_;
@@ -36,6 +38,15 @@ using namespace OHOS::Media::Effect::Test;
 
 namespace {
     constexpr uint32_t CROP_FACTOR = 2;
+}
+
+static bool IsRk3568()
+{
+#ifdef PRODUCT_RK3568
+    return true;   // 编译时确定为 RK3568 平台
+#else
+    return false;  // 非 RK3568 平台
+#endif
 }
 
 namespace OHOS {
@@ -672,6 +683,9 @@ HWTEST_F(ImageEffectInnerUnittest, Quality_Reset_After_Clear_001, TestSize.Level
 
 HWTEST_F(ImageEffectInnerUnittest, Quality_Multiple_Filters_001, TestSize.Level1)
 {
+    if (IsRk3568()) {
+        GTEST_SKIP() << "Skipped on rk3568";
+    }
     imageEffect_->AddEFilter(std::shared_ptr<EFilter>(efilter_));
     std::shared_ptr<EFilter> contrastFilter = EFilterFactory::Instance()->Create(CONTRAST_EFILTER);
     imageEffect_->AddEFilter(contrastFilter);
@@ -708,6 +722,9 @@ HWTEST_F(ImageEffectInnerUnittest, Quality_Default_Value_001, TestSize.Level0)
 
 HWTEST_F(ImageEffectInnerUnittest, Quality_HEIC_Fallback_001, TestSize.Level1)
 {
+    if (IsRk3568()) {
+        GTEST_SKIP() << "Skipped on rk3568";
+    }
     imageEffect_->AddEFilter(std::shared_ptr<EFilter>(efilter_));
     
     imageEffect_->SetDefaultQuality(88);

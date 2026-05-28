@@ -56,9 +56,14 @@ base_sources = [
 ohos_unittest("image_effect_unittest") {
   module_out_path = module_output_path
   resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
+  
+  # BUILD.gn 中的官方用法
+  defines = []
+  if (defined(product_name) && product_name == "rk3568") {
+      defines += [ "PRODUCT_RK3568" ]   # 定义宏
+  }
 
   include_dirs = base_include_dirs
-
   include_dirs += [
     "$image_effect_root_dir/frameworks/native/effect/render_environment/gpu_render",
     "$image_effect_root_dir/frameworks/native/effect/render_environment/utils",

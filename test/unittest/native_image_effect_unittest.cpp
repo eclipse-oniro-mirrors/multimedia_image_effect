@@ -55,6 +55,15 @@ namespace {
     constexpr uint32_t CROP_FACTOR = 2;
 }
 
+static bool IsRk3568()
+{
+#ifdef PRODUCT_RK3568
+    return true;   // 编译时确定为 RK3568 平台
+#else
+    return false;  // 非 RK3568 平台
+#endif
+}
+
 namespace OHOS {
 namespace Media {
 namespace Effect {
@@ -267,6 +276,10 @@ public:
  */
 HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputUri001, TestSize.Level1)
 {
+    if (IsRk3568()) {
+        GTEST_SKIP() << "Skipped on rk3568";
+    }
+
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
 
@@ -409,6 +422,10 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetInputUri005, TestSize.Level1
  */
 HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri001, TestSize.Level1)
 {
+    if (IsRk3568()) {
+        GTEST_SKIP() << "Skipped on rk3568";
+    }
+
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
 
@@ -496,6 +513,10 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri003, TestSize.Level
  */
 HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri004, TestSize.Level1)
 {
+    if (IsRk3568()) {
+        GTEST_SKIP() << "Skipped on rk3568";
+    }
+
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
 
@@ -531,6 +552,10 @@ HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri004, TestSize.Level
  */
 HWTEST_F(NativeImageEffectUnittest, OHImageEffectSetOutputUri005, TestSize.Level1)
 {
+    if (IsRk3568()) {
+        GTEST_SKIP() << "Skipped on rk3568";
+    }
+    
     OH_ImageEffect *imageEffect = OH_ImageEffect_Create(IMAGE_EFFECT_NAME);
     ASSERT_NE(imageEffect, nullptr);
 
