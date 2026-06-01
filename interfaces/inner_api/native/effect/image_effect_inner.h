@@ -246,6 +246,12 @@ protected:
     DataInfo outDateInfo_;
 
 private:
+    enum ImageEffectState : int32_t {
+        IMAGE_EFFECT_NOT_INITIALIZED = 0,
+        STRUCT_IMAGE_EFFECT_CONSTANT = 1,
+        DESTRUCTOR_IMAGE_EFFECT_CONSTANT = 2
+    };
+
     ErrorCode LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer, std::shared_ptr<EffectBuffer> &dstEffectBuffer,
         IEffectFormat format);
 
@@ -304,7 +310,7 @@ private:
 
     sptr<Surface> toProducerSurface_;   // from ImageEffect to XComponent
     sptr<Surface> fromProducerSurface_; // to camera hal
-    volatile int32_t imageEffectFlag_ = 0;
+    std::atomic<ImageEffectState> imageEffectFlag_ {IMAGE_EFFECT_NOT_INITIALIZED};
     bool setCycleBuffersNumber_ = false;
     bool setConsumerBufferSize_ = false;
 
