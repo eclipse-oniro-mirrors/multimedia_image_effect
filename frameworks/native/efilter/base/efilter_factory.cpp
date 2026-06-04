@@ -35,7 +35,7 @@ EFilterFactory::~EFilterFactory()
     ClearFunctions();
 }
 
-EFilterFactory::ClearFunctions()
+void EFilterFactory::ClearFunctions()
 {
     std::lock_guard<std::recursive_mutex> lock(functionsMutex_);
     functions_.clear();
