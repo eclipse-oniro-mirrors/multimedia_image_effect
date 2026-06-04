@@ -23,10 +23,22 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
+
 EFilterFactory *EFilterFactory::Instance()
 {
     static EFilterFactory instance;
     return &instance;
+}
+
+EFilterFactory::~EFilterFactory()
+{
+    ClearFunctions();
+}
+
+EFilterFactory::ClearFunctions()
+{
+    std::lock_guard<std::recursive_mutex> lock(functionsMutex_);
+    functions_.clear();
 }
 
 void EFilterFactory::RegisterFunction(const std::string &name, const EFilterFunction &function)
@@ -34,6 +46,7 @@ void EFilterFactory::RegisterFunction(const std::string &name, const EFilterFunc
     EFFECT_LOGI("register efilter. name=%{public}s", name.c_str());
     CHECK_AND_RETURN_LOG(name.c_str() != nullptr,
         "RegisterFunction: register RegisterFunction name fail! name=%{public}s", name.c_str());
+    std::lock_guard<std::recursive_mutex> lock(functionsMutex_);
     auto it = functions_.find(name);
     if (it == functions_.end()) {
         auto result = functions_.emplace(name, function);
@@ -53,7 +66,7 @@ void EFilterFactory::RegisterDelegate(const std::string &name, const std::shared
     RegisterEFilter<CustomEFilter>(name);
 
     CustomEFilter::SetEffectInfo(name, effectInfo);
-
+    std::lock_guard<std::recursive_mutex> lock(delegatesMutex_);
     auto it = delegates_.find(name);
     if (it == delegates_.end()) {
         auto result = delegates_.emplace(name, delegate);
@@ -67,6 +80,7 @@ void EFilterFactory::RegisterDelegate(const std::string &name, const std::shared
 
 std::shared_ptr<IFilterDelegate> EFilterFactory::GetDelegate(const std::string &name)
 {
+    std::lock_guard<std::recursive_mutex> lock(delegatesMutex_);
     auto it = delegates_.find(name);
     if (it != delegates_.end()) {
         return it->second;
@@ -98,33 +112,53 @@ std::shared_ptr<EFilter> EFilterFactory::Create(const std::string &name, void *h
     ExternLoader::Instance()->InitExt();
     CHECK_AND_RETURN_RET_LOG(name.c_str() != nullptr, nullptr,
         "Create: register Create name fail! name=%{public}s", name.c_str());
-    auto it = functions_.find(name);
-    if (it != functions_.end()) {
-        std::shared_ptr<EFilter> efilter = it->second.generator_(name);
-        if (GetDelegate(name)) {
-            static_cast<CustomEFilter *>(efilter.get())->SetHandler(handler);
+    EFilterGenerator generator = nullptr;
+    {
+        std::lock_guard<std::recursive_mutex> lock(functionsMutex_);
+        auto it = functions_.find(name);
+        if (it != functions_.end()) {
+            generator = it->second.generator_;
         }
-        return efilter;
     }
-    EFFECT_LOGE("create effect fail! functions has no %{public}s", name.c_str());
-    return nullptr;
+
+    CHECK_AND_RETURN_RET_LOG(generator != nullptr, nullptr,
+        "create effect fail! functions has no %{public}s", name.c_str());
+
+    std::shared_ptr<Efilter> efilter = generator(name);
+    CHECK_AND_RETURN_RET_LOG(efilter != nullptr, nullptr,
+        "create effect fail! generator returned nullptr for %{public}s", name.c_str());
+
+    if (GetDelegate(name)) {
+        static_cast<CustomEFilter *>(efilter.get())->SetHandler(handler);
+    }
+    return efilter;
 }
 
 std::shared_ptr<EffectInfo> EFilterFactory::GetEffectInfo(const std::string &name)
 {
     ExternLoader::Instance()->InitExt();
-    auto it = functions_.find(name);
-    if (it != functions_.end()) {
-        return it->second.infoGetter_(name);
+
+    EFilterInfoGetter infoGetter = nullptr;
+    {
+        std::lock_guard<std::recursive_mutex> lock(functionsMutex_);
+        auto it = functions_.find(name);
+        if (it != functions_.end()) {
+            infoGetter = it->second.infoGetter_;
+        }
     }
-    EFFECT_LOGE("get effect info fail! functions has no %{public}s", name.c_str());
-    return nullptr;
+
+    CHECK_AND_RETURN_RET_LOG(infoGetter != nullptr, nullptr,
+        "get effect info fail! functions has no %{public}s", name.c_str());
+
+    return infoGetter(name);
 }
 
 void EFilterFactory::GetAllEffectNames(std::vector<const char *> &names)
 {
-    std::transform(functions_.begin(), functions_.end(), std::back_inserter(names),
-        [](const auto &pair) { return pair.first.c_str(); });
+    std::lock_guard<std::recursive_mutex> lock(functionsMutex_);
+    for (const auto &pair : functions_) {
+        names.push_back(pair.first.c_str());
+    }
 }
 } // namespace Effect
 } // namespace Media
