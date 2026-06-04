@@ -124,7 +124,7 @@ std::shared_ptr<EFilter> EFilterFactory::Create(const std::string &name, void *h
     CHECK_AND_RETURN_RET_LOG(generator != nullptr, nullptr,
         "create effect fail! functions has no %{public}s", name.c_str());
 
-    std::shared_ptr<Efilter> efilter = generator(name);
+    std::shared_ptr<EFilter> efilter = generator(name);
     CHECK_AND_RETURN_RET_LOG(efilter != nullptr, nullptr,
         "create effect fail! generator returned nullptr for %{public}s", name.c_str());
 
