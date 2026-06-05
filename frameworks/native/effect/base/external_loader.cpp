@@ -73,9 +73,9 @@ void ExternLoader::LoadExtSo()
     // 如果dlsym调用成功， 将临时指针赋值给类成员
     if (allSymbolsLoaded) {
         initFunc_ = reinterpret_cast<InitModuleFunc>(initFunc);
-        deinitFunc_ = reinterpret_cast<InitModuleFunc>(deinitFunc);
+        deinitFunc_ = reinterpret_cast<DeinitFunc>(deinitFunc);
         initModuleFunc_ = reinterpret_cast<InitModuleFunc>(initModuleFunc);
-        deinitModuleFunc_ = reinterpret_cast<InitModuleFunc>(deinitModuleFunc);
+        deinitModuleFunc_ = reinterpret_cast<DeinitModuleFunc>(deinitModuleFunc);
         isExtLoad_ = true;
     } else {
         // 如果有任何dlsym调用失败， 关闭动态链接库
@@ -96,7 +96,7 @@ InitFunc ExternLoader::GetInitFunc() const
     return initFunc_;
 }
 
-InitFunc ExternLoader::GetDeinitFunc() const
+DeinitFunc ExternLoader::GetDeinitFunc() const
 {
     return deinitFunc_;
 }
@@ -106,7 +106,7 @@ InitModuleFunc ExternLoader::GetInitModuleFunc() const
     return initModuleFunc_;
 }
 
-InitModuleFunc ExternLoader::GetDeinitModuleFunc() const
+DeinitModuleFunc ExternLoader::GetDeinitModuleFunc() const
 {
     return deinitModuleFunc_;
 }

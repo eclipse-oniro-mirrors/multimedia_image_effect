@@ -28,17 +28,17 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-using EFilterGenerator = std::function<std::shared_ptr<EFilter>(const std::string &name)>;
-using EFilterInfoGetter = std::function<std::shared_ptr<EffectInfo>(const std::string &name)>;
+using EFilterGenerator = std::shared_ptr<EFilter>(*)(const std::string &name);
+using EFilterInfoGetter = std::shared_ptr<EffectInfo>(*)(const std::string &name);
 
 struct EFilterFunction {
-    EFilterGenerator generator_;
-    EFilterInfoGetter infoGetter_;
+    EFilterGenerator generator_ = nullptr;
+    EFilterInfoGetter infoGetter_ = nullptr;
 };
 
 class EFilterFactory {
 public:
-    ~EFilterFactory() = default;
+    ~EFilterFactory();
 
     EFilterFactory(const EFilterFactory &) = delete;
 
@@ -65,9 +65,12 @@ public:
 
     template <class T> void RegisterEFilter(const std::string &name)
     {
-        EFilterFunction function = {
-            .generator_ = [](const std::string &name) { return std::make_shared<T>(name); },
-            .infoGetter_ = [](const std::string &name) { return T::GetEffectInfo(name); }
+        EFilterFunction function;
+        function.generator_ = [](const std::string &name) -> std::shared_ptr<EFilter> {
+            return std::make_shared<T>(name);
+        };
+        function.infoGetter_ = [](const std::string &name) -> std::shared_ptr<EffectInfo> {
+            return T::GetEffectInfo(name);
         };
 
         RegisterFunction(name, function);
@@ -76,11 +79,16 @@ public:
     IMAGE_EFFECT_EXPORT std::shared_ptr<EffectInfo> GetEffectInfo(const std::string &name);
 
     IMAGE_EFFECT_EXPORT void GetAllEffectNames(std::vector<const char *> &names);
+
+    void ClearFunctions();
+
 private:
     EFilterFactory() = default;
 
+    mutable std::recursive_mutex functionsMutex_;
     std::map<std::string, EFilterFunction> functions_;
 
+    mutable std::recursive_mutex delegatesMutex_;
     std::map<std::string, std::shared_ptr<IFilterDelegate>> delegates_;
 };
 
