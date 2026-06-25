@@ -871,12 +871,7 @@ ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelForm
 ErrorCode ImageEffect::InitEffectBuffer(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     std::shared_ptr<EffectBuffer> &dstEffectBuffer, IEffectFormat format)
 {
-    ParseOptions options;
-    options.isOutputData = false;
-    options.format = format;
-    options.strategy = impl_->effectContext_->logStrategy_;
-    options.needsDecodeDfxData = needsDecodeDfxData_;
-    ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, options);
+    ErrorCode res = LockAll(srcEffectBuffer, dstEffectBuffer, format);
     if (res != ErrorCode::SUCCESS) {
         UnLockAll();
         return res;
@@ -1601,7 +1596,12 @@ void ImageEffect::RemoveGainMapIfNeed() const
 ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     std::shared_ptr<EffectBuffer> &dstEffectBuffer, IEffectFormat format)
 {
-    ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, false, format, impl_->effectContext_->logStrategy_);
+    ParseOptions options;
+    options.isOutputData = false;
+    options.format = format;
+    options.strategy = impl_->effectContext_->logStrategy_;
+    options.needsDecodeDfxData = needsDecodeDfxData_;
+    ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, options);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("ParseDataInfo inData fail! res=%{public}d", res);
         return res;
