@@ -344,6 +344,8 @@ private:
     uint32_t failureCount_ = 0;
     std::shared_ptr<ThreadSafeBufferQueue<BufferEntry>> bufferPool_;
     int32_t configIpType_ = 0;
+    bool needsDecodeDfxData_  = false;
+    bool needsPackDfxData_ = false;
 };
 } // namespace Effect
 } // namespace Media

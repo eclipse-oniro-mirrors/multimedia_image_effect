@@ -871,7 +871,12 @@ ErrorCode ImageEffect::GetImageInfo(uint32_t &width, uint32_t &height, PixelForm
 ErrorCode ImageEffect::InitEffectBuffer(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     std::shared_ptr<EffectBuffer> &dstEffectBuffer, IEffectFormat format)
 {
-    ErrorCode res = LockAll(srcEffectBuffer, dstEffectBuffer, format);
+    ParseOptions options;
+    options.isOutputData = false;
+    options.format = format;
+    options.strategy = impl_->effectContext_->logStrategy_;
+    options.needsDecodeDfxData = needsDecodeDfxData_;
+    ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, options);
     if (res != ErrorCode::SUCCESS) {
         UnLockAll();
         return res;
@@ -1605,7 +1610,8 @@ ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
 
     if (outDateInfo_.dataType_ != DataType::UNKNOWN && !IsSameInOutputData(inDateInfo_, outDateInfo_)) {
         EFFECT_LOGD("output data set, start parse data info. dataType=%{public}d", outDateInfo_.dataType_);
-        res = ParseDataInfo(outDateInfo_, dstEffectBuffer, true, format, impl_->effectContext_->logStrategy_);
+        options.isOutputData = true;
+        res = ParseDataInfo(outDateInfo_, dstEffectBuffer, options);
         if (res != ErrorCode::SUCCESS) {
             EFFECT_LOGE("ParseDataInfo outData fail! res=%{public}d", res);
             return res;
@@ -1617,7 +1623,7 @@ ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
 }
 
 ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectBuffer> &effectBuffer,
-    bool isOutputData, IEffectFormat format, LOG_STRATEGY strategy)
+    ParseOptions &options)
 {
     switch (dataInfo.dataType_) {
         case DataType::PIXEL_MAP:
