@@ -173,6 +173,13 @@ private:
     const size_t max_capacity_;
 };
 
+struct ParseOptions {
+    bool isOutputData = false;
+    IEffectFormat format = IEffectFormat::RGBA8888;
+    LOG_STRATEGY strategy = LOG_STRATEGY::NORMAL;
+    bool needsDecodeDfxData = false;
+};
+
 class ImageEffect : public Effect, public std::enable_shared_from_this<ImageEffect> {
 public:
     IMAGE_EFFECT_EXPORT ImageEffect(const char *name = nullptr);
@@ -240,7 +247,7 @@ protected:
     IMAGE_EFFECT_EXPORT static void ClearDataInfo(DataInfo &dataInfo);
 
     IMAGE_EFFECT_EXPORT static ErrorCode ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectBuffer> &effectBuffer,
-        bool isOutputData, IEffectFormat format, LOG_STRATEGY strategy = LOG_STRATEGY::NORMAL);
+        ParseOptions &options);
 
     DataInfo inDateInfo_;
     DataInfo outDateInfo_;

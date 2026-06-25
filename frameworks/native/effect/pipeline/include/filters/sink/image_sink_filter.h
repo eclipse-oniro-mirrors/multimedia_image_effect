@@ -48,7 +48,8 @@ public:
         void* eglSync_;
     };
 
-    virtual ErrorCode SetSink(const std::shared_ptr<EffectBuffer> &sink, int32_t quality);
+    virtual ErrorCode SetSink(const std::shared_ptr<EffectBuffer> &sink, int32_t quality,
+        bool needsPackDfxData = false);
 
     void DestoryTexureCache();
 
@@ -126,6 +127,7 @@ private:
     std::unordered_map<uint32_t, TextureCacheSeq> texureCacheSeqs_;
     sptr<SurfaceBuffer> hdrSurfaceBuffer_ = nullptr;
     int bufferQueueSize_ = 0;
+    bool needsPackDfxData_ = false;
 };
 } // namespace Effect
 } // namespace Media

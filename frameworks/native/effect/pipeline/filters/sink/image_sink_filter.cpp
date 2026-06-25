@@ -35,11 +35,13 @@ REGISTER_FILTER_FACTORY(ImageSinkFilter);
 constexpr int SINGLE_BUFFER = 1;
 constexpr int DOUBLE_BUFFER = 2;
 
-ErrorCode ImageSinkFilter::SetSink(const std::shared_ptr<EffectBuffer> &sink, int32_t quality)
+ErrorCode ImageSinkFilter::SetSink(const std::shared_ptr<EffectBuffer> &sink, int32_t quality,
+    bool needsPackDfxData)
 {
     EFFECT_LOGD("SetSink entered. quality = %{public}d", quality);
     sinkBuffer_ = sink;
     quality_ = quality;
+    needsPackDfxData_ = needsPackDfxData;
     return ErrorCode::SUCCESS;
 }
 
@@ -679,6 +681,7 @@ ErrorCode ImageSinkFilter::PackToFile(const std::string &path, const std::shared
         .desiredDynamicRange = EncodeDynamicRange::AUTO,
         .quality = static_cast<int32_t>(quality_),
         .needsPackProperties = true,
+        .needsPackDfxData = needsPackDfxData_,
     };
     if (encodedFormat == "image/heic" || encodedFormat == "image/heif") {
         result = StartImagePacking(imagePacker, path, option);

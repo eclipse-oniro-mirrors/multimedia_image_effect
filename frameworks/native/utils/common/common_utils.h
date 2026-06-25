@@ -53,9 +53,9 @@ public:
         const DataType &dataType, LOG_STRATEGY strategy = LOG_STRATEGY::NORMAL, int64_t timestamp = 0);
     static std::string UrlToPath(const std::string &url);
     static ErrorCode ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData,
-        IEffectFormat format);
+        IEffectFormat format, bool needsDecodeDfxData);
     static ErrorCode ParsePath(std::string &path, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData,
-        IEffectFormat format);
+        IEffectFormat format, bool needsDecodeDfxData);
     IMAGE_EFFECT_EXPORT static ErrorCode ParseTex(unsigned int textureId, unsigned int colorSpace,
         std::shared_ptr<EffectBuffer> &effectBuffer);
     IMAGE_EFFECT_EXPORT static void UnlockPixelMap(const PixelMap *pixelMap);
