@@ -341,7 +341,7 @@ std::string CommonUtils::UrlToPath(const std::string &url)
 }
 
 ErrorCode CommonUtils::ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> &effectBuffer, bool isOutputData,
-    IEffectFormat format)
+    IEffectFormat format, bool needsDecodeDfxData)
 {
     if (isOutputData) {
         std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
@@ -353,7 +353,7 @@ ErrorCode CommonUtils::ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> 
     }
 
     auto path = UrlToPath(uri);
-    ErrorCode res = ParsePath(path, effectBuffer, isOutputData, format);
+    ErrorCode res = ParsePath(path, effectBuffer, isOutputData, format, needsDecodeDfxData);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
         "ParseUri: path name fail! uri=%{public}s, res=%{public}d", uri.c_str(), res);
 
@@ -366,7 +366,7 @@ ErrorCode CommonUtils::ParseUri(std::string &uri, std::shared_ptr<EffectBuffer> 
 }
 
 ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer> &effectBuffer,
-    bool isOutputData, IEffectFormat format)
+    bool isOutputData, IEffectFormat format, bool needsDecodeDfxData)
 {
     if (isOutputData) {
         std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
@@ -395,6 +395,7 @@ ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer
 
     DecodingOptionsForPicture options;
     options.desiredPixelFormat = CommonUtils::SwitchToPixelFormat(format);
+    options.needsDecodeDfxData = needsDecodeDfxData;
     EFFECT_LOGD("CommonUtils::ParsePath. PixelFormat=%{public}d, encodedFormat=%{public}s", options.desiredPixelFormat,
         encodedFormat.c_str());
     std::unique_ptr<Picture> picture = imageSource->CreatePicture(options, errorCode);

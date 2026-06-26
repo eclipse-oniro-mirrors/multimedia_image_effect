@@ -353,11 +353,11 @@ ErrorCode ConfigSourceFilter(std::shared_ptr<ImageSourceFilter> &srcFilter, std:
 }
 
 ErrorCode ConfigSinkFilter(std::shared_ptr<ImageSinkFilter> &sinkFilter, std::shared_ptr<EffectBuffer> &sinkBuffer,
-    sptr<Surface> &toXComponentSurface, int32_t quality)
+    sptr<Surface> &toXComponentSurface, int32_t quality, bool needsPackDfxData)
 {
     CHECK_AND_RETURN_RET_LOG(sinkFilter != nullptr, ErrorCode::ERR_INPUT_NULL, "sinkFilter is null");
 
-    ErrorCode res = sinkFilter->SetSink(sinkBuffer, quality);
+    ErrorCode res = sinkFilter->SetSink(sinkBuffer, quality, needsPackDfxData);
     FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "set sink fail! res=%{public}d", res);
     res = sinkFilter->SetXComponentSurface(toXComponentSurface);
     FALSE_RETURN_MSG_E(res == ErrorCode::SUCCESS, res, "SetRenderSurface fail! res=%{public}d", res);
@@ -898,9 +898,11 @@ ErrorCode ImageEffect::ConfigureFilters(std::shared_ptr<EffectBuffer> srcEffectB
     std::shared_ptr<ImageSinkFilter> &sinkFilter = impl_->sinkFilter_;
 
     if (outDateInfo_.dataType_ == DataType::UNKNOWN) {
-        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, inDateInfo_.quality_);
+        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, inDateInfo_.quality_,
+            needsPackDfxData_);
     } else {
-        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, outDateInfo_.quality_);
+        res = ConfigSinkFilter(sinkFilter, dstEffectBuffer, toProducerSurface_, outDateInfo_.quality_,
+            needsPackDfxData_);
     }
 
     if (res != ErrorCode::SUCCESS) {
@@ -1019,12 +1021,16 @@ std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
             "Restore: efilter restore fail! name=%{public}s", name.c_str());
         imageEffect->AddEFilter(efilter);
     }
+    imageEffect->needsDecodeDfxData_ = true;
+    imageEffect->needsPackDfxData_ = true;
     return imageEffect;
 }
 
 ErrorCode ImageEffect::Load(std::string &info)
 {
     EFFECT_TRACE_NAME("ImageEffect::Load");
+    needsPackDfxData_ = true;
+    needsDecodeDfxData_ = true;
     const EffectJsonPtr root = EffectJsonHelper::ParseJsonData(info);
     CHECK_AND_RETURN_RET_LOG(root->HasElement("imageEffect"), ErrorCode::ERR_INPUT_NULL, "Load: imageInfo is null");
     const EffectJsonPtr &imageInfo = root->GetElement("imageEffect");
@@ -1590,7 +1596,12 @@ void ImageEffect::RemoveGainMapIfNeed() const
 ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     std::shared_ptr<EffectBuffer> &dstEffectBuffer, IEffectFormat format)
 {
-    ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, false, format, impl_->effectContext_->logStrategy_);
+    ParseOptions options;
+    options.isOutputData = false;
+    options.format = format;
+    options.strategy = impl_->effectContext_->logStrategy_;
+    options.needsDecodeDfxData = needsDecodeDfxData_;
+    ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, options);
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("ParseDataInfo inData fail! res=%{public}d", res);
         return res;
@@ -1599,7 +1610,8 @@ ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
 
     if (outDateInfo_.dataType_ != DataType::UNKNOWN && !IsSameInOutputData(inDateInfo_, outDateInfo_)) {
         EFFECT_LOGD("output data set, start parse data info. dataType=%{public}d", outDateInfo_.dataType_);
-        res = ParseDataInfo(outDateInfo_, dstEffectBuffer, true, format, impl_->effectContext_->logStrategy_);
+        options.isOutputData = true;
+        res = ParseDataInfo(outDateInfo_, dstEffectBuffer, options);
         if (res != ErrorCode::SUCCESS) {
             EFFECT_LOGE("ParseDataInfo outData fail! res=%{public}d", res);
             return res;
@@ -1611,7 +1623,7 @@ ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
 }
 
 ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectBuffer> &effectBuffer,
-    bool isOutputData, IEffectFormat format, LOG_STRATEGY strategy)
+    ParseOptions &options)
 {
     switch (dataInfo.dataType_) {
         case DataType::PIXEL_MAP:
@@ -1619,11 +1631,13 @@ ErrorCode ImageEffect::ParseDataInfo(DataInfo &dataInfo, std::shared_ptr<EffectB
         case DataType::SURFACE:
         case DataType::SURFACE_BUFFER:
             return CommonUtils::ParseSurfaceData(dataInfo.surfaceBufferInfo_.surfaceBuffer_, effectBuffer,
-                dataInfo.dataType_, strategy, dataInfo.surfaceBufferInfo_.timestamp_);
+                dataInfo.dataType_, options.strategy, dataInfo.surfaceBufferInfo_.timestamp_);
         case DataType::URI:
-            return CommonUtils::ParseUri(dataInfo.uri_, effectBuffer, isOutputData, format);
+            return CommonUtils::ParseUri(dataInfo.uri_, effectBuffer, options.isOutputData, options.format,
+                options.needsDecodeDfxData);
         case DataType::PATH:
-            return CommonUtils::ParsePath(dataInfo.path_, effectBuffer, isOutputData, format);
+            return CommonUtils::ParsePath(dataInfo.path_, effectBuffer, options.isOutputData, options.format,
+                options.needsDecodeDfxData);
         case DataType::NATIVE_WINDOW:
             return CommonUtils::ParseNativeWindowData(effectBuffer, dataInfo.dataType_);
         case DataType::PICTURE:

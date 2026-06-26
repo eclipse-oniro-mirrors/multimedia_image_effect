@@ -187,20 +187,23 @@ HWTEST_F(ImageEffectInnerUnittest, Image_effect_unittest_006, TestSize.Level1)
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     std::shared_ptr<EffectBuffer> effectBuffer = std::make_unique<EffectBuffer>(bufferInfo, nullptr, extraInfo);
     std::shared_ptr<ImageEffect> imageEffect = std::make_unique<ImageEffect>();
+    ParseOptions options;
+    options.format = IEffectFormat::RGBA8888;
 
     dataInfo.dataType_ = DataType::PATH;
     dataInfo.path_ = "path";
-    IEffectFormat format = IEffectFormat::RGBA8888;
-    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, true, format), ErrorCode::SUCCESS);
+    options.isOutputData = true;
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, options), ErrorCode::SUCCESS);
 
     dataInfo.dataType_ = DataType::NATIVE_WINDOW;
-    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::SUCCESS);
+    options.isOutputData = false;
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, options), ErrorCode::SUCCESS);
 
     dataInfo.dataType_ = DataType::UNKNOWN;
-    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::ERR_NO_DATA);
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, options), ErrorCode::ERR_NO_DATA);
 
     dataInfo.dataType_ = static_cast<DataType>(100);
-    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, false, format), ErrorCode::ERR_UNSUPPORTED_DATA_TYPE);
+    EXPECT_EQ(imageEffect->ParseDataInfo(dataInfo, effectBuffer, options), ErrorCode::ERR_UNSUPPORTED_DATA_TYPE);
 }
 
 HWTEST_F(ImageEffectInnerUnittest, SetOutputPicture_001, TestSize.Level1)
