@@ -85,7 +85,6 @@ HWTEST_F(TestRenderEnvironment, TestRenderEnvironment001, TestSize.Level1)
 {
     std::shared_ptr<EffectBuffer> output;
     renderEnvironment->outType_ = DataType::NATIVE_WINDOW;
-    effectBuffer->bufferInfo_->width_ = 2 * WIDTH;
     renderEnvironment->GenTex(effectBuffer, output);
 
     effectBuffer->bufferInfo_->formatType_ = IEffectFormat::DEFAULT;
