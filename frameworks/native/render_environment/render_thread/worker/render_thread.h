@@ -81,6 +81,7 @@ template <typename QUEUE> RenderThread<QUEUE>::~RenderThread()
 
 template <typename QUEUE> void RenderThread<QUEUE>::AddTask(const LocalTaskType &task, bool overwrite)
 {
+    std::shared_lock<std::shared_mutex> lock(taskMutex_);
     std::unique_lock<std::mutex> lk(cvMutex);
     cvFull.wait(lk, [this]() { return (m_localMsgQueue->GetSize() < this->qSize) || (!m_isWorking); });
     if (m_isWorking) {
@@ -139,9 +140,9 @@ template <typename QUEUE> void RenderThread<QUEUE>::Run()
         bool cvRet = cvEmpty.wait_for(lk, std::chrono::milliseconds(TIME_FOR_WAITING_TASK),
             [this]() { return (m_localMsgQueue->GetSize() > 0) || (!m_isWorking); });
         if (cvRet) {
+            std::shared_lock<std::shared_mutex> lock(taskMutex_);
             LocalTaskType task;
             bool ret = m_localMsgQueue->Pop(task);
-            std::shared_lock<std::shared_mutex> lock(taskMutex_);
             lk.unlock();
             cvFull.notify_one();
             if (ret) {

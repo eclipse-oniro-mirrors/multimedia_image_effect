@@ -84,7 +84,7 @@ bool PipelineCore::IncludeCameraColorFilter()
     CHECK_AND_RETURN_RET_LOG(!filters_.empty(), false, "PipelineCore filters_ is empty!");
     for (const auto &filter : filters_) {
         if (std::find(colorFilters_.begin(), colorFilters_.end(), filter->GetName()) != colorFilters_.end()) {
-            EFFECT_LOGD("PipelineCore::IncludeCameraColorFilter find out %{public}s", filter->GetName().c_str());
+            EFFECT_LOGI("PipelineCore::IncludeCameraColorFilter find out %{public}s", filter->GetName().c_str());
             return true;
         }
     }
