@@ -81,6 +81,11 @@ public:
     static Mat4x4 Perspective(float fov, float aspect, float nearV, float farV)
     {
         Mat4x4 result(0.0f);
+        if (std::fabs(std::tan(fov / 2.0f)) < EPS ||
+            std::fabs(aspect) < EPS ||
+            std::fabs(nearV - farV) < EPS) {
+                return result;
+        }
 
         float f = 1.0f / std::tan(fov / 2.0f);
 
