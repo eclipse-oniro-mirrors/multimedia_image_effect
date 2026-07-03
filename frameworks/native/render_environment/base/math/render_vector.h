@@ -23,6 +23,7 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
+const float EPS = 1e-6f;
 
 struct Vec2 {
     union {
@@ -39,71 +40,89 @@ struct Vec2 {
     float& operator[](int i) { return data[i]; }
     const float& operator[](int i) const { return data[i]; }
 
-    Vec2 operator+(const Vec2& rhs) const {
+    Vec2 operator+(const Vec2& rhs) const
+    {
         return Vec2(x + rhs.x, y + rhs.y);
     }
 
-    Vec2 operator-(const Vec2& rhs) const {
+    Vec2 operator-(const Vec2& rhs) const
+    {
         return Vec2(x - rhs.x, y - rhs.y);
     }
 
-    Vec2 operator*(const Vec2& rhs) const {
+    Vec2 operator*(const Vec2& rhs) const
+    {
         return Vec2(x * rhs.x, y * rhs.y);
     }
 
-    Vec2 operator/(const Vec2& rhs) const {
+    Vec2 operator/(const Vec2& rhs) const
+    {
         return Vec2(x / rhs.x, y / rhs.y);
     }
 
-    Vec2& operator+=(const Vec2& rhs) {
+    Vec2& operator+=(const Vec2& rhs)
+    {
         x += rhs.x;
         y += rhs.y;
         return *this;
     }
 
-    Vec2& operator-=(const Vec2& rhs) {
+    Vec2& operator-=(const Vec2& rhs)
+    {
         x -= rhs.x;
         y -= rhs.y;
         return *this;
     }
 
-    Vec2& operator*=(const Vec2& rhs) {
+    Vec2& operator*=(const Vec2& rhs)
+    {
         x *= rhs.x;
         y *= rhs.y;
         return *this;
     }
 
-    Vec2& operator/=(const Vec2& rhs) { 
+    Vec2& operator/=(const Vec2& rhs)
+    {
         x /= rhs.x;
         y /= rhs.y;
         return *this;
     }
 
-    Vec2 operator*(float s) const {
+    Vec2 operator*(float s) const
+    {
         return Vec2(x * s, y * s);
     }
 
-    Vec2 operator/(float s) const {
+    Vec2 operator/(float s) const
+    {
+        if (std::fabs(s) < EPS) {
+            return Vec2(0.0f, 0.0f);
+        }
         return Vec2(x / s, y / s);
     }
 
-    bool operator==(const Vec2& rhs) const {
+    bool operator==(const Vec2& rhs) const
+    {
         return x == rhs.x && y == rhs.y;
     }
 
-    bool operator!=(const Vec2& rhs) const {
+    bool operator!=(const Vec2& rhs) const
+    {
         return !(*this == rhs);
     }
 
-    float Dot(const Vec2& rhs) const {
+    float Dot(const Vec2& rhs) const
+    {
         return x * rhs.x + y * rhs.y;
     }
 
-    float Length() const {
+    float Length() const
+    {
         return std::sqrt(x * x + y * y);
     }
 
-    Vec2 Normalize() const {
+    Vec2 Normalize() const
+    {
         float len = Length();
         if (len > 0.0f) {
             return Vec2(x / len, y / len);
@@ -134,47 +153,59 @@ struct Vec3 {
     float& operator[](int i) { return data[i]; }
     const float& operator[](int i) const { return data[i]; }
 
-    Vec3 operator+(const Vec3& rhs) const {
+    Vec3 operator+(const Vec3& rhs) const
+    {
         return Vec3(x + rhs.x, y + rhs.y, z + rhs.z);
     }
 
-    Vec3 operator-(const Vec3& rhs) const {
+    Vec3 operator-(const Vec3& rhs) const
+    {
         return Vec3(x - rhs.x, y - rhs.y, z - rhs.z);
     }
 
-    Vec3 operator*(float s) const {
+    Vec3 operator*(float s) const
+    {
         return Vec3(x * s, y * s, z * s);
     }
 
-    Vec3 operator/(float s) const {
+    Vec3 operator/(float s) const
+    {
+        if (std::fabs(s) < EPS) {
+            return Vec3(0.0f, 0.0f, 0.0f);
+        }
         return Vec3(x / s, y / s, z / s);
     }
 
-    bool operator==(const Vec3& rhs) const {
+    bool operator==(const Vec3& rhs) const
+    {
         return x == rhs.x && y == rhs.y && z == rhs.z;
     }
 
-    bool operator!=(const Vec3& rhs) const {
+    bool operator!=(const Vec3& rhs) const
+    {
         return !(*this == rhs);
     }
 
-    float Dot(const Vec3& rhs) const {
+    float Dot(const Vec3& rhs) const
+    {
         return x * rhs.x + y * rhs.y + z * rhs.z;
     }
 
-    Vec3 Cross(const Vec3& rhs) const {
+    Vec3 Cross(const Vec3& rhs) const
+    {
         return Vec3 (
             y * rhs.z - z * rhs.y,
             z * rhs.x - x * rhs.z,
-            x * rhs.y - y * rhs.x
-        );
+            x * rhs.y - y * rhs.x);
     }
 
-    float Length() const {
+    float Length() const
+    {
         return std::sqrt(x * x + y * y + z * z);
     }
 
-    Vec3 Normalize() const {
+    Vec3 Normalize() const
+    {
         float len = Length();
         if (len > 0.0f) {
             return Vec3(x / len, y / len, z / len);
@@ -206,39 +237,51 @@ struct Vec4 {
     float& operator[](int i) { return data[i]; }
     const float& operator[](int i) const { return data[i]; }
 
-    Vec4 operator+(const Vec4& rhs) const {
-        return Vec4(x + rhs.x, y + rhs.y, z + rhs.z, w + rhs.w); 
+    Vec4 operator+(const Vec4& rhs) const
+    {
+        return Vec4(x + rhs.x, y + rhs.y, z + rhs.z, w + rhs.w);
     }
 
-    Vec4 operator-(const Vec4& rhs) const {
-        return Vec4(x - rhs.x, y - rhs.y, z - rhs.z, w - rhs.w); 
+    Vec4 operator-(const Vec4& rhs) const
+    {
+        return Vec4(x - rhs.x, y - rhs.y, z - rhs.z, w - rhs.w);
     }
 
-    Vec4 operator*(float s) const {
+    Vec4 operator*(float s) const
+    {
         return Vec4(x * s, y * s, z * s, w * s);
     }
 
-    Vec4 operator/(float s) const {
+    Vec4 operator/(float s) const
+    {
+        if (std::fabs(s) < EPS) {
+            return Vec4(0.0f, 0.0f, 0.0f, 0.0f);
+        }
         return Vec4(x / s, y / s, z / s, w / s);
     }
 
-    bool operator==(const Vec4& rhs) const {
+    bool operator==(const Vec4& rhs) const
+    {
         return x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w;
     }
 
-    bool operator!=(const Vec4& rhs) const {
+    bool operator!=(const Vec4& rhs) const
+    {
         return !(*this == rhs);
     }
 
-    float Dot(const Vec4& rhs) const {
+    float Dot(const Vec4& rhs) const
+    {
         return x * rhs.x + y * rhs.y + z * rhs.z + w * rhs.w;
     }
 
-    float Length() const {
+    float Length() const
+    {
         return std::sqrt(x * x + y * y + z * z + w * w);
     }
 
-    Vec4 Normalize() const {
+    Vec4 Normalize() const
+    {
         float len = Length();
         if (len > 0.0f) {
             return Vec4(x / len, y / len, z / len, w / len);
