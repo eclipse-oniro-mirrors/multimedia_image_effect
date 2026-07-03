@@ -64,47 +64,47 @@ void RenderOpenglRenderer::Draw(GLuint texId, GLuint fbo, RenderMesh *mesh, Rend
 
 void ProcessTransform(GraphicTransformType type, RenderGeneralProgram *shader)
 {
-    glm::mat4 trans = glm::mat4(1.0f);
+    Mat4x4 trans = Mat4x4(1.0f);
     switch (type) {
         case GRAPHIC_ROTATE_90:
-            trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(90.0f), 0.0f, 0.0f, 1.0f);
             shader->SetUniform("transform", MathUtils::NativePtr(trans));
             break;
         case GRAPHIC_FLIP_H_ROT90:
-            trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(90.0f), 0.0f, 0.0f, 1.0f);
             shader->SetUniform("transform", MathUtils::NativePtr(trans));
             shader->SetUniform("flipH", 1.0f);
             break;
         case GRAPHIC_FLIP_V_ROT90:
-            trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(90.0f), 0.0f, 0.0f, 1.0f);
             shader->SetUniform("transform", MathUtils::NativePtr(trans));
             shader->SetUniform("flipV", 1.0f);
             break;
         case GRAPHIC_ROTATE_180:
-            trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(180.0f), 0.0f, 0.0f, 1.0f);
             shader->SetUniform("transform", MathUtils::NativePtr(trans));
             break;
         case GRAPHIC_FLIP_H_ROT180:
-            trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(180.0f), 0.0f, 0.0f, 1.0f);
             shader->SetUniform("transform", MathUtils::NativePtr(trans));
             shader->SetUniform("flipH", 1.0f);
             break;
         case GRAPHIC_FLIP_V_ROT180:
-            trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(180.0f), 0.0f, 0.0f, 1.0f);
             shader->SetUniform("transform", MathUtils::NativePtr(trans));
             shader->SetUniform("flipV", 1.0f);
             break;
         case GRAPHIC_ROTATE_270:
-            trans = glm::rotate(trans, glm::radians(270.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(270.0f), 0.0f, 0.0f, 1.0f);
             shader->SetUniform("transform", MathUtils::NativePtr(trans));
             break;
         case GRAPHIC_FLIP_H_ROT270:
-            trans = glm::rotate(trans, glm::radians(270.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(270.0f), 0.0f, 0.0f, 1.0f);
             shader->SetUniform("transform", MathUtils::NativePtr(trans));
             shader->SetUniform("flipH", 1.0f);
             break;
         case GRAPHIC_FLIP_V_ROT270:
-            trans = glm::rotate(trans, glm::radians(270.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(270.0f), 0.0f, 0.0f, 1.0f);
             shader->SetUniform("transform", MathUtils::NativePtr(trans));
             shader->SetUniform("flipV", 1.0f);
             break;

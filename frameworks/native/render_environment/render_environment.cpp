@@ -454,18 +454,18 @@ ResourceCache *RenderEnvironment::GetResourceCache()
     return param_->resCache_;
 }
 
-glm::mat4 GetTransformMatrix(GraphicTransformType type)
+Mat4x4 GetTransformMatrix(GraphicTransformType type)
 {
-    glm::mat4 trans = glm::mat4(1.0f);
+    Mat4x4 trans = Mat4x4(1.0f);
     switch (type) {
         case GRAPHIC_ROTATE_90:
-            trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(90.0f), 0.0f, 0.0f, 1.0f);
             break;
         case GRAPHIC_ROTATE_180:
-            trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(180.0f), 0.0f, 0.0f, 1.0f);
             break;
         case GRAPHIC_ROTATE_270:
-            trans = glm::rotate(trans, glm::radians(270.0f), glm::vec3(0.0, 0.0, 1.0));
+            MathUtils::Rotate(trans, trans, MathUtils::Radians(270.0f), 0.0f, 0.0f, 1.0f);
             break;
         default:
             break;
@@ -480,7 +480,7 @@ void RenderEnvironment::DrawFrameWithTransform(const std::shared_ptr<EffectBuffe
         UpdateCanvas();
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        glm::mat4 trans = GetTransformMatrix(type);
+        Mat4x4 trans = GetTransformMatrix(type);
         if (buffer->bufferInfo_->tex_ == nullptr) {
             EFFECT_LOGE("RenderEnvironment DrawFrameWithTransform tex is nullptr");
             return;
