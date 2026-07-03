@@ -32,10 +32,12 @@ struct Mat2x2 {
         };
     };
 
-    Mat2x2() {
+    Mat2x2()
+    {
         std::fill(data, data + 4, 0.0f);
     }
-    Mat2x2(float v) {
+    Mat2x2(float v)
+    {
         std::fill(data, data + 4, 0.0f);
         data[0] = data[3] = v;
     }
@@ -45,7 +47,8 @@ struct Mat2x2 {
     float& operator[](int i) { return data[i]; }
     const float& operator[](int i) const { return data[i]; }
 
-    Mat2x2 operator*(const Mat2x2& rhs) const {
+    Mat2x2 operator*(const Mat2x2& rhs) const
+    {
         Mat2x2 result;
         result.data[0] = data[0] * rhs.data[0] + data[2] * rhs.data[1];
         result.data[1] = data[1] * rhs.data[0] + data[3] * rhs.data[1];
@@ -54,14 +57,15 @@ struct Mat2x2 {
         return result;
     }
 
-    Vec2 operator*(const Vec2& v) const {
+    Vec2 operator*(const Vec2& v) const
+    {
         return Vec2(
             data[0] * v.x + data[2] * v.y,
-            data[1] * v.x + data[3] * v.y
-        );
+            data[1] * v.x + data[3] * v.y);
     }
 
-    Mat2x2 Inverse() const {
+    Mat2x2 Inverse() const
+    {
         Mat2x2 inv;
         float det = data[0] * data[3] - data[1] * data[2];
         if (det == 0.0f) {
@@ -95,10 +99,12 @@ struct Mat3x3 {
         };
     };
 
-    Mat3x3() {
+    Mat3x3()
+    {
         std::fill(data, data + 9, 0.0f);
     }
-    Mat3x3(float v) {
+    Mat3x3(float v)
+    {
         std::fill(data, data + 9, 0.0f);
         data[0] = data[4] = data[8] = v;
     }
@@ -112,7 +118,8 @@ struct Mat3x3 {
     float& operator[](int i) { return data[i]; }
     const float& operator[](int i) const { return data[i]; }
 
-    Mat3x3 operator*(const Mat3x3& rhs) const {
+    Mat3x3 operator*(const Mat3x3& rhs) const
+    {
         Mat3x3 result;
         for (int col = 0; col < 3; col++) {
             for (int row = 0; row < 3; row++) {
@@ -125,15 +132,16 @@ struct Mat3x3 {
         return result;
     }
 
-    Vec3 operator*(const Vec3& v) const {
+    Vec3 operator*(const Vec3& v) const
+    {
         return Vec3(
             data[0] * v.x + data[3] * v.y + data[6] * v.z,
             data[1] * v.x + data[4] * v.y + data[7] * v.z,
-            data[2] * v.x + data[5] * v.y + data[8] * v.z
-        );
+            data[2] * v.x + data[5] * v.y + data[8] * v.z);
     }
 
-    Mat3x3 Inverse() const {
+    Mat3x3 Inverse() const
+    {
         Mat3x3 inv;
         float det = data[0] * (data[4] * data[8] - data[5] * data[7]) -
                     data[1] * (data[3] * data[8] - data[5] * data[6]) +
@@ -176,11 +184,13 @@ struct Mat4x4 {
         };
     };
 
-    Mat4x4() {
+    Mat4x4()
+    {
         std::fill(data, data + 16, 0.0f);
     }
 
-    Mat4x4(float v) {
+    Mat4x4(float v)
+    {
         std::fill(data, data + 16, 0.0f);
         data[0] = data[5] = data[10] = data[15] = v;
     }
@@ -197,7 +207,8 @@ struct Mat4x4 {
     float& operator[](int i) { return data[i]; }
     const float& operator[](int i) const { return data[i]; }
 
-    Mat4x4 operator*(const Mat4x4& rhs) const {
+    Mat4x4 operator*(const Mat4x4& rhs) const
+    {
         Mat4x4 result;
         for (int col = 0; col < 4; col++) {
             for (int row = 0; row < 4; row++) {
@@ -211,16 +222,17 @@ struct Mat4x4 {
         return result;
     }
 
-    Vec4 operator*(const Vec4& v) const {
+    Vec4 operator*(const Vec4& v) const
+    {
         return Vec4(
             data[0] * v.x + data[4] * v.y + data[8] * v.z + data[12] * v.w,
             data[1] * v.x + data[5] * v.y + data[9] * v.z + data[13] * v.w,
             data[2] * v.x + data[6] * v.y + data[10] * v.z + data[14] * v.w,
-            data[3] * v.x + data[7] * v.y + data[11] * v.z + data[15] * v.w
-        );
+            data[3] * v.x + data[7] * v.y + data[11] * v.z + data[15] * v.w);
     }
 
-    Mat4x4 Inverse() const {
+    Mat4x4 Inverse() const
+    {
         Mat4x4 inv;
 
         float a00 = data[0];
