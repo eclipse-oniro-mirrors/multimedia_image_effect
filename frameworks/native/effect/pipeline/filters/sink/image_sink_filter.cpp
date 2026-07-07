@@ -378,10 +378,15 @@ std::pair<MetaDataMap, MetaDataMap> PrepareMetaDatas(const EffectBuffer *input)
 {
     auto inputPicture = input->extraInfo_->picture;
     CHECK_AND_RETURN_RET_LOG(inputPicture, {}, "PrepareMetaDatas: picture is nullptr!");
-    auto primaryMetaData = CommonUtils::GetMetaData(reinterpret_cast<SurfaceBuffer*>(
-        inputPicture->GetMainPixel()->GetFd()));
+    auto mainPixel = inputPicture->GetMainPixel();
+    CHECK_AND_RETURN_RET_LOG(mainPixel != nullptr, {}, "PrepareMetaDatas: GetMainPixel is nullptr!");
+    CHECK_AND_RETURN_RET_LOG(mainPixel->GetFd() != nullptr, {},
+        "PrepareMetaDatas: mainPixel GetFd is nullptr!");
+    auto primaryMetaData = CommonUtils::GetMetaData(reinterpret_cast<SurfaceBuffer*>(mainPixel->GetFd()));
     auto getGainmapPixelMap = inputPicture->GetGainmapPixelMap();
     CHECK_AND_RETURN_RET_LOG(getGainmapPixelMap, {}, "PrepareMetaDatas: GetGainmapPixelMap is nullptr!");
+    CHECK_AND_RETURN_RET_LOG(getGainmapPixelMap->GetFd(), {},
+        "PrepareMetaDatas: getGainmapPixelMap GetFd is nullptr!");
     auto gainMapMetaData = CommonUtils::GetMetaData(reinterpret_cast<SurfaceBuffer*>(
         getGainmapPixelMap->GetFd()));
     return { primaryMetaData, gainMapMetaData };
@@ -998,7 +1003,8 @@ ErrorCode ImageSinkFilter::RenderHdr10(const std::shared_ptr<EffectBuffer> &buff
     EffectBuffer *input = context->renderStrategy_->GetInput();
     CHECK_AND_RETURN_RET_LOG(input, ErrorCode::ERR_INPUT_NULL, "Input buffer is nullptr");
     auto sb = buffer->bufferInfo_->surfaceBuffer_;
-    CHECK_AND_RETURN_RET_LOG(input, ErrorCode::ERR_INPUT_NULL, "Input buffer is nullptr");
+    CHECK_AND_RETURN_RET_LOG(sb != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "RenderHdr10: surfaceBuffer is nullptr");
     CM_ColorSpaceType colorSpaceType;
     ColorSpaceHelper::GetSurfaceBufferColorSpaceType(sb, colorSpaceType);
     auto srcMetaData = CommonUtils::GetMetaData(sb);
@@ -1085,7 +1091,8 @@ ErrorCode ImageSinkFilter::ProcessDisplayForNoTex(const std::shared_ptr<EffectBu
         EffectBuffer *input = context->renderStrategy_->GetInput();
         CHECK_AND_RETURN_RET_LOG(input, ErrorCode::ERR_INPUT_NULL, "Input buffer is nullptr");
         auto sb = buffer->bufferInfo_->surfaceBuffer_;
-        CHECK_AND_RETURN_RET_LOG(input, ErrorCode::ERR_INPUT_NULL, "Input buffer is nullptr");
+        CHECK_AND_RETURN_RET_LOG(sb != nullptr, ErrorCode::ERR_INPUT_NULL,
+            "ProcessDisplayForNoTex: surfaceBuffer is nullptr");
         auto transformType = GetSurfaceTransform(input);
         auto requestConfig = CreateBaseBufferConfig(
             static_cast<int32_t>(buffer->bufferInfo_->width_),
