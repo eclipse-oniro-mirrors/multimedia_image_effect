@@ -34,7 +34,7 @@ ExternLoader *ExternLoader::Instance()
 
 ExternLoader::~ExternLoader()
 {
-
+    EFFECT_LOGD("ExternLoader::~ExternLoader");
 }
 
 void ExternLoader::LoadExtSo()
