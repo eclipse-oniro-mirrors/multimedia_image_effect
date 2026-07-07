@@ -24,6 +24,7 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
+ExternLoader *ExternLoader::loadInstance_ = nullptr;
 ExternLoader *ExternLoader::Instance()
 {
     if (loadInstance_ == nullptr) {
