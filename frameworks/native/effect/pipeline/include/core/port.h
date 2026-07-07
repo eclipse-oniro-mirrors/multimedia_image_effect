@@ -137,7 +137,15 @@ class EmptyInPort : public InPort {
 public:
     static std::shared_ptr<InPort> GetInstance()
     {
+        if (port_ == nullptr) {
+            port_ = std::make_shared<EmptyInPort>();
+        }
         return port_;
+    }
+
+    static void DestroyInstance()
+    {
+        port_.reset();
     }
 
     EmptyInPort() : InPort(nullptr, "emptyInPort") {}
@@ -162,7 +170,15 @@ class EmptyOutPort : public OutPort {
 public:
     static std::shared_ptr<OutPort> GetInstance()
     {
+        if (port_ == nullptr) {
+            port_ = std::make_shared<EmptyOutPort>();
+        }
         return port_;
+    }
+
+    static void DestroyInstance()
+    {
+        port_.reset();
     }
 
     EmptyOutPort() : OutPort(nullptr, "emptyOutPort") {}

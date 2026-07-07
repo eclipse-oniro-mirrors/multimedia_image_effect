@@ -38,7 +38,7 @@ using DeinitModuleFunc = void (*)();
 // Class responsible for loading and managing external shared libraries
 class ExternLoader {
 public:
-    ~ExternLoader() = default;
+    ~ExternLoader();
 
     // Returns a singleton instance of ExternLoader
     IMAGE_EFFECT_EXPORT static ExternLoader *Instance();
@@ -60,8 +60,14 @@ public:
 
     // Initializes the external library
     void InitExt();
+
+    IMAGE_EFFECT_EXPORT static void DestroyInstance();
+
+    void Close();
 private:
     ExternLoader() = default;
+
+    static ExternLoader *loadInstance_;
 
     // Pointer to the initialization function
     InitFunc initFunc_ = nullptr;
@@ -81,6 +87,8 @@ private:
     std::mutex loadExtSo_;
     // Mutex for synchronizing initialization of the external shared library
     std::mutex initExtSo_;
+
+    void* handle_;
 };
 } // namespace Effect
 } // namespace Media

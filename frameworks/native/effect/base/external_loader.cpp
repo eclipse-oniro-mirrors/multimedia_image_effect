@@ -15,6 +15,9 @@
 
 #include "external_loader.h"
 #include "effect_trace.h"
+#include "efilter_factory.h"
+#include "filter_factory.h"
+#include "port.h"
 
 #include <dlfcn.h>
 
@@ -23,8 +26,15 @@ namespace Media {
 namespace Effect {
 ExternLoader *ExternLoader::Instance()
 {
-    static ExternLoader instance;
-    return &instance;
+    if (loadInstance_ == nullptr) {
+        loadInstance_ = new (std::nothrow) ExternLoader;
+    }
+    return loadInstance_;
+}
+
+ExternLoader::~ExternLoader()
+{
+
 }
 
 void ExternLoader::LoadExtSo()
@@ -84,6 +94,29 @@ void ExternLoader::LoadExtSo()
         isExtLoad_ = false;
         EFFECT_LOGE("EFilterFactory: LoadExtSo failed due to dlsym errors.");
     }
+    handle_ = effectExtHandle;
+}
+
+void ExternLoader::DestroyInstance()
+{
+    EFFECT_LOGD("ExternLoader::DestroyInstance start");
+    if (loadInstance_) {
+        loadInstance_->Close();
+        delete loadInstance_;
+        loadInstance_ = nullptr;
+    }
+    FilterFactory::DestroyInstance();
+    EmptyInPort::DestroyInstance();
+    EmptyOutPort::DestroyInstance();
+    EFFECT_LOGD("ExternLoader::DestroyInstance end");
+}
+
+void ExternLoader::Close()
+{
+    if (handle_) {
+        dlclose(handle_);
+    }
+    handle_ = nullptr;
 }
 
 bool ExternLoader::IsExtLoad() const

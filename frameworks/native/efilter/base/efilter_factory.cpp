@@ -23,11 +23,22 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
+EFilterFactory *EFilterFactory::instance_ = nullptr;
 
 EFilterFactory *EFilterFactory::Instance()
 {
-    static EFilterFactory instance;
-    return &instance;
+    if (instance_ == nullptr) {
+        instance_ = new (std::nothrow) EFilterFactory;
+    }
+    return instance_;
+}
+
+void EFilterFactory::DestroyInstance()
+{
+    if (instance_) {
+        delete instance_;
+        instance_ = nullptr;
+    }
 }
 
 EFilterFactory::~EFilterFactory()
@@ -39,6 +50,7 @@ void EFilterFactory::ClearFunctions()
 {
     std::lock_guard<std::recursive_mutex> lock(functionsMutex_);
     functions_.clear();
+    delegates_.clear();
 }
 
 void EFilterFactory::RegisterFunction(const std::string &name, const EFilterFunction &function)
