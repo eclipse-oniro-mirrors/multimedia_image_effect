@@ -45,6 +45,7 @@ public:
     EFilterFactory operator = (const EFilterFactory &) = delete;
 
     IMAGE_EFFECT_EXPORT static EFilterFactory *Instance();
+    IMAGE_EFFECT_EXPORT static void DestroyInstance();
 
     IMAGE_EFFECT_EXPORT void RegisterFunction(const std::string &name, const EFilterFunction &function);
 
@@ -84,6 +85,8 @@ public:
 
 private:
     EFilterFactory() = default;
+
+    static EFilterFactory *instance_;
 
     mutable std::recursive_mutex functionsMutex_;
     std::map<std::string, EFilterFunction> functions_;

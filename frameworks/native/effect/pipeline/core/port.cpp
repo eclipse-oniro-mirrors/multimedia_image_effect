@@ -22,8 +22,8 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
-std::shared_ptr<InPort> EmptyInPort::port_ = std::make_shared<EmptyInPort>();
-std::shared_ptr<OutPort> EmptyOutPort::port_ = std::make_shared<EmptyOutPort>();
+std::shared_ptr<InPort> EmptyInPort::port_ = nullptr;
+std::shared_ptr<OutPort> EmptyOutPort::port_ = nullptr;
 
 std::shared_ptr<Port> Port::GetPeerPort()
 {

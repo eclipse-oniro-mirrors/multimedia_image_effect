@@ -19,10 +19,23 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
+FilterFactory *FilterFactory::instance_ = nullptr;
+
 FilterFactory &FilterFactory::Instance()
 {
-    static FilterFactory instance;
-    return instance;
+    if (instance_ == nullptr) {
+        instance_ = new (std::nothrow) FilterFactory;
+    }
+    return *instance_;
+}
+
+void FilterFactory::DestroyInstance()
+{
+    if (instance_) {
+        instance_->generators_.clear();
+        delete instance_;
+        instance_ = nullptr;
+    }
 }
 
 void FilterFactory::Init() {}

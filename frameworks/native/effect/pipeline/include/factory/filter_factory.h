@@ -29,13 +29,18 @@ using InstanceGenerator = std::function<std::shared_ptr<Filter>(const std::strin
 
 class FilterFactory {
 public:
-    ~FilterFactory() = default;
+    ~FilterFactory()
+    {
+        generators_.clear();
+    }
 
     FilterFactory(const FilterFactory &) = delete;
 
     FilterFactory operator = (const FilterFactory &) = delete;
 
     static FilterFactory &Instance();
+
+    static void DestroyInstance();
 
     void Init();
 
@@ -63,6 +68,8 @@ public:
 
 private:
     FilterFactory() = default;
+
+    static FilterFactory *instance_;
 
     std::unordered_map<std::string, InstanceGenerator> generators_;
 };
