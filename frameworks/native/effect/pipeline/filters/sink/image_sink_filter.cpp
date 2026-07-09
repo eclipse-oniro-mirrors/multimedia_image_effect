@@ -1045,7 +1045,6 @@ ErrorCode ImageSinkFilter::Render8GainMap(const std::shared_ptr<EffectBuffer> &b
     EffectBuffer *output = input;
     SetPictureMetaData(output, primaryMetaData, gainMapMetaData);
 
-    
     CHECK_AND_RETURN_RET_LOG(output->extraInfo_ != nullptr && output->extraInfo_->picture != nullptr,
         ErrorCode::ERR_INPUT_NULL, "Render8GainMap: output picture is nullptr");
     std::shared_ptr<PixelMap> composedPixelMap = output->extraInfo_->picture->GetHdrComposedPixelMap();
