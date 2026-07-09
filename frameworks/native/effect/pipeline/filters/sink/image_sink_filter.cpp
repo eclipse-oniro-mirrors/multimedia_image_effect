@@ -396,8 +396,11 @@ void SetPictureMetaData(EffectBuffer *output, MetaDataMap& primaryMetaData, Meta
 {
     auto outputPicture = output->extraInfo_->picture;
     CHECK_AND_RETURN_LOG(outputPicture, "SetPictureMetaData: picture is nullptr!");
+    auto mainPixel = outputPicture->GetMainPixel();
+    CHECK_AND_RETURN_LOG(mainPixel != nullptr, "SetPictureMetaData: mainPixel is nullptr!");
+    CHECK_AND_RETURN_LOG(mainPixel->GetFd() != nullptr, "SetPictureMetaData: mainPixel GetFd is nullptr!");
     CommonUtils::SetMetaData(primaryMetaData, reinterpret_cast<SurfaceBuffer*>(
-        outputPicture->GetMainPixel()->GetFd()));
+        mainPixel->GetFd()));
     auto getGainmapPixelMap = outputPicture->GetGainmapPixelMap();
     CHECK_AND_RETURN_LOG(getGainmapPixelMap, "SetPictureMetaData: GetGainmapPixelMap is nullptr!");
     CommonUtils::SetMetaData(gainMapMetaData, reinterpret_cast<SurfaceBuffer*>(
@@ -1002,6 +1005,8 @@ ErrorCode ImageSinkFilter::RenderHdr10(const std::shared_ptr<EffectBuffer> &buff
 {
     EffectBuffer *input = context->renderStrategy_->GetInput();
     CHECK_AND_RETURN_RET_LOG(input, ErrorCode::ERR_INPUT_NULL, "Input buffer is nullptr");
+    CHECK_AND_RETURN_RET_LOG(buffer != nullptr && buffer->bufferInfo_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "RenderHdr10: buffer or bufferInfo_ is nullptr");
     auto sb = buffer->bufferInfo_->surfaceBuffer_;
     CHECK_AND_RETURN_RET_LOG(sb != nullptr, ErrorCode::ERR_INPUT_NULL,
         "RenderHdr10: surfaceBuffer is nullptr");
@@ -1009,6 +1014,8 @@ ErrorCode ImageSinkFilter::RenderHdr10(const std::shared_ptr<EffectBuffer> &buff
     ColorSpaceHelper::GetSurfaceBufferColorSpaceType(sb, colorSpaceType);
     auto srcMetaData = CommonUtils::GetMetaData(sb);
     auto transformType = GetSurfaceTransform(input);
+    CHECK_AND_RETURN_RET_LOG(buffer->bufferInfo_->tex_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "RenderHdr10: buffer->bufferInfo_->tex_ is nullptr");
     auto requestConfig = CreateBaseBufferConfig(
         static_cast<int32_t>(buffer->bufferInfo_->tex_->Width()),
         static_cast<int32_t>(buffer->bufferInfo_->tex_->Height()),
@@ -1025,6 +1032,8 @@ ErrorCode ImageSinkFilter::Render8GainMap(const std::shared_ptr<EffectBuffer> &b
     CHECK_AND_RETURN_RET_LOG(input, ErrorCode::ERR_INPUT_NULL, "Input buffer is nullptr");
 
     auto [primaryBuffer, auxiliaryBuffer] = PrepareBuffers(input);
+    CHECK_AND_RETURN_RET_LOG(auxiliaryBuffer != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "Render8GainMap: auxiliaryBuffer is nullptr, gainmap buffer info missing");
 
     // save data
     if (!CommonUtils::IsEnableCopyMetaData(SINGLE_BUFFER, input)) {
@@ -1036,6 +1045,9 @@ ErrorCode ImageSinkFilter::Render8GainMap(const std::shared_ptr<EffectBuffer> &b
     EffectBuffer *output = input;
     SetPictureMetaData(output, primaryMetaData, gainMapMetaData);
 
+    
+    CHECK_AND_RETURN_RET_LOG(output->extraInfo_ != nullptr && output->extraInfo_->picture != nullptr,
+        ErrorCode::ERR_INPUT_NULL, "Render8GainMap: output picture is nullptr");
     std::shared_ptr<PixelMap> composedPixelMap = output->extraInfo_->picture->GetHdrComposedPixelMap();
     CHECK_AND_RETURN_RET_LOG(composedPixelMap->GetFd() != nullptr, result,
         "ImageSinkFilter::RenderToDisplay surfaceBuffer is nullptr!");

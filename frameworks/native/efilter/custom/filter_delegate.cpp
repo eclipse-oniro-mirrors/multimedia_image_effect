@@ -84,6 +84,8 @@ bool FilterDelegate::Render(void *efilter, EffectBuffer *src, std::shared_ptr<Ef
         FilterDelegate::PushData(filter, dst);
     };
 
+    CHECK_AND_RETURN_RET_LOG(ohDelegate_->render != nullptr, false,
+        "FilterDelegateRender: render callback is null!");
     bool res = ohDelegate_->render((OH_EffectFilter *)efilter, srcBuffer.get(), pushData);
     BufferType bufferType = src->bufferInfo_->bufferType_;
     if (bufferType == BufferType::DMA_BUFFER) {
@@ -104,6 +106,8 @@ bool FilterDelegate::SetValue(void *efilter, const std::string &key, const Any &
     EFFECT_LOGD("FilterDelegate SetValue.");
     std::unique_ptr<ImageEffect_Any> ohValue = std::make_unique<ImageEffect_Any>();
     NativeCommonUtils::SwitchToOHAny(value, ohValue.get());
+    CHECK_AND_RETURN_RET_LOG(ohDelegate_->setValue != nullptr, false,
+        "FilterDelegateSetValue: setValue callback is null!");
     return ohDelegate_->setValue((OH_EffectFilter *)efilter, key.c_str(), ohValue.get());
 }
 
@@ -111,6 +115,8 @@ bool FilterDelegate::Save(void *efilter, EffectJsonPtr &res)
 {
     EFFECT_LOGI("FilterDelegate Save.");
     char *result = nullptr;
+    CHECK_AND_RETURN_RET_LOG(ohDelegate_->save != nullptr, false,
+        "FilterDelegateSave: save callback is null!");
     if (!ohDelegate_->save((OH_EffectFilter *)efilter, &result)) {
         return false;
     }
@@ -126,6 +132,8 @@ void *FilterDelegate::Restore(const EffectJsonPtr &values)
 {
     EFFECT_LOGI("FilterDelegate Restore.");
     std::string valueStr = values->ToString();
+    CHECK_AND_RETURN_RET_LOG(ohDelegate_->restore != nullptr, false,
+        "FilterDelegateRestore: restore callback is null!");
     return ohDelegate_->restore(valueStr.c_str());
 }
 

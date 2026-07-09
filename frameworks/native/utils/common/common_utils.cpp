@@ -175,7 +175,9 @@ void CommonUtils::CopyAuxiliaryBufferInfos(const EffectBuffer *src, EffectBuffer
 
 MetaDataMap CommonUtils::GetMetaData(SurfaceBuffer* surfaceBuffer)
 {
-    std::unordered_map<uint32_t, std::vector<uint8_t>> metadataMap;
+    std::unordered_map<uint32_t, std::vector<uint8_t>> metadataMap{};
+    CHECK_AND_RETURN_RET_LOG(surfaceBuffer != nullptr, metadataMap,
+        "CommonUtils::GetMetaData: surfaceBuffer is nullptr!");
     std::vector<uint32_t> keys = {};
     surfaceBuffer->ListMetadataKeys(keys);
     EFFECT_LOGD("CommonUtils::GetMetaData: keys length = %{public}d", static_cast<int>(keys.size()));
