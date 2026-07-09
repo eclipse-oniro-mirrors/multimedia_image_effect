@@ -132,7 +132,7 @@ void *FilterDelegate::Restore(const EffectJsonPtr &values)
 {
     EFFECT_LOGI("FilterDelegate Restore.");
     std::string valueStr = values->ToString();
-    CHECK_AND_RETURN_RET_LOG(ohDelegate_->restore != nullptr, false,
+    CHECK_AND_RETURN_RET_LOG(ohDelegate_->restore != nullptr, nullptr,
         "FilterDelegateRestore: restore callback is null!");
     return ohDelegate_->restore(valueStr.c_str());
 }
