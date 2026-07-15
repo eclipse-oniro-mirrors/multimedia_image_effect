@@ -139,6 +139,8 @@ ohos_shared_library("image_effect_impl") {
     "napi:ace_napi",
     "qos_manager:qos",
     "skia:skia_canvaskit",
+    "egl:libEGL",
+    "opengles:libGLES",
   ]
 
   if (image_effect_colorspace_convertor_enable) {
@@ -202,6 +204,8 @@ ohos_shared_library("image_effect") {
     "image_framework:picture",
     "image_framework:pixelmap",
     "napi:ace_napi",
+    "egl:libEGL",
+    "opengles:libGLES",
   ]
 
   cflags_cc = [

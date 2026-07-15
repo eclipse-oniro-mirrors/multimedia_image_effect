@@ -36,7 +36,9 @@
         "libexif",
         "qos_manager",
         "video_processing_engine",
-        "skia"
+        "skia",
+        "egl",
+        "opengles"
       ],
       "third_party": [
         "egl",
