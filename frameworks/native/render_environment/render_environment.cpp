@@ -418,15 +418,16 @@ void RenderEnvironment::ConvertFromRGBToYUV(RenderTexturePtr input, IEffectForma
 {
     int width = static_cast<int>(input->Width());
     int height = static_cast<int>(input->Height());
+    uint32_t rowStride = (static_cast<uint32_t>(width) + 1) & ~1u; // match FormatHelper::CaculateRowStride
     auto rgbData = std::make_unique<unsigned char[]>(width * height * RGBA_SIZE_PER_PIXEL);
     ReadPixelsFromTex(input, rgbData.get(), width, height, width);
     auto *srcNV12 = static_cast<unsigned char *>(data);
-    uint8_t *srcNV12UV = srcNV12 + static_cast<uint32_t>(width * height);
+    uint8_t *srcNV12UV = srcNV12 + static_cast<uint32_t>(height) * rowStride;
     for (uint32_t i = 0; i < static_cast<uint32_t>(height); i++) {
         for (uint32_t j = 0; j < static_cast<uint32_t>(width); j++) {
-            uint32_t yIndex = i * static_cast<uint32_t>(width) + j;
+            uint32_t yIndex = i * rowStride + j;
             uint32_t nvIndex =
-                i / UV_PLANE_SIZE * static_cast<uint32_t>(width) + j - j % UV_PLANE_SIZE; // 2 mean u/v split factor
+                i / UV_PLANE_SIZE * rowStride + j - j % UV_PLANE_SIZE; // 2 mean u/v split factor
             uint32_t rgbIndex = i * static_cast<uint32_t>(width) * static_cast<uint32_t>(RGBA_SIZE_PER_PIXEL) +
                 j * static_cast<uint32_t>(RGBA_SIZE_PER_PIXEL);
             uint8_t r = rgbData[rgbIndex];
@@ -525,8 +526,23 @@ void RenderEnvironment::ConvertTextureToBuffer(RenderTexturePtr source, EffectBu
     int w = static_cast<int>(source->Width());
     int h = static_cast<int>(source->Height());
     if (output->bufferInfo_->surfaceBuffer_ == nullptr) {
+        // Clamp readback dimensions to output buffercapacity
+        int outW = static_cast<int>(output->bufferInfo_->width_);
+        int outH = static_cast<int>(output->bufferInfo_->height_);
+        if (w > outW) {
+            w = outW;
+        }
+        if (h > outH) {
+            h = outH;
+        }
+        CHECK_AND_RETURN_LOG(w > 0 && h > 0, "ConvertTextureToBuffer: invalid size");
+
         if (output->bufferInfo_->formatType_ == IEffectFormat::RGBA8888 ||
             output->bufferInfo_->formatType_ == IEffectFormat::RGBA_1010102) {
+            size_t requireSize = static_cast<size_t>(h -1) * output->bufferInfo_->rowStride_
+                + static_cast<size_t>(w) * RGBA_SIZE_PER_PIXEL;
+            CHECK_AND_RETURN_LOG(requireSize <= static_cast<size_t>(output->bufferInfo_->len_),
+                "ConvertTextureToBuffer: output buffer overflow");
             ReadPixelsFromTex(source, output->buffer_, w, h, output->bufferInfo_->rowStride_ / RGBA_SIZE_PER_PIXEL);
         } else {
             ConvertFromRGBToYUV(source, output->bufferInfo_->formatType_, output->buffer_);

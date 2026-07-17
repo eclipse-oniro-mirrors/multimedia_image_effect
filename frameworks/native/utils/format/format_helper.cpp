@@ -85,7 +85,7 @@ uint32_t FormatHelper::CalculateRowStride(uint32_t width, IEffectFormat format)
             return width * RGBA_BYTES_PER_PIXEL;
         case IEffectFormat::YUVNV12:
         case IEffectFormat::YUVNV21:
-            return width;
+            return (width + 1) & ~1u;
         case IEffectFormat::YCRCB_P010:
         case IEffectFormat::YCBCR_P010:
             return width * P10_BYTES_PER_LUMA;
@@ -195,8 +195,10 @@ void ConvertRGBAToNV12(FormatConverterInfo &src, FormatConverterInfo &dst)
             uint8_t b = srcRGBA[srcIndex + B];
 
             dstNV12[y_index] = FormatHelper::RGBToY(r, g, b);
-            dstNV12UV[nv_index] = FormatHelper::RGBToU(r, g, b);
-            dstNV12UV[nv_index + 1] = FormatHelper::RGBToV(r, g, b);
+            if (i % UV_SPLIT_FACTOR == 0 && j % UV_SPLIT_FACTOR == 0) {
+                dstNV12UV[nv_index] = FormatHelper::RGBToU(r, g, b);
+                dstNV12UV[nv_index + 1] = FormatHelper::RGBToV(r, g, b);
+            }
         }
     }
 }
@@ -215,7 +217,7 @@ void ConvertRGBAToNV21(FormatConverterInfo &src, FormatConverterInfo &dst)
     uint8_t *dstNV21 = static_cast<uint8_t *>(dst.buffer);
     uint8_t *dstNV21UV = dstNV21 + dstBuffInfo.height_ * dstRowStride;
 
-#pragma omp parallel for default(none) shared(height, width, srcRGBA, dstNV12, dstNV12UV, srcRowStride, dstRowStride)
+#pragma omp parallel for default(none) shared(height, width, srcRGBA, dstNV21, dstNV21UV, srcRowStride, dstRowStride)
     for (uint32_t i = 0; i < height; i++) {
         for (uint32_t j = 0; j < width; j++) {
             uint32_t y_index = i * dstRowStride + j;
@@ -226,8 +228,10 @@ void ConvertRGBAToNV21(FormatConverterInfo &src, FormatConverterInfo &dst)
             uint8_t b = srcRGBA[srcIndex + B];
 
             dstNV21[y_index] = FormatHelper::RGBToY(r, g, b);
-            dstNV21UV[nv_index] = FormatHelper::RGBToV(r, g, b);
-            dstNV21UV[nv_index + 1] = FormatHelper::RGBToU(r, g, b);
+            if (i % UV_SPLIT_FACTOR == 0 && j % UV_SPLIT_FACTOR == 0) {
+                dstNV21UV[nv_index] = FormatHelper::RGBToV(r, g, b);
+                dstNV21UV[nv_index + 1] = FormatHelper::RGBToU(r, g, b);
+            }
         }
     }
 }
