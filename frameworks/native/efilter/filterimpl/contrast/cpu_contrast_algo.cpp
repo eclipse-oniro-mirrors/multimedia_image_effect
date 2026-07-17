@@ -42,8 +42,10 @@ ErrorCode ContrastCheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint3
     uint32_t dst_height = dst->bufferInfo_->height_;
     
     if (dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
-       src->bufferInfo_->len_ < src_width*src_height*RGBA_SIZE ||
-       dst->bufferInfo_->len_ < src->bufferInfo_->len_) {
+        src->bufferInfo_->len_ < src_width*src_height*RGBA_SIZE ||
+        dst->bufferInfo_->len_ < src->bufferInfo_->len_ ||
+        src->bufferInfo_->len_ < static_cast<uint32_t>(src->bufferInfo_->rowStride_) * src_height ||
+        dst->bufferInfo_->len_ < static_cast<uint32_t>(dst->bufferInfo_->rowStride_) * src_height) {
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
     }
     return ErrorCode::SUCCESS;

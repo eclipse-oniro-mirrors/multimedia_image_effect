@@ -93,16 +93,27 @@ void Crop(EffectBuffer *src, EffectBuffer *dst, Region *region)
     int32_t rowCount = cropHeight > dstHeight ? dstHeight : cropHeight;
     int32_t pixelCount = cropWidth > dstWidth ? dstWidth : cropWidth;
     int32_t count = pixelCount * PIXEL_BYTES;
+    CHECK_AND_RETURN_LOG(rowCount > 0 && pixelCount > 0, "Crop: invalid rowCount or pixelCount");
 
     auto *srcBuffer = static_cast<char *>(src->buffer_);
     auto *dstBuffer = static_cast<char *>(dst->buffer_);
     uint32_t srcRowStride = src->bufferInfo_->rowStride_;
     uint32_t dstRowStride = dst->bufferInfo_->rowStride_;
-    char *srcStart = srcBuffer + cropTop * static_cast<int32_t>(srcRowStride) + cropLeft * PIXEL_BYTES;
+
+    size_t srcStartOff = static_cast<size_t>(cropTop) * srcRowStride + static_cast<size_t>(cropLeft) * PIXEL_BYTES;
+    size_t srcEnd = srcStartOff + static_cast<size_t>(rowCount - 1) * srcRowStride + static_cast<size_t>(count);
+    size_t dstEnd = static_cast<size_t>(rowCount - 1) * dstRowStride + static_cast<size_t>(count);
+
+    CHECK_AND_RETURN_LOG(srcEnd <= static_cast<size_t>(src->bufferInfo_->len_) &&
+        dstEnd <= static_cast<size_t>(dst->bufferInfo_->len_), "Crop: buffer overflow");
+
+    char *srcStart = srcBuffer + srcStartOff;
     EFFECT_LOGD("Crop: srcRowStride=%{public}d, dstRowStride=%{public}d, rowCount=%{public}d, count=%{public}d",
         srcRowStride, dstRowStride, rowCount, count);
+
     for (int32_t i = 0; i < rowCount; ++i) {
-        errno_t ret = memcpy_s(dstBuffer + i * dstRowStride, dstRowStride, srcStart + i * srcRowStride, count);
+        errno_t ret = memcpy_s(dstBuffer + static_cast<size_t>(i) * dstRowStride, dstRowStride,
+            srcStart + static_cast<size_t>(i) * srcRowStride, count);
         if (ret != 0) {
             EFFECT_LOGE("CropEFilter::Render memcpy_s failed. ret=%{public}d, i=%{public}d", ret, i);
             continue;
