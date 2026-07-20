@@ -117,7 +117,6 @@ ohos_unittest("image_effect_unittest") {
     "image_framework:picture",
     "image_framework:pixelmap",
     "ipc:ipc_single",
-    "napi:ace_napi",
     "libexif:libexif",
     "googletest:gmock_main",
     "googletest:gtest_main",

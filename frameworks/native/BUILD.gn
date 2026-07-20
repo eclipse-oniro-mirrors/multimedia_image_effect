@@ -136,7 +136,6 @@ ohos_shared_library("image_effect_impl") {
     "hitrace:hitrace_meter",
     "image_framework:image_native",
     "libexif:libexif",
-    "napi:ace_napi",
     "qos_manager:qos",
     "skia:skia_canvaskit",
     "egl:libEGL",
@@ -203,7 +202,6 @@ ohos_shared_library("image_effect") {
     "image_framework:image_native",
     "image_framework:picture",
     "image_framework:pixelmap",
-    "napi:ace_napi",
     "egl:libEGL",
     "opengles:libGLES",
   ]
