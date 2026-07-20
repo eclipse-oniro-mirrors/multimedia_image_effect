@@ -241,6 +241,10 @@ public:
 
     bool IncludeCameraColorFilter();
 
+    IMAGE_EFFECT_EXPORT void SetRenderPriorityFlag(bool renderPriorityFlag);
+ 	 
+ 	IMAGE_EFFECT_EXPORT bool GetRenderPriorityFlag() const {return renderPriorityFlag_;}
+
 protected:
     IMAGE_EFFECT_EXPORT virtual ErrorCode Render();
 
@@ -346,6 +350,7 @@ private:
     int32_t configIpType_ = 0;
     bool needsDecodeDfxData_  = false;
     bool needsPackDfxData_ = false;
+    bool renderPriorityFlag_ = false;
 };
 } // namespace Effect
 } // namespace Media

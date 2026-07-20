@@ -19,6 +19,8 @@
 #include <securec.h>
 #include <algorithm>
 #include <sync_fence.h>
+#include <sys/syscall.h>
+#include <sys/resource.h>
 #include <thread>
 
 #include "qos.h"
@@ -51,6 +53,7 @@ namespace OHOS {
 namespace Media {
 namespace Effect {
 using namespace OHOS::HDI::Display::Graphic::Common;
+using namespace OHOS::QOS;
 
 enum class EffectState {
     IDLE,
@@ -58,6 +61,7 @@ enum class EffectState {
 };
 
 const int QUALITY_MAX_CONSTANT = 100;
+const int WATCH_RENDER_FUNNY_PRIORITY = -20;
 const std::string FUNCTION_FLUSH_SURFACE_BUFFER = "flushSurfaceBuffer";
 
 class ImageEffect::Impl {
@@ -192,6 +196,11 @@ struct EffectParameters {
     std::shared_ptr<EffectBuffer> &&dstEffectBuffer_;
     std::map<ConfigType, Any> &&config_;
     std::shared_ptr<EffectContext> &&effectContext_;
+};
+
+struct RenderMode {
+    bool isNeedCreateThread = false;
+    bool isNeedPriority = false;
 };
 
 enum class RunningType : int32_t {
@@ -478,22 +487,46 @@ ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> pipeline, const Effe
     return ErrorCode::SUCCESS;
 }
 
+void SetRenderPriority()
+{
+    EFFECT_LOGI("SetRenderPriority enter");
+    int tid = syscall(SYS_gettid);
+    int priority = WATCH_RENDER_FUNNY_PRIORITY; // priority:40
+    if (setpriority(PRIO_PROCESS, tid, priority) != 0) {
+        EFFECT_LOGE("SetRenderPriority failed");
+    }
+}
+
+
 ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters,
-    unsigned long int taskId, RenderThread<> *thread, bool isNeedCreateThread = false)
+    unsigned long int taskId, RenderThread<> *thread, RenderMode &mode)
 {
     if (thread == nullptr) {
         EFFECT_LOGE("pipeline Prepare fail! render thread is nullptr");
         return ErrorCode::ERR_INVALID_OPERATION;
     }
 
-    if (!isNeedCreateThread) {
-        return ProcessPipelineTask(pipeline, effectParameters);
+    if (!mode.isNeedCreateThread) {
+        if (mode.isNeedPriority) {
+            SetRenderPriority();
+        }
+        auto res = ProcessPipelineTask(pipeline, effectParameters);
+        if (mode.isNeedPriority) {
+            SetThreadQos(QosLevel::QOS_USER_INTERACTIVE); // 为当前线程设置等级
+        }
+        return res;
     } else {
         auto prom = std::make_shared<std::promise<ErrorCode>>();
         std::future<ErrorCode> fut = prom->get_future();
         auto task = std::make_shared<RenderTask<>>([pipeline, &effectParameters, &prom]() {
+            if (mode.isNeedPriority) {
+                SetRenderPriority();
+            }
             auto res = ProcessPipelineTask(pipeline, effectParameters);
             prom->set_value(res);
+            if (mode.isNeedPriority) {
+                SetThreadQos(QosLevel::QOS_USER_INTERACTIVE); // 为当前线程设置等级
+            }
             return;
         }, 0, taskId);
         thread->AddTask(task);
@@ -505,7 +538,7 @@ ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const Effe
 }
 
 ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters,
-    unsigned long int taskId, RenderThread<> *thread, bool isNeedCreateThread = false)
+    unsigned long int taskId, RenderThread<> *thread, RenderMode &mode)
 {
     effectParameters.effectContext_->renderStrategy_->Init(effectParameters.srcEffectBuffer_,
         effectParameters.dstEffectBuffer_);
@@ -513,7 +546,7 @@ ErrorCode StartPipeline(std::shared_ptr<PipelineCore> &pipeline, const EffectPar
         effectParameters.dstEffectBuffer_);
     effectParameters.effectContext_->memoryManager_->Init(effectParameters.srcEffectBuffer_,
         effectParameters.dstEffectBuffer_);
-    ErrorCode res = StartPipelineInner(pipeline, effectParameters, taskId, thread, isNeedCreateThread);
+    ErrorCode res = StartPipelineInner(pipeline, effectParameters, taskId, thread, mode);
     effectParameters.effectContext_->memoryManager_->Deinit();
     effectParameters.effectContext_->colorSpaceManager_->Deinit();
     effectParameters.effectContext_->renderStrategy_->Deinit();
@@ -966,7 +999,11 @@ ErrorCode ImageEffect::Render()
     impl_->effectContext_->renderEnvironment_->SetOutputType(outBuffer->extraInfo_->dataType);
     EffectParameters effectParameters(srcEffectBuffer, dstEffectBuffer, config_, impl_->effectContext_);
     bool isNeedCreateThread = !impl_->isQosEnabled_ && srcEffectBuffer->extraInfo_->dataType != DataType::TEX;
-    res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread, isNeedCreateThread);
+    RenderMode renderMode;
+    renderMode.isNeedCreateThread = isNeedCreateThread;
+    renderModer.isNeedPriority = renderPriorityFlag_;
+    res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread, renderMode);
+    renderPriorityFlag_ = false;
     if (res != ErrorCode::SUCCESS) {
         EFFECT_LOGE("StartPipeline fail! res=%{public}d", res);
         UnLockAll();
@@ -1486,6 +1523,11 @@ sptr<Surface> ImageEffect::GetInputSurface()
     }
 
     return fromProducerSurface_;
+}
+
+ void ImageEffect::SetRenderPriorityFlag(bool renderPriorityFlag)
+{
+ 	renderPriorityFlag_ = renderPriorityFlag;
 }
 
 ErrorCode ImageEffect::SetOutNativeWindow(OHNativeWindow *nativeWindow)
