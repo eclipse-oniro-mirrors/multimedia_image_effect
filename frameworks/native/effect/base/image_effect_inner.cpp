@@ -1001,7 +1001,7 @@ ErrorCode ImageEffect::Render()
     bool isNeedCreateThread = !impl_->isQosEnabled_ && srcEffectBuffer->extraInfo_->dataType != DataType::TEX;
     RenderMode renderMode;
     renderMode.isNeedCreateThread = isNeedCreateThread;
-    renderModer.isNeedPriority = renderPriorityFlag_;
+    renderMode.isNeedPriority = renderPriorityFlag_;
     res = StartPipeline(impl_->pipeline_, effectParameters, RequestTaskId(), m_renderThread, renderMode);
     renderPriorityFlag_ = false;
     if (res != ErrorCode::SUCCESS) {
