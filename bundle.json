@@ -23,7 +23,6 @@
       "components": [
         "hitrace",
         "hilog",
-        "napi",
         "image_framework",
         "graphic_2d",
         "graphic_surface",
