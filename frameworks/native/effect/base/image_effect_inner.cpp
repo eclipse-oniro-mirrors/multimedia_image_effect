@@ -518,7 +518,7 @@ ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const Effe
     } else {
         auto prom = std::make_shared<std::promise<ErrorCode>>();
         std::future<ErrorCode> fut = prom->get_future();
-        auto task = std::make_shared<RenderTask<>>([pipeline, &effectParameters, &prom]() {
+        auto task = std::make_shared<RenderTask<>>([pipeline, &effectParameters, &prom, mode]() {
             if (mode.isNeedPriority) {
                 SetRenderPriority();
             }
@@ -1525,9 +1525,9 @@ sptr<Surface> ImageEffect::GetInputSurface()
     return fromProducerSurface_;
 }
 
- void ImageEffect::SetRenderPriorityFlag(bool renderPriorityFlag)
+void ImageEffect::SetRenderPriorityFlag(bool renderPriorityFlag)
 {
- 	renderPriorityFlag_ = renderPriorityFlag;
+    renderPriorityFlag_ = renderPriorityFlag;
 }
 
 ErrorCode ImageEffect::SetOutNativeWindow(OHNativeWindow *nativeWindow)
