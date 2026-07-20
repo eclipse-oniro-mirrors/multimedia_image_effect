@@ -243,7 +243,7 @@ public:
 
     IMAGE_EFFECT_EXPORT void SetRenderPriorityFlag(bool renderPriorityFlag);
  	 
- 	IMAGE_EFFECT_EXPORT bool GetRenderPriorityFlag() const {return renderPriorityFlag_;}
+    IMAGE_EFFECT_EXPORT bool GetRenderPriorityFlag() const {return renderPriorityFlag_;}
 
 protected:
     IMAGE_EFFECT_EXPORT virtual ErrorCode Render();
