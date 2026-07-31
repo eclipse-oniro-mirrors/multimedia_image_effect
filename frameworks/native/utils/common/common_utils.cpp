@@ -875,7 +875,7 @@ bool GetSbStaticMetadata(const sptr<SurfaceBuffer> &buffer, std::vector<uint8_t>
 
 void CopySurfaceBufferInfo(sptr<SurfaceBuffer> &source, sptr<SurfaceBuffer> &dst)
 {
-    CHECK_AND_RETURN_RET(source != nullptr && dst != nullptr,
+    CHECK_AND_RETURN_LOGI(source != nullptr && dst != nullptr,
         "VpeUtils CopySurfaceBufferInfo failed, source or dst is nullptr");
     std::vector<uint8_t> hdrMetadataTypeVec;
     std::vector<uint8_t> colorSpaceInfoVec;
