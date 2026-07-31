@@ -272,9 +272,8 @@ void GLUtils::DestroyImage(EGLImageKHR img)
 
 void GLUtils::DestroySyncKHR(EGLSyncKHR sync)
 {
-    if (sync != EGL_NO_SYNC_KHR) {
-        eglDestroySyncKHR(eglGetDisplay(EGL_DEFAULT_DISPLAY), sync);
-    }
+    CHECK_AND_RETURN_NOLOG(sync != EGL_NO_SYNC_KHR);
+    eglDestroySyncKHR(eglGetDisplay(EGL_DEFAULT_DISPLAY), sync);
 }
 
 void GLUtils::CreateSyncKHR(EGLSyncKHR &sync)
@@ -286,19 +285,16 @@ void GLUtils::CreateSyncKHR(EGLSyncKHR &sync)
 int32_t GLUtils::GetEGLFenceFd(EGLSyncKHR sync)
 {
     int32_t glFenceFd = -1;
-    if (sync != EGL_NO_SYNC_KHR) {
-        glFenceFd = eglDupNativeFenceFDANDROID(eglGetDisplay(EGL_DEFAULT_DISPLAY), sync);
-        glFenceFd = glFenceFd >= 0 ? glFenceFd : -1;
-    }
+    CHECK_AND_RETURN_RET(sync != EGL_NO_SYNC_KHR, glFenceFd);
+    glFenceFd = eglDupNativeFenceFDANDROID(eglGetDisplay(EGL_DEFAULT_DISPLAY), sync);
+    glFenceFd = glFenceFd >= 0 ? glFenceFd : -1;
 
     return glFenceFd;
 }
 
 GLuint GLUtils::CreateTextureFromSurfaceBuffer(SurfaceBuffer *buffer)
 {
-    if (buffer == nullptr) {
-        return 0;
-    }
+    CHECK_AND_RETURN_RET(buffer != nullptr, 0);
     EGLImageKHR img = CreateEGLImage(eglGetDisplay(EGL_DEFAULT_DISPLAY), buffer);
     GLuint tex = CreateTextureFromImage(img);
     return tex;

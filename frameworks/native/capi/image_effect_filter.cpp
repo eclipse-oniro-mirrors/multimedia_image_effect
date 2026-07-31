@@ -498,10 +498,8 @@ ImageEffect_ErrorCode OH_EffectFilter_GetValue(OH_EffectFilter *nativeEFilter, c
     }
 
     result = NativeCommonUtils::SwitchToOHAny(any, value);
-    if (result != ErrorCode::SUCCESS) {
-        EFFECT_LOGE("FilterGetValue: get value fail! result=%{public}d, key=%{public}s", result, key);
-        return ImageEffect_ErrorCode::EFFECT_UNKNOWN;
-    }
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_UNKNOWN,
+        "FilterGetValue: get value fail! result=%{public}d, key=%{public}s", result, key);
 
     return ImageEffect_ErrorCode::EFFECT_SUCCESS;
 }
@@ -565,9 +563,7 @@ void OH_EffectFilter_ReleaseFilterNames()
     std::unique_lock<std::mutex> lock(filterMutex_);
     EFFECT_LOGI("Release filter names.");
     for (const auto &filterNames : sOHFilterNames) {
-        if (filterNames == nullptr) {
-            continue;
-        }
+        CHECK_AND_CONTINUE_NOLOG(filterNames != nullptr);
         free(filterNames->nameList);
     }
     sOHFilterNames.clear();
@@ -665,16 +661,14 @@ ImageEffect_ErrorCode OH_EffectFilter_RenderWithTextureId(OH_EffectFilter *filte
         "FilterRender: input parameter outputTextureId is invalid!");
     std::shared_ptr<EffectBuffer> inEffectBuffer = nullptr;
     ErrorCode result = CommonUtils::ParseTex(inputTextureId, colorSpace, inEffectBuffer);
-    if (result != ErrorCode::SUCCESS || inEffectBuffer == nullptr) {
-        EFFECT_LOGE("FilterRender: parse input tex error! errorCode:%{public}d", result);
-        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
-    }
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS && inEffectBuffer != nullptr,
+        ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "FilterRender: parse input tex error! errorCode:%{public}d", result);
     std::shared_ptr<EffectBuffer> outEffectBuffer = nullptr;
     result = CommonUtils::ParseTex(outputTextureId, colorSpace, outEffectBuffer);
-    if (result != ErrorCode::SUCCESS || outEffectBuffer == nullptr) {
-        EFFECT_LOGE("FilterRender: parse output tex error! errorCode:%{public}d", result);
-        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
-    }
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS && outEffectBuffer != nullptr,
+        ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "FilterRender: parse output tex error! errorCode:%{public}d", result);
     result = filter->filter_->Render(inEffectBuffer, outEffectBuffer);
     CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, NativeCommonUtils::ConvertRenderResult(result),
         "FilterRender: filter render fail! errorCode:%{public}d", result);

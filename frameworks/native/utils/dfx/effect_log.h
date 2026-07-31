@@ -57,10 +57,57 @@
         }                                             \
     } while (0)
 
+#define CHECK_AND_RETURN_RET_LOGD(cond, ret, fmt, ...) \
+    do {                                              \
+        if (!(cond)) {                                \
+            EFFECT_LOGD(fmt, ##__VA_ARGS__);          \
+            return ret;                               \
+        }                                             \
+    } while (0)
+
+#define CHECK_AND_RETURN_RET_LOGI(cond, ret, fmt, ...) \
+    do {                                              \
+        if (!(cond)) {                                \
+            EFFECT_LOGI(fmt, ##__VA_ARGS__);          \
+            return ret;                               \
+        }                                             \
+    } while (0)
+
+#define CHECK_AND_RETURN_RET_LOGW(cond, ret, fmt, ...) \
+    do {                                              \
+        if (!(cond)) {                                \
+            EFFECT_LOGW(fmt, ##__VA_ARGS__);          \
+            return ret;                               \
+        }                                             \
+    } while (0)
+
 #define CHECK_AND_RETURN_LOG(cond, fmt, ...) \
     do {                                     \
         if (!(cond)) {                       \
             EFFECT_LOGE(fmt, ##__VA_ARGS__); \
+            return;                          \
+        }                                    \
+    } while (0)
+
+#define CHECK_AND_RETURN_LOGD(cond, fmt, ...) \
+    do {                                     \
+        if (!(cond)) {                       \
+            EFFECT_LOGD(fmt, ##__VA_ARGS__); \
+            return;                          \
+        }                                    \
+    } while (0)
+    
+#define CHECK_AND_RETURN_LOGI(cond, fmt, ...) \
+    do {                                     \
+        if (!(cond)) {                       \
+            EFFECT_LOGI(fmt, ##__VA_ARGS__); \
+            return;                          \
+        }                                    \
+    } while (0)
+
+#define CHECK_AND_RETURN_NOLOG(cond, fmt, ...) \
+    do {                                     \
+        if (!(cond)) {                       \
             return;                          \
         }                                    \
     } while (0)
@@ -71,9 +118,25 @@
         continue;                              \
     }
 
+#define CHECK_AND_CONTINUE_LOGD(cond, fmt, ...) \
+    if (!(cond)) {                             \
+        EFFECT_LOGD(fmt, ##__VA_ARGS__);       \
+        continue;                              \
+    }
+
+#define CHECK_AND_CONTINUE_NOLOG(cond, fmt, ...) \
+    if (!(cond)) {                               \
+        continue;                                \
+    }
+
 #define CHECK_AND_PRINT_LOG(cond, fmt, ...)    \
     if (!(cond)) {                             \
         EFFECT_LOGE(fmt, ##__VA_ARGS__);       \
+    }
+
+#define CHECK_AND_PRINT_LOGW(cond, fmt, ...)    \
+    if (!(cond)) {                             \
+        EFFECT_LOGW(fmt, ##__VA_ARGS__);       \
     }
 
 #define CHECK_AND_RETURN_RET(cond, ret)               \

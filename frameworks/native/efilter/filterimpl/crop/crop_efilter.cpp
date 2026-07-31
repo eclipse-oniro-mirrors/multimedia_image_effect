@@ -241,9 +241,7 @@ std::shared_ptr<MemNegotiatedCap> CropEFilter::Negotiate(const std::shared_ptr<M
 
 std::shared_ptr<EffectInfo> CropEFilter::GetEffectInfo(const std::string &name)
 {
-    if (info_ != nullptr) {
-        return info_;
-    }
+    CHECK_AND_RETURN_RET(info_ == nullptr, info_);
     info_ = std::make_unique<EffectInfo>();
     info_->formats_.emplace(IEffectFormat::RGBA8888, std::vector<IPType>{ IPType::CPU });
     info_->formats_.emplace(IEffectFormat::RGBA_1010102, std::vector<IPType>{ IPType::CPU });

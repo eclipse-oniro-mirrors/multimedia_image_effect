@@ -55,10 +55,7 @@ IEffectFormat CalculateHighPriorityFormat(const std::vector<IEffectFormat> &srcF
 
 std::vector<IEffectFormat> CalculateNegotiateFormats(const std::vector<std::vector<IEffectFormat>> &negotiateFormats)
 {
-    if (negotiateFormats.empty()) {
-        EFFECT_LOGE("calculate negotiate, format is null.");
-        return {};
-    }
+    CHECK_AND_RETURN_RET_LOG(!negotiateFormats.empty(), {}, "calculate negotiate, format is null.");
 
     std::vector<IEffectFormat> intersectFormats = negotiateFormats[0];
     if (negotiateFormats.size() == 1) {

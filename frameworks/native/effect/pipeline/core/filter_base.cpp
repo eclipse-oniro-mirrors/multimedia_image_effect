@@ -141,18 +141,14 @@ ErrorCode FilterBase::PullData(const std::string &outPort, std::shared_ptr<Effec
 void FilterBase::OnEvent(const Event &event)
 {
     // Receive event from port and pass it to pipeline.
-    if (eventReceiver_ != nullptr) {
-        eventReceiver_->OnEvent(event);
-    }
+    CHECK_AND_RETURN_NOLOG(eventReceiver_ != nullptr);
+    eventReceiver_->OnEvent(event);
 }
 
 template <typename T> T FilterBase::FindPort(const std::vector<T> &ports, const std::string &name)
 {
     auto find = std::find_if(ports.begin(), ports.end(), [name](const T &item) {
-        if (item == nullptr) {
-            return false;
-        }
-        return name == item->GetName();
+        return item == nullptr ? false : name == item->GetName();
     });
     if (find != ports.end()) {
         return *find;

@@ -81,22 +81,20 @@ ErrorCode GpuContrastAlgo::Init()
 
 void GpuContrastAlgo::PreDraw(GLenum target)
 {
-    if (shader_ != nullptr && target == GL_TEXTURE_2D) {
-        if (renderEffectData_->inputTexture_ != nullptr) {
-            shader_->BindTexture("Texture", 0, renderEffectData_->inputTexture_->GetName(), target);
-        }
-        shader_->SetFloat("ratio", renderEffectData_->ratio);
+    CHECK_AND_RETURN_NOLOG(shader_ != nullptr && target == GL_TEXTURE_2D);
+    if (renderEffectData_->inputTexture_ != nullptr) {
+        shader_->BindTexture("Texture", 0, renderEffectData_->inputTexture_->GetName(), target);
     }
+    shader_->SetFloat("ratio", renderEffectData_->ratio);
 }
 
 void GpuContrastAlgo::PostDraw(GLenum target)
 {
-    if (renderEffectData_->inputTexture_ != nullptr) {
-        if (target == GL_TEXTURE_2D) {
-            shader_->UnBindTexture(0, target);
-        }
-        renderEffectData_->inputTexture_.reset();
+    CHECK_AND_RETURN_NOLOG(renderEffectData_->inputTexture_ != nullptr);
+    if (target == GL_TEXTURE_2D) {
+        shader_->UnBindTexture(0, target);
     }
+    renderEffectData_->inputTexture_.reset();
 }
 
 float GpuContrastAlgo::ParseContrast(std::map<std::string, Any> &value)

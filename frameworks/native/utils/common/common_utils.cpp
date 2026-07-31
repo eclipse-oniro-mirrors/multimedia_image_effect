@@ -185,10 +185,7 @@ MetaDataMap CommonUtils::GetMetaData(SurfaceBuffer* surfaceBuffer)
     for (const auto key : keys) {
         std::vector<uint8_t> values;
         auto ret = surfaceBuffer->GetMetadata(key, values);
-        if (ret != 0) {
-            EFFECT_LOGE("GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
-            continue;
-        }
+        CHECK_AND_CONTINUE_LOG(ret == 0, "GetMetadata fail! key = %{public}d res = %{public}d", key, ret);
 
         metadataMap.emplace(key, std::move(values));
     }
@@ -203,9 +200,7 @@ void CommonUtils::SetMetaData(MetaDataMap& metaData, SurfaceBuffer* surfaceBuffe
 
     for (const auto& [key, values] : metaData) {
         GSError ret = surfaceBuffer->SetMetadata(key, values);
-        if (ret != 0) {
-            EFFECT_LOGE("SetMetadata failed! key = %{public}d, res = %{public}d", key, ret);
-        }
+        CHECK_AND_PRINT_LOG(ret == 0, "SetMetadata failed! key = %{public}d, res = %{public}d", key, ret);
     }
 }
 
@@ -389,11 +384,9 @@ ErrorCode CommonUtils::ParsePath(std::string &path, std::shared_ptr<EffectBuffer
     uint32_t ret = imageSource->GetImageInfo(info);
     CHECK_AND_RETURN_RET_LOG(ret == 0, ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT, "imageSource get image info fail!");
     std::string encodedFormat = info.encodedFormat;
-    if (std::find(FILE_TYPE_SUPPORT_TABLE.begin(), FILE_TYPE_SUPPORT_TABLE.end(), encodedFormat) ==
-        FILE_TYPE_SUPPORT_TABLE.end()) {
-        EFFECT_LOGE("ParsePath: encodedFormat not support! encodedFormat=%{public}s", encodedFormat.c_str());
-        return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
-    }
+    CHECK_AND_RETURN_RET_LOG(std::find(FILE_TYPE_SUPPORT_TABLE.begin(), FILE_TYPE_SUPPORT_TABLE.end(), encodedFormat) !=
+        FILE_TYPE_SUPPORT_TABLE.end(), ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT,
+        "ParsePath: encodedFormat not support! encodedFormat=%{public}s", encodedFormat.c_str());
 
     DecodingOptionsForPicture options;
     options.desiredPixelFormat = CommonUtils::SwitchToPixelFormat(format);
@@ -575,18 +568,13 @@ int32_t GetImagePropertyInt(const std::shared_ptr<ExifMetadata> &exifMetadata, c
     }
 
     std::from_chars_result res = std::from_chars(strValue.data(), strValue.data() + strValue.size(), value);
-    if (res.ec != std::errc()) {
-        return static_cast<int32_t>(ErrorCode::ERR_IMAGE_DATA);
-    }
 
-    return 0;
+    return res.ec != std::errc() ? static_cast<int32_t>(ErrorCode::ERR_IMAGE_DATA) : 0;
 }
 
 void PrintImageExifInfo(const std::shared_ptr<ExifMetadata> &exifMetadata, const std::string &tag)
 {
-    if (exifMetadata == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_NOLOG(exifMetadata != nullptr);
 
     int32_t width = 0;
     GetImagePropertyInt(exifMetadata, IMAGE_WIDTH, width);
@@ -608,9 +596,7 @@ void UpdateExifDataTime(const std::shared_ptr<ExifMetadata> &exifMetadata)
     CHECK_AND_RETURN_LOG(exifMetadata != nullptr, "UpdateExifDataTime: exifMetadata is null!");
 
     std::string dateTime;
-    if (exifMetadata->GetValue(DATE_TIME, dateTime) != 0 || dateTime.empty()) {
-        return;
-    }
+    CHECK_AND_RETURN_NOLOG(exifMetadata->GetValue(DATE_TIME, dateTime) == 0 && !dateTime.empty());
 
     time_t now = time(nullptr);
     CHECK_AND_RETURN_LOG(now > 0, "UpdateExifDateTime: time fail!");
@@ -735,11 +721,8 @@ AuxiliaryPictureType SwitchToAuxiliaryPictureType(EffectPixelmapType pixelmapTyp
     AuxiliaryPictureType auxPicType = AuxiliaryPictureType::NONE;
 
     auto itr = EffectPixelmapTypeToAuxPicType_.find(pixelmapType);
-    if (itr != EffectPixelmapTypeToAuxPicType_.end()) {
-        auxPicType = itr->second;
-    }
 
-    return auxPicType;
+    return itr != EffectPixelmapTypeToAuxPicType_.end() ? itr->second : auxPicType;
 }
 
 std::shared_ptr<PixelMap> GetAuxiliaryPixelMap(Picture *picture, EffectPixelmapType auxiliaryPictureType)
@@ -856,19 +839,18 @@ void ProcessYUVInfo(PixelMap *pixelMap, const SurfaceBuffer *sBuffer, const OH_N
     info.uvWidth = static_cast<uint32_t>(width / YUV_HALF);
     info.yHeight = static_cast<uint32_t>(height);
     info.uvHeight = static_cast<uint32_t>(height / YUV_HALF);
-    if (planes->planeCount >= YUV_PLANE_COUNT) {
-        int32_t pixelFmt = sBuffer->GetFormat();
-        bool isYuvP010 = IsYuvP010(pixelFmt);
-        int uvPlaneOffset = (pixelFmt == GRAPHIC_PIXEL_FMT_YCBCR_420_SP ||
-            pixelFmt == GRAPHIC_PIXEL_FMT_YCBCR_P010) ? 1 : 2;
-        info.yStride = isYuvP010 ? (planes->planes[0].columnStride / YUV_HALF) : planes->planes[0].columnStride;
-        info.uvStride = isYuvP010 ? (planes->planes[uvPlaneOffset].columnStride / YUV_HALF) :
-            (planes->planes[uvPlaneOffset].columnStride);
-        info.yOffset = isYuvP010 ? (planes->planes[0].offset / YUV_HALF) : (planes->planes[0].offset);
-        info.uvOffset =
-            isYuvP010 ? (planes->planes[uvPlaneOffset].offset / YUV_HALF) : (planes->planes[uvPlaneOffset].offset);
-        pixelMap->SetImageYUVInfo(info);
-    }
+    CHECK_AND_RETURN_NOLOG(planes->planeCount >= YUV_PLANE_COUNT);
+    int32_t pixelFmt = sBuffer->GetFormat();
+    bool isYuvP010 = IsYuvP010(pixelFmt);
+    int uvPlaneOffset = (pixelFmt == GRAPHIC_PIXEL_FMT_YCBCR_420_SP ||
+        pixelFmt == GRAPHIC_PIXEL_FMT_YCBCR_P010) ? 1 : 2;
+    info.yStride = isYuvP010 ? (planes->planes[0].columnStride / YUV_HALF) : planes->planes[0].columnStride;
+    info.uvStride = isYuvP010 ? (planes->planes[uvPlaneOffset].columnStride / YUV_HALF) :
+        (planes->planes[uvPlaneOffset].columnStride);
+    info.yOffset = isYuvP010 ? (planes->planes[0].offset / YUV_HALF) : (planes->planes[0].offset);
+    info.uvOffset =
+        isYuvP010 ? (planes->planes[uvPlaneOffset].offset / YUV_HALF) : (planes->planes[uvPlaneOffset].offset);
+    pixelMap->SetImageYUVInfo(info);
 }
 
 bool SetSbDynamicMetadata(sptr<SurfaceBuffer> &buffer, const std::vector<uint8_t> &dynamicMetadata)
@@ -893,10 +875,8 @@ bool GetSbStaticMetadata(const sptr<SurfaceBuffer> &buffer, std::vector<uint8_t>
 
 void CopySurfaceBufferInfo(sptr<SurfaceBuffer> &source, sptr<SurfaceBuffer> &dst)
 {
-    if (source == nullptr || dst == nullptr) {
-        EFFECT_LOGI("VpeUtils CopySurfaceBufferInfo failed, source or dst is nullptr");
-        return;
-    }
+    CHECK_AND_RETURN_RET(source != nullptr && dst != nullptr,
+        "VpeUtils CopySurfaceBufferInfo failed, source or dst is nullptr");
     std::vector<uint8_t> hdrMetadataTypeVec;
     std::vector<uint8_t> colorSpaceInfoVec;
     std::vector<uint8_t> staticData;
@@ -953,14 +933,11 @@ ErrorCode ModifyYUVInfo(PixelMap *pixelMap, void *context, const MemoryInfo &mem
         info.uvOffset = info.yStride * info.yHeight;
         pixelMap->SetImageYUVInfo(info);
     } else {
-        if (sBuffer == nullptr) {
-            return ErrorCode::SUCCESS;
-        }
+        CHECK_AND_RETURN_RET(sBuffer != nullptr, ErrorCode::SUCCESS);
         OH_NativeBuffer_Planes *planes = nullptr;
         GSError retVal = sBuffer->GetPlanesInfo(reinterpret_cast<void **>(&planes));
-        if (retVal != OHOS::GSERROR_OK || planes == nullptr || planes->planeCount <= 1) {
-            return ErrorCode::SUCCESS;
-        }
+        CHECK_AND_RETURN_RET(retVal == OHOS::GSERROR_OK && planes != nullptr && planes->planeCount > 1,
+            ErrorCode::SUCCESS);
         ProcessYUVInfo(pixelMap, sBuffer, planes);
     }
     return ErrorCode::SUCCESS;

@@ -48,11 +48,8 @@ ErrorCode PipelineCore::Start()
     CHECK_AND_RETURN_RET_LOG(!filters_.empty(), ErrorCode::ERR_PARAM_INVALID, "PipelineCore Start filters is null!");
     state_ = FilterState::RUNNING;
     auto sourceEffect = filters_[0];
-    if (sourceEffect) {
-        return sourceEffect->Start();
-    }
-    EFFECT_LOGE("Start, sourceEffect is null");
-    return ErrorCode::ERR_PIPELINE_INVALID_FILTER;
+    CHECK_AND_RETURN_RET_LOG(sourceEffect, ErrorCode::ERR_PIPELINE_INVALID_FILTER, "Start, sourceEffect is null");
+    return sourceEffect->Start();
 }
 
 ErrorCode PipelineCore::AddFilter(Filter *filterIn)
@@ -151,11 +148,8 @@ ErrorCode PipelineCore::LinkPorts(std::shared_ptr<OutPort> outPort, std::shared_
 
 void PipelineCore::OnEvent(const Event &event)
 {
-    if (eventReceiver_) {
-        eventReceiver_->OnEvent(event);
-    } else {
-        EFFECT_LOGD("no event receiver when receive type %{public}d", event.type);
-    }
+    CHECK_AND_RETURN_LOGD(eventReceiver_, "no event receiver when receive type %{public}d", event.type);
+    eventReceiver_->OnEvent(event);
 }
 } // namespace Effect
 } // namespace Media

@@ -230,18 +230,17 @@ ImageEffect::ImageEffect(const char *name)
     ExternLoader::Instance()->InitExt();
     ExtInitModule();
 
-    if (m_renderThread == nullptr) {
-        auto func = [this]() {
-            EFFECT_LOGD("ImageEffect has no render work to do!");
-        };
-        m_renderThread = new RenderThread<>(RENDER_QUEUE_SIZE, func);
-        m_renderThread->Start();
-        if (name != nullptr && strcmp(name, "Photo") == 0) {
-            auto task = std::make_shared<RenderTask<>>([this]() { this->InitEGLEnv(); }, COMMON_TASK_TAG,
-                RequestTaskId());
-            m_renderThread->AddTask(task);
-            task->Wait();
-        }
+    CHECK_AND_RETURN_NOLOG(m_renderThread == nullptr);
+    auto func = [this]() {
+        EFFECT_LOGD("ImageEffect has no render work to do!");
+    };
+    m_renderThread = new RenderThread<>(RENDER_QUEUE_SIZE, func);
+    m_renderThread->Start();
+    if (name != nullptr && strcmp(name, "Photo") == 0) {
+        auto task = std::make_shared<RenderTask<>>([this]() { this->InitEGLEnv(); }, COMMON_TASK_TAG,
+            RequestTaskId());
+        m_renderThread->AddTask(task);
+        task->Wait();
     }
 }
 
@@ -386,9 +385,7 @@ void GetConfigIPTypes(const std::map<ConfigType, Any> &config, std::vector<IPTyp
     }
 
     ErrorCode result = CommonUtils::ParseAny(it->second, configIPTypes);
-    if (result == ErrorCode::SUCCESS) {
-        return;
-    }
+    CHECK_AND_RETURN_NOLOG(result != ErrorCode::SUCCESS);
     EFFECT_LOGE("parse ipType fail! use default config.");
     configIPTypes = { IPType::CPU, IPType::GPU };
 }
@@ -420,9 +417,7 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     IEffectFormat effectFormat = srcEffectBuffer->bufferInfo_->formatType_;
     const std::vector<std::shared_ptr<Capability>> &caps = context->capNegotiate_->GetCapabilityList();
     for (const auto &capability : caps) {
-        if (capability == nullptr || capability->pixelFormatCap_ == nullptr) {
-            continue;
-        }
+        CHECK_AND_CONTINUE_NOLOG(capability != nullptr && capability->pixelFormatCap_ != nullptr);
         std::map<IEffectFormat, std::vector<IPType>> &formats = capability->pixelFormatCap_->formats;
 
         if (runningIPType == IPType::GPU && !isTextureInput) {
@@ -430,11 +425,9 @@ ErrorCode ChooseIPType(const std::shared_ptr<EffectBuffer> &srcEffectBuffer,
         }
 
         auto it = formats.find(effectFormat);
-        if (it == formats.end()) {
-            EFFECT_LOGE("effectFormat not support! effectFormat=%{public}d, name=%{public}s",
-                effectFormat, capability->name_.c_str());
-            return isTextureInput ? ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE : ErrorCode::SUCCESS;
-        }
+        CHECK_AND_RETURN_RET_LOG(it != formats.end(), isTextureInput ? ErrorCode::ERR_UNSUPPORTED_FORMAT_TYPE :
+            ErrorCode::SUCCESS, "effectFormat not support! effectFormat=%{public}d, name=%{public}s",
+            effectFormat, capability->name_.c_str());
 
         std::vector<IPType> &ipTypes = it->second;
         if (std::find(configIPTypes.begin(), configIPTypes.end(), priorityIPType) != configIPTypes.end() &&
@@ -466,10 +459,7 @@ ErrorCode ProcessPipelineTask(std::shared_ptr<PipelineCore> pipeline, const Effe
     IPType runningIPType;
     res = ChooseIPType(effectParameters.srcEffectBuffer_, effectParameters.effectContext_, effectParameters.config_,
         runningIPType);
-    if (res != ErrorCode::SUCCESS) {
-        EFFECT_LOGE("choose running ip type fail! res=%{public}d", res);
-        return res;
-    }
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "choose running ip type fail! res=%{public}d", res);
     if (effectParameters.effectContext_->renderEnvironment_->GetEGLStatus() != EGLStatus::READY
         && runningIPType == IPType::GPU) {
         bool isCustomEnv = effectParameters.srcEffectBuffer_->extraInfo_->dataType == DataType::TEX;
@@ -492,19 +482,16 @@ void SetRenderPriority()
     EFFECT_LOGI("SetRenderPriority enter");
     int tid = syscall(SYS_gettid);
     int priority = WATCH_RENDER_FUNNY_PRIORITY; // priority:40
-    if (setpriority(PRIO_PROCESS, tid, priority) != 0) {
-        EFFECT_LOGE("SetRenderPriority failed");
-    }
+    CHECK_AND_RETURN_NOLOG(setpriority(PRIO_PROCESS, tid, priority) != 0);
+    EFFECT_LOGE("SetRenderPriority failed");
 }
 
 
 ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const EffectParameters &effectParameters,
     unsigned long int taskId, RenderThread<> *thread, RenderMode &mode)
 {
-    if (thread == nullptr) {
-        EFFECT_LOGE("pipeline Prepare fail! render thread is nullptr");
-        return ErrorCode::ERR_INVALID_OPERATION;
-    }
+    CHECK_AND_RETURN_RET_LOG(thread != nullptr, ErrorCode::ERR_INVALID_OPERATION,
+        "pipeline Prepare fail! render thread is nullptr")
 
     if (!mode.isNeedCreateThread) {
         if (mode.isNeedPriority) {
@@ -632,10 +619,9 @@ ErrorCode ImageEffect::SetOutputSurfaceBuffer(OHOS::SurfaceBuffer *surfaceBuffer
 ErrorCode ImageEffect::SetInputUri(const std::string &uri)
 {
     EFFECT_LOGD("ImageEffect::SetInputUri");
-    if (!CommonUtils::EndsWithJPG(uri) && !CommonUtils::EndsWithHEIF(uri)) {
-        EFFECT_LOGE("SetInputUri: file type is not support! only support jpg/jpeg and heif.");
-        return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
-    }
+    CHECK_AND_RETURN_RET_LOG(CommonUtils::EndsWithJPG(uri) || CommonUtils::EndsWithHEIF(uri),
+        ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT, "SetInputUri: file type is not support! only support "
+        "jpg/jpeg and heif.");
     ClearDataInfo(inDateInfo_);
     inDateInfo_.dataType_ = DataType::URI;
     inDateInfo_.uri_ = std::move(uri);
@@ -652,10 +638,9 @@ ErrorCode ImageEffect::SetOutputUri(const std::string &uri)
         return ErrorCode::SUCCESS;
     }
 
-    if (!CommonUtils::EndsWithJPG(uri) && !CommonUtils::EndsWithHEIF(uri)) {
-        EFFECT_LOGE("SetOutputUri: file type is not support! only support jpg/jpeg and heif.");
-        return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
-    }
+    CHECK_AND_RETURN_RET_LOG(CommonUtils::EndsWithJPG(uri) || CommonUtils::EndsWithHEIF(uri),
+        ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT, "SetOutputUri: file type is not support! only support "
+        "jpg/jpeg and heif.");
     ClearDataInfo(outDateInfo_);
     outDateInfo_.dataType_ = DataType::URI;
     outDateInfo_.uri_ = std::move(uri);
@@ -676,10 +661,9 @@ ErrorCode ImageEffect::SetDefaultQuality(int32_t quality)
 ErrorCode ImageEffect::SetInputPath(const std::string &path)
 {
     EFFECT_LOGD("ImageEffect::SetInputPath");
-    if (!CommonUtils::EndsWithJPG(path) && !CommonUtils::EndsWithHEIF(path)) {
-        EFFECT_LOGE("SetInputPath: file type is not support! only support jpg/jpeg and heif.");
-        return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
-    }
+    CHECK_AND_RETURN_RET_LOG(CommonUtils::EndsWithJPG(path) || CommonUtils::EndsWithHEIF(path),
+        ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT, "SetInputPath: file type is not support! only support "
+        "jpg/jpeg and heif.");
     ClearDataInfo(inDateInfo_);
     inDateInfo_.dataType_ = DataType::PATH;
     inDateInfo_.path_ = std::move(path);
@@ -697,10 +681,9 @@ ErrorCode ImageEffect::SetOutputPath(const std::string &path)
         return ErrorCode::SUCCESS;
     }
 
-    if (!CommonUtils::EndsWithJPG(path) && !CommonUtils::EndsWithHEIF(path)) {
-        EFFECT_LOGE("SetOutputPath: file type is not support! only support jpg/jpeg and heif.");
-        return ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT;
-    }
+    CHECK_AND_RETURN_RET_LOG(CommonUtils::EndsWithJPG(path) || CommonUtils::EndsWithHEIF(path),
+        ErrorCode::ERR_FILE_TYPE_NOT_SUPPORT, "SetOutputPath: file type is not support! only support "
+        "jpg/jpeg and heif.");
     ClearDataInfo(outDateInfo_);
     outDateInfo_.dataType_ = DataType::PATH;
     outDateInfo_.path_ = std::move(path);
@@ -718,9 +701,7 @@ ErrorCode CheckPixelmapColorSpace(std::shared_ptr<EffectBuffer> &srcEffectBuffer
         "not support different format. srcFormat=%{public}d, dstFormat=%{public}d",
         srcEffectBuffer->bufferInfo_->formatType_, dstEffectBuffer->bufferInfo_->formatType_);
 
-    if (srcEffectBuffer->extraInfo_->dataType == DataType::TEX) {
-        return ErrorCode::SUCCESS;
-    }
+    CHECK_AND_RETURN_RET(srcEffectBuffer->extraInfo_->dataType != DataType::TEX, ErrorCode::SUCCESS);
 
     // color space is same or not.
     EffectColorSpace srcColorSpace = srcEffectBuffer->bufferInfo_->colorSpace_;
@@ -770,10 +751,9 @@ ErrorCode CheckToRenderPara(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     CHECK_AND_RETURN_RET_LOG(dstEffectBuffer->extraInfo_ != nullptr, ErrorCode::ERR_EXTRA_INFO_NULL,
         "extra info is null! dstExtraInfo=%{public}d", dstEffectBuffer->extraInfo_ == nullptr);
 
-    if (dstEffectBuffer->bufferInfo_->tex_ != nullptr && dstEffectBuffer->bufferInfo_->tex_->Width() == 0
-        && dstEffectBuffer->bufferInfo_->tex_->Height() == 0) {
-        return ErrorCode::SUCCESS;
-    }
+    CHECK_AND_RETURN_RET(dstEffectBuffer->bufferInfo_->tex_ == nullptr ||
+        dstEffectBuffer->bufferInfo_->tex_->Width() != 0 || dstEffectBuffer->bufferInfo_->tex_->Height() != 0,
+        ErrorCode::SUCCESS);
 
     // input and output type is same or not.
     DataType srcDataType = srcEffectBuffer->extraInfo_->dataType;
@@ -1135,22 +1115,14 @@ ErrorCode ImageEffect::SetOutputSurface(sptr<Surface>& surface)
 
 void ImageEffect::UpdateProducerSurfaceInfo()
 {
-    if (impl_->surfaceAdapter_ == nullptr) {
-        EFFECT_LOGE("impl surfaceAdapter is nullptr!");
-        return;
-    }
+    CHECK_AND_RETURN_LOG(impl_->surfaceAdapter_ != nullptr, "impl surfaceAdapter is nullptr!");
     auto transform = impl_->surfaceAdapter_->GetTransform();
-    if (transform == toProducerTransform_) {
-        return;
-    }
+    CHECK_AND_RETURN_NOLOG(transform != toProducerTransform_);
     toProducerTransform_ = transform;
     EFFECT_LOGI("Set toProducerSurface transform %{public}d, GRAPHIC_ROTATE_270: %{public}d",
         transform, GRAPHIC_ROTATE_270);
 
-    if (toProducerSurface_ == nullptr) {
-        EFFECT_LOGE("toProducerSurface_ is nullptr!");
-        return;
-    }
+    CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr, "toProducerSurface_ is nullptr!");
     toProducerSurface_->SetTransform(transform);
 }
 
@@ -1190,10 +1162,8 @@ bool IsSurfaceBufferHebc(sptr<SurfaceBuffer> &buffer)
     res = MetadataHelper::ConvertVecToMetadata(values, hebcAccessType);
     CHECK_AND_RETURN_RET(res == 0, false);
 
-    if (hebcAccessType == V1_1::HEBC_ACCESS_HW_ONLY) {
-        EFFECT_LOGD("IsSurfaceBufferHebc: surface buffer is Hebc data!");
-        return true;
-    }
+    CHECK_AND_RETURN_RET_LOGD(hebcAccessType != V1_1::HEBC_ACCESS_HW_ONLY, true,
+        "IsSurfaceBufferHebc: surface buffer is Hebc data!");
     return false;
 }
 
@@ -1236,9 +1206,8 @@ void ImageEffect::RenderBuffer()
     };
     impl_->effectContext_->renderEnvironment_->NotifyInputChanged();
     this->Render();
-    if (impl_->effectContext_->logStrategy_ == LOG_STRATEGY::NORMAL) {
-        impl_->effectContext_->logStrategy_ = LOG_STRATEGY::LIMITED;
-    }
+    impl_->effectContext_->logStrategy_ = impl_->effectContext_->logStrategy_ == LOG_STRATEGY::NORMAL ?
+        LOG_STRATEGY::LIMITED : impl_->effectContext_->logStrategy_;
 
     EFFECT_LOGD("ProcessRender: FlushBuffer: %{public}d", entry->buffer_->GetSeqNum());
     auto ret = FlushBuffer(entry->buffer_, entry->syncFence_, true, true, entry->timestamp_);
@@ -1280,14 +1249,11 @@ GSError ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, sptr<SyncFenc
     if (isNeedAttach) {
         ret = toProducerSurface_->AttachAndFlushBuffer(flushBuffer, isSendFence ? syncFence : invalidFence,
             flushConfig, false);
-        if (ret != GSError::GSERROR_OK) {
-            EFFECT_LOGE("AttachAndFlushBuffer: attach and flush buffer failed. %{public}d", ret);
-        }
+        CHECK_AND_RETURN_RET_LOG(ret == GSError::GSERROR_OK, ret, "AttachAndFlushBuffer: attach and flush buffer "
+            "failed. %{public}d", ret);
     } else {
         ret = toProducerSurface_->FlushBuffer(flushBuffer, isSendFence ? syncFence : invalidFence, flushConfig);
-        if (ret != GSError::GSERROR_OK) {
-            EFFECT_LOGE("FlushBuffer: flush buffer failed. %{public}d", ret);
-        }
+        CHECK_AND_RETURN_RET_LOG(ret == GSError::GSERROR_OK, ret, "FlushBuffer: flush buffer failed. %{public}d", ret);
     }
 
     return ret;
@@ -1333,10 +1299,8 @@ void ImageEffect::ProcessRender(BufferProcessInfo& bufferProcessInfo, bool& isNe
     CHECK_AND_RETURN_LOG(toProducerSurface_ != nullptr, "ProcessRender: toProducerSurface is nullptr.");
     auto requestConfig = GetBufferRequestConfig(inBuffer);
     auto ret = toProducerSurface_->RequestAndDetachBuffer(outBuffer, outBufferSyncFence, requestConfig);
-    if (ret != 0 || outBuffer == nullptr) {
-        EFFECT_LOGE("ProcessRender::RequestAndDetachBuffer failed. %{public}d", ret);
-        return;
-    }
+    CHECK_AND_RETURN_LOG(ret == 0 && outBuffer != nullptr, "ProcessRender::RequestAndDetachBuffer "
+        "failed. %{public}d", ret);
     EFFECT_LOGD("ProcessRender: inBuffer: %{public}d, outBuffer: %{public}d",
         inBuffer->GetSeqNum(), outBuffer->GetSeqNum());
 
@@ -1598,10 +1562,7 @@ void ImageEffect::ClearDataInfo(DataInfo &dataInfo)
 
 bool IsSameInOutputData(const DataInfo &inDataInfo, const DataInfo &outDataInfo)
 {
-    if (inDataInfo.dataType_ != outDataInfo.dataType_) {
-        return false;
-    }
-
+    CHECK_AND_RETURN_RET(inDataInfo.dataType_ == outDataInfo.dataType_, false);
     switch (inDataInfo.dataType_) {
         case DataType::PIXEL_MAP:
             return inDataInfo.pixelMap_ == outDataInfo.pixelMap_;
@@ -1646,20 +1607,14 @@ ErrorCode ImageEffect::LockAll(std::shared_ptr<EffectBuffer> &srcEffectBuffer,
     options.strategy = impl_->effectContext_->logStrategy_;
     options.needsDecodeDfxData = needsDecodeDfxData_;
     ErrorCode res = ParseDataInfo(inDateInfo_, srcEffectBuffer, options);
-    if (res != ErrorCode::SUCCESS) {
-        EFFECT_LOGE("ParseDataInfo inData fail! res=%{public}d", res);
-        return res;
-    }
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ParseDataInfo inData fail! res=%{public}d", res);
     EFFECT_LOGD("input data set, parse data info success! dataType=%{public}d", inDateInfo_.dataType_);
 
     if (outDateInfo_.dataType_ != DataType::UNKNOWN && !IsSameInOutputData(inDateInfo_, outDateInfo_)) {
         EFFECT_LOGD("output data set, start parse data info. dataType=%{public}d", outDateInfo_.dataType_);
         options.isOutputData = true;
         res = ParseDataInfo(outDateInfo_, dstEffectBuffer, options);
-        if (res != ErrorCode::SUCCESS) {
-            EFFECT_LOGE("ParseDataInfo outData fail! res=%{public}d", res);
-            return res;
-        }
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ParseDataInfo outData fail! res=%{public}d", res);
         EFFECT_LOGD("output data set, parse data info success! dataType=%{public}d", outDateInfo_.dataType_);
     }
 
@@ -1726,9 +1681,7 @@ void ImageEffect::InitEGLEnv()
 void ImageEffect::DestroyEGLEnv()
 {
     EFFECT_LOGI("ImageEffect DestroyEGLEnv enter!");
-    if (impl_->effectContext_->renderEnvironment_ == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_NOLOG(impl_->effectContext_->renderEnvironment_ != nullptr);
     impl_->effectContext_->renderEnvironment_->ReleaseParam();
     impl_->effectContext_->renderEnvironment_->Release();
     EFFECT_LOGI("ImageEffect DestroyEGLEnv end!");
@@ -1801,9 +1754,7 @@ ErrorCode ImageEffect::SetOutputTexture(int32_t textureId)
 
 void ImageEffect::UpdateConsumerBuffersNumber()
 {
-    if (setConsumerBufferSize_) {
-        return;
-    }
+    CHECK_AND_RETURN_NOLOG(!setConsumerBufferSize_);
 
     if (!toProducerSurface_ || !fromProducerSurface_) {
         EFFECT_LOGE("UpdateConsumerBuffersNumber: toProducerSurface_ or fromProducerSurface_ is null!");
@@ -1824,9 +1775,7 @@ void ImageEffect::UpdateConsumerBuffersNumber()
 
 void ImageEffect::UpdateCycleBuffersNumber()
 {
-    if (setCycleBuffersNumber_) {
-        return;
-    }
+    CHECK_AND_RETURN_NOLOG(!setCycleBuffersNumber_);
 
     if (!toProducerSurface_ || !fromProducerSurface_) {
         EFFECT_LOGE("UpdateCycleBuffersNumber: toProducerSurface_ or fromProducerSurface_ is null!");

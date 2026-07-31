@@ -147,10 +147,8 @@ ImageEffect_ErrorCode OH_ImageEffect_InsertFilterByFilter(OH_ImageEffect *imageE
     EFFECT_LOGI("Insert filter. name=%{public}s", filterName.c_str());
 
     ErrorCode result = imageEffect->imageEffect_->InsertEFilter(filter->filter_, index);
-    if (result != ErrorCode::SUCCESS) {
-        EFFECT_LOGE("InsertFilter: insert filter fail! result=%{public}d, name=%{public}s", result, filterName.c_str());
-        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
-    }
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "InsertFilter: insert filter fail! result=%{public}d, name=%{public}s", result, filterName.c_str());
 
     imageEffect->filters_.emplace(imageEffect->filters_.begin() + index, filter, filterName);
     EventInfo eventInfo = {
@@ -277,10 +275,8 @@ ImageEffect_ErrorCode OH_ImageEffect_ReplaceFilterByFilter(OH_ImageEffect *image
     EFFECT_LOGI("Replace filter. index=%{public}d, name=%{public}s", index, filter->filter_->GetName().c_str());
 
     ErrorCode result = imageEffect->imageEffect_->ReplaceEFilter(filter->filter_, index);
-    if (result != ErrorCode::SUCCESS) {
-        EFFECT_LOGE("ReplaceFilter fail! result=%{public}d, index=%{public}d", result, index);
-        return ImageEffect_ErrorCode ::EFFECT_ERROR_PARAM_INVALID;
-    }
+    CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "ReplaceFilter fail! result=%{public}d, index=%{public}d", result, index);
 
     auto &originFilter = imageEffect->filters_.at(index);
     CHECK_AND_RETURN_RET_LOG(originFilter.first != nullptr, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
@@ -330,10 +326,8 @@ ImageEffect_ErrorCode OH_ImageEffect_SetOutputSurface(OH_ImageEffect *imageEffec
         "SetOutputSurface: input parameter nativeWindow is null!");
 
     ErrorCode errorCode = imageEffect->imageEffect_->SetOutNativeWindow(nativeWindow);
-    if (errorCode != ErrorCode::SUCCESS) {
-        EFFECT_LOGE("SetOutputSurface: set output surface fail! errorCode=%{public}d", errorCode);
-        return ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID;
-    }
+    CHECK_AND_RETURN_RET_LOG(errorCode == ErrorCode::SUCCESS, ImageEffect_ErrorCode::EFFECT_ERROR_PARAM_INVALID,
+        "SetOutputSurface: set output surface fail! errorCode=%{public}d", errorCode);
     EFFECT_LOGI("SetOutputSurface: set output surface success!.");
 
     EventInfo eventInfo = {
@@ -716,10 +710,8 @@ OH_EffectFilter *OH_ImageEffect_GetFilter(OH_ImageEffect *imageEffect, uint32_t 
 {
     std::unique_lock<std::mutex> lock(effectMutex_);
     CHECK_AND_RETURN_RET_LOG(imageEffect != nullptr, nullptr, "GetFilter: input parameter imageEffect is null!");
-    if (index >= static_cast<uint32_t>(imageEffect->filters_.size())) {
-        EFFECT_LOGE("GetFilter: input parameter index is invalid!");
-        return nullptr;
-    }
+    CHECK_AND_RETURN_RET_LOG(index < static_cast<uint32_t>(imageEffect->filters_.size()), nullptr,
+        "GetFilter: input parameter index is invalid!");
     return imageEffect->filters_.at(index).first;
 }
 

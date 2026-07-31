@@ -31,11 +31,10 @@ FilterFactory &FilterFactory::Instance()
 
 void FilterFactory::DestroyInstance()
 {
-    if (instance_) {
-        instance_->generators_.clear();
-        delete instance_;
-        instance_ = nullptr;
-    }
+    CHECK_AND_RETURN_NOLOG(instance_);
+    instance_->generators_.clear();
+    delete instance_;
+    instance_ = nullptr;
 }
 
 void FilterFactory::Init() {}
@@ -52,9 +51,7 @@ void FilterFactory::RegisterGenerator(const std::string &name, const InstanceGen
 std::shared_ptr<Filter> FilterFactory::CreateFilter(const std::string &filterName, const std::string &aliasName)
 {
     auto it = generators_.find(filterName);
-    if (it != generators_.end()) {
-        return it->second(aliasName);
-    }
+    CHECK_AND_RETURN_RET(it == generators_.end(), it->second(aliasName));
 
     EFFECT_LOGW("Pipeline FilterFactory generators do not have %{public}s, aliasName=%{public}s", filterName.c_str(),
         aliasName.c_str());

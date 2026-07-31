@@ -142,9 +142,7 @@ void RenderEnvironment::InitDefaultShaderMT(RenderParam *param)
 void RenderEnvironment::InitEngine(OHNativeWindow *window)
 {
     EFFECT_LOGI("RenderEnvironment InitEngine start");
-    if (window_ != nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_NOLOG(window_ == nullptr);
     window_ = window;
     screenSurface_ = new RenderSurface(std::string());
     screenSurface_->SetAttrib(attribute_);
@@ -305,29 +303,29 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::ConvertBufferToTexture(EffectBu
     extraInfo->dataType = DataType::TEX;
     std::shared_ptr<EffectBuffer> output = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
     output->bufferInfo_->tex_ = renderTex;
-    if (source->bufferInfo_->hdrFormat_ == HdrFormat::HDR8_GAINMAP && source->auxiliaryBufferInfos != nullptr) {
-        output->auxiliaryBufferInfos =
-            std::make_unique<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
-        for (const auto& entry : *source->auxiliaryBufferInfos) {
-            std::shared_ptr<BufferInfo> auxiliaryBufferInfo = std::make_shared<BufferInfo>();
-            CommonUtils::CopyBufferInfo(*(entry.second), *auxiliaryBufferInfo);
-            output->auxiliaryBufferInfos->emplace(entry.first, auxiliaryBufferInfo);
-        }
-
-        auto gainBuffer = source -> auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP);
-        if (gainBuffer != source -> auxiliaryBufferInfos -> end()) {
-            auto gainBufferInfo = gainBuffer->second;
-            if (gainBufferInfo != nullptr) {
-                std::shared_ptr<ExtraInfo> gainExtraInfo = std::make_unique<ExtraInfo>();
-                auto tempGainBuffer =
-                    std::make_shared<EffectBuffer>(gainBufferInfo, gainBufferInfo->addr_, gainExtraInfo);
-                RenderTexturePtr gainTex = param_->resCache_->RequestTexture(
-                    static_cast<int>(gainBufferInfo->width_), static_cast<int>(gainBufferInfo->height_), GL_RGBA8);
-                DrawBufferToTexture(gainTex, tempGainBuffer.get());
-                gainBufferInfo->tex_ = gainTex;
-            }
-        }
+    CHECK_AND_RETURN_RET(source->bufferInfo_->hdrFormat_ == HdrFormat::HDR8_GAINMAP &&
+    source->auxiliaryBufferInfos != nullptr, output);
+    output->auxiliaryBufferInfos =
+        std::make_unique<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
+    for (const auto& entry : *source->auxiliaryBufferInfos) {
+        std::shared_ptr<BufferInfo> auxiliaryBufferInfo = std::make_shared<BufferInfo>();
+        CommonUtils::CopyBufferInfo(*(entry.second), *auxiliaryBufferInfo);
+        output->auxiliaryBufferInfos->emplace(entry.first, auxiliaryBufferInfo);
     }
+
+    auto gainBuffer = source -> auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP);
+    CHECK_AND_RETURN_RET(gainBuffer != source -> auxiliaryBufferInfos -> end(), output);
+
+    auto gainBufferInfo = gainBuffer->second;
+    CHECK_AND_RETURN_RET(gainBufferInfo != nullptr, output);
+
+    std::shared_ptr<ExtraInfo> gainExtraInfo = std::make_unique<ExtraInfo>();
+    auto tempGainBuffer =
+        std::make_shared<EffectBuffer>(gainBufferInfo, gainBufferInfo->addr_, gainExtraInfo);
+    RenderTexturePtr gainTex = param_->resCache_->RequestTexture(
+        static_cast<int>(gainBufferInfo->width_), static_cast<int>(gainBufferInfo->height_), GL_RGBA8);
+    DrawBufferToTexture(gainTex, tempGainBuffer.get());
+    gainBufferInfo->tex_ = gainTex;
     return output;
 }
 
@@ -343,10 +341,9 @@ bool RenderEnvironment::IfNeedGenMainTex() const
 
 void RenderEnvironment::UpdateCanvas()
 {
-    if (window_ != nullptr) {
-        OH_NativeWindow_NativeWindowHandleOpt(window_, GET_BUFFER_GEOMETRY, &canvasHeight, &canvasWidth);
-        param_->viewport_.Set(0, 0, canvasWidth, canvasHeight);
-    }
+    CHECK_AND_RETURN_NOLOG(window_ != nullptr);
+    OH_NativeWindow_NativeWindowHandleOpt(window_, GET_BUFFER_GEOMETRY, &canvasHeight, &canvasWidth);
+    param_->viewport_.Set(0, 0, canvasWidth, canvasHeight);
 }
 
 void RenderEnvironment::DrawBufferToTexture(RenderTexturePtr renderTex, const EffectBuffer *source)
@@ -476,49 +473,41 @@ Mat4x4 GetTransformMatrix(GraphicTransformType type)
 
 void RenderEnvironment::DrawFrameWithTransform(const std::shared_ptr<EffectBuffer> &buffer, GraphicTransformType type)
 {
-    if (param_ != nullptr) {
-        BeginFrame();
-        UpdateCanvas();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-        Mat4x4 trans = GetTransformMatrix(type);
-        if (buffer->bufferInfo_->tex_ == nullptr) {
-            EFFECT_LOGE("RenderEnvironment DrawFrameWithTransform tex is nullptr");
-            return;
-        }
-        param_->renderer_->DrawOnScreen(buffer->bufferInfo_->tex_->GetName(), param_->meshBaseDrawFrame_,
-            param_->shaderBaseDrawFrame_, &param_->viewport_, MathUtils::NativePtr(trans), GL_TEXTURE_2D);
-
-        if (screenSurface_ == nullptr) {
-            EFFECT_LOGE("RenderEnvironment screenSurface_ is nullptr");
-            return;
-        }
-        param_->context_->SwapBuffers(screenSurface_);
-        GLUtils::CheckError(__FILE_NAME__, __LINE__);
+    CHECK_AND_RETURN_NOLOG(param_ != nullptr);
+    BeginFrame();
+    UpdateCanvas();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    Mat4x4 trans = GetTransformMatrix(type);
+    if (buffer->bufferInfo_->tex_ == nullptr) {
+        EFFECT_LOGE("RenderEnvironment DrawFrameWithTransform tex is nullptr");
+        return;
     }
+    param_->renderer_->DrawOnScreen(buffer->bufferInfo_->tex_->GetName(), param_->meshBaseDrawFrame_,
+        param_->shaderBaseDrawFrame_, &param_->viewport_, MathUtils::NativePtr(trans), GL_TEXTURE_2D);
+
+    CHECK_AND_RETURN_LOG(screenSurface_ != nullptr, "RenderEnvironment screenSurface_ is nullptr");
+    param_->context_->SwapBuffers(screenSurface_);
+    GLUtils::CheckError(__FILE_NAME__, __LINE__);
 }
 
 void RenderEnvironment::DrawFrame(GLuint texId, GraphicTransformType type)
 {
-    if (param_ != nullptr) {
-        BeginFrame();
-        UpdateCanvas();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glClearColor(1.0, 0, 0, 0);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    CHECK_AND_RETURN_NOLOG(param_ != nullptr);
+    BeginFrame();
+    UpdateCanvas();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(1.0, 0, 0, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        auto mesh = std::make_shared<RenderMesh>(DEFAULT_FLIP_VERTEX_DATA);
-        mesh->Bind(param_->shaderBaseDrawFrameYUV_);
-        param_->renderer_->DrawOnScreenWithTransform(texId, mesh.get(),
-            param_->shaderBaseDrawFrameYUV_, &param_->viewport_, type, GL_TEXTURE_EXTERNAL_OES);
-        glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
-        if (screenSurface_ == nullptr) {
-            EFFECT_LOGE("RenderEnvironment screenSurface_ is nullptr");
-            return;
-        }
-        param_->context_->SwapBuffers(screenSurface_);
-        GLUtils::CheckError(__FILE_NAME__, __LINE__);
-    }
+    auto mesh = std::make_shared<RenderMesh>(DEFAULT_FLIP_VERTEX_DATA);
+    mesh->Bind(param_->shaderBaseDrawFrameYUV_);
+    param_->renderer_->DrawOnScreenWithTransform(texId, mesh.get(),
+        param_->shaderBaseDrawFrameYUV_, &param_->viewport_, type, GL_TEXTURE_EXTERNAL_OES);
+    glBindTexture(GL_TEXTURE_EXTERNAL_OES, 0);
+    CHECK_AND_RETURN_LOG(screenSurface_ != nullptr, "RenderEnvironment screenSurface_ is nullptr");
+    param_->context_->SwapBuffers(screenSurface_);
+    GLUtils::CheckError(__FILE_NAME__, __LINE__);
 }
 
 void RenderEnvironment::ConvertTextureToBuffer(RenderTexturePtr source, EffectBuffer *output, bool needProcessCache)
@@ -529,12 +518,8 @@ void RenderEnvironment::ConvertTextureToBuffer(RenderTexturePtr source, EffectBu
         // Clamp readback dimensions to output buffercapacity
         int outW = static_cast<int>(output->bufferInfo_->width_);
         int outH = static_cast<int>(output->bufferInfo_->height_);
-        if (w > outW) {
-            w = outW;
-        }
-        if (h > outH) {
-            h = outH;
-        }
+        w = w > outW ? outW : w;
+        h = h > outH ? outH : h;
         CHECK_AND_RETURN_LOG(w > 0 && h > 0, "ConvertTextureToBuffer: invalid size");
 
         if (output->bufferInfo_->formatType_ == IEffectFormat::RGBA8888 ||
