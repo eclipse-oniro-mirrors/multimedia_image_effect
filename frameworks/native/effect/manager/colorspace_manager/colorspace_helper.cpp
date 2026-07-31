@@ -417,7 +417,7 @@ bool ColorSpaceHelper::ShouldComposeAsCuva(const sptr<SurfaceBuffer> &baseSptr, 
     GetHDRDynamicMetadata(baseSptr.GetRefPtr(), baseStaticMetadata);
     std::vector<uint8_t> baseDynamicMetadata;
     GetHDRDynamicMetadata(gainmapSptr.GetRefPtr(), baseDynamicMetadata);
-    CHECK_AND_RETURN_RET(baseStaticMetadata.size() !== 0 && baseDynamicMetadata.size() != 0, true);
+    CHECK_AND_RETURN_RET(baseStaticMetadata.size() != 0 && baseDynamicMetadata.size() != 0, true);
 
     std::vector<uint8_t> gainmapDynamicMetadata;
     GetHDRDynamicMetadata(gainmapSptr.GetRefPtr(), gainmapDynamicMetadata);

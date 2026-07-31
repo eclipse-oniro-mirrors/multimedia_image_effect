@@ -210,9 +210,9 @@ Picture *NativeCommonUtils::GetPictureFromNativePicture(OH_PictureNative *pictur
 
 bool IsMatchLookupCondition(std::shared_ptr<EffectInfo> &effectInfo, std::string &type, uint32_t enumValue)
 {
-    CHECK_AND_RETURN_RET_NOLOG(type.compare("Format") == 0, false);
+    CHECK_AND_RETURN_RET(type.compare("Format") == 0, false);
     auto formatType = static_cast<IEffectFormat>(enumValue);
-    CHECK_AND_RETURN_RET_NOLOG(formatType != IEffectFormat::DEFAULT, true);
+    CHECK_AND_RETURN_RET(formatType != IEffectFormat::DEFAULT, true);
 
     auto it = std::find_if(effectInfo->formats_.begin(), effectInfo->formats_.end(),
         [&formatType](const std::pair<IEffectFormat, std::vector<IPType>> &format) {
@@ -225,9 +225,9 @@ bool IsMatchLookupCondition(std::shared_ptr<IFilterDelegate> &filterDelegate, st
 {
     auto effectInfo = static_cast<OH_EffectFilterInfo *>(filterDelegate->GetEffectInfo());
 
-    CHECK_AND_RETURN_RET_NOLOG(type.compare("Format") == 0, false);
+    CHECK_AND_RETURN_RET(type.compare("Format") == 0, false);
     auto formatType = static_cast<IEffectFormat>(enumValue);
-    CHECK_AND_RETURN_RET_NOLOG(formatType != IEffectFormat::DEFAULT, true);
+    CHECK_AND_RETURN_RET(formatType != IEffectFormat::DEFAULT, true);
     ImageEffect_Format ohFormatType = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
     NativeCommonUtils::SwitchToOHFormatType(formatType, ohFormatType);
     return ohFormatType != ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN && effectInfo != nullptr &&

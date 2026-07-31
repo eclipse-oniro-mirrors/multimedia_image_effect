@@ -234,13 +234,13 @@ ErrorCode ModifyPictureForGainMap(PixelMap *gainMapPixelMap, EffectBuffer *src,
         "ModifyPictureForInnerPixelMap: pixelMap is null!");
 
     uint8_t *pixels = const_cast<uint8_t *>(gainMapPixelMap->GetPixels());
-    CHECK_AND_RETURN_LOGD(pixels != gainMapBuffer->buffer_, ErrorCode::SUCCESS,
+    CHECK_AND_RETURN_RET_LOGD(pixels != gainMapBuffer->buffer_, ErrorCode::SUCCESS,
         "ModifyPicture: not need modify picture!");
     auto srcGainMapBufferInfo = src->auxiliaryBufferInfos->at(EffectPixelmapType::GAINMAP);
     auto defaultExtraInfo = std::make_shared<ExtraInfo>();
     auto srcGainMapBuffer = std::make_shared<EffectBuffer>(srcGainMapBufferInfo, nullptr, defaultExtraInfo);
     if (gainMapBuffer->extraInfo_->dataType == DataType::TEX) {
-        CHECK_AND_RETURN_LOGD(gainMapPixelMap->GetWidth() == static_cast<int32_t>(gainMapBuffer->bufferInfo_->width_) &&
+        CHECK_AND_RETURN_RET_LOGD(gainMapPixelMap->GetWidth() == static_cast<int32_t>(gainMapBuffer->bufferInfo_->width_) &&
             gainMapPixelMap->GetHeight() == static_cast<int32_t>(gainMapBuffer->bufferInfo_->height_),
             CommonUtils::ModifyPixelMapPropertyForTexture(gainMapPixelMap, gainMapBuffer, context),
             "ModifyPicture: ModifyPixelMapPropertyForTexture");
@@ -319,7 +319,7 @@ ErrorCode ModifyPicture(EffectBuffer *src, const std::shared_ptr<EffectBuffer> &
 
     bool isAuxiliaryBufferInfosEmpty = !buffer->auxiliaryBufferInfos ||
         (buffer->auxiliaryBufferInfos && buffer->auxiliaryBufferInfos->empty());
-    CHECK_AND_RETURN_RET_LOG(!isAuxiliaryBufferInfosEmpty, ErrorCode::SUCCESS);
+    CHECK_AND_RETURN_RET(!isAuxiliaryBufferInfosEmpty, ErrorCode::SUCCESS);
 
     EFFECT_LOGD("ModifyPicture: save gainmap");
     auto bufferIt = buffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP);
@@ -400,7 +400,7 @@ std::pair<std::shared_ptr<EffectBuffer>, std::shared_ptr<EffectBuffer>> PrepareB
     auto primaryBuffer = std::make_shared<EffectBuffer>(primaryBufferInfo, nullptr, primaryExtraInfo);
 
     std::pair<std::shared_ptr<EffectBuffer>, std::shared_ptr<EffectBuffer>> ret = {primaryBuffer, nullptr};
-    CHECK_AND_RETURN_LOG(input->bufferInfo_->hdrFormat_ != HdrFormat::HDR8_GAINMAP ||
+    CHECK_AND_RETURN_RET(input->bufferInfo_->hdrFormat_ != HdrFormat::HDR8_GAINMAP ||
         input->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP) == input->auxiliaryBufferInfos->end(),
         ret);
 
@@ -753,7 +753,7 @@ ErrorCode CheckAndProcessOutTex(RenderTexturePtr dstTex, RenderTexturePtr srcTex
 {
     CHECK_AND_RETURN_RET_LOG(srcTex != nullptr, ErrorCode::ERR_INPUT_NULL, "ModifyTex srcTex is null");
     CHECK_AND_RETURN_RET_LOG(dstTex != nullptr, ErrorCode::ERR_INPUT_NULL, "ModifyTex dstTex is null");
-    CHECK_AND_RETURN_NOLOG(dstTex->Width() != 0 && dstTex->Height() != 0m, ErrorCode::SUCCESS);
+    CHECK_AND_RETURN_RET(dstTex->Width() != 0 && dstTex->Height() != 0, ErrorCode::SUCCESS);
     GLUtils::CreateDefaultTexture(srcTex->Width(), srcTex->Height(), srcTex->Format(), dstTex->GetName());
     return ErrorCode::SUCCESS;
 }

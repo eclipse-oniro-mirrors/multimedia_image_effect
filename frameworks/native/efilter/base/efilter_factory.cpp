@@ -35,7 +35,7 @@ EFilterFactory *EFilterFactory::Instance()
 
 void EFilterFactory::DestroyInstance()
 {
-    CHECK_AND_RETURN_NOLOG(instance_)
+    CHECK_AND_RETURN_NOLOG(instance_);
     delete instance_;
     instance_ = nullptr;
 }

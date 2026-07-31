@@ -491,7 +491,7 @@ ErrorCode StartPipelineInner(std::shared_ptr<PipelineCore> &pipeline, const Effe
     unsigned long int taskId, RenderThread<> *thread, RenderMode &mode)
 {
     CHECK_AND_RETURN_RET_LOG(thread != nullptr, ErrorCode::ERR_INVALID_OPERATION,
-        "pipeline Prepare fail! render thread is nullptr")
+        "pipeline Prepare fail! render thread is nullptr");
 
     if (!mode.isNeedCreateThread) {
         if (mode.isNeedPriority) {
