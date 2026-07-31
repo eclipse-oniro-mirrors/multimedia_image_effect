@@ -240,8 +240,9 @@ ErrorCode ModifyPictureForGainMap(PixelMap *gainMapPixelMap, EffectBuffer *src,
     auto defaultExtraInfo = std::make_shared<ExtraInfo>();
     auto srcGainMapBuffer = std::make_shared<EffectBuffer>(srcGainMapBufferInfo, nullptr, defaultExtraInfo);
     if (gainMapBuffer->extraInfo_->dataType == DataType::TEX) {
-        CHECK_AND_RETURN_RET_LOGD(gainMapPixelMap->GetWidth() == static_cast<int32_t>(gainMapBuffer->bufferInfo_->width_) &&
-            gainMapPixelMap->GetHeight() == static_cast<int32_t>(gainMapBuffer->bufferInfo_->height_),
+        CHECK_AND_RETURN_RET_LOGD(gainMapPixelMap->GetWidth() ==
+            static_cast<int32_t>(gainMapBuffer->bufferInfo_->width_) && gainMapPixelMap->GetHeight() ==
+            static_cast<int32_t>(gainMapBuffer->bufferInfo_->height_),
             CommonUtils::ModifyPixelMapPropertyForTexture(gainMapPixelMap, gainMapBuffer, context),
             "ModifyPicture: ModifyPixelMapPropertyForTexture");
         context->renderEnvironment_->ConvertTextureToBuffer(gainMapBuffer->bufferInfo_->tex_,
