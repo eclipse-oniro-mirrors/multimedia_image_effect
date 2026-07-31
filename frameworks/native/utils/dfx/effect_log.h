@@ -105,7 +105,7 @@
         }                                    \
     } while (0)
 
-#define CHECK_AND_RETURN_NOLOG(cond, fmt, ...) \
+#define CHECK_AND_RETURN_NOLOG(cond)         \
     do {                                     \
         if (!(cond)) {                       \
             return;                          \
@@ -124,7 +124,7 @@
         continue;                              \
     }
 
-#define CHECK_AND_CONTINUE_NOLOG(cond, fmt, ...) \
+#define CHECK_AND_CONTINUE_NOLOG(cond) \
     if (!(cond)) {                               \
         continue;                                \
     }
