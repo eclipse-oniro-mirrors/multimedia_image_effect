@@ -160,7 +160,8 @@ ErrorCode ModifySurfaceBuffer(EffectBuffer *src, const std::shared_ptr<EffectBuf
         return ErrorCode::ERR_BUFFER_NOT_ALLOW_CHANGE;
     }
 
-    bool isCopyDataToSurfaceBuffer = static_cast<uint32_t>(surfaceBuffer->GetStride()) == buffer->bufferInfo_->rowStride_ &&
+    bool isCopyDataToSurfaceBuffer =
+        static_cast<uint32_t>(surfaceBuffer->GetStride()) == buffer->bufferInfo_->rowStride_ &&
         static_cast<uint32_t>(surfaceBuffer->GetHeight()) == buffer->bufferInfo_->height_ &&
         CommonUtils::SwitchToEffectFormat((GraphicPixelFormat)surfaceBuffer->GetFormat()) ==
         buffer->bufferInfo_->formatType_;
@@ -233,7 +234,8 @@ ErrorCode ModifyPictureForGainMap(PixelMap *gainMapPixelMap, EffectBuffer *src,
         "ModifyPictureForInnerPixelMap: pixelMap is null!");
 
     uint8_t *pixels = const_cast<uint8_t *>(gainMapPixelMap->GetPixels());
-    CHECK_AND_RETURN_LOGD(pixels != gainMapBuffer->buffer_, ErrorCode::SUCCESS, "ModifyPicture: not need modify picture!");
+    CHECK_AND_RETURN_LOGD(pixels != gainMapBuffer->buffer_, ErrorCode::SUCCESS,
+        "ModifyPicture: not need modify picture!");
     auto srcGainMapBufferInfo = src->auxiliaryBufferInfos->at(EffectPixelmapType::GAINMAP);
     auto defaultExtraInfo = std::make_shared<ExtraInfo>();
     auto srcGainMapBuffer = std::make_shared<EffectBuffer>(srcGainMapBufferInfo, nullptr, defaultExtraInfo);
@@ -249,9 +251,9 @@ ErrorCode ModifyPictureForGainMap(PixelMap *gainMapPixelMap, EffectBuffer *src,
     }
 
     auto gainMapEffectType = CommonUtils::SwitchToEffectFormat(gainMapPixelMap->GetPixelFormat());
-    bool isCopyDataToPixelMap = static_cast<uint32_t>(gainMapPixelMap->GetRowStride()) == gainMapBuffer->bufferInfo_->rowStride_ &&
-        static_cast<uint32_t>(gainMapPixelMap->GetHeight()) == gainMapBuffer->bufferInfo_->height_ &&
-        gainMapEffectType == gainMapBuffer->bufferInfo_->formatType_;
+    bool isCopyDataToPixelMap = static_cast<uint32_t>(gainMapPixelMap->GetRowStride()) ==
+        gainMapBuffer->bufferInfo_->rowStride_ && static_cast<uint32_t>(gainMapPixelMap->GetHeight()) ==
+        gainMapBuffer->bufferInfo_->height_ && gainMapEffectType == gainMapBuffer->bufferInfo_->formatType_;
     CHECK_AND_RETURN_RET(isCopyDataToPixelMap,
         CommonUtils::ModifyPixelMapProperty(gainMapPixelMap, gainMapBuffer, context, false));
     EFFECT_LOGD("ModifyPicture: Copy data to pixel map.");

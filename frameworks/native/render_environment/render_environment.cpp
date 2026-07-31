@@ -304,7 +304,7 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::ConvertBufferToTexture(EffectBu
     std::shared_ptr<EffectBuffer> output = std::make_shared<EffectBuffer>(bufferInfo, nullptr, extraInfo);
     output->bufferInfo_->tex_ = renderTex;
     CHECK_AND_RETURN_RET(source->bufferInfo_->hdrFormat_ == HdrFormat::HDR8_GAINMAP &&
-    source->auxiliaryBufferInfos != nullptr, output);
+        source->auxiliaryBufferInfos != nullptr, output);
     output->auxiliaryBufferInfos =
         std::make_unique<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
     for (const auto& entry : *source->auxiliaryBufferInfos) {
