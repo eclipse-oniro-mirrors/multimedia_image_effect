@@ -426,6 +426,7 @@ ErrorCode EFilter::PushData(const std::string &inPort, const std::shared_ptr<Eff
     if (effectBuffer != nullptr) {
         output = effectBuffer.get();
     }
+    CHECK_AND_RETURN_RET_LOG(output, ErrorCode::ERR_INPUT_NULL, "output is null, filterNmae=%{public}s", name_.c_str());
     HandleCacheStart(source, context);
     ErrorCode res = Render(source.get(), output, context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Render inout fail! filterName=%{public}s", name_.c_str());
@@ -528,9 +529,13 @@ ErrorCode EFilter::PushData(EffectBuffer *buffer, std::shared_ptr<EffectContext>
 {
     CHECK_AND_RETURN_RET_LOG(buffer != nullptr, ErrorCode::ERR_INPUT_NULL,
         "PushData: input effect buffer is null! filterName=%{public}s", name_.c_str());
+    CHECK_AND_RETURN_RET_LOG(buffer->bufferInfo_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "PushData: input effect bufferInfo is null! filterName=%{public}s", name_.c_str());
 
     std::shared_ptr<EffectBuffer> effectBuffer =
         std::make_shared<EffectBuffer>(buffer->bufferInfo_, buffer->buffer_, buffer->extraInfo_);
+    CHECK_AND_RETURN_RET_LOG(effectBuffer->bufferInfo_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "PushData: effectBuffer bufferInfo is null!");
     effectBuffer->bufferInfo_->tex_ = buffer->bufferInfo_->tex_;
     effectBuffer->auxiliaryBufferInfos = buffer->auxiliaryBufferInfos;
     if (outPorts_.empty()) {

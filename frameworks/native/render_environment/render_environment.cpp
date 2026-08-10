@@ -751,6 +751,8 @@ void RenderEnvironment::DrawTexFromSurfaceBuffer(RenderTexturePtr tex, SurfaceBu
 
 std::shared_ptr<EffectBuffer> RenderEnvironment::GenTexEffectBuffer(const std::shared_ptr<EffectBuffer>& input)
 {
+    CHECK_AND_RETURN_RET_LOG(input != nullptr && input->extraInfo_ != nullptr && input->bufferInfo_ != nullptr,
+        nullptr, "GenTexEffectBuffer: input, extraInfo or bufferInfo is nullptr");
     EFFECT_LOGD("GenTexEffectBuffer: dataType = %{public}d", input->extraInfo_->dataType);
     auto info = input->bufferInfo_;
     auto bufferInfo = std::make_shared<BufferInfo>();
@@ -769,6 +771,7 @@ std::shared_ptr<EffectBuffer> RenderEnvironment::GenTexEffectBuffer(const std::s
         out->auxiliaryBufferInfos = std::make_shared<std::unordered_map<
                 EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
         for (const auto& [pixType, effectBufferInfo] : *input->auxiliaryBufferInfos) {
+            CHECK_AND_CONTINUE_LOG(effectBufferInfo != nullptr, "effectBufferInfo is nullptr");
             auto auxiliaryBufferInfo = std::make_shared<BufferInfo>();
             CommonUtils::CopyBufferInfo(*effectBufferInfo, *auxiliaryBufferInfo);
 

@@ -1055,7 +1055,9 @@ std::shared_ptr<ImageEffect> ImageEffect::Restore(std::string &info)
     for (auto &efilterInfo : efiltersInfo) {
         std::string name = efilterInfo->GetString("name");
         CHECK_AND_CONTINUE_LOG(!name.empty(), "Restore: [name] not exist");
-        std::shared_ptr<EFilter> efilter = EFilterFactory::Instance()->Restore(name, efilterInfo, nullptr);
+        auto *factory = EFilterFactory::Instance();
+        CHECK_AND_CONTINUE_LOG(factory != nullptr, "Load: EFilterFactory instance is null");
+        std::shared_ptr<EFilter> efilter = factory->Restore(name, efilterInfo, nullptr);
         CHECK_AND_RETURN_RET_LOG(efilter != nullptr, nullptr,
             "Restore: efilter restore fail! name=%{public}s", name.c_str());
         imageEffect->AddEFilter(efilter);
@@ -1262,6 +1264,7 @@ BufferRequestConfig ImageEffect::GetBufferRequestConfig(const sptr<SurfaceBuffer
 GSError ImageEffect::FlushBuffer(sptr<SurfaceBuffer>& flushBuffer, sptr<SyncFence>& syncFence, bool isNeedAttach,
     bool isSendFence, int64_t& timestamp)
 {
+    CHECK_AND_RETURN_RET_LOG(flushBuffer != nullptr, GSERROR_INVALID_ARGUMENTS, "FlushBuffer: flushBuffer is nullptr");
     BufferFlushConfig flushConfig = {
         .damage = {
             .w = flushBuffer->GetWidth(),
