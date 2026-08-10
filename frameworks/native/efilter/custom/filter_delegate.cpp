@@ -58,6 +58,8 @@ bool FilterDelegate::Render(void *efilter, EffectBuffer *src, EffectBuffer *dst,
 
 bool FilterDelegate::Render(void *efilter, EffectBuffer *src, std::shared_ptr<EffectContext> &context)
 {
+    CHECK_AND_RETURN_RET_LOG(src != nullptr && src->bufferInfo_ != nullptr && src->extraInfo_ != nullptr, false,
+        "FilterDelegate::Render: src or bufferInfo or extraInfo is null!");
     EFFECT_LOGD("FilterDelegate Render.");
     std::unique_ptr<OH_EffectBufferInfo> srcBuffer = std::make_unique<OH_EffectBufferInfo>();
     srcBuffer->addr = src->buffer_;
@@ -104,6 +106,7 @@ bool FilterDelegate::Render(void *efilter, EffectBuffer *src, std::shared_ptr<Ef
 bool FilterDelegate::SetValue(void *efilter, const std::string &key, const Any &value)
 {
     EFFECT_LOGD("FilterDelegate SetValue.");
+    CHECK_AND_RETURN_RET_LOG(efilter != nullptr, false, "FilterDelegateSetValue: efilter is null!");
     std::unique_ptr<ImageEffect_Any> ohValue = std::make_unique<ImageEffect_Any>();
     NativeCommonUtils::SwitchToOHAny(value, ohValue.get());
     CHECK_AND_RETURN_RET_LOG(ohDelegate_->setValue != nullptr, false,
@@ -192,6 +195,7 @@ void FilterDelegate::PushData(OH_EffectFilter *filter, OH_EffectBufferInfo *dst)
         PARA_RENDER_INFO);
 
     auto &context = AnyCast<std::shared_ptr<EffectContext> &>(any);
+    CHECK_AND_RETURN_LOG(context != nullptr, "FilterDelegate::PushData: context is null");
     filter->filter_->PushData(effectBuffer.get(), context);
 }
 
@@ -220,6 +224,7 @@ std::shared_ptr<EffectBuffer> FilterDelegate::GenDstEffectBuffer(const OH_Effect
 
 void FilterDelegate::FlushCacheIfNeed(EffectBuffer *src)
 {
+    CHECK_AND_RETURN_LOG(src != nullptr, "FlushCacheIfNeed: src is nullptr");
     CHECK_AND_RETURN_LOG(src->extraInfo_, "FlushCacheIfNeed: extraInfo is nullptr");
     auto dataType = src->extraInfo_->dataType;
     CHECK_AND_RETURN(dataType != DataType::TEX);
@@ -230,7 +235,7 @@ void FilterDelegate::FlushCacheIfNeed(EffectBuffer *src)
 
 void FilterDelegate::FlushCacheForce(EffectBuffer *src)
 {
-    CHECK_AND_RETURN_LOG(src->extraInfo_, "FlushCacheForce: extraInfo is nullptr");
+    CHECK_AND_RETURN_LOG(src != nullptr && src->extraInfo_, "FlushCacheForce: src or extraInfo is nullptr");
     CHECK_AND_RETURN_LOG(src->bufferInfo_ && src->bufferInfo_->surfaceBuffer_,
         "FlushCacheForce: bufferInfo or surfaceBuffer is nullptr");
     (void)src->bufferInfo_->surfaceBuffer_->FlushCache();

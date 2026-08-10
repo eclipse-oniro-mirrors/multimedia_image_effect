@@ -376,6 +376,8 @@ GraphicTransformType GetSurfaceTransform(EffectBuffer *input)
 
 std::pair<MetaDataMap, MetaDataMap> PrepareMetaDatas(const EffectBuffer *input)
 {
+    CHECK_AND_RETURN_RET_LOG(input != nullptr, {}, "PrepareMetaDatas: input is nullptr!");
+    CHECK_AND_RETURN_RET_LOG(input->extraInfo_ != nullptr, {}, "PrepareMetaDatas: extraInfo is nullptr!");
     auto inputPicture = input->extraInfo_->picture;
     CHECK_AND_RETURN_RET_LOG(inputPicture, {}, "PrepareMetaDatas: picture is nullptr!");
     auto mainPixel = inputPicture->GetMainPixel();
@@ -1003,6 +1005,8 @@ BufferRequestConfig ImageSinkFilter::CreateBaseBufferConfig(int32_t width, int32
 ErrorCode ImageSinkFilter::RenderHdr10(const std::shared_ptr<EffectBuffer> &buffer,
     std::shared_ptr<EffectContext> &context)
 {
+    CHECK_AND_RETURN_RET_LOG(context != nullptr && context->renderStrategy_ != nullptr,
+        ErrorCode::ERR_INPUT_NULL, "RenderHdr10: context or renderStrategy is nullptr");
     EffectBuffer *input = context->renderStrategy_->GetInput();
     CHECK_AND_RETURN_RET_LOG(input, ErrorCode::ERR_INPUT_NULL, "Input buffer is nullptr");
     CHECK_AND_RETURN_RET_LOG(buffer != nullptr && buffer->bufferInfo_ != nullptr, ErrorCode::ERR_INPUT_NULL,
@@ -1043,10 +1047,10 @@ ErrorCode ImageSinkFilter::Render8GainMap(const std::shared_ptr<EffectBuffer> &b
     auto result = ModifyPicture(input, buffer, context);
     CHECK_AND_RETURN_RET_LOG(result == ErrorCode::SUCCESS, result, "SaveData fail");
     EffectBuffer *output = input;
-    SetPictureMetaData(output, primaryMetaData, gainMapMetaData);
-
     CHECK_AND_RETURN_RET_LOG(output->extraInfo_ != nullptr && output->extraInfo_->picture != nullptr,
         ErrorCode::ERR_INPUT_NULL, "Render8GainMap: output picture is nullptr");
+    SetPictureMetaData(output, primaryMetaData, gainMapMetaData);
+
     std::shared_ptr<PixelMap> composedPixelMap = output->extraInfo_->picture->GetHdrComposedPixelMap();
     CHECK_AND_RETURN_RET_LOG(composedPixelMap->GetFd() != nullptr, result,
         "ImageSinkFilter::RenderToDisplay surfaceBuffer is nullptr!");
@@ -1137,6 +1141,7 @@ ErrorCode ImageSinkFilter::PushData(const std::string &inPort, const std::shared
     } else {
         output = context->renderStrategy_->GetInput();
     }
+    CHECK_AND_RETURN_RET_LOG(output, ErrorCode::ERR_INPUT_NULL, "ImageSinkFilter::PushData: output buffer is nullptr");
 
     if (buffer->extraInfo_->dataType == DataType::TEX) {
         if (output->extraInfo_->dataType == DataType::NATIVE_WINDOW) {

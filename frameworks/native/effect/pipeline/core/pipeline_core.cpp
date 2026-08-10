@@ -83,6 +83,7 @@ bool PipelineCore::IncludeCameraColorFilter()
 {
     CHECK_AND_RETURN_RET_LOG(!filters_.empty(), false, "PipelineCore filters_ is empty!");
     for (const auto &filter : filters_) {
+        CHECK_AND_CONTINUE_LOG(filter != nullptr, "PipelineCore::IncludeCameraColorFilter filter is nullptr");
         if (std::find(colorFilters_.begin(), colorFilters_.end(), filter->GetName()) != colorFilters_.end()) {
             EFFECT_LOGI("PipelineCore::IncludeCameraColorFilter find out %{public}s", filter->GetName().c_str());
             return true;
@@ -136,7 +137,11 @@ ErrorCode PipelineCore::LinkFilters(std::vector<Filter *> filters)
 
     int count = std::max((int)(filters.size()) - 1, 0);
     for (int i = 0; i < count; i++) {
+        CHECK_AND_RETURN_RET_LOG(filters[i]->GetOutPort(PORT_NAME_DEFAULT), ErrorCode::ERR_PARAM_INVALID,
+            "Get default out port fail!");
         filters[i]->GetOutPort(PORT_NAME_DEFAULT)->Connect(filters[i + 1]->GetInPort(PORT_NAME_DEFAULT));
+        CHECK_AND_RETURN_RET_LOG(filters[i + 1]->GetInPort(PORT_NAME_DEFAULT), ErrorCode::ERR_PARAM_INVALID,
+            "Get default in port fail!");
         filters[i + 1]->GetInPort(PORT_NAME_DEFAULT)->Connect(filters[i]->GetOutPort(PORT_NAME_DEFAULT));
     }
     return ErrorCode::SUCCESS;
