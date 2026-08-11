@@ -95,16 +95,12 @@ ErrorCode ContrastEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::sha
 
 ErrorCode ContrastEFilter::SetValue(const std::string &key, Any &value)
 {
-    if (Parameter::KEY_INTENSITY.compare(key) != 0) {
-        EFFECT_LOGE("key is not support! key=%{public}s", key.c_str());
-        return ErrorCode::ERR_UNSUPPORTED_VALUE_KEY;
-    }
+    CHECK_AND_RETURN_RET_LOG(Parameter::KEY_INTENSITY.compare(key) == 0, ErrorCode::ERR_UNSUPPORTED_VALUE_KEY,
+        "key is not support! key=%{public}s", key.c_str());
 
     auto contrastPtr = AnyCast<float>(&value);
-    if (contrastPtr == nullptr) {
-        EFFECT_LOGE("the type is not float! key=%{public}s", key.c_str());
-        return ErrorCode::ERR_ANY_CAST_TYPE_NOT_FLOAT;
-    }
+    CHECK_AND_RETURN_RET_LOG(contrastPtr != nullptr, ErrorCode::ERR_ANY_CAST_TYPE_NOT_FLOAT,
+        "the type is not float! key=%{public}s", key.c_str());
 
     float contrast = *contrastPtr;
     if (contrast < Parameter::INTENSITY_RANGE[0] || contrast > Parameter::INTENSITY_RANGE[1]) {
@@ -119,15 +115,12 @@ ErrorCode ContrastEFilter::SetValue(const std::string &key, Any &value)
 ErrorCode ContrastEFilter::Restore(const EffectJsonPtr &values)
 {
     // If the developer does not set parameters, the function returns a failure, but it is a normal case.
-    if (!values->HasElement(Parameter::KEY_INTENSITY)) {
-        EFFECT_LOGW("not set value! key=%{public}s", Parameter::KEY_INTENSITY.c_str());
-        return ErrorCode::SUCCESS;
-    }
+    CHECK_AND_RETURN_RET_LOGW(values->HasElement(Parameter::KEY_INTENSITY), ErrorCode::SUCCESS,
+        "not set value! key=%{public}s", Parameter::KEY_INTENSITY.c_str());
 
     float contrast = values->GetFloat(Parameter::KEY_INTENSITY);
-    if (contrast < Parameter::INTENSITY_RANGE[0] || contrast > Parameter::INTENSITY_RANGE[1]) {
-        return ErrorCode::ERR_VALUE_OUT_OF_RANGE;
-    }
+    CHECK_AND_RETURN_RET(contrast >= Parameter::INTENSITY_RANGE[0] && contrast <= Parameter::INTENSITY_RANGE[1],
+        ErrorCode::ERR_VALUE_OUT_OF_RANGE);
     Any any = contrast;
     return SetValue(Parameter::KEY_INTENSITY, any);
 }

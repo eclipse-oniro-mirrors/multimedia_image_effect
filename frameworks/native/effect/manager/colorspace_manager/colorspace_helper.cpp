@@ -121,9 +121,8 @@ OH_NativeBuffer_ColorSpace ColorSpaceHelper::ConvertToNativeBufferColorSpace(Eff
 {
     OH_NativeBuffer_ColorSpace nativeBufferColorSpace = OH_NativeBuffer_ColorSpace::OH_COLORSPACE_NONE;
     auto it = EFFECT_TO_NATIVE_BUFFER_COLORSPACE_MAP.find(effectColorSpace);
-    if (it != EFFECT_TO_NATIVE_BUFFER_COLORSPACE_MAP.end()) {
-        nativeBufferColorSpace = it->second;
-    }
+    nativeBufferColorSpace = it != EFFECT_TO_NATIVE_BUFFER_COLORSPACE_MAP.end() ? it->second :
+        OH_NativeBuffer_ColorSpace::OH_COLORSPACE_NONE;
 
     EFFECT_LOGD("ConvertToEffectColorSpace: colorSpaceType=%{public}d, effectColorSpaceType=%{public}d",
         effectColorSpace, nativeBufferColorSpace);
@@ -316,9 +315,8 @@ ErrorCode DecomposeHdrImageIfNeed(const EffectColorSpace &colorSpace, const Effe
         return ErrorCode::SUCCESS;
     }
 
-    if (buffer->extraInfo_->dataType == DataType::TEX) {
-        return ErrorCode::ERR_COLORSPACE_NOT_SUPPORT_CONVERT;
-    }
+    CHECK_AND_RETURN_RET(buffer->extraInfo_->dataType != DataType::TEX,
+        ErrorCode::ERR_COLORSPACE_NOT_SUPPORT_CONVERT);
 
     EFFECT_LOGI("ColorSpaceHelper::DecomposeHdrImage");
     std::shared_ptr<Memory> oldMemory = context->memoryManager_->GetMemoryByAddr(buffer->buffer_);
@@ -389,19 +387,15 @@ void ColorSpaceHelper::TryFixGainmapHdrMetadata(sptr<SurfaceBuffer> &gainmapSptr
 {
     std::vector<uint8_t> gainmapDynamicMetadata;
     GetHDRDynamicMetadata(gainmapSptr.GetRefPtr(), gainmapDynamicMetadata);
-    if (gainmapDynamicMetadata.size() != sizeof(ISOMetadata)) {
-        EFFECT_LOGI("%{public}s no need to fix gainmap dynamic metadata, size: %{public}zu",
-            __func__, gainmapDynamicMetadata.size());
-        return;
-    }
+    CHECK_AND_RETURN_LOGI(gainmapDynamicMetadata.size() == sizeof(ISOMetadata),
+        "%{public}s no need to fix gainmap dynamic metadata, size: %{public}zu",
+        __func__, gainmapDynamicMetadata.size());
 
     HDRVividExtendMetadata extendMetadata = {};
     int32_t memCpyRes = memcpy_s(&extendMetadata.metaISO, sizeof(ISOMetadata),
         gainmapDynamicMetadata.data(), gainmapDynamicMetadata.size());
-    if (memCpyRes != EOK) {
-        EFFECT_LOGE("%{public}s memcpy_s ISOMetadata fail, error: %{public}d", __func__, memCpyRes);
-        return;
-    }
+    CHECK_AND_RETURN_LOG(memCpyRes == EOK, "%{public}s memcpy_s ISOMetadata fail, error: %{public}d",
+        __func__, memCpyRes);
     if (extendMetadata.metaISO.useBaseColorFlag != 0) {
         extendMetadata.baseColorMeta.baseColorPrimary = COLORPRIMARIES_SRGB;
         extendMetadata.gainmapColorMeta.combineColorPrimary = COLORPRIMARIES_SRGB;
@@ -412,10 +406,8 @@ void ColorSpaceHelper::TryFixGainmapHdrMetadata(sptr<SurfaceBuffer> &gainmapSptr
     std::vector<uint8_t> extendMetadataVec(sizeof(HDRVividExtendMetadata));
     memCpyRes = memcpy_s(extendMetadataVec.data(), extendMetadataVec.size(),
         &extendMetadata, sizeof(HDRVividExtendMetadata));
-    if (memCpyRes != EOK) {
-        EFFECT_LOGE("%{public}s memcpy_s HDRVividExtendMetadata fail, error: %{public}d", __func__, memCpyRes);
-        return;
-    }
+    CHECK_AND_RETURN_LOG(memCpyRes == EOK, "%{public}s memcpy_s HDRVividExtendMetadata fail, error: %{public}d",
+        __func__, memCpyRes);
     SetHDRDynamicMetadata(gainmapSptr.GetRefPtr(), extendMetadataVec);
 }
 
@@ -425,16 +417,11 @@ bool ColorSpaceHelper::ShouldComposeAsCuva(const sptr<SurfaceBuffer> &baseSptr, 
     GetHDRDynamicMetadata(baseSptr.GetRefPtr(), baseStaticMetadata);
     std::vector<uint8_t> baseDynamicMetadata;
     GetHDRDynamicMetadata(gainmapSptr.GetRefPtr(), baseDynamicMetadata);
-    if (baseStaticMetadata.size() == 0 || baseDynamicMetadata.size() == 0) {
-        return true;
-    }
+    CHECK_AND_RETURN_RET(baseStaticMetadata.size() != 0 && baseDynamicMetadata.size() != 0, true);
 
     std::vector<uint8_t> gainmapDynamicMetadata;
     GetHDRDynamicMetadata(gainmapSptr.GetRefPtr(), gainmapDynamicMetadata);
-    if (gainmapDynamicMetadata.size() != sizeof(HDRVividExtendMetadata)) {
-        return true;
-    }
-    return false;
+    return gainmapDynamicMetadata.size() != sizeof(HDRVividExtendMetadata);
 }
 } // namespace Effect
 } // namespace Media

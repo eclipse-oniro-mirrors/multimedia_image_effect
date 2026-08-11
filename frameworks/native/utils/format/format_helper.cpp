@@ -130,10 +130,9 @@ ErrorCode CheckConverterInfo(FormatConverterInfo &src, FormatConverterInfo &dst)
 
     BufferInfo &srcBuffInfo = src.bufferInfo;
     BufferInfo &dstBuffInfo = dst.bufferInfo;
-    if (srcBuffInfo.width_ != dstBuffInfo.width_ || srcBuffInfo.height_ != dstBuffInfo.height_) {
-        EFFECT_LOGW("CheckConverterInfo: diff size! srcW=%{public}d, srcH=%{public}d, dstW=%{public}d, dstH=%{public}d",
-            srcBuffInfo.width_, srcBuffInfo.height_, dstBuffInfo.width_, dstBuffInfo.height_);
-    }
+    CHECK_AND_PRINT_LOGW(srcBuffInfo.width_ == dstBuffInfo.width_ && srcBuffInfo.height_ == dstBuffInfo.height_,
+        "CheckConverterInfo: diff size! srcW=%{public}d, srcH=%{public}d, dstW=%{public}d, dstH=%{public}d",
+        srcBuffInfo.width_, srcBuffInfo.height_, dstBuffInfo.width_, dstBuffInfo.height_);
 
     EFFECT_LOGD("CheckConverterInfo: src{w=%{public}d h=%{public}d format=%{public}d len=%{public}d stride=%{public}d},"
         " dts={w=%{public}d h=%{public}d format=%{public}d len=%{public}d stride=%{public}d}",

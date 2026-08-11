@@ -35,9 +35,7 @@ EffectBuffer *ChooseBufOnSetInput(EffectBuffer *buffer, EffectBuffer *src,
 EffectBuffer *ChooseBufOnSetInOutput(EffectBuffer *buffer, EffectBuffer *src, EffectBuffer *dst,
     std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap)
 {
-    if (buffer->buffer_ == dst->buffer_) {
-        return buffer;
-    }
+    CHECK_AND_RETURN_RET(buffer->buffer_ != dst->buffer_, buffer);
 
     std::shared_ptr<BufferInfo> &bufferInfo = buffer->bufferInfo_;
     std::shared_ptr<BufferInfo> &dstBufferInfo = dst->bufferInfo_;
@@ -53,11 +51,7 @@ EffectBuffer *ChooseBufOnSetInOutput(EffectBuffer *buffer, EffectBuffer *src, Ef
     }
 
     // not allow to modify src while set input and output
-    if (src->buffer_ == buffer->buffer_) {
-        return nullptr;
-    }
-
-    return buffer;
+    return src->buffer_ == buffer->buffer_ ? nullptr : buffer;
 }
 
 EffectBuffer *RenderStrategy::ChooseBestOutput(EffectBuffer *buffer,

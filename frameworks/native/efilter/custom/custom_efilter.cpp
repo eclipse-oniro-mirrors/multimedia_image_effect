@@ -69,10 +69,8 @@ ErrorCode CustomEFilter::Restore(const EffectJsonPtr &value)
     CHECK_AND_RETURN_RET_LOG(delegate_ != nullptr, ErrorCode::ERR_INPUT_NULL, "delegate_ is null");
     void *result = delegate_->Restore(value);
     auto *filter = static_cast<EFilter *>(result);
-    if (filter == nullptr) {
-        EFFECT_LOGE("custom efilter restore fail! name=%{public}s", name_.c_str());
-        return ErrorCode::ERR_CUSTOM_EFILTER_RESTORE_FAIL;
-    }
+    CHECK_AND_RETURN_RET_LOG(filter != nullptr, ErrorCode::ERR_CUSTOM_EFILTER_RESTORE_FAIL,
+        "custom efilter restore fail! name=%{public}s", name_.c_str());
 
     std::map<std::string, Any> filterValues = filter->GetValues();
     for (auto &filterValue : filterValues) {

@@ -210,38 +210,28 @@ Picture *NativeCommonUtils::GetPictureFromNativePicture(OH_PictureNative *pictur
 
 bool IsMatchLookupCondition(std::shared_ptr<EffectInfo> &effectInfo, std::string &type, uint32_t enumValue)
 {
-    if (type.compare("Format") == 0) {
-        auto formatType = static_cast<IEffectFormat>(enumValue);
-        if (formatType == IEffectFormat::DEFAULT) {
-            return true;
-        }
+    CHECK_AND_RETURN_RET(type.compare("Format") == 0, false);
+    auto formatType = static_cast<IEffectFormat>(enumValue);
+    CHECK_AND_RETURN_RET(formatType != IEffectFormat::DEFAULT, true);
 
-        auto it = std::find_if(effectInfo->formats_.begin(), effectInfo->formats_.end(),
-            [&formatType](const std::pair<IEffectFormat, std::vector<IPType>> &format) {
-                return formatType == format.first;
-            });
-        return it != effectInfo->formats_.end();
-    } else {
-        return false;
-    }
+    auto it = std::find_if(effectInfo->formats_.begin(), effectInfo->formats_.end(),
+        [&formatType](const std::pair<IEffectFormat, std::vector<IPType>> &format) {
+            return formatType == format.first;
+        });
+    return it != effectInfo->formats_.end();
 }
 
 bool IsMatchLookupCondition(std::shared_ptr<IFilterDelegate> &filterDelegate, std::string &type, uint32_t enumValue)
 {
     auto effectInfo = static_cast<OH_EffectFilterInfo *>(filterDelegate->GetEffectInfo());
 
-    if (type.compare("Format") == 0) {
-        auto formatType = static_cast<IEffectFormat>(enumValue);
-        if (formatType == IEffectFormat::DEFAULT) {
-            return true;
-        }
-        ImageEffect_Format ohFormatType = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
-        NativeCommonUtils::SwitchToOHFormatType(formatType, ohFormatType);
-        return ohFormatType != ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN && effectInfo != nullptr &&
-            effectInfo->supportedFormats.find(ohFormatType) != effectInfo->supportedFormats.end();
-    } else {
-        return false;
-    }
+    CHECK_AND_RETURN_RET(type.compare("Format") == 0, false);
+    auto formatType = static_cast<IEffectFormat>(enumValue);
+    CHECK_AND_RETURN_RET(formatType != IEffectFormat::DEFAULT, true);
+    ImageEffect_Format ohFormatType = ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN;
+    NativeCommonUtils::SwitchToOHFormatType(formatType, ohFormatType);
+    return ohFormatType != ImageEffect_Format::EFFECT_PIXEL_FORMAT_UNKNOWN && effectInfo != nullptr &&
+        effectInfo->supportedFormats.find(ohFormatType) != effectInfo->supportedFormats.end();
 }
 
 void NativeCommonUtils::ParseLookupKey(std::string &key, std::vector<const char *> &matchEFilter)

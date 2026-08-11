@@ -164,10 +164,8 @@ ErrorCode OutPort::PushData(const std::shared_ptr<EffectBuffer> &buffer, std::sh
 
 ErrorCode OutPort::PullData(std::shared_ptr<EffectBuffer> &data)
 {
-    if (filter_) {
-        EFFECT_LOGI("OutPort::PullData for filter(%{public}s)", filter_->GetName().c_str());
-        return filter_->PullData(name_, data);
-    }
+    CHECK_AND_RETURN_RET_LOGI(!filter_, filter_->PullData(name_, data), "OutPort::PullData for filter(%{public}s)",
+        filter_->GetName().c_str());
     EFFECT_LOGE("filter destructed! name=%{public}s", name_.c_str());
     return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
 }

@@ -102,17 +102,15 @@ ErrorCode BrightnessEFilter::SetValue(const std::string &key, Any &value)
     }
 
     auto brightnessPtr = AnyCast<float>(&value);
-    if (brightnessPtr == nullptr) {
-        EFFECT_LOGE("the type is not float! key=%{public}s", key.c_str());
-        return ErrorCode::ERR_ANY_CAST_TYPE_NOT_FLOAT;
-    }
+    CHECK_AND_RETURN_RET_LOG(brightnessPtr != nullptr, ErrorCode::ERR_ANY_CAST_TYPE_NOT_FLOAT,
+        "the type is not float! key=%{public}s", key.c_str());
 
     float brightness = *brightnessPtr;
-    if (brightness < Parameter::INTENSITY_RANGE[0] || brightness > Parameter::INTENSITY_RANGE[1]) {
-        EFFECT_LOGW("the value is out of range! key=%{public}s, value=%{public}f, range=[%{public}f, %{public}f]",
-            key.c_str(), brightness, Parameter::INTENSITY_RANGE[0], Parameter::INTENSITY_RANGE[1]);
-        *brightnessPtr = CommonUtils::Clip(brightness, Parameter::INTENSITY_RANGE[0], Parameter::INTENSITY_RANGE[1]);
-    }
+    CHECK_AND_RETURN_RET(brightness < Parameter::INTENSITY_RANGE[0] || brightness > Parameter::INTENSITY_RANGE[1],
+        EFilter::SetValue(key, value));
+    EFFECT_LOGW("the value is out of range! key=%{public}s, value=%{public}f, range=[%{public}f, %{public}f]",
+        key.c_str(), brightness, Parameter::INTENSITY_RANGE[0], Parameter::INTENSITY_RANGE[1]);
+    *brightnessPtr = CommonUtils::Clip(brightness, Parameter::INTENSITY_RANGE[0], Parameter::INTENSITY_RANGE[1]);
 
     return EFilter::SetValue(key, value);
 }
@@ -122,15 +120,16 @@ ErrorCode BrightnessEFilter::Restore(const EffectJsonPtr &values)
     // If the developer does not set parameters, the function returns a failure, but it is a normal case.
     CHECK_AND_RETURN_RET_LOG(values != nullptr, ErrorCode::ERR_INPUT_NULL,
         "BrightnessEFilter::Restore values is null, filter=%{public}s", name_.c_str());
+    CHECK_AND_RETURN_RET_LOGW(values->HasElement(Parameter::KEY_INTENSITY), ErrorCode::SUCCESS,
+        "not set value! key=%{public}s", Parameter::KEY_INTENSITY.c_str());
     if (!values->HasElement(Parameter::KEY_INTENSITY)) {
         EFFECT_LOGW("not set value! key=%{public}s", Parameter::KEY_INTENSITY.c_str());
         return ErrorCode::SUCCESS;
     }
 
     float brightness = values->GetFloat(Parameter::KEY_INTENSITY);
-    if (brightness < Parameter::INTENSITY_RANGE[0] || brightness > Parameter::INTENSITY_RANGE[1]) {
-        return ErrorCode::ERR_VALUE_OUT_OF_RANGE;
-    }
+    CHECK_AND_RETURN_RET(brightness >= Parameter::INTENSITY_RANGE[0] && brightness <= Parameter::INTENSITY_RANGE[1],
+        ErrorCode::ERR_VALUE_OUT_OF_RANGE);
     Any any = brightness;
     return SetValue(Parameter::KEY_INTENSITY, any);
 }

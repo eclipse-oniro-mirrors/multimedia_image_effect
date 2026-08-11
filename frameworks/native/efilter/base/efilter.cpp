@@ -339,12 +339,12 @@ std::shared_ptr<EffectBuffer> EFilter::ConvertFromGPU2CPU(const std::shared_ptr<
 
     if (buffer->auxiliaryBufferInfos == nullptr) return source;
     auto gainMapBufferInfoIt = buffer->auxiliaryBufferInfos->find(EffectPixelmapType::GAINMAP);
-    if (gainMapBufferInfoIt == buffer->auxiliaryBufferInfos->end()) return source;
+    CHECK_AND_RETURN_RET(gainMapBufferInfoIt != buffer->auxiliaryBufferInfos->end(), source);
 
     auto gainMapBufferInfo = gainMapBufferInfoIt->second;
     auto tmpGainMapBuffer = std::make_shared<EffectBuffer>(gainMapBufferInfo, nullptr, input->extraInfo_);
     auto gainMapBuffer = CreateEffectBufferFromTexture(input->buffer_, tmpGainMapBuffer, context);
-    if (!gainMapBuffer) return source;
+    CHECK_AND_RETURN_RET(gainMapBuffer, source);
 
     gainMapBuffer->bufferInfo_->pixelmapType_ = EffectPixelmapType::GAINMAP;
     gainMapBuffer->bufferInfo_->bufferType_ = gainMapBuffer->extraInfo_->bufferType;
@@ -460,18 +460,16 @@ ErrorCode EFilter::AllocBuffer(std::shared_ptr<EffectContext> &context,
     bufferInfo->surfaceBuffer_ = (allocMemInfo.bufferType == BufferType::DMA_BUFFER) ?
         static_cast<SurfaceBuffer *>(allocMemInfo.extra) : nullptr;
     effectBuffer = std::make_shared<EffectBuffer>(bufferInfo, memoryData->data, extraInfo);
-
-        if (source->auxiliaryBufferInfos != nullptr) {
-            effectBuffer->auxiliaryBufferInfos =
-                std::make_unique<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
-            EFFECT_LOGD("ConvertFromCPU2GPU buffer->auxiliaryBufferInfos != nullptr");
-            for (const auto &entry : *source->auxiliaryBufferInfos) {
-                std::shared_ptr<BufferInfo> auxiliaryBufferInfo = std::make_shared<BufferInfo>();
-                *auxiliaryBufferInfo = *(entry.second);
-                effectBuffer->auxiliaryBufferInfos->emplace(entry.first, auxiliaryBufferInfo);
-            }
-        }
-        return ErrorCode::SUCCESS;
+    CHECK_AND_RETURN_RET(source->auxiliaryBufferInfos != nullptr, ErrorCode::SUCCESS);
+    effectBuffer->auxiliaryBufferInfos =
+        std::make_unique<std::unordered_map<EffectPixelmapType, std::shared_ptr<BufferInfo>>>();
+    EFFECT_LOGD("ConvertFromCPU2GPU buffer->auxiliaryBufferInfos != nullptr");
+    for (const auto &entry : *source->auxiliaryBufferInfos) {
+        std::shared_ptr<BufferInfo> auxiliaryBufferInfo = std::make_shared<BufferInfo>();
+        *auxiliaryBufferInfo = *(entry.second);
+        effectBuffer->auxiliaryBufferInfos->emplace(entry.first, auxiliaryBufferInfo);
+    }
+    return ErrorCode::SUCCESS;
 }
 
 ErrorCode EFilter::UseCache(std::shared_ptr<EffectContext> &context)
@@ -484,17 +482,13 @@ ErrorCode EFilter::UseCache(std::shared_ptr<EffectContext> &context)
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "GetFilterCache fail");
     CHECK_AND_RETURN_RET_LOG(cacheConfig_ != nullptr, ErrorCode::ERR_INPUT_NULL,
         "GetIPType fail, cacheConfig_ is null");
-    if (cacheConfig_->GetIPType() == IPType::GPU) {
-        return Render(cacheBuffer.get(), context);
-    }
+    CHECK_AND_RETURN_RET(cacheConfig_->GetIPType() != IPType::GPU, Render(cacheBuffer.get(), context));
     CHECK_AND_RETURN_RET_LOG(outputCap_ != nullptr, ErrorCode::ERR_INPUT_NULL,
         "get memNegotiatedCap fail, outputCap is null");
     std::shared_ptr<MemNegotiatedCap> &memNegotiatedCap = outputCap_->memNegotiatedCap_;
     EffectBuffer *output = context->renderStrategy_->ChooseBestOutput(cacheBuffer.get(), memNegotiatedCap);
     CHECK_AND_RETURN_RET_LOG(output != nullptr, ErrorCode::ERR_INPUT_NULL, "RChooseBestOutput fail, out is null");
-    if (cacheBuffer.get() == output) {
-        return Render(cacheBuffer.get(), context);
-    }
+    CHECK_AND_RETURN_RET(cacheBuffer.get() != output, Render(cacheBuffer.get(), context));
     res = Render(cacheBuffer.get(), output, context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "Render inout fail! filterName=%{public}s",
         name_.c_str());
@@ -518,9 +512,8 @@ ErrorCode OnPushDataPortsEmpty(std::shared_ptr<EffectBuffer> &buffer, std::share
 
     // efilter create new buffer and inout with the same buffer.
     EffectBuffer *output = context->renderStrategy_->GetOutput();
-    if (output == nullptr || input->buffer_ == output->buffer_) {
-        return CommonUtils::ModifyPixelMapProperty(buffer->bufferInfo_->pixelMap_, buffer, context);
-    }
+    CHECK_AND_RETURN_RET(output != nullptr && input->buffer_ != output->buffer_,
+        CommonUtils::ModifyPixelMapProperty(buffer->bufferInfo_->pixelMap_, buffer, context));
     EFFECT_LOGW("not support different input and output buffer! filterName=%{public}s", name.c_str());
     return ErrorCode::ERR_UNSUPPORTED_INOUT_WITH_DIFF_BUFFER;
 }
@@ -575,9 +568,7 @@ ErrorCode CreateDmaEffectBufferIfNeed(IPType runningType, EffectBuffer *current,
         return ErrorCode::SUCCESS;
     }
     if (runningType == IPType::GPU && current->extraInfo_->bufferType == BufferType::DMA_BUFFER) {
-        if (current == src || current->buffer_ != src->buffer_) {
-            return ErrorCode::SUCCESS;
-        }
+        CHECK_AND_RETURN_RET(current != src && current->buffer_ == src->buffer_, ErrorCode::SUCCESS);
     }
 
     MemoryInfo memInfo = {
@@ -696,16 +687,15 @@ ErrorCode CheckAndUpdateEffectBufferIfNeed(std::shared_ptr<EffectBuffer> &src, s
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res,
         "CheckAndUpdateEffectBufferIfNeed: ConvertColorSpace fail! res=%{public}d, name=%{public}s", res, name.c_str());
 
-    if (src->buffer_ != dst->buffer_) {
-        // color space is same or not after covert color space if needed.
-        EffectColorSpace srcColorSpace = src->bufferInfo_->colorSpace_;
-        EffectColorSpace dstColorSpace = dst->bufferInfo_->colorSpace_;
-        bool isSrcHdr = ColorSpaceHelper::IsHdrColorSpace(srcColorSpace);
-        bool isDstHdr = ColorSpaceHelper::IsHdrColorSpace(dstColorSpace);
-        CHECK_AND_RETURN_RET_LOG(isSrcHdr == isDstHdr, ErrorCode::ERR_FILTER_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
-            "CheckAndUpdateEffectBufferIfNeed: input and output color space not support! srcRealColorSpace=%{public}d, "
-            "dstColorSpace=%{public}d", srcColorSpace, dstColorSpace);
-    }
+    CHECK_AND_RETURN_RET(src->buffer_ != dst->buffer_, ErrorCode::SUCCESS);
+    // color space is same or not after covert color space if needed.
+    EffectColorSpace srcColorSpace = src->bufferInfo_->colorSpace_;
+    EffectColorSpace dstColorSpace = dst->bufferInfo_->colorSpace_;
+    bool isSrcHdr = ColorSpaceHelper::IsHdrColorSpace(srcColorSpace);
+    bool isDstHdr = ColorSpaceHelper::IsHdrColorSpace(dstColorSpace);
+    CHECK_AND_RETURN_RET_LOG(isSrcHdr == isDstHdr, ErrorCode::ERR_FILTER_NOT_SUPPORT_INPUT_OUTPUT_COLORSPACE,
+        "CheckAndUpdateEffectBufferIfNeed: input and output color space not support! srcRealColorSpace=%{public}d, "
+        "dstColorSpace=%{public}d", srcColorSpace, dstColorSpace);
 
     return ErrorCode::SUCCESS;
 }

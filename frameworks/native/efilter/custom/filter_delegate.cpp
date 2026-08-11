@@ -120,12 +120,8 @@ bool FilterDelegate::Save(void *efilter, EffectJsonPtr &res)
     char *result = nullptr;
     CHECK_AND_RETURN_RET_LOG(ohDelegate_->save != nullptr, false,
         "FilterDelegateSave: save callback is null!");
-    if (!ohDelegate_->save((OH_EffectFilter *)efilter, &result)) {
-        return false;
-    }
-    if (result == nullptr) {
-        return true;
-    }
+    CHECK_AND_RETURN_RET(ohDelegate_->save((OH_EffectFilter *)efilter, &result), false);
+    CHECK_AND_RETURN_RET(result != nullptr, true);
     std::string content = result;
     res = EffectJsonHelper::ParseJsonData(content);
     return true;

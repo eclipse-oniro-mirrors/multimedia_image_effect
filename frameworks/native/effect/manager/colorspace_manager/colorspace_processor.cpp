@@ -108,9 +108,7 @@ sptr<SurfaceBuffer> AllocGainmapSurfaceBuffer(std::vector<std::shared_ptr<Memory
 
 void PrintColorSpaceInfo(const sptr<SurfaceBuffer> &surfaceBuffer, const std::string &tag)
 {
-    if (surfaceBuffer == nullptr) {
-        return;
-    }
+    CHECK_AND_RETURN_NOLOG(surfaceBuffer != nullptr);
 
     CM_HDR_Metadata_Type metadataType = CM_HDR_Metadata_Type::CM_METADATA_NONE;
     ColorSpaceHelper::GetSurfaceBufferMetadataType(surfaceBuffer, metadataType);
@@ -252,9 +250,7 @@ std::shared_ptr<MemoryData> ColorSpaceProcessor::GetMemoryData(SurfaceBuffer *sb
 
     void *pSurfaceBuffer = static_cast<void *>(sb);
     for (const auto &memoryData : memoryDataArray_) {
-        if (memoryData->memoryInfo.extra == pSurfaceBuffer) {
-            return memoryData;
-        }
+        CHECK_AND_RETURN_RET(memoryData->memoryInfo.extra != pSurfaceBuffer, memoryData);
     }
 
     return nullptr;

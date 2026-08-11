@@ -27,10 +27,7 @@ void MemcpyHelper::CopyData(CopyInfo &src, CopyInfo &dst)
     uint8_t *srcBuffet = src.data;
     uint8_t *dstBuffer = dst.data;
     CHECK_AND_RETURN_LOG(srcBuffet != nullptr && dstBuffer != nullptr, "Input addr is null!");
-    if (srcBuffet == dstBuffer) {
-        EFFECT_LOGD("Buffer is same, not need copy.");
-        return;
-    }
+    CHECK_AND_RETURN_LOGD(srcBuffet != dstBuffer, "Buffer is same, not need copy.");
 
     BufferInfo &srcInfo = src.bufferInfo;
     BufferInfo &dstInfo = dst.bufferInfo;
@@ -58,13 +55,12 @@ void MemcpyHelper::CopyData(CopyInfo &src, CopyInfo &dst)
     uint32_t dstRowCount = FormatHelper::CalculateDataRowCount(dstInfo.height_, dstInfo.formatType_);
     uint32_t rowCount = srcRowCount > dstRowCount ? dstRowCount : srcRowCount;
     uint32_t count = srcRowStride > dstRowStride ? dstRowStride : srcRowStride;
-    if (rowCount != 0 && (dstRowStride > dstBufferLen / rowCount || srcRowStride > srcBufferLen / rowCount)) {
-        EFFECT_LOGE("Out of buffer available range! Copy fail! srcH=%{public}d, srcFormat=%{public}d, "
-            "srcStride=%{public}d, srcLen=%{public}d, dstH=%{public}d, dstFormat=%{public}d, dstStride=%{public}d, "
-            "dstLen=%{public}d", srcInfo.height_, srcInfo.formatType_, srcInfo.rowStride_, srcInfo.len_,
-            dstInfo.height_, dstInfo.formatType_, dstInfo.rowStride_, dstInfo.len_);
-        return;
-    }
+    CHECK_AND_RETURN_LOG(rowCount == 0 || !(dstRowStride > dstBufferLen / rowCount ||
+        srcRowStride > srcBufferLen / rowCount),
+        "Out of buffer available range! Copy fail! srcH=%{public}d, srcFormat=%{public}d, "
+        "srcStride=%{public}d, srcLen=%{public}d, dstH=%{public}d, dstFormat=%{public}d, dstStride=%{public}d, "
+        "dstLen=%{public}d", srcInfo.height_, srcInfo.formatType_, srcInfo.rowStride_, srcInfo.len_,
+        dstInfo.height_, dstInfo.formatType_, dstInfo.rowStride_, dstInfo.len_);
     for (uint32_t i = 0; i < rowCount; i++) {
         errno_t ret = memcpy_s(dstBuffer + i * dstRowStride, dstRowStride, srcBuffet + i * srcRowStride, count);
         if (ret != 0) {

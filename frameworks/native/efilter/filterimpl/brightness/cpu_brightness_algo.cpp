@@ -39,12 +39,10 @@ ErrorCode BrightnessCheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uin
     uint32_t dst_width = dst->bufferInfo_->width_;
     uint32_t dst_height = dst->bufferInfo_->height_;
     
-    if (dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
+    bool isInvalidParameterValue = dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
        src->bufferInfo_->len_ < src_width*src_height*RGBA_SIZE ||
-       dst->bufferInfo_->len_ < src->bufferInfo_->len_) {
-        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
-    }
-    return ErrorCode::SUCCESS;
+       dst->bufferInfo_->len_ < src->bufferInfo_->len_;
+    return isInvalidParameterValue ? ErrorCode::ERR_INVALID_PARAMETER_VALUE : ErrorCode::SUCCESS;
 }
 
 float CpuBrightnessAlgo::ParseBrightness(std::map<std::string, Any> &value)
@@ -70,9 +68,8 @@ ErrorCode CpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
     uint32_t width = src->bufferInfo_->width_;
     uint32_t height = src->bufferInfo_->height_;
 
-    if (BrightnessCheckBufferInfolen(src, dst, width, height) != ErrorCode::SUCCESS) {
-        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
-    }
+    CHECK_AND_RETURN_RET(BrightnessCheckBufferInfolen(src, dst, width, height) == ErrorCode::SUCCESS,
+        ErrorCode::ERR_INVALID_PARAMETER_VALUE);
 
     float eps = ESP;
     if (fabs(brightness) < eps) {

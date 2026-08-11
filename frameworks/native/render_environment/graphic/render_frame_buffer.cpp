@@ -43,15 +43,14 @@ RenderFrameBuffer::~RenderFrameBuffer()
 void RenderFrameBuffer::Resize(int width, int height)
 {
     CHECK_AND_RETURN_LOG(texture_ != nullptr, "RenderFrameBuffer Resize fail, texture_ is null.");
-    if ((width != (int)texture_->Width()) || (height != (int)texture_->Height())) {
-        GLenum fmt = texture_->Format();
-        texture_.reset();
-        texture_ = cache_->RequestTexture(width, height, fmt);
-        glBindFramebuffer(GL_FRAMEBUFFER, fboId_);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_->GetName(), 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        GLUtils::CheckError(__FILE_NAME__, __LINE__);
-    }
+    CHECK_AND_RETURN_NOLOG((width != (int)texture_->Width()) || (height != (int)texture_->Height()));
+    GLenum fmt = texture_->Format();
+    texture_.reset();
+    texture_ = cache_->RequestTexture(width, height, fmt);
+    glBindFramebuffer(GL_FRAMEBUFFER, fboId_);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_->GetName(), 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    GLUtils::CheckError(__FILE_NAME__, __LINE__);
 }
 
 RenderTexturePtr RenderFrameBuffer::Texture() const

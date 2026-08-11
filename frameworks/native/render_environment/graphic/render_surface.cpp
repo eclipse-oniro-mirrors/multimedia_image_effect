@@ -46,21 +46,15 @@ bool RenderSurface::Create(void *window)
     CHECK_AND_RETURN_RET_LOG(display_ != nullptr, false, "RenderSurface eglGetDisplay fail.");
     std::vector<int> attributeList = attribute_.ToEGLAttribList();
     EGLBoolean ret = eglChooseConfig(display_, attributeList.data(), &config_, 1, &retNum);
-    if (ret != EGL_TRUE) {
-        EGLint error = eglGetError();
-        EFFECT_LOGE("RenderSurface create failed, code: %{public}d", error);
-        return false;
-    }
+    CHECK_AND_RETURN_RET_LOG(ret == EGL_TRUE, false, "RenderSurface create failed, code: %{public}d",
+        eglGetError());
     EGLint surfaceAttribs[] = {
         EGL_NONE
     };
     EGLNativeWindowType mEglWindow = reinterpret_cast<EGLNativeWindowType>(window);
     surface_ = eglCreateWindowSurface(display_, config_, mEglWindow, surfaceAttribs);
-    if (surface_ == EGL_NO_SURFACE) {
-        EGLint error = eglGetError();
-        EFFECT_LOGE("RenderSurface create failed, code: %{public}d", error);
-        return false;
-    }
+    CHECK_AND_RETURN_RET_LOG(surface_ != EGL_NO_SURFACE, false, "RenderSurface create failed, code: %{public}d",
+        eglGetError());
     surfaceType_ = SurfaceType::SURFACE_TYPE_ON_SCREEN;
     SetReady(true);
     return true;
@@ -72,20 +66,14 @@ bool RenderSurface::Init()
     display_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     std::vector<int> attributeList = attribute_.ToEGLAttribList();
     EGLBoolean ret = eglChooseConfig(display_, attributeList.data(), &config_, 1, &retNum);
-    if (ret != EGL_TRUE) {
-        EGLint error = eglGetError();
-        EFFECT_LOGE("RenderSurface create failed, code: %{public}d", error);
-        return false;
-    }
+    CHECK_AND_RETURN_RET_LOG(ret == EGL_TRUE, false, "RenderSurface create failed, code: %{public}d",
+        eglGetError());
     EGLint surfaceAttribs[] = {
         EGL_NONE
     };
     surface_ = eglCreatePbufferSurface(display_, config_, surfaceAttribs);
-    if (surface_ == EGL_NO_SURFACE) {
-        EGLint error = eglGetError();
-        EFFECT_LOGE("RenderSurface create failed, code: %{public}d", error);
-        return false;
-    }
+    CHECK_AND_RETURN_RET_LOG(surface_ != EGL_NO_SURFACE, false, "RenderSurface create failed, code: %{public}d",
+        eglGetError());
     surfaceType_ = SurfaceType::SURFACE_TYPE_OFF_SCREEN;
     SetReady(true);
     return true;
@@ -93,16 +81,12 @@ bool RenderSurface::Init()
 
 bool RenderSurface::Release()
 {
-    if (IsReady()) {
-        EGLBoolean ret = eglDestroySurface(display_, surface_);
-        if (ret != EGL_TRUE) {
-            EGLint error = eglGetError();
-            EFFECT_LOGE("RenderSurface create failed, code: %{public}d", error);
-            return false;
-        }
-        surfaceType_ = SurfaceType::SURFACE_TYPE_NULL;
-        SetReady(false);
-    }
+    CHECK_AND_RETURN_RET(IsReady(), true);
+    EGLBoolean ret = eglDestroySurface(display_, surface_);
+    CHECK_AND_RETURN_RET_LOG(ret == EGL_TRUE, false, "RenderSurface create failed, code: %{public}d",
+        eglGetError());
+    surfaceType_ = SurfaceType::SURFACE_TYPE_NULL;
+    SetReady(false);
     return true;
 }
 

@@ -80,12 +80,11 @@ ErrorCode GpuBrightnessAlgo::Init()
 
 void GpuBrightnessAlgo::PreDraw(GLenum target)
 {
-    if (shader_ != nullptr && target == GL_TEXTURE_2D) {
-        if (renderEffectData_->inputTexture_ != nullptr) {
-            shader_->BindTexture("Texture", 0, renderEffectData_->inputTexture_->GetName(), target);
-        }
-        shader_->SetFloat("ratio", renderEffectData_->ratio);
+    CHECK_AND_RETURN_NOLOG(shader_ != nullptr && target == GL_TEXTURE_2D);
+    if (renderEffectData_->inputTexture_ != nullptr) {
+        shader_->BindTexture("Texture", 0, renderEffectData_->inputTexture_->GetName(), target);
     }
+    shader_->SetFloat("ratio", renderEffectData_->ratio);
 }
 
 void GpuBrightnessAlgo::PostDraw(GLenum target)

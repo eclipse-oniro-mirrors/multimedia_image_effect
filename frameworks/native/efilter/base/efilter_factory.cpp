@@ -35,10 +35,9 @@ EFilterFactory *EFilterFactory::Instance()
 
 void EFilterFactory::DestroyInstance()
 {
-    if (instance_) {
-        delete instance_;
-        instance_ = nullptr;
-    }
+    CHECK_AND_RETURN_NOLOG(instance_);
+    delete instance_;
+    instance_ = nullptr;
 }
 
 EFilterFactory::~EFilterFactory()

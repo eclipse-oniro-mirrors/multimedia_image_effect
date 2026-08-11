@@ -40,15 +40,13 @@ ErrorCode ContrastCheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint3
 {
     uint32_t dst_width = dst->bufferInfo_->width_;
     uint32_t dst_height = dst->bufferInfo_->height_;
-    
-    if (dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
+
+    bool isInvalidParameterValue = dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
         src->bufferInfo_->len_ < src_width*src_height*RGBA_SIZE ||
         dst->bufferInfo_->len_ < src->bufferInfo_->len_ ||
         src->bufferInfo_->len_ < static_cast<uint32_t>(src->bufferInfo_->rowStride_) * src_height ||
-        dst->bufferInfo_->len_ < static_cast<uint32_t>(dst->bufferInfo_->rowStride_) * src_height) {
-        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
-    }
-    return ErrorCode::SUCCESS;
+        dst->bufferInfo_->len_ < static_cast<uint32_t>(dst->bufferInfo_->rowStride_) * src_height;
+    return isInvalidParameterValue ? ErrorCode::ERR_INVALID_PARAMETER_VALUE : ErrorCode::SUCCESS;
 }
 
 ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
@@ -63,9 +61,8 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
     uint32_t width = src->bufferInfo_->width_;
     uint32_t height = src->bufferInfo_->height_;
 
-    if (ContrastCheckBufferInfolen(src, dst, width, height) != ErrorCode::SUCCESS) {
-        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
-    }
+    CHECK_AND_RETURN_RET(ContrastCheckBufferInfolen(src, dst, width, height) == ErrorCode::SUCCESS,
+        ErrorCode::ERR_INVALID_PARAMETER_VALUE);
 
     float eps = ESP;
     if (fabs(contrast) < eps) {
