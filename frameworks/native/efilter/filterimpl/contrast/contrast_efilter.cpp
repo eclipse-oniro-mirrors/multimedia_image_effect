@@ -79,6 +79,8 @@ ErrorCode ContrastEFilter::Render(EffectBuffer *buffer, std::shared_ptr<EffectCo
 
 ErrorCode ContrastEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context)
 {
+    CHECK_AND_RETURN_RET_LOG(src != nullptr && src->bufferInfo_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "contrast render, src or bufferInfo is null");
     IPType ipType = context->ipType_;
     auto it = contrastFilterInfo_.find(ipType);
     CHECK_AND_RETURN_RET_LOG(it != contrastFilterInfo_.end(), ErrorCode::ERR_UNSUPPORTED_IPTYPE_FOR_EFFECT,

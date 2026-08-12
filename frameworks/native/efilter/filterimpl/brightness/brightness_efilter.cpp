@@ -80,6 +80,8 @@ ErrorCode BrightnessEFilter::Render(EffectBuffer *buffer, std::shared_ptr<Effect
 
 ErrorCode BrightnessEFilter::Render(EffectBuffer *src, EffectBuffer *dst, std::shared_ptr<EffectContext> &context)
 {
+    CHECK_AND_RETURN_RET_LOG(src != nullptr && src->bufferInfo_ != nullptr, ErrorCode::ERR_INPUT_NULL,
+        "brightness render, src or bufferInfo is null");
     IPType ipType = context->ipType_;
     auto it = brightnessFilterInfo_.find(ipType);
     CHECK_AND_RETURN_RET_LOG(it != brightnessFilterInfo_.end(), ErrorCode::ERR_UNSUPPORTED_IPTYPE_FOR_EFFECT,
