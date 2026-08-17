@@ -14,13 +14,65 @@
      limitations under the License.
 -->
 <configuration ver="2.0">
-    <target name="image_effect_unittest">
+    <target name="utils_unittest">
+        <depend pushpath="/data/test" findpath="res" presetcmd=""/>
+        <preparer>
+            <option name="push" value="camera_efilter_test.jpg -> /data/test/resource" src="res"/>
+            <option name="push" value="image_effect_1k_test1.jpg -> /data/test/resource" src="res"/>
+            <option name="shell" value="cp /data/test/resource/image_effect_1k_test1.jpg /data/test/resource/image_effect_1k_test1.png"/>
+        </preparer>
+        <cleaner>
+            <option name="shell" value="rm -rf /data/test/"/>
+        </cleaner>
+    </target>
+
+    <target name="colorspace_manager_unittest">
+        <depend pushpath="/data/test" findpath="res" presetcmd=""/>
+        <preparer>
+            <option name="push" value="image_effect_1k_test1.jpg -> /data/test/resource" src="res"/>
+        </preparer>
+        <cleaner>
+            <option name="shell" value="rm -rf /data/test/"/>
+        </cleaner>
+    </target>
+
+    <target name="efilter_unittest">
+        <depend pushpath="/data/test" findpath="res" presetcmd=""/>
+        <preparer>
+            <option name="push" value="image_effect_1k_test1.jpg -> /data/test/resource" src="res"/>
+        </preparer>
+        <cleaner>
+            <option name="shell" value="rm -rf /data/test/"/>
+        </cleaner>
+    </target>
+
+    <target name="image_effect_inner_unittest">
+        <depend pushpath="/data/test" findpath="res" presetcmd=""/>
+        <preparer>
+            <option name="push" value="image_effect_1k_test1.jpg -> /data/test/resource" src="res"/>
+            <option name="shell" value="cp /data/test/resource/image_effect_1k_test1.jpg /data/test/resource/image_effect_1k_test1.png"/>
+        </preparer>
+        <cleaner>
+            <option name="shell" value="rm -rf /data/test/"/>
+        </cleaner>
+    </target>
+
+    <target name="image_effect_capi_unittest">
+        <depend pushpath="/data/test" findpath="res" presetcmd=""/>
+        <preparer>
+            <option name="push" value="image_effect_hdr_test1.jpg -> /data/test/resource" src="res"/>
+        </preparer>
+        <cleaner>
+            <option name="shell" value="rm -rf /data/test/"/>
+        </cleaner>
+    </target>
+
+    <target name="native_image_effect_unittest">
         <depend pushpath="/data/test" findpath="res" presetcmd=""/>
         <preparer>
             <option name="push" value="image_effect_1k_test1.jpg -> /data/test/resource" src="res"/>
             <option name="push" value="image_effect_hdr_test1.jpg -> /data/test/resource" src="res"/>
             <option name="push" value="image_effect_adobe_test1.jpg -> /data/test/resource" src="res"/>
-            <option name="push" value="camera_efilter_test.jpg -> /data/test/resource" src="res"/>
             <option name="shell" value="cp /data/test/resource/image_effect_1k_test1.jpg /data/test/resource/image_effect_1k_test1.png"/>
         </preparer>
         <cleaner>

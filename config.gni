@@ -14,6 +14,7 @@
 image_effect_root_dir = "//foundation/multimedia/image_effect"
 declare_args() {
 image_effect_colorspace_convertor_enable = false
+image_effect_test = true
 }
 
 if (defined(global_parts_info) &&

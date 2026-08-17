@@ -16,121 +16,258 @@ import("//foundation/multimedia/image_effect/config.gni")
 
 module_output_path = "image_effect/image_effect/test"
 
-base_include_dirs = [
+common_include_dirs = [
+  "$image_effect_root_dir/interfaces/inner_api/native",
+  "$image_effect_root_dir/interfaces/inner_api/native/base",
+  "$image_effect_root_dir/interfaces/inner_api/native/colorspace",
+  "$image_effect_root_dir/interfaces/inner_api/native/common",
+  "$image_effect_root_dir/interfaces/inner_api/native/custom",
+  "$image_effect_root_dir/interfaces/inner_api/native/effect",
+  "$image_effect_root_dir/interfaces/inner_api/native/efilter",
   "$image_effect_root_dir/interfaces/inner_api/native/memory",
   "$image_effect_root_dir/frameworks/native/effect/base",
-  "$image_effect_root_dir/frameworks/native/capi",
   "$image_effect_root_dir/frameworks/native/effect/pipeline/include/core",
-  "$image_effect_root_dir/frameworks/native/effect/pipeline/include/filters/sink",
+  "$image_effect_root_dir/frameworks/native/effect/pipeline/include/factory",
+  "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager",
+  "$image_effect_root_dir/frameworks/native/efilter/base",
+  "$image_effect_root_dir/frameworks/native/efilter/custom",
+  "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness",
+  "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast",
   "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop",
-  "$image_effect_root_dir/frameworks/native/render_environment",
-  "$image_effect_root_dir/frameworks/native/render_environment/graphic_2d",
+  "$image_effect_root_dir/frameworks/native/capi/",
   "$image_effect_root_dir/frameworks/native/utils/common",
   "$image_effect_root_dir/frameworks/native/utils/dfx",
+  "$image_effect_root_dir/frameworks/native/render_environment",
+  "$image_effect_root_dir/frameworks/native/render_environment/base/math",
+  "$image_effect_root_dir/frameworks/native/render_environment/core",
+  "$image_effect_root_dir/frameworks/native/render_environment/graphic",
+  "$image_effect_root_dir/frameworks/native/render_environment/render_thread/queue",
+  "$image_effect_root_dir/frameworks/native/render_environment/render_thread/task",
+  "$image_effect_root_dir/frameworks/native/render_environment/render_thread/worker",
+  "$image_effect_root_dir/interfaces/kits/native",
+  "$image_effect_root_dir/test/unittest/mock/include",
+  "$image_effect_root_dir/test/unittest/common",
+  "$image_effect_root_dir/test/unittest/utils",
 ]
 
-base_sources = [
-  "$image_effect_root_dir/frameworks/native/capi/native_common_utils.cpp",
-  "$image_effect_root_dir/frameworks/native/effect/base/external_loader.cpp",
-  "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory.cpp",
-  "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory_manager.cpp",
-  "$image_effect_root_dir/frameworks/native/effect/pipeline/core/capability_negotiate.cpp",
-  "$image_effect_root_dir/frameworks/native/effect/pipeline/core/filter_base.cpp",
-  "$image_effect_root_dir/frameworks/native/effect/pipeline/core/pipeline_core.cpp",
-  "$image_effect_root_dir/frameworks/native/effect/pipeline/core/port.cpp",
-  "$image_effect_root_dir/frameworks/native/effect/pipeline/factory/filter_factory.cpp",
-  "$image_effect_root_dir/frameworks/native/effect/pipeline/filters/sink/image_sink_filter.cpp",
-  "$image_effect_root_dir/frameworks/native/efilter/base/render_strategy.cpp",
-  "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast/cpu_contrast_algo.cpp",
-  "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop/crop_efilter.cpp",
-  "$image_effect_root_dir/frameworks/native/render_environment/core/render_opengl_renderer.cpp",
-  "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_program.cpp",
-  "$image_effect_root_dir/frameworks/native/render_environment/graphic/gl_utils.cpp",
-  "$image_effect_root_dir/frameworks/native/render_environment/render_environment.cpp",
-  "$image_effect_root_dir/frameworks/native/utils/common/common_utils.cpp",
-  "$image_effect_root_dir/frameworks/native/utils/common/effect_json_helper.cpp",
-  "$image_effect_root_dir/frameworks/native/utils/common/any.cpp",
-  "$image_effect_root_dir/frameworks/native/utils/dfx/error_code.cpp",
+common_cflags = [
+  "-fPIC",
+  "-Werror=unused",
+  "-fno-access-control",  # Ignore Private Member Access Control
 ]
 
-ohos_unittest("image_effect_unittest") {
+common_external_deps = [
+  "cJSON:cjson",
+  "c_utils:utils",
+  "graphic_2d:EGL",
+  "graphic_2d:GLESv3",
+  "graphic_surface:surface",
+  "graphic_surface:sync_fence",
+  "hilog:libhilog",
+  "image_framework:image_native",
+  "image_framework:pixelmap",
+  "googletest:gmock_main",
+  "googletest:gtest_main",
+  "bounds_checking_function:libsec_shared",
+]
+
+ohos_unittest("utils_unittest") {
   module_out_path = module_output_path
   resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
-
-  include_dirs = base_include_dirs
-
-  include_dirs += [
-    "$image_effect_root_dir/frameworks/native/effect/render_environment/gpu_render",
-    "$image_effect_root_dir/frameworks/native/effect/render_environment/utils",
-    "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness",
-    "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast",
-    "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop",
-    "$image_effect_root_dir/frameworks/native/capi",
-    "$image_effect_root_dir/frameworks/native/render_environment",
-    "$image_effect_root_dir/frameworks/native/render_environment/graphic",
-    "$image_effect_root_dir/test/unittest/mock/include",
-    "$image_effect_root_dir/test/unittest/common",
-    "$image_effect_root_dir/test/unittest/utils",
+  include_dirs = common_include_dirs
+  sources = [
+    "$image_effect_root_dir/test/unittest/TestJsonHelper.cpp",
+    "$image_effect_root_dir/test/unittest/TestUtils.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_producer_surface.cpp",
   ]
 
-  sources = base_sources
+  deps = [ "$image_effect_root_dir/frameworks/native:image_effect_static" ]
+  external_deps = common_external_deps
+  use_exceptions = true
+  cflags = common_cflags
+  cflags_cc = common_cflags
+}
 
-  sources += [
-    "$image_effect_root_dir/test/unittest/TestCpuContrastAlgo.cpp",
-    "$image_effect_root_dir/test/unittest/TestEffectColorSpaceManager.cpp",
+ohos_unittest("memory_manager_unittest") {
+  module_out_path = module_output_path
+  include_dirs = common_include_dirs
+  sources = [
     "$image_effect_root_dir/test/unittest/TestEffectMemoryManager.cpp",
+  ]
+
+  deps = [ "$image_effect_root_dir/frameworks/native:image_effect_static" ]
+  external_deps = common_external_deps
+  use_exceptions = true
+  cflags = common_cflags
+  cflags_cc = common_cflags
+}
+
+ohos_unittest("colorspace_manager_unittest") {
+  module_out_path = module_output_path
+  resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
+  include_dirs = common_include_dirs
+  sources = [
+    "$image_effect_root_dir/test/unittest/TestEffectColorSpaceManager.cpp",
+  ]
+
+  deps = [ "$image_effect_root_dir/frameworks/native:image_effect_static" ]
+  external_deps = common_external_deps + [
+    "image_framework:picture",
+    "graphic_2d:color_manager",
+    "drivers_interface_display:display_commontype_idl_headers",
+  ]
+  use_exceptions = true
+  cflags = common_cflags
+  cflags_cc = common_cflags
+}
+
+ohos_unittest("pipeline_unittest") {
+  module_out_path = module_output_path
+  include_dirs = common_include_dirs
+  sources = [
     "$image_effect_root_dir/test/unittest/TestEffectPipeline.cpp",
-    "$image_effect_root_dir/test/unittest/TestImageEffect.cpp",
-    "$image_effect_root_dir/test/unittest/TestImageSinkFilter.cpp",
-    "$image_effect_root_dir/test/unittest/TestJsonHelper.cpp",
     "$image_effect_root_dir/test/unittest/TestPort.cpp",
+  ]
+
+  deps = [ "$image_effect_root_dir/frameworks/native:image_effect_static" ]
+  external_deps = common_external_deps + [
+    "egl:libEGL",
+    "opengles:libGLES",
+  ]
+  use_exceptions = true
+  cflags = common_cflags
+  cflags_cc = common_cflags
+}
+
+ohos_unittest("efilter_unittest") {
+  module_out_path = module_output_path
+  resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
+  include_dirs = common_include_dirs
+  sources = [
+    "$image_effect_root_dir/test/unittest/TestImageEffect.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_pixel_map.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_producer_surface.cpp",
+  ]
+
+  deps = [ "$image_effect_root_dir/frameworks/native:image_effect_static" ]
+  external_deps = common_external_deps + [
+    "graphic_surface:surface",
+    "graphic_2d:color_manager",
+    "egl:libEGL",
+    "opengles:libGLES",
+  ]
+  use_exceptions = true
+  cflags = common_cflags
+  cflags_cc = common_cflags
+}
+
+ohos_unittest("render_environment_unittest") {
+  module_out_path = module_output_path
+  include_dirs = common_include_dirs
+  sources = [
     "$image_effect_root_dir/test/unittest/TestRenderEnvironment.cpp",
-    "$image_effect_root_dir/test/unittest/TestUtils.cpp",
-    "$image_effect_root_dir/test/unittest/image_effect_capi_unittest.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_producer_surface.cpp",
+  ]
+
+  deps = [ "$image_effect_root_dir/frameworks/native:image_effect_static" ]
+  external_deps = common_external_deps + [
+    "graphic_surface:surface",
+    "graphic_2d:EGL",
+    "graphic_2d:GLESv3",
+    "egl:libEGL",
+    "opengles:libGLES",
+  ]
+  use_exceptions = true
+  cflags = common_cflags
+  cflags_cc = common_cflags
+}
+
+ohos_unittest("image_effect_inner_unittest") {
+  module_out_path = module_output_path
+  resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
+  include_dirs = common_include_dirs
+  sources = [
     "$image_effect_root_dir/test/unittest/image_effect_inner_unittest.cpp",
     "$image_effect_root_dir/test/unittest/mock/src/mock_picture.cpp",
     "$image_effect_root_dir/test/unittest/mock/src/mock_pixel_map.cpp",
     "$image_effect_root_dir/test/unittest/mock/src/mock_producer_surface.cpp",
-    "$image_effect_root_dir/test/unittest/native_image_effect_unittest.cpp",
-    "$image_effect_root_dir/test/unittest/utils/test_native_buffer_utils.cpp",
-    "$image_effect_root_dir/test/unittest/utils/test_picture_utils.cpp",
-    "$image_effect_root_dir/test/unittest/utils/test_pixel_map_utils.cpp",
   ]
 
-  deps = [
-    "$image_effect_root_dir/frameworks/native:image_effect",
-    "$image_effect_root_dir/frameworks/native:image_effect_impl",
-  ]
-
-  external_deps = [
-    "ability_base:zuri",
-    "cJSON:cjson",
-    "c_utils:utils",
-    "drivers_interface_display:display_commontype_idl_headers",
-    "graphic_2d:EGL",
-    "graphic_2d:GLESv3",
-    "graphic_surface:surface",
-    "graphic_surface:sync_fence",
-    "hilog:libhilog",
-    "hitrace:hitrace_meter",
-    "image_framework:image_native",
+  deps = [ "$image_effect_root_dir/frameworks/native:image_effect_static" ]
+  external_deps = common_external_deps + [
     "image_framework:picture",
-    "image_framework:pixelmap",
+    "graphic_surface:surface",
     "ipc:ipc_single",
+    "napi:ace_napi",
+    "node:node_header_notice",
+    "init:libbegetutil",
     "libexif:libexif",
-    "googletest:gmock_main",
-    "googletest:gtest_main",
+    "graphic_2d:librender_service_client",
+    "graphic_2d:color_manager",
     "egl:libEGL",
     "opengles:libGLES",
   ]
-
   use_exceptions = true
+  cflags = common_cflags
+  cflags_cc = common_cflags
+}
 
-  cflags = [
-    "-fPIC",
-    "-Werror=unused",
-    "-fno-access-control",  # Ignore Private Member Access Control
+ohos_unittest("image_effect_capi_unittest") {
+  module_out_path = module_output_path
+  resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
+  include_dirs = common_include_dirs
+  sources = [
+    "$image_effect_root_dir/test/unittest/image_effect_capi_unittest.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_pixel_map.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_producer_surface.cpp",
+    "$image_effect_root_dir/test/unittest/utils/test_pixel_map_utils.cpp",
   ]
 
-  cflags_cc = cflags
+  deps = [ "$image_effect_root_dir/frameworks/native:image_effect_static" ]
+  external_deps = common_external_deps + [
+    "image_framework:picture",
+    "graphic_surface:surface",
+    "napi:ace_napi",
+    "node:node_header_notice",
+    "libexif:libexif",
+    "graphic_2d:librender_service_client",
+    "egl:libEGL",
+    "opengles:libGLES",
+  ]
+  use_exceptions = true
+  cflags = common_cflags
+  cflags_cc = common_cflags
+}
+
+ohos_unittest("native_image_effect_unittest") {
+  module_out_path = module_output_path
+  resource_config_file = "$image_effect_root_dir/test/resource/ohos_test.xml"
+  include_dirs = common_include_dirs
+  sources = [
+    "$image_effect_root_dir/test/unittest/native_image_effect_unittest.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_picture.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_pixel_map.cpp",
+    "$image_effect_root_dir/test/unittest/mock/src/mock_producer_surface.cpp",
+    "$image_effect_root_dir/test/unittest/utils/test_native_buffer_utils.cpp",
+    "$image_effect_root_dir/test/unittest/utils/test_pixel_map_utils.cpp",
+  ]
+
+  deps = [ "$image_effect_root_dir/frameworks/native:image_effect_static" ]
+  external_deps = common_external_deps + [
+    "image_framework:picture",
+    "graphic_surface:surface",
+    "graphic_surface:sync_fence",
+    "ipc:ipc_single",
+    "napi:ace_napi",
+    "node:node_header_notice",
+    "init:libbegetutil",
+    "libexif:libexif",
+    "graphic_2d:librender_service_client",
+    "graphic_2d:color_manager",
+    "egl:libEGL",
+    "opengles:libGLES",
+  ]
+  use_exceptions = true
+  cflags = common_cflags
+  cflags_cc = common_cflags
 }
