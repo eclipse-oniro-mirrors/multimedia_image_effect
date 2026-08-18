@@ -221,3 +221,110 @@ ohos_shared_library("image_effect") {
   innerapi_tags = [ "ndk" ]
   part_name = "image_effect"
 }
+if (image_effect_test) {
+  ohos_static_library("image_effect_static") {
+    public_configs = [ ":image_effect_impl_public_config" ]
+
+    include_dirs = [
+      "$image_effect_root_dir/interfaces/kits/native",
+      "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager",
+      "$image_effect_root_dir/frameworks/native/efilter/custom",
+      "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness",
+      "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast",
+      "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop",
+      "$image_effect_root_dir/frameworks/native/utils/common",
+    ]
+
+    sources = [
+      "$image_effect_root_dir/frameworks/native/effect/base/effect.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/base/effect_context.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/base/effect_surface_adapter.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/base/external_loader.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/base/image_effect_inner.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_processor.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_helper.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_manager.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/colorspace_strategy.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/manager/colorspace_manager/metadata_processor.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/manager/memory_manager/effect_memory_manager.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/pipeline/core/capability_negotiate.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/pipeline/core/filter_base.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/pipeline/core/pipeline_core.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/pipeline/core/port.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/pipeline/factory/filter_factory.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/pipeline/filters/sink/image_sink_filter.cpp",
+      "$image_effect_root_dir/frameworks/native/effect/pipeline/filters/source/image_source_filter.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/base/efilter.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/base/efilter_base.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/base/efilter_factory.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/base/render_strategy.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/custom/custom_efilter.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/custom/filter_delegate.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness/brightness_efilter.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness/cpu_brightness_algo.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/filterimpl/brightness/gpu_brightness_algo.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast/contrast_efilter.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast/cpu_contrast_algo.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/filterimpl/contrast/gpu_contrast_algo.cpp",
+      "$image_effect_root_dir/frameworks/native/efilter/filterimpl/crop/crop_efilter.cpp",
+      "$image_effect_root_dir/frameworks/native/capi/image_effect.cpp",
+      "$image_effect_root_dir/frameworks/native/capi/image_effect_filter.cpp",
+      "$image_effect_root_dir/frameworks/native/capi/native_common_utils.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/core/algorithm_program.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/core/render_mesh.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/core/render_opengl_renderer.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/graphic/gl_utils.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_attribute.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_context.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_frame_buffer.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_general_program.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_program.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/graphic/render_surface.cpp",
+      "$image_effect_root_dir/frameworks/native/render_environment/render_environment.cpp",
+      "$image_effect_root_dir/frameworks/native/utils/common/common_utils.cpp",
+      "$image_effect_root_dir/frameworks/native/utils/common/effect_json_helper.cpp",
+      "$image_effect_root_dir/frameworks/native/utils/common/memcpy_helper.cpp",
+      "$image_effect_root_dir/frameworks/native/utils/common/string_helper.cpp",
+      "$image_effect_root_dir/frameworks/native/utils/common/any.cpp",
+      "$image_effect_root_dir/frameworks/native/utils/dfx/error_code.cpp",
+      "$image_effect_root_dir/frameworks/native/utils/dfx/event_report.cpp",
+      "$image_effect_root_dir/frameworks/native/utils/format/format_helper.cpp",
+    ]
+
+    use_exceptions = true
+
+    external_deps = [
+      "ability_base:zuri",
+      "bounds_checking_function:libsec_shared",
+      "cJSON:cjson",
+      "c_utils:utils",
+      "drivers_interface_display:display_commontype_idl_headers",
+      "graphic_2d:EGL",
+      "graphic_2d:GLESv3",
+      "graphic_2d:color_manager",
+      "graphic_2d:librender_service_client",
+      "graphic_surface:surface",
+      "graphic_surface:sync_fence",
+      "hilog:libhilog",
+      "hisysevent:libhisysevent",
+      "hitrace:hitrace_meter",
+      "image_framework:image_native",
+      "image_framework:picture",
+      "image_framework:pixelmap",
+      "libexif:libexif",
+      "qos_manager:qos",
+      "skia:skia_canvaskit",
+      "egl:libEGL",
+      "opengles:libGLES",
+    ]
+
+    if (image_effect_colorspace_convertor_enable) {
+      external_deps += [ "video_processing_engine:videoprocessingengine" ]
+      defines = [ "VPE_ENABLE" ]
+    }
+
+    subsystem_name = "multimedia"
+    part_name = "image_effect"
+  }
+}

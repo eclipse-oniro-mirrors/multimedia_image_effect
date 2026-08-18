@@ -13,5 +13,15 @@
 
 group("image_effect_test") {
   testonly = true
-  deps = [ "unittest:image_effect_unittest" ]
+  deps = [
+    "unittest:utils_unittest",
+    "unittest:memory_manager_unittest",
+    "unittest:colorspace_manager_unittest",
+    "unittest:pipeline_unittest",
+    "unittest:efilter_unittest",
+    "unittest:render_environment_unittest",
+    "unittest:image_effect_inner_unittest",
+    "unittest:image_effect_capi_unittest",
+    "unittest:native_image_effect_unittest",
+  ]
 }

@@ -20,6 +20,8 @@
 #include "test_common.h"
 #include "filter_base.h"
 #include "transfer.h"
+#include "brightness_efilter.h"
+#include "contrast_efilter.h"
 
 using namespace testing::ext;
 
@@ -33,7 +35,11 @@ public:
     TestEffectPipeline() = default;
 
     ~TestEffectPipeline() override = default;
-    static void SetUpTestCase() {}
+    static void SetUpTestCase()
+    {
+        EFilterFactory::Instance()->RegisterEFilter<BrightnessEFilter>(BRIGHTNESS_EFILTER);
+        EFilterFactory::Instance()->RegisterEFilter<ContrastEFilter>(CONTRAST_EFILTER);
+    }
 
     static void TearDownTestCase() {}
 
