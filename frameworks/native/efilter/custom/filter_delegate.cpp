@@ -15,6 +15,7 @@
 
 #include "filter_delegate.h"
 
+#include <limits>
 #include "common_utils.h"
 #include "effect_log.h"
 #include "efilter.h"
@@ -203,8 +204,13 @@ std::shared_ptr<EffectBuffer> FilterDelegate::GenDstEffectBuffer(const OH_Effect
     bufferInfo->height_ = static_cast<uint32_t>(dst->height);
     bufferInfo->rowStride_ = static_cast<uint32_t>(dst->rowSize);
     NativeCommonUtils::SwitchToFormatType(dst->format, bufferInfo->formatType_);
-    bufferInfo->len_ =
-        FormatHelper::CalculateDataRowCount(bufferInfo->height_, bufferInfo->formatType_) * bufferInfo->rowStride_;
+    uint64_t calcLen = 0;
+    if (!SafeMul(static_cast<uint64_t>(FormatHelper::CalculateDataRowCount(bufferInfo->height_,
+        bufferInfo->formatType_)), bufferInfo->rowStride_, calcLen)) {
+        EFFECT_LOGE("GenDstEffectBuffer: len overflow! height=%{public}u, rowStride=%{public}u",
+            bufferInfo->height_, bufferInfo->rowStride_);
+    }
+    bufferInfo->len_ = static_cast<uint32_t>(calcLen);
     bufferInfo->surfaceBuffer_ = nullptr;
     std::shared_ptr<ExtraInfo> extraInfo = std::make_shared<ExtraInfo>();
     *extraInfo = *src->extraInfo_;

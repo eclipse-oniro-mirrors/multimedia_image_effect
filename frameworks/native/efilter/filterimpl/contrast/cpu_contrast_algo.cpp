@@ -40,13 +40,66 @@ ErrorCode ContrastCheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uint3
 {
     uint32_t dst_width = dst->bufferInfo_->width_;
     uint32_t dst_height = dst->bufferInfo_->height_;
+    uint64_t dst_required = 0;
+    uint64_t src_required = 0;
+    if (!SafeMul3(dst_width, dst_height, RGBA_SIZE, dst_required) ||
+        !SafeMul3(src_width, src_height, RGBA_SIZE, src_required) ||
+        dst->bufferInfo_->len_ < dst_required || src->bufferInfo_->len_ < src_required ||
+        dst->bufferInfo_->len_ < src->bufferInfo_->len_) {
+        EFFECT_LOGE("ContrastCheckBufferInfolen: buffer check fail! dstLen=%{public}u, srcLen=%{public}u",
+            dst->bufferInfo_->len_, src->bufferInfo_->len_);
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
+    return ErrorCode::SUCCESS;
+}
 
-    bool isInvalidParameterValue = dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
-        src->bufferInfo_->len_ < src_width*src_height*RGBA_SIZE ||
-        dst->bufferInfo_->len_ < src->bufferInfo_->len_ ||
-        src->bufferInfo_->len_ < static_cast<uint32_t>(src->bufferInfo_->rowStride_) * src_height ||
-        dst->bufferInfo_->len_ < static_cast<uint32_t>(dst->bufferInfo_->rowStride_) * src_height;
-    return isInvalidParameterValue ? ErrorCode::ERR_INVALID_PARAMETER_VALUE : ErrorCode::SUCCESS;
+bool ContrastCheckStride(EffectBuffer *src, EffectBuffer *dst, uint32_t height)
+{
+    uint32_t srcRowStride = src->bufferInfo_->rowStride_;
+    uint32_t dstRowStride = dst->bufferInfo_->rowStride_;
+    uint64_t srcTotalSize = 0;
+    uint64_t dstTotalSize = 0;
+    if (srcRowStride == 0 || dstRowStride == 0 ||
+        !SafeMul(srcRowStride, height, srcTotalSize) || srcTotalSize > src->bufferInfo_->len_ ||
+        !SafeMul(dstRowStride, height, dstTotalSize) || dstTotalSize > dst->bufferInfo_->len_) {
+        EFFECT_LOGE("ContrastCheckStride: invalid stride! srcRowStride=%{public}u, dstRowStride=%{public}u, "
+            "height=%{public}u, srcLen=%{public}u, dstLen=%{public}u",
+            srcRowStride, height, dstRowStride, src->bufferInfo_->len_, dst->bufferInfo_->len_);
+        return false;
+    }
+    return true;
+}
+
+bool ContrastCheckYUVOffset(uint32_t width, uint32_t height, uint64_t &uvOffset)
+{
+    if (!SafeMul(width, height, uvOffset)) {
+        EFFECT_LOGE("ContrastCheckYUVOffset: width*height overflow! width=%{public}u, height=%{public}u",
+            width, height);
+        return false;
+    }
+    return true;
+}
+
+void ContrastBuildLUT(float scale, unsigned char lut[])
+{
+    for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
+        float current = (float)idx / UNSIGHED_CHAR_MAX;
+        current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_FACTOR * PI * current);
+        current = CommonUtils::Clip(current, 0, 1);
+        lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
+    }
+}
+
+bool ContrastCopyIfZero(float contrast, EffectBuffer *src, EffectBuffer *dst)
+{
+    if (fabs(contrast) < ESP) {
+        if (src != dst) {
+            errno_t result = memcpy_s(dst->buffer_, dst->bufferInfo_->len_, src->buffer_, src->bufferInfo_->len_);
+            CHECK_AND_RETURN_RET_LOG(result == 0, false, "memory copy failed: %{public}d", result);
+        }
+        return true;
+    }
+    return false;
 }
 
 ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
@@ -63,27 +116,19 @@ ErrorCode CpuContrastAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *dst,
 
     CHECK_AND_RETURN_RET(ContrastCheckBufferInfolen(src, dst, width, height) == ErrorCode::SUCCESS,
         ErrorCode::ERR_INVALID_PARAMETER_VALUE);
-
-    float eps = ESP;
-    if (fabs(contrast) < eps) {
-        if (src != dst) {
-            errno_t result = memcpy_s(dstRgb, dst->bufferInfo_->len_, srcRgb, src->bufferInfo_->len_);
-            CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_MEMCPY_FAIL, "memory copy failed: %{public}d", result);
-        }
+    if (ContrastCopyIfZero(contrast, src, dst)) {
         return ErrorCode::SUCCESS;
     }
     float scale = contrast / SCALE_FACTOR;
 
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
-    for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
-        float current = (float)idx / UNSIGHED_CHAR_MAX;
-        current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_FACTOR * PI * current);
-        current = CommonUtils::Clip(current, 0, 1);
-        lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
-    }
+    ContrastBuildLUT(scale, lut);
 
     uint32_t srcRowStride = src->bufferInfo_->rowStride_;
     uint32_t dstRowStride = dst->bufferInfo_->rowStride_;
+    if (!ContrastCheckStride(src, dst, height)) {
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
     
     if (srcRowStride * (height - 1) + (width - 1) * BYTES_PER_INT + BYTES_PER_INT >  dst->bufferInfo_->len_ ||
     dstRowStride * (height - 1) + (width - 1) * BYTES_PER_INT + BYTES_PER_INT > src->bufferInfo_->len_) {
@@ -115,26 +160,20 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst,
     uint32_t width = src->bufferInfo_->width_;
     uint32_t height = src->bufferInfo_->height_;
 
-    float eps = ESP;
-    if (fabs(contrast) < eps) {
-        if (src != dst) {
-            errno_t result = memcpy_s(dstNV21, dst->bufferInfo_->len_, srcNV21, src->bufferInfo_->len_);
-            CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_MEMCPY_FAIL, "memory copy failed: %{public}d", result);
-        }
+    if (ContrastCopyIfZero(contrast, src, dst)) {
         return ErrorCode::SUCCESS;
     }
     float scale = contrast / SCALE_FACTOR;
 
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
-    for (uint32_t i = 0; i < UNSIGHED_CHAR_DATA_RECORDS; i++) {
-        float current = (float)(i) / UNSIGHED_CHAR_MAX;
-        current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_FACTOR * PI * current);
-        current = CommonUtils::Clip(current, 0, 1);
-        lut[i] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
-    }
+    ContrastBuildLUT(scale, lut);
 
-    uint8_t *srcNV21UV = srcNV21 + width * height;
-    uint8_t *dstNV21UV = dstNV21 + width * height;
+    uint64_t uvOffset = 0;
+    if (!ContrastCheckYUVOffset(width, height, uvOffset)) {
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
+    uint8_t *srcNV21UV = srcNV21 + uvOffset;
+    uint8_t *dstNV21UV = dstNV21 + uvOffset;
 
 #pragma omp parallel for default(none) shared(height, width, srcNV21, dstNV21, lut)
     for (uint32_t i = 0; i < height; i++) {
@@ -172,26 +211,20 @@ ErrorCode CpuContrastAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst,
     uint32_t width = src->bufferInfo_->width_;
     uint32_t height = src->bufferInfo_->height_;
 
-    float eps = ESP;
-    if (fabs(contrast) < eps) {
-        if (src != dst) {
-            errno_t result = memcpy_s(dstNV12, dst->bufferInfo_->len_, srcNV12, src->bufferInfo_->len_);
-            CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_MEMCPY_FAIL, "memory copy failed: %{public}d", result);
-        }
+    if (ContrastCopyIfZero(contrast, src, dst)) {
         return ErrorCode::SUCCESS;
     }
     float scale = contrast / SCALE_FACTOR;
 
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
-    for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
-        float current = (float)(idx) / UNSIGHED_CHAR_MAX;
-        current = current - scale * 0.1f * sin(ALGORITHM_PARAMTER_FACTOR * PI * current);
-        current = CommonUtils::Clip(current, 0, 1);
-        lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
-    }
+    ContrastBuildLUT(scale, lut);
 
-    uint8_t *srcNV12UV = srcNV12 + width * height;
-    uint8_t *dstNV12UV = dstNV12 + width * height;
+    uint64_t uvOffset = 0;
+    if (!ContrastCheckYUVOffset(width, height, uvOffset)) {
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
+    uint8_t *srcNV12UV = srcNV12 + uvOffset;
+    uint8_t *dstNV12UV = dstNV12 + uvOffset;
 
 #pragma omp parallel for default(none) shared(height, width, srcNV12, dstNV12, lut)
     for (uint32_t i = 0; i < height; i++) {

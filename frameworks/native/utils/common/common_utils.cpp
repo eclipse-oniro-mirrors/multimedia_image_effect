@@ -204,6 +204,30 @@ void CommonUtils::SetMetaData(MetaDataMap& metaData, SurfaceBuffer* surfaceBuffe
     }
 }
 
+ErrorCode CommonUtils::CalcBufferLen(std::shared_ptr<BufferInfo> &bufferInfo, IEffectFormat formatType)
+{
+    uint64_t calclen = 0;
+    if (formatType == IEffectFormat::RGBA8888 || formatType == IEffectFormat::RGBA_1010102 ||
+        formatType == IEffectFormat::RGBA_F16) {
+        if (!SafeMul(bufferInfo->height_ , bufferInfo->rowStride_, calclen)) {
+            EFFECT_LOGE("CalcBufferLen: height * rowStride overflow! height=%{public}u, rowStride=%{public}u",
+                bufferInfo->height_, bufferInfo->rowStride_);
+            return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+        }
+    } else {
+        calclen = FormatHelper::CalculateSize(bufferInfo->rowStride_, bufferInfo->height_, formatType);
+    }
+
+    if (calclen > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())) {
+        EFFECT_LOGE("CalcBufferLen: buffer len overflow! height=%{public}u, rowStride=%{public}u, "
+            "calclen=%{public}llu",bufferInfo->height_, bufferInfo->rowStride_,
+            static_cast<unsigned long long>(calclen));
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
+    bufferInfo->len_ = static_cast<uint32_t>(calclen);
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode CommonUtils::ParsePixelMapData(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer)
 {
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
@@ -231,9 +255,10 @@ ErrorCode CommonUtils::ParsePixelMapData(PixelMap *pixelMap, std::shared_ptr<Eff
     } else {
         bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
     }
-    bufferInfo->len_ = (formatType == IEffectFormat::RGBA8888 || formatType == IEffectFormat::RGBA_1010102 ||
-        formatType == IEffectFormat::RGBA_F16) ? bufferInfo->height_ * bufferInfo->rowStride_ :
-        FormatHelper::CalculateSize(bufferInfo->rowStride_, bufferInfo->height_, formatType);
+    ErrorCode calRes = CalcBufferLen(bufferInfo, formatType);
+    if (calRes != ErrorCode::SUCCESS) {
+        return calRes;
+    }
     bufferInfo->formatType_ = formatType;
     bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(colorSpaceName);
     bufferInfo->hdrFormat_ = formatType == IEffectFormat::RGBA_1010102 ? HdrFormat::HDR10 : bufferInfo->hdrFormat_;
@@ -771,7 +796,14 @@ ErrorCode CommonUtils::ParseTex(unsigned int textureId, unsigned int colorSpace,
     }
     bufferInfo->colorSpace_ = ColorSpaceHelper::ConvertToEffectColorSpace(static_cast<ColorSpaceName>(colorSpace));
     bufferInfo->rowStride_ = bufferInfo->width_;
-    bufferInfo->len_ = bufferInfo->width_ * bufferInfo->height_ * RGBA_BYTES_PER_PIXEL;
+
+    uint64_t texLen = 0;
+    if (!SafeMul3(bufferInfo->width_, bufferInfo->height_, RGBA_BYTES_PER_PIXEL, texLen)) {
+        EFFECT_LOGE("ParseTex len overflow! width=%{public}u, height=%{public}u",
+            bufferInfo->width_, bufferInfo->height_);
+    }
+    bufferInfo->len_ = static_cast<uint32_t>(texLen);
+
     std::shared_ptr<ExtraInfo> extraInfo = std::make_unique<ExtraInfo>();
     extraInfo->dataType = DataType::TEX;
     extraInfo->bufferType = BufferType::DMA_BUFFER;

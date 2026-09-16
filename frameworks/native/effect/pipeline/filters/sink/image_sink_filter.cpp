@@ -71,13 +71,18 @@ ErrorCode ImageSinkFilter::Start()
 
 void CopyDataToPixelMap(PixelMap *pixelMap, const std::shared_ptr<EffectBuffer> &buffer)
 {
+    uint64_t calcLen = 0;
+    if (!SafeMul(static_cast<uint64_t>(FormatHelper::CalculateDataRowCount(
+        static_cast<uint32_t>(pixelMap->GetHeight()),
+        CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat()))),
+        static_cast<uint32_t>(pixelMap->GetRowStride()), calcLen)) {
+        EFFECT_LOGE("CopyDataToPixelMap: len overflow!");
+    }
     CopyInfo dst = {
         .bufferInfo = {
             .width_ = static_cast<uint32_t>(pixelMap->GetWidth()),
             .height_ = static_cast<uint32_t>(pixelMap->GetHeight()),
-            .len_ = FormatHelper::CalculateDataRowCount(static_cast<uint32_t>(pixelMap->GetHeight()),
-                CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat())) *
-                static_cast<uint32_t>(pixelMap->GetRowStride()),
+            .len_ = static_cast<uint32_t>(calcLen),
             .formatType_ = CommonUtils::SwitchToEffectFormat(pixelMap->GetPixelFormat()),
             .rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride()),
         },

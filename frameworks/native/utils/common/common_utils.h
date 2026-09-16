@@ -36,6 +36,31 @@
 namespace OHOS {
 namespace Media {
 namespace Effect {
+inline bool SafeMul(uint64_t a, uint64_t b, uint64_t &result)
+{
+    if (a == 0 || b == 0) {
+        result = 0;
+        return true;
+    }
+    if (a > UINT64_MAX / b) {
+        return false;
+    }
+    result = a * b;
+    return true;
+}
+
+inline bool SafeMul3(uint64_t a, uint64_t b, uint64_t c, uint64_t &result)
+{
+    uint64_t ab = 0;
+    if (!SafeMul(a, b, ab)) {
+        return false;
+    }
+    if (!SafeMul(ab, c, result)) {
+        return false;
+    }
+    return true;
+}
+
 class CommonUtils {
 public:
     static const int32_t RGBA_BYTES_PER_PIXEL = 4;
@@ -46,7 +71,8 @@ public:
 
     static MetaDataMap GetMetaData(SurfaceBuffer *surfaceBuffer);
     static void SetMetaData(MetaDataMap &metaData, SurfaceBuffer *surfaceBuffer);
-    
+
+    static ErrorCode CalcBufferLen(std::shared_ptr<BufferInfo> &bufferInfo, IEffectFormat formatType);
     static ErrorCode ParsePixelMapData(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
     IMAGE_EFFECT_EXPORT static ErrorCode LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
     static ErrorCode ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer, std::shared_ptr<EffectBuffer> &effectBuffer,

@@ -39,10 +39,67 @@ ErrorCode BrightnessCheckBufferInfolen(EffectBuffer *src, EffectBuffer *dst, uin
     uint32_t dst_width = dst->bufferInfo_->width_;
     uint32_t dst_height = dst->bufferInfo_->height_;
     
-    bool isInvalidParameterValue = dst->bufferInfo_->len_ < dst_width*dst_height*RGBA_SIZE ||
-       src->bufferInfo_->len_ < src_width*src_height*RGBA_SIZE ||
-       dst->bufferInfo_->len_ < src->bufferInfo_->len_;
-    return isInvalidParameterValue ? ErrorCode::ERR_INVALID_PARAMETER_VALUE : ErrorCode::SUCCESS;
+    uint64_t dst_required = 0;
+    uint64_t src_required = 0;
+    if (!SafeMul3(dst_width, dst_height, RGBA_SIZE, dst_required) ||
+        !SafeMul3(src_width, src_height, RGBA_SIZE, src_required) ||
+        dst->bufferInfo_->len_ < dst_required || src->bufferInfo_->len_ < src_required ||
+        dst->bufferInfo_->len_ < src->bufferInfo_->len_) {
+        EFFECT_LOGE("BrightnessCheckBufferInfolen: buffer check fail! dstLen=%{public}u, srcLen=%{public}u",
+            dst->bufferInfo_->len_, src->bufferInfo_->len_);
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
+    return ErrorCode::SUCCESS;
+}
+
+bool BrightnessCheckStride(EffectBuffer *src, EffectBuffer *dst, uint32_t height)
+{
+    uint32_t srcRowStride = src->bufferInfo_->rowStride_;
+    uint32_t dstRowStride = dst->bufferInfo_->rowStride_;
+    uint64_t srcTotalSize = 0;
+    uint64_t dstTotalSize = 0;
+    if (srcRowStride == 0 || dstRowStride == 0 ||
+        !SafeMul(srcRowStride, height, srcTotalSize) || srcTotalSize > src->bufferInfo_->len_ ||
+        !SafeMul(dstRowStride, height, dstTotalSize) || dstTotalSize > dst->bufferInfo_->len_) {
+        EFFECT_LOGE("BrightnessCheckStride: invalid stride! srcRowStride=%{public}u, dstRowStride=%{public}u, "
+            "height=%{public}u, srcLen=%{public}u, dstLen=%{public}u",
+            srcRowStride, dstRowStride, height,src->bufferInfo_->len_, dst->bufferInfo_->len_);
+        return false;
+    }
+    return true;
+}
+
+bool BrightnessCheckYUVOffset(uint32_t width, uint32_t height, uint64_t &uvOffset)
+{
+    if (!SafeMul(width, height, uvOffset)) {
+        EFFECT_LOGE("BrightnessCheckYUVOffset: width*height overflow! width=%{public}u, height=%{public}u",
+            width, height);
+        return false;
+    }
+    return true;
+}
+
+void BrightnessBuildLUT(float scale, unsigned char lut[])
+{
+    float eps = ESP;
+    for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
+        float current = CommonUtils::Clip(1.f - (float)(idx) / UNSIGHED_CHAR_MAX, 0, 1) + eps;
+        current = 1.f - pow(current, scale);
+        current = CommonUtils::Clip(current, 0, 1);
+        lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
+    }
+}
+
+bool BrightnessCopyIfZero(float brightness, EffectBuffer *src, EffectBuffer *dst)
+{
+    if (fabs(brightness) < ESP) {
+        if (src != dst) {
+            errno_t result = memcpy_s(dst->buffer_, dst->bufferInfo_->len_, src->buffer_, src->bufferInfo_->len_);
+            CHECK_AND_RETURN_RET_LOG(result == 0, false, "memory copy failed: %{public}d", result);
+        }
+        return true;
+    }
+    return false;
 }
 
 float CpuBrightnessAlgo::ParseBrightness(std::map<std::string, Any> &value)
@@ -71,27 +128,19 @@ ErrorCode CpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
     CHECK_AND_RETURN_RET(BrightnessCheckBufferInfolen(src, dst, width, height) == ErrorCode::SUCCESS,
         ErrorCode::ERR_INVALID_PARAMETER_VALUE);
 
-    float eps = ESP;
-    if (fabs(brightness) < eps) {
-        if (src != dst) {
-            errno_t result = memcpy_s(dstRgb, dst->bufferInfo_->len_, srcRgb, src->bufferInfo_->len_);
-            CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_MEMCPY_FAIL, "memory copy failed: %{public}d", result);
-        }
+    if (BrightnessCopyIfZero(brightness, src, dst)) {
         return ErrorCode::SUCCESS;
     }
-    float scale = brightness / SCALE_FACTOR;
-    scale = pow(2.4f, scale); // 2.4 is algorithm parameter.
+    float scale = pow(2.4f, brightness / SCALE_FACTOR); // 2.4 is algorithm parameter.
 
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
-    for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
-        float current = CommonUtils::Clip(1.f - (float)(idx) / UNSIGHED_CHAR_MAX, 0, 1) + eps;
-        current = 1.f - pow(current, scale);
-        current = CommonUtils::Clip(current, 0, 1);
-        lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
-    }
+    BrightnessBuildLUT(scale, lut);
 
     uint32_t srcRowStride = src->bufferInfo_->rowStride_;
     uint32_t dstRowStride = dst->bufferInfo_->rowStride_;
+    if (!BrightnessCheckStride(src, dst, height)) {
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
     
     if (srcRowStride * (height - 1) + (width - 1) * BYTES_PER_INT + BYTES_PER_INT >  dst->bufferInfo_->len_ ||
     dstRowStride * (height - 1) + (width - 1) * BYTES_PER_INT + BYTES_PER_INT > src->bufferInfo_->len_) {
@@ -123,27 +172,20 @@ ErrorCode CpuBrightnessAlgo::OnApplyYUVNV21(EffectBuffer *src, EffectBuffer *dst
     uint32_t width = src->bufferInfo_->width_;
     uint32_t height = src->bufferInfo_->height_;
 
-    float eps = ESP;
-    if (fabs(brightness) < eps) {
-        if (src != dst) {
-            errno_t result = memcpy_s(dstNV21, dst->bufferInfo_->len_, srcNV21, src->bufferInfo_->len_);
-            CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_MEMCPY_FAIL, "memory copy failed: %{public}d", result);
-        }
+    if (BrightnessCopyIfZero(brightness, src, dst)) {
         return ErrorCode::SUCCESS;
     }
-    float scale = brightness / SCALE_FACTOR;
-    scale = pow(2.4f, scale); // 2.4 is algorithm parameter.
+    float scale = pow(2.4f, brightness / SCALE_FACTOR); // 2.4 is algorithm parameter.
 
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
-    for (uint32_t idx = 0; idx < UNSIGHED_CHAR_DATA_RECORDS; idx++) {
-        float current = CommonUtils::Clip(1.f - (float)(idx) / UNSIGHED_CHAR_MAX, 0, 1) + eps;
-        current = 1.f - pow(current, scale);
-        current = CommonUtils::Clip(current, 0, 1);
-        lut[idx] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
-    }
+    BrightnessBuildLUT(scale, lut);
 
-    uint8_t *srcNV21UV = srcNV21 + width * height;
-    uint8_t *dstNV21UV = dstNV21 + width * height;
+    uint64_t uvOffset = 0;
+    if (!BrightnessCheckYUVOffset(width, height, uvOffset)) {
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
+    uint8_t *srcNV21UV = srcNV21 + uvOffset;
+    uint8_t *dstNV21UV = dstNV21 + uvOffset;
 
 #pragma omp parallel for default(none) shared(height, width, srcNV21, dstNV21, lut)
     for (uint32_t i = 0; i < height; i++) {
@@ -182,27 +224,20 @@ ErrorCode CpuBrightnessAlgo::OnApplyYUVNV12(EffectBuffer *src, EffectBuffer *dst
     uint32_t width = src->bufferInfo_->width_;
     uint32_t height = src->bufferInfo_->height_;
 
-    float eps = ESP;
-    if (fabs(brightness) < eps) {
-        if (src != dst) {
-            errno_t result = memcpy_s(dstNV12, dst->bufferInfo_->len_, srcNV12, src->bufferInfo_->len_);
-            CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_MEMCPY_FAIL, "memory copy failed: %{public}d", result);
-        }
+    if (BrightnessCopyIfZero(brightness, src, dst)) {
         return ErrorCode::SUCCESS;
     }
-    float brightnessScale = brightness / SCALE_FACTOR;
-    brightnessScale = pow(2.4f, brightnessScale); // 2.4 is algorithm parameter.
+    float scale = pow(2.4f, brightness / SCALE_FACTOR); // 2.4 is algorithm parameter.
 
     unsigned char lut[UNSIGHED_CHAR_DATA_RECORDS] = {0};
-    for (uint32_t i = 0; i < UNSIGHED_CHAR_DATA_RECORDS; i++) {
-        float current = CommonUtils::Clip(1.f - (float)(i) / UNSIGHED_CHAR_MAX, 0, 1) + eps;
-        current = 1.f - pow(current, brightnessScale);
-        current = CommonUtils::Clip(current, 0, 1);
-        lut[i] = (unsigned char)(current * UNSIGHED_CHAR_MAX);
-    }
+    BrightnessBuildLUT(scale, lut);
 
-    uint8_t *srcNV12UV = srcNV12 + width * height;
-    uint8_t *dstNV12UV = dstNV12 + width * height;
+    uint64_t uvOffset = 0;
+    if (!BrightnessCheckYUVOffset(width, height, uvOffset)) {
+        return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+    }
+    uint8_t *srcNV12UV = srcNV12 + uvOffset;
+    uint8_t *dstNV12UV = dstNV12 + uvOffset;
 
 #pragma omp parallel for default(none) shared(height, width, srcNV12, dstNV12, lut)
     for (uint32_t i = 0; i < height; i++) {
