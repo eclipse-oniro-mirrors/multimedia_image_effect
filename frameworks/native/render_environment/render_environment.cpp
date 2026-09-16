@@ -388,7 +388,7 @@ GLuint RenderEnvironment::ConvertFromYUVToRGB(const EffectBuffer *source, IEffec
     int height = static_cast<int>(source->bufferInfo_->height_);
     auto *srcNV12 = static_cast<unsigned char *>(source->buffer_);
     uint64_t allocSize = 0;
-    if (!SafeMul3(static_cast<uint64_t>(width), static_cast<uint64_t>(height), 
+    if (!SafeMul3(static_cast<uint64_t>(width), static_cast<uint64_t>(height),
         static_cast<uint64_t>(RGBA_SIZE_PER_PIXEL), allocSize) || allocSize == 0) {
         EFFECT_LOGE("ConvertFromYUVToRGB size overflow! width=%{public}d, height=%{public}d", width, height);
         return 0;
