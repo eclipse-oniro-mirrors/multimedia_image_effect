@@ -63,7 +63,7 @@ bool BrightnessCheckStride(EffectBuffer *src, EffectBuffer *dst, uint32_t height
         !SafeMul(dstRowStride, height, dstTotalSize) || dstTotalSize > dst->bufferInfo_->len_) {
         EFFECT_LOGE("BrightnessCheckStride: invalid stride! srcRowStride=%{public}u, dstRowStride=%{public}u, "
             "height=%{public}u, srcLen=%{public}u, dstLen=%{public}u",
-            srcRowStride, dstRowStride, height,src->bufferInfo_->len_, dst->bufferInfo_->len_);
+            srcRowStride, dstRowStride, height, src->bufferInfo_->len_, dst->bufferInfo_->len_);
         return false;
     }
     return true;

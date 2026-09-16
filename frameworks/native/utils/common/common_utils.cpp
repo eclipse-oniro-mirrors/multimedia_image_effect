@@ -209,7 +209,7 @@ ErrorCode CommonUtils::CalcBufferLen(std::shared_ptr<BufferInfo> &bufferInfo, IE
     uint64_t calclen = 0;
     if (formatType == IEffectFormat::RGBA8888 || formatType == IEffectFormat::RGBA_1010102 ||
         formatType == IEffectFormat::RGBA_F16) {
-        if (!SafeMul(bufferInfo->height_ , bufferInfo->rowStride_, calclen)) {
+        if (!SafeMul(bufferInfo->height_, bufferInfo->rowStride_, calclen)) {
             EFFECT_LOGE("CalcBufferLen: height * rowStride overflow! height=%{public}u, rowStride=%{public}u",
                 bufferInfo->height_, bufferInfo->rowStride_);
             return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
@@ -220,7 +220,7 @@ ErrorCode CommonUtils::CalcBufferLen(std::shared_ptr<BufferInfo> &bufferInfo, IE
 
     if (calclen > static_cast<uint64_t>(std::numeric_limits<uint32_t>::max())) {
         EFFECT_LOGE("CalcBufferLen: buffer len overflow! height=%{public}u, rowStride=%{public}u, "
-            "calclen=%{public}llu",bufferInfo->height_, bufferInfo->rowStride_,
+            "calclen=%{public}llu", bufferInfo->height_, bufferInfo->rowStride_,
             static_cast<unsigned long long>(calclen));
         return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
     }

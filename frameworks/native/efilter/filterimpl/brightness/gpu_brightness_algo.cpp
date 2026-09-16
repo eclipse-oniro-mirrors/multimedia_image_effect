@@ -147,7 +147,7 @@ ErrorCode GpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
         }
         dst->bufferInfo_->rowStride_ = static_cast<uint32_t>(rowStrideCalc);
         uint64_t lenCalc = 0;
-        if (!SafeMul3(static_cast<uint64_t>(tex->Width()), static_cast<uint64_t>(tex->Height()), 
+        if (!SafeMul3(static_cast<uint64_t>(tex->Width()), static_cast<uint64_t>(tex->Height()),
             RGBA_SIZE_PER_PIXEL, lenCalc)) {
             EFFECT_LOGE("GpuBrightness: len overflow! width=%{public}d, height=%{public}d",
                 tex->Width(), tex->Height());
