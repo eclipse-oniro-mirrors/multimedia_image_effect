@@ -100,14 +100,30 @@ void Crop(EffectBuffer *src, EffectBuffer *dst, Region *region)
     uint32_t srcRowStride = src->bufferInfo_->rowStride_;
     uint32_t dstRowStride = dst->bufferInfo_->rowStride_;
 
-    size_t srcStartOff = static_cast<size_t>(cropTop) * srcRowStride + static_cast<size_t>(cropLeft) * PIXEL_BYTES;
-    size_t srcEnd = srcStartOff + static_cast<size_t>(rowCount - 1) * srcRowStride + static_cast<size_t>(count);
-    size_t dstEnd = static_cast<size_t>(rowCount - 1) * dstRowStride + static_cast<size_t>(count);
+    if (srcRowStride == 0 || dstRowStride == 0) {
+        EFFECT_LOGE("Crop: invalid stride! srcRowStride=%{public}d, dstRowStride=%{public}d",
+            srcRowStride, dstRowStride);
+        return;
+    }
+    uint64_t srcStartOffset = static_cast<uint64_t>(cropTop) * srcRowStride +
+        static_cast<uint64_t>(cropLeft) * PIXEL_BYTES;
+    uint64_t srcEndOffset = srcStartOffset + static_cast<uint64_t>(rowCount - 1) * srcRowStride +
+        static_cast<uint64_t>(count);
+    if (srcEndOffset > src->bufferInfo_->len_) {
+        EFFECT_LOGE("Crop: source region exceeds buffer! srcStartOffset=%{public}llu, srcEndOffset=%{public}llu, "
+            "srcLen=%{public}u", static_cast<unsigned long long>(srcStartOffset),
+            static_cast<unsigned long long>(srcEndOffset), src->bufferInfo_->len_);
+        return;
+    }
+    uint64_t dstEndOffset = static_cast<uint64_t>(rowCount - 1) * dstRowStride + static_cast<uint64_t>(count);
+    if (dstEndOffset > dst->bufferInfo_->len_) {
+        EFFECT_LOGE("Crop: dest region exceeds buffer! dstEndOffset=%{public}llu, dstLen=%{public}u",
+            static_cast<unsigned long long>(dstEndOffset), dst->bufferInfo_->len_);
+        return;
+    }
+    char *srcStart = srcBuffer + static_cast<uint64_t>(cropTop) * srcRowStride +
+        static_cast<uint64_t>(cropLeft) * PIXEL_BYTES;
 
-    CHECK_AND_RETURN_LOG(srcEnd <= static_cast<size_t>(src->bufferInfo_->len_) &&
-        dstEnd <= static_cast<size_t>(dst->bufferInfo_->len_), "Crop: buffer overflow");
-
-    char *srcStart = srcBuffer + srcStartOff;
     EFFECT_LOGD("Crop: srcRowStride=%{public}d, dstRowStride=%{public}d, rowCount=%{public}d, count=%{public}d",
         srcRowStride, dstRowStride, rowCount, count);
 

@@ -24,6 +24,7 @@
         "hitrace",
         "hilog",
         "image_framework",
+        "init",
         "graphic_2d",
         "graphic_surface",
         "c_utils",

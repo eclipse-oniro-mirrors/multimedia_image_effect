@@ -55,12 +55,13 @@ void MemcpyHelper::CopyData(CopyInfo &src, CopyInfo &dst)
     uint32_t dstRowCount = FormatHelper::CalculateDataRowCount(dstInfo.height_, dstInfo.formatType_);
     uint32_t rowCount = srcRowCount > dstRowCount ? dstRowCount : srcRowCount;
     uint32_t count = srcRowStride > dstRowStride ? dstRowStride : srcRowStride;
-    CHECK_AND_RETURN_LOG(rowCount == 0 || !(dstRowStride > dstBufferLen / rowCount ||
-        srcRowStride > srcBufferLen / rowCount),
-        "Out of buffer available range! Copy fail! srcH=%{public}d, srcFormat=%{public}d, "
-        "srcStride=%{public}d, srcLen=%{public}d, dstH=%{public}d, dstFormat=%{public}d, dstStride=%{public}d, "
-        "dstLen=%{public}d", srcInfo.height_, srcInfo.formatType_, srcInfo.rowStride_, srcInfo.len_,
-        dstInfo.height_, dstInfo.formatType_, dstInfo.rowStride_, dstInfo.len_);
+    uint64_t srcTotalSize = static_cast<uint64_t>(rowCount) * srcRowStride;
+    uint64_t dstTotalSize = static_cast<uint64_t>(rowCount) * dstRowStride;
+    if (rowCount == 0 || srcTotalSize > srcBufferLen || dstTotalSize > dstBufferLen) {
+        EFFECT_LOGE("Out of buffer available range! srcTotal=%{public}lld, dstTotal=%{public}lld",
+            static_cast<unsigned long long>(srcTotalSize), static_cast<unsigned long long>(dstTotalSize));
+        return;
+    }
     for (uint32_t i = 0; i < rowCount; i++) {
         errno_t ret = memcpy_s(dstBuffer + i * dstRowStride, dstRowStride, srcBuffet + i * srcRowStride, count);
         if (ret != 0) {

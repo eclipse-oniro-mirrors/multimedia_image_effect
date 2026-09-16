@@ -362,6 +362,14 @@ void RenderEnvironment::DrawBufferToTexture(RenderTexturePtr renderTex, const Ef
         if (source->bufferInfo_->formatType_ == IEffectFormat::RGBA8888 ||
             source->bufferInfo_->formatType_ == IEffectFormat::RGBA_1010102) {
             int stride = static_cast<int>(source->bufferInfo_->rowStride_ / 4);
+            uint64_t requiredSize = static_cast<uint64_t>(stride) * RGBA_SIZE_PER_PIXEL * static_cast<uint64_t>(height);
+            if (stride <width || requiredSize > source->bufferInfo_->len_) {
+                EFFECT_LOGE("DrawBufferToTexture: invaild stride or buffer size! stride=%{public}d, width=%{public}d, "
+                    "height=%{public}d, required=%{public}llu, srcLen=%{public}u",
+                    stride, width, height, static_cast<unsigned long long>(requiredSize), source->bufferInfo_->len_);
+                GLUtils::DeleteFboOnly(tempFbo);
+                return;
+            }
             tex = GenTextureWithPixels(source->buffer_, width, height, stride, format);
         } else {
             tex = ConvertFromYUVToRGB(source, format);
@@ -379,8 +387,22 @@ GLuint RenderEnvironment::ConvertFromYUVToRGB(const EffectBuffer *source, IEffec
     int width = static_cast<int>(source->bufferInfo_->width_);
     int height = static_cast<int>(source->bufferInfo_->height_);
     auto *srcNV12 = static_cast<unsigned char *>(source->buffer_);
-    uint8_t *srcNV12UV = srcNV12 + width * height;
-    auto data = std::make_unique<unsigned char[]>(width * height * RGBA_SIZE_PER_PIXEL);
+    uint64_t allocSize = 0;
+    if (!SafeMul3(static_cast<uint64_t>(width), static_cast<uint64_t>(height),
+        static_cast<uint64_t>(RGBA_SIZE_PER_PIXEL), allocSize) || allocSize == 0) {
+        EFFECT_LOGE("ConvertFromYUVToRGB size overflow! width=%{public}d, height=%{public}d", width, height);
+        return 0;
+    }
+    uint64_t srcDataSize = 0;
+    if (!SafeMul3(static_cast<uint64_t>(width), static_cast<uint64_t>(height),
+        static_cast<uint64_t>(RGBA_SIZE_PER_PIXEL), srcDataSize) ||
+        srcDataSize > source->bufferInfo_->len_) {
+        EFFECT_LOGE("ConvertFromYUVToRGB: buffer too small! srcDataSize=%{public}llu, srcLen=%{public}u",
+            static_cast<unsigned long long>(srcDataSize), source->bufferInfo_->len_);
+        return 0;
+    }
+    uint8_t *srcNV12UV = srcNV12 + static_cast<uint64_t>(width) * static_cast<uint64_t>(height);
+    auto data = std::make_unique<unsigned char[]>(static_cast<size_t>(allocSize));
     for (uint32_t i = 0; i < static_cast<uint32_t>(height); i++) {
         for (uint32_t j = 0; j < static_cast<uint32_t>(width); j++) {
             uint32_t nvIndex =
@@ -415,11 +437,17 @@ void RenderEnvironment::ConvertFromRGBToYUV(RenderTexturePtr input, IEffectForma
 {
     int width = static_cast<int>(input->Width());
     int height = static_cast<int>(input->Height());
+    uint64_t allocSize = 0;
+    if (!SafeMul3(static_cast<uint64_t>(width), static_cast<uint64_t>(height),
+        static_cast<uint64_t>(RGBA_SIZE_PER_PIXEL), allocSize) || allocSize == 0) {
+        EFFECT_LOGE("ConvertFromRGBToYUV size overflow! width=%{public}d, height=%{public}d", width, height);
+        return;
+    }
     uint32_t rowStride = (static_cast<uint32_t>(width) + 1) & ~1u; // match FormatHelper::CaculateRowStride
-    auto rgbData = std::make_unique<unsigned char[]>(width * height * RGBA_SIZE_PER_PIXEL);
+    auto rgbData = std::make_unique<unsigned char[]>(static_cast<size_t>(allocSize));
     ReadPixelsFromTex(input, rgbData.get(), width, height, width);
     auto *srcNV12 = static_cast<unsigned char *>(data);
-    uint8_t *srcNV12UV = srcNV12 + static_cast<uint32_t>(height) * rowStride;
+    uint8_t *srcNV12UV = srcNV12 + static_cast<uint64_t>(height) * static_cast<uint64_t>(rowStride);
     for (uint32_t i = 0; i < static_cast<uint32_t>(height); i++) {
         for (uint32_t j = 0; j < static_cast<uint32_t>(width); j++) {
             uint32_t yIndex = i * rowStride + j;

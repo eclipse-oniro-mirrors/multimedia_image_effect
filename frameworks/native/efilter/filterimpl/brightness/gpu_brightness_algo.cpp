@@ -140,8 +140,20 @@ ErrorCode GpuBrightnessAlgo::OnApplyRGBA8888(EffectBuffer *src, EffectBuffer *ds
     } else {
         dst->bufferInfo_->width_ = tex->Width();
         dst->bufferInfo_->height_ = tex->Height();
-        dst->bufferInfo_->rowStride_ = tex->Width() * RGBA_SIZE_PER_PIXEL;
-        dst->bufferInfo_->len_ = tex->Width() * tex->Height() * RGBA_SIZE_PER_PIXEL;
+        uint64_t rowStrideCalc = 0;
+        if (!SafeMul(static_cast<uint64_t>(tex->Width()), RGBA_SIZE_PER_PIXEL, rowStrideCalc)) {
+            EFFECT_LOGE("GpuBrightness: rowstride overflow! width=%{public}d", tex->Width());
+            return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+        }
+        dst->bufferInfo_->rowStride_ = static_cast<uint32_t>(rowStrideCalc);
+        uint64_t lenCalc = 0;
+        if (!SafeMul3(static_cast<uint64_t>(tex->Width()), static_cast<uint64_t>(tex->Height()),
+            RGBA_SIZE_PER_PIXEL, lenCalc)) {
+            EFFECT_LOGE("GpuBrightness: len overflow! width=%{public}d, height=%{public}d",
+                tex->Width(), tex->Height());
+            return ErrorCode::ERR_INVALID_PARAMETER_VALUE;
+        }
+        dst->bufferInfo_->len_ = static_cast<uint32_t>(lenCalc);
         dst->bufferInfo_->formatType_ = IEffectFormat::RGBA8888;
         dst->bufferInfo_->tex_ = tex;
     }
