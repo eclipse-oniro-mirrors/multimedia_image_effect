@@ -17,6 +17,7 @@
 #define IMAGE_EFFECT_EFFECT_MEMORY_H
 
 #include <memory>
+#include "ashmem.h"
 #include "effect_info.h"
 #include "effect_type.h"
 #include "error_code.h"
@@ -88,7 +89,13 @@ private:
 
 struct SharedMemoryData : public MemoryData {
     ~SharedMemoryData();
-    int* fdPtr = nullptr;
+    // Ashmem 对象统一持有 ashmem fd 与用户态映射，析构时自动 UnmapAshmem + CloseAshmem
+    // 避免散落的 ::close/::munmap 导致 FDSAN 告警与重复关闭风险
+    sptr<Ashmem> ashmem = nullptr;
+    // 供外部消费方(如 PixelMap/跨进程)接管的独立 fd 指针，
+    // 通过 dup 复制自 ashmem 内部 fd，所有权移交后由消费方负责 close，本类仅负责 delete
+    int *fdPtr = nullptr;
+    bool fdTransferred = false;
     size_t len = 0;
 };
 

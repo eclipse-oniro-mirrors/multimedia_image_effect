@@ -22,6 +22,7 @@
 #include "common_utils.h"
 #include "effect_log.h"
 #include "format_helper.h"
+#include "unique_fd.h"
 
 namespace OHOS {
 namespace Media {
@@ -172,17 +173,15 @@ ErrorCode DmaMemory::Release()
     return ErrorCode::SUCCESS;
 }
 
-void ReleaseSharedMemory(void* &data, int* &fdPtr, size_t len)
+void ReleaseSharedMemory(SharedMemoryData *memoryData)
 {
-    if (data != nullptr && data != MAP_FAILED) {
-        ::munmap(data, len);
-        data = nullptr;
+    if (memoryData == nullptr) {
+        return;
     }
-    if (fdPtr != nullptr) {
-        ::close(*fdPtr);
-        delete(fdPtr);
-        fdPtr = nullptr;
-    }
+    // sptr 引用清零，触发 ~Ashmem() 依次执行 UnmapAshmem(munmap) 和 CloseAshmem(close(fd))
+    // fd 与 映射的释放交由 Ashmem 类统一管理， 避免手写 ::munmap 和 ::close(fd) 引发的 FDSAN 告警
+    memoryData->ashmem = nullptr;
+    memoryData->data = nullptr;
 }
 
 SharedMemoryData::~SharedMemoryData()
@@ -191,39 +190,54 @@ SharedMemoryData::~SharedMemoryData()
         return;
     }
     EFFECT_LOGI("SharedMemoryData destructor! len=%{public}zu", len);
-    ReleaseSharedMemory(data, fdPtr, len);
+    if (fdPtr != nullptr && !fdTransferred) {
+        // fd 未被消费方接管，通过 RAII 关闭
+        UniqueFd exportFd(*fdPtr);
+        delete(fdPtr);
+        fdPtr = nullptr;
+    }
+    ReleaseSharedMemory(this);
 }
 
 std::shared_ptr<MemoryData> SharedMemory::Alloc(MemoryInfo &memoryInfo)
 {
-    size_t size = memoryInfo.bufferInfo.len_;
-    EFFECT_LOGI("SharedMemory::Alloc size=%{public}zu", size);
-    CHECK_AND_RETURN_RET_LOG(size <= MAX_RAM_SIZE && size > 0, nullptr, "size out of range! size=%{public}zu", size);
+    uint32_t size = memoryInfo.bufferInfo.len_;
+    EFFECT_LOGI("SharedMemory::Alloc size=%{public}u", size);
+    CHECK_AND_RETURN_RET_LOG(size <= MAX_RAM_SIZE && size > 0, nullptr, "size out of range! size=%{public}u", size);
 
-    int fd = AshmemCreate("ImageEffectAlloc Data", size);
-    CHECK_AND_RETURN_RET_LOG(fd >= 0, nullptr, "SharedMemory::Alloc AshmemCreate fd:[%{public}d].", fd);
+    // 使用 Ashmem 类替代裸 AshmemCreate/AshmemSetProt/mmap 接口，fd 与映射由 sptr RAII 管理，
+    // 失败路径无需手写 ::close(fd)，规避 FDSAN 告警
+    sptr<Ashmem> ashmem = Ashmem::CreateAshmem("ImageEffectAlloc Data", static_cast<int32_t>(size));
+    CHECK_AND_RETURN_RET_LOG(ashmem != nullptr, nullptr, "SharedMemory::Alloc AshmemCreate failed.");
 
-    if (AshmemSetProt(fd, PROT_READ | PROT_WRITE) < 0) {
+    if (!ashmem->SetProtection(PROT_READ | PROT_WRITE)) {
         EFFECT_LOGE("SharedMemory::Alloc AshmemSetProt errno %{public}d.", errno);
-        ::close(fd);
+        // ashmem 出作用域析构时自动 close fd
         return nullptr;
     }
-    void *data = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (data == MAP_FAILED) {
-        EFFECT_LOGE("SharedMemory::Alloc mmap failed, errno:%{public}d", errno);
-        ::close(fd);
+    if (!ashmem->MapReadAndWriteAshmem()) {
+        EFFECT_LOGE("SharedMemory::Alloc AshmemMap errno %{public}d.", errno);
+        // ashmem 出作用域析构时自动 close fd
         return nullptr;
     }
+
+    // 映射成功后获取用户态地址，等价于 mmap 返回值
+    void *data = const_cast<void *>(ashmem->ReadFromAshmem(0, 0));
+    CHECK_AND_RETURN_RET_LOG(data != nullptr, nullptr, "SharedMemory::Alloc get mapped addr failed.");
     std::shared_ptr<SharedMemoryData> memoryData = std::make_unique<SharedMemoryData>();
     memoryData->data = data;
     memoryData->memoryInfo = memoryInfo;
     memoryData->memoryInfo.bufferInfo.rowStride_ =
         FormatHelper::CalculateRowStride(memoryInfo.bufferInfo.width_, memoryInfo.bufferInfo.formatType_);
-    std::unique_ptr<int> fdPtr = std::make_unique<int>(fd);
-    memoryData->fdPtr = fdPtr.release();
+    // 为外部消费方(如 PixelMap/跨进程)导出独立的 fd 副本，避免与内部 ashmem 的 fd 冲突导致重复 close
+    // 消费方接管后自行 close，本类仅负责 delete 该内存
+    UniqueFd exportFd(::dup(ashmem->GetAshmemFd()));
+    CHECK_AND_RETURN_RET_LOG(exportFd.Get() >= 0, nullptr, "SharedMemory::Alloc dup fd failed.");
+    memoryData->fdPtr = new int(exportFd.Release()); // 交由 SharedMemoryData 析构释放
     memoryData->memoryInfo.extra = memoryData->fdPtr;
     memoryData->memoryInfo.bufferType = BufferType::SHARED_MEMORY;
     memoryData->len = size;
+    memoryData->ashmem = ashmem; // 保留 sptr 引用，确保映射和 fd 生命周期
     memoryData_ = memoryData;
 
     return memoryData;
@@ -236,8 +250,15 @@ ErrorCode SharedMemory::Release()
         EFFECT_LOGE("SharedMemory::Release memoryData is null!");
         return ErrorCode::ERR_MEMORY_DATA_ABNORMAL;
     }
-
-    ReleaseSharedMemory(memoryData_->data, memoryData_->fdPtr, memoryData_->len);
+    if (memoryData_->fdPtr != nullptr && !memoryData_->fdTransferred) {
+        // fd 本体由 Ashmem 类管理，此处仅释放外部导出的独立句柄内存，不再执行close
+        // fd 未被消费方接管，通过 RAII 关闭
+        UniqueFd exportFd(*memoryData_->fdPtr);
+        delete(memoryData_->fdPtr);
+        memoryData_->fdPtr = nullptr;
+    }
+    // 置空 Ashmem，触发 unmap + close
+    ReleaseSharedMemory(memoryData_.get());
     memoryData_ = nullptr;
     return ErrorCode::SUCCESS;
 }

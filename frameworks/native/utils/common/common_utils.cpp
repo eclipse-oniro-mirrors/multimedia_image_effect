@@ -584,6 +584,27 @@ ErrorCode GetPixelsContext(std::shared_ptr<MemoryData> &memoryData, BufferType b
     return ErrorCode::SUCCESS;
 }
 
+/*
+ * 对Sharedmemory::Alloc 分配的共享内存，为其移交到 PixelMap 提供一份独立的用户态映射，
+ * 避免像素图析构时 munmap/close/delete 与内部 Ashmem 的映射 /fd 互相释放造成重复 munmap 或 close。
+ * 仅 SharedMemory::Alloc 才会为 SHARED_MEMORY 设置 memoryInfo.extra(fdPtr)，可作为类型判别依据
+ */
+ErrorCode GetSharedMemoryExportResource(SharedMemoryData *sharedMemoryData, uint32_t size, void **addr)
+{
+    *addr = nullptr;
+    CHECK_AND_RETURN_RET_LOG(sharedMemoryData != nullptr && sharedMemoryData->fdPtr != nullptr,
+                             ErrorCode::ERR_INVALID_FD,
+                             "SHARED_MEMORY:: shared memory data is invalid!");
+    CHECK_AND_RETURN_RET_LOG(size <= sharedMemoryData->len,
+                             ErrorCode::ERR_ALLOC_MEMORY_SIZE_OUT_OF_RANGE,
+                             "SHARED_MEMORY:: shared memory data is invalid!");
+    void *mapAddr = ::mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, *sharedMemoryData->fdPtr, 0);
+    CHECK_AND_RETURN_RET_LOG(mapAddr != MAP_FAILED, ErrorCode::ERR_INVALID_FD,
+        "SHARED_MEMORY: mmap export fd fail! errno=%{public}d", errno);
+    *addr = mapAddr;
+    return ErrorCode::SUCCESS;
+}
+
 int32_t GetImagePropertyInt(const std::shared_ptr<ExifMetadata> &exifMetadata, const std::string &key, int32_t &value)
 {
     std::string strValue;
@@ -975,6 +996,46 @@ ErrorCode ModifyYUVInfo(PixelMap *pixelMap, void *context, const MemoryInfo &mem
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode SetPixelMapPixelAddrAndImageInfo(std::shared_ptr<MemoryData> &memoryData, PixelMap *pixelMap,
+    void *context, AllocatorType &allocatorType)
+{
+    const MemoryInfo &memoryInfo = memoryData->memoryInfo;
+    // not need to release the origin buffer in pixelMap, SetPixelsAddr will release it.
+    uint32_t bufferSize = FormatHelper::CalculateSize(memoryInfo.bufferInfo.width_, memoryInfo.bufferInfo.height_,
+        memoryInfo.bufferInfo.formatType_);
+    void *pixelMapData = memoryData->data;
+    if (memoryInfo.bufferType == BufferType::SHARED_MEMORY && memoryData->memoryInfo.extra != nullptr) {
+        // 共享内存移交像素图前，为像素图建立独立的映射由其接管
+        // 避免像素图析构时执行 munmap 与内部 Ashmem 的映射互相释放
+        ErrorCode res = GetSharedMemoryExportResource(static_cast<SharedMemoryData *>(memoryData.get()), bufferSize,
+            &pixelMapData);
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "get shared memory export resource fail!");
+    }
+    pixelMap->SetPixelsAddr(pixelMapData, context, bufferSize, allocatorType, nullptr);
+
+    ImageInfo imageInfo;
+    pixelMap->GetImageInfo(imageInfo);
+    imageInfo.size.width = static_cast<int32_t>(memoryInfo.bufferInfo.width_);
+    imageInfo.size.height = static_cast<int32_t>(memoryInfo.bufferInfo.height_);
+    imageInfo.pixelFormat = CommonUtils::SwitchToPixelFormat(memoryInfo.bufferInfo.formatType_);
+    uint32_t result = pixelMap->SetImageInfo(imageInfo, true);
+    if (imageInfo.pixelFormat == PixelFormat::NV12 || imageInfo.pixelFormat == PixelFormat::NV21 ||
+        imageInfo.pixelFormat == PixelFormat::YCBCR_P010 || imageInfo.pixelFormat == PixelFormat::YCRCB_P010) {
+        ErrorCode res = ModifyYUVInfo(pixelMap, context, memoryInfo);
+        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "HandleYUVInfo fail! res=%{public}d", res);
+    }
+    EFFECT_LOGI("SetImageInfo width=%{public}d, height=%{public}d, result: %{public}d", imageInfo.size.width,
+                imageInfo.size.height, result);
+    CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_SET_IMAGE_INFO_FAIL,
+        "exec SetImageInfo fail! result=%{public}d", result);
+
+    if (memoryInfo.bufferType == BufferType::SHARED_MEMORY && memoryData->memoryInfo.extra != nullptr) {
+        static_cast<SharedMemoryData *>(memoryData.get())->fdTransferred = true;
+    }
+
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, PixelMap *pixelMap,
     AllocatorType &allocatorType, bool isUpdateExif, const std::shared_ptr<EffectContext> &effectContext)
 {
@@ -991,24 +1052,8 @@ ErrorCode ModifyPixelMapPropertyInner(std::shared_ptr<MemoryData> &memoryData, P
     ErrorCode res = GetPixelsContext(memoryData, memoryInfo.bufferType, &context);
     CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "get pixels context fail! res=%{public}d", res);
 
-    // not need to release the origin buffer in pixelMap, SetPixelsAddr will release it.
-    pixelMap->SetPixelsAddr(memoryData->data, context, memoryInfo.bufferInfo.len_, allocatorType, nullptr);
-
-    ImageInfo imageInfo;
-    pixelMap->GetImageInfo(imageInfo);
-    imageInfo.size.width = static_cast<int32_t>(memoryInfo.bufferInfo.width_);
-    imageInfo.size.height = static_cast<int32_t>(memoryInfo.bufferInfo.height_);
-    imageInfo.pixelFormat = CommonUtils::SwitchToPixelFormat(memoryInfo.bufferInfo.formatType_);
-    uint32_t result = pixelMap->SetImageInfo(imageInfo, true);
-    if (imageInfo.pixelFormat == PixelFormat::NV12 || imageInfo.pixelFormat == PixelFormat::NV21 ||
-        imageInfo.pixelFormat == PixelFormat::YCBCR_P010 || imageInfo.pixelFormat == PixelFormat::YCRCB_P010) {
-        res = ModifyYUVInfo(pixelMap, context, memoryInfo);
-        CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "HandleYUVInfo fail! res=%{public}d", res);
-    }
-    EFFECT_LOGI("ModifyPixelMapPropertyInner: SetImageInfo width=%{public}d, height=%{public}d, result: %{public}d",
-        imageInfo.size.width, imageInfo.size.height, result);
-    CHECK_AND_RETURN_RET_LOG(result == 0, ErrorCode::ERR_SET_IMAGE_INFO_FAIL,
-        "ModifyPixelMapPropertyInner: exec SetImageInfo fail! result=%{public}d", result);
+    res = SetPixelMapPixelAddrAndImageInfo(memoryData, pixelMap, context, allocatorType);
+    CHECK_AND_RETURN_RET_LOG(res == ErrorCode::SUCCESS, res, "ModifyPixelMapPropertyInner: set pixels addr fail!");
 
     // update rowStride
     pixelMap->SetRowStride(memoryInfo.bufferInfo.rowStride_);
