@@ -193,14 +193,16 @@ ErrorCode CropEFilter::CropToOutputBuffer(EffectBuffer *src, std::shared_ptr<Eff
         cropLeft, cropTop, cropWidth, cropHeight);
     CHECK_AND_RETURN_RET_LOG(cropWidth >= 0 && cropHeight >= 0, ErrorCode::ERR_INVALID_PARAMETER_VALUE,
         "invalid cropSize!");
-    CHECK_AND_RETURN_RET_LOG(cropWidth == 0 || static_cast<int64_t>(std::numeric_limits<uint32_t>::max()) / cropWidth >
-        cropHeight * PIXEL_BYTES, ErrorCode::ERR_INVALID_PARAMETER_VALUE, "huge cropSize!");
+    uint64_t len = 0;
+    CHECK_AND_RETURN_RET_LOG(SafeMul3(static_cast<uint64_t>(cropWidth), static_cast<uint64_t>(cropHeight),
+        static_cast<uint64_t>(PIXEL_BYTES), len) && len <= UINT32_MAX,
+        ErrorCode::ERR_INVALID_PARAMETER_VALUE, "huge cropSize!");
 
     MemoryInfo allocMemInfo = {
         .bufferInfo = {
             .width_ = static_cast<uint32_t>(cropWidth),
             .height_ = static_cast<uint32_t>(cropHeight),
-            .len_ = static_cast<uint32_t>(cropWidth * cropHeight * PIXEL_BYTES),
+            .len_ = static_cast<uint32_t>(len),
             .formatType_ = src->bufferInfo_->formatType_,
             .colorSpace_ = src->bufferInfo_->colorSpace_,
         },

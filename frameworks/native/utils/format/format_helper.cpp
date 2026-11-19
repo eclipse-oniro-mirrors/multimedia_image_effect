@@ -15,6 +15,7 @@
 
 #include "format_helper.h"
 
+#include "common_utils.h"
 #include "effect_log.h"
 
 namespace {
@@ -81,14 +82,28 @@ uint32_t FormatHelper::CalculateRowStride(uint32_t width, IEffectFormat format)
 {
     switch (format) {
         case IEffectFormat::RGBA8888:
-        case IEffectFormat::RGBA_1010102:
-            return width * RGBA_BYTES_PER_PIXEL;
+        case IEffectFormat::RGBA_1010102: {
+            uint64_t rowStride = 0;
+            if (!SafeMul(width, static_cast<uint64_t>(RGBA_BYTES_PER_PIXEL), rowStride) ||
+                rowStride > UINT32_MAX) {
+                EFFECT_LOGE("CalculateRowStride: row stride overflow! width=%{public}u", width);
+                return UINT32_MAX;
+            }
+            return static_cast<uint32_t>(rowStride);
+        }
         case IEffectFormat::YUVNV12:
         case IEffectFormat::YUVNV21:
             return (width + 1) & ~1u;
         case IEffectFormat::YCRCB_P010:
-        case IEffectFormat::YCBCR_P010:
-            return width * P10_BYTES_PER_LUMA;
+        case IEffectFormat::YCBCR_P010: {
+            uint64_t rowStride = 0;
+            if (!SafeMul(width, static_cast<uint64_t>(P10_BYTES_PER_LUMA), rowStride) ||
+                rowStride > UINT32_MAX) {
+                EFFECT_LOGE("CalculateRowStride: row stride overflow! width=%{public}u", width);
+                return UINT32_MAX;
+            }
+            return static_cast<uint32_t>(rowStride);
+        }
         default:
             return width;
     }
@@ -96,8 +111,13 @@ uint32_t FormatHelper::CalculateRowStride(uint32_t width, IEffectFormat format)
 
 uint32_t FormatHelper::CalculateSize(uint32_t width, uint32_t height, IEffectFormat format)
 {
-    return static_cast<uint32_t>(static_cast<int64_t>(CalculateDataRowCount(height, format)) *
-        static_cast<int64_t>(CalculateRowStride(width, format)));
+    uint64_t size = 0;
+    if (!SafeMul(CalculateDataRowCount(height, format),
+        static_cast<uint64_t>(CalculateRowStride(width, format)), size) || size > UINT32_MAX) {
+        EFFECT_LOGE("CalculateSize: size overflow! width=%{public}u, height=%{public}u", width, height);
+        return UINT32_MAX;
+    }
+    return static_cast<uint32_t>(size);
 }
 
 std::unordered_set<IEffectFormat> FormatHelper::GetAllSupportedFormats()
@@ -181,14 +201,16 @@ void ConvertRGBAToNV12(FormatConverterInfo &src, FormatConverterInfo &dst)
 
     uint8_t *srcRGBA = static_cast<uint8_t *>(src.buffer);
     uint8_t *dstNV12 = static_cast<uint8_t *>(dst.buffer);
-    uint8_t *dstNV12UV = dstNV12 + dstBuffInfo.height_ * dstRowStride;
+    uint8_t *dstNV12UV = dstNV12 + static_cast<uint64_t>(dstBuffInfo.height_) * dstRowStride;
 
 #pragma omp parallel for default(none) shared(height, width, srcRGBA, dstNV12, dstNV12UV, srcRowStride, dstRowStride)
     for (uint32_t i = 0; i < height; i++) {
         for (uint32_t j = 0; j < width; j++) {
-            uint32_t y_index = i * dstRowStride + j;
-            uint32_t nv_index = i / UV_SPLIT_FACTOR * dstRowStride + j - j % UV_SPLIT_FACTOR;
-            uint32_t srcIndex = i * srcRowStride + j * RGBA_BYTES_PER_PIXEL;
+            uint64_t y_index = static_cast<uint64_t>(i) * dstRowStride + j;
+            uint64_t nv_index = static_cast<uint64_t>(i) / UV_SPLIT_FACTOR * dstRowStride +
+                j - j % UV_SPLIT_FACTOR;
+            uint64_t srcIndex = static_cast<uint64_t>(i) * srcRowStride +
+                static_cast<uint64_t>(j) * RGBA_BYTES_PER_PIXEL;
             uint8_t r = srcRGBA[srcIndex + R];
             uint8_t g = srcRGBA[srcIndex + G];
             uint8_t b = srcRGBA[srcIndex + B];
@@ -214,14 +236,16 @@ void ConvertRGBAToNV21(FormatConverterInfo &src, FormatConverterInfo &dst)
 
     uint8_t *srcRGBA = static_cast<uint8_t *>(src.buffer);
     uint8_t *dstNV21 = static_cast<uint8_t *>(dst.buffer);
-    uint8_t *dstNV21UV = dstNV21 + dstBuffInfo.height_ * dstRowStride;
+    uint8_t *dstNV21UV = dstNV21 + static_cast<uint64_t>(dstBuffInfo.height_) * dstRowStride;
 
 #pragma omp parallel for default(none) shared(height, width, srcRGBA, dstNV21, dstNV21UV, srcRowStride, dstRowStride)
     for (uint32_t i = 0; i < height; i++) {
         for (uint32_t j = 0; j < width; j++) {
-            uint32_t y_index = i * dstRowStride + j;
-            uint32_t nv_index = i / UV_SPLIT_FACTOR * dstRowStride + j - j % UV_SPLIT_FACTOR;
-            uint32_t srcIndex = i * srcRowStride + j * RGBA_BYTES_PER_PIXEL;
+            uint64_t y_index = static_cast<uint64_t>(i) * dstRowStride + j;
+            uint64_t nv_index = static_cast<uint64_t>(i) / UV_SPLIT_FACTOR * dstRowStride +
+                j - j % UV_SPLIT_FACTOR;
+            uint64_t srcIndex = static_cast<uint64_t>(i) * srcRowStride +
+                static_cast<uint64_t>(j) * RGBA_BYTES_PER_PIXEL;
             uint8_t r = srcRGBA[srcIndex + R];
             uint8_t g = srcRGBA[srcIndex + G];
             uint8_t b = srcRGBA[srcIndex + B];
@@ -245,15 +269,17 @@ void ConvertNV12ToRGBA(FormatConverterInfo &src, FormatConverterInfo &dst)
     uint32_t dstRowStride = dstBuffInfo.rowStride_;
 
     uint8_t *srcNV12 = static_cast<uint8_t *>(src.buffer);
-    uint8_t *srcNV12UV = srcNV12 + srcBuffInfo.height_ * srcRowStride;
+    uint8_t *srcNV12UV = srcNV12 + static_cast<uint64_t>(srcBuffInfo.height_) * srcRowStride;
     uint8_t *dstRGBA = static_cast<uint8_t *>(dst.buffer);
 
 #pragma omp parallel for default(none) shared(height, width, srcNV12, srcNV12UV, dstRGBA, srcRowStride, dstRowStride)
     for (uint32_t i = 0; i < height; i++) {
         for (uint32_t j = 0; j < width; j++) {
-            uint32_t y_index = i * srcRowStride + j;
-            uint32_t nv_index = i / UV_SPLIT_FACTOR * srcRowStride + j - j % UV_SPLIT_FACTOR;
-            uint32_t dstIndex = i * dstRowStride + j *RGBA_BYTES_PER_PIXEL;
+            uint64_t y_index = static_cast<uint64_t>(i) * srcRowStride + j;
+            uint64_t nv_index = static_cast<uint64_t>(i) / UV_SPLIT_FACTOR * srcRowStride +
+                j - j % UV_SPLIT_FACTOR;
+            uint64_t dstIndex = static_cast<uint64_t>(i) * dstRowStride +
+                static_cast<uint64_t>(j) *RGBA_BYTES_PER_PIXEL;
             uint8_t y = srcNV12[y_index];
             uint8_t u = srcNV12UV[nv_index];
             uint8_t v = srcNV12UV[nv_index + 1];
@@ -278,15 +304,17 @@ void ConvertNV21ToRGBA(FormatConverterInfo &src, FormatConverterInfo &dst)
     CHECK_AND_RETURN_LOG(src.buffer != nullptr && dst.buffer != nullptr,
         "ConvertNV21ToRGBA: src buffer or dst buffer is null!");
     uint8_t *srcNV21 = static_cast<uint8_t *>(src.buffer);
-    uint8_t *srcNV21UV = srcNV21 + srcBuffInfo.height_ * srcRowStride;
+    uint8_t *srcNV21UV = srcNV21 + static_cast<uint64_t>(srcBuffInfo.height_) * srcRowStride;
     uint8_t *dstRGBA = static_cast<uint8_t *>(dst.buffer);
 
 #pragma omp parallel for default(none) shared(height, width, srcNV21, srcNV21UV, dstRGBA, srcRowStride, dstRowStride)
     for (uint32_t i = 0; i < height; i++) {
         for (uint32_t j = 0; j < width; j++) {
-            uint32_t y_index = i * srcRowStride + j;
-            uint32_t nv_index = i / UV_SPLIT_FACTOR * srcRowStride + j - j % UV_SPLIT_FACTOR;
-            uint32_t dstIndex = i * dstRowStride + j *RGBA_BYTES_PER_PIXEL;
+            uint64_t y_index = static_cast<uint64_t>(i) * srcRowStride + j;
+            uint64_t nv_index = static_cast<uint64_t>(i) / UV_SPLIT_FACTOR * srcRowStride +
+                j - j % UV_SPLIT_FACTOR;
+            uint64_t dstIndex = static_cast<uint64_t>(i) * dstRowStride +
+                static_cast<uint64_t>(j) *RGBA_BYTES_PER_PIXEL;
             uint8_t y = srcNV21[y_index];
             uint8_t v = srcNV21UV[nv_index];
             uint8_t u = srcNV21UV[nv_index + 1];

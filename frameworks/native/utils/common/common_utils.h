@@ -73,6 +73,7 @@ public:
     static void SetMetaData(MetaDataMap &metaData, SurfaceBuffer *surfaceBuffer);
 
     static ErrorCode CalcBufferLen(std::shared_ptr<BufferInfo> &bufferInfo, IEffectFormat formatType);
+    static ErrorCode GetPixelMapRowStride(PixelMap *pixelMap, uint32_t &rowStride);
     static ErrorCode ParsePixelMapData(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
     IMAGE_EFFECT_EXPORT static ErrorCode LockPixelMap(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer);
     static ErrorCode ParseSurfaceData(OHOS::SurfaceBuffer *surfaceBuffer, std::shared_ptr<EffectBuffer> &effectBuffer,
