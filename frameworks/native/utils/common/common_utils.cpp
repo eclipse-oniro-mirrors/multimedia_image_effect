@@ -228,6 +228,29 @@ ErrorCode CommonUtils::CalcBufferLen(std::shared_ptr<BufferInfo> &bufferInfo, IE
     return ErrorCode::SUCCESS;
 }
 
+ErrorCode CommonUtils::GetPixelMapRowStride(PixelMap *pixelMap, uint32_t &rowStride)
+{
+    CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
+    if (pixelMap->GetPixelFormat() == PixelFormat::NV21 ||
+        pixelMap->GetPixelFormat() == PixelFormat::NV12) {
+        YUVDataInfo info;
+        pixelMap->GetImageYUVInfo(info);
+        rowStride = info.yStride;
+    } else if (pixelMap->GetPixelFormat() == PixelFormat::YCRCB_P010 ||
+        pixelMap->GetPixelFormat() == PixelFormat::YCBCR_P010) {
+        YUVDataInfo info;
+        pixelMap->GetImageYUVInfo(info);
+        uint64_t stride = 0;
+        CHECK_AND_RETURN_RET_LOG(SafeMul(info.yStride, static_cast<uint64_t>(P010_BYTES_PIXEL), stride) &&
+            stride <= UINT32_MAX, ErrorCode::ERR_INVALID_PARAMETER_VALUE,
+            "GetPixelMapRowStride: rowStride overflow! yStride=%{public}u", info.yStride);
+        rowStride = static_cast<uint32_t>(stride);
+    } else {
+        rowStride = static_cast<uint32_t>(pixelMap->GetRowStride());
+    }
+    return ErrorCode::SUCCESS;
+}
+
 ErrorCode CommonUtils::ParsePixelMapData(PixelMap *pixelMap, std::shared_ptr<EffectBuffer> &effectBuffer)
 {
     CHECK_AND_RETURN_RET_LOG(pixelMap != nullptr, ErrorCode::ERR_INPUT_NULL, "pixelMap is null!");
@@ -242,19 +265,9 @@ ErrorCode CommonUtils::ParsePixelMapData(PixelMap *pixelMap, std::shared_ptr<Eff
     std::shared_ptr<BufferInfo> bufferInfo = std::make_unique<BufferInfo>();
     bufferInfo->width_ = static_cast<uint32_t>(pixelMap->GetWidth());
     bufferInfo->height_ = static_cast<uint32_t>(pixelMap->GetHeight());
-    if (pixelMap->GetPixelFormat() == PixelFormat::NV21 ||
-        pixelMap->GetPixelFormat() == PixelFormat::NV12) {
-        YUVDataInfo info;
-        pixelMap->GetImageYUVInfo(info);
-        bufferInfo->rowStride_ = info.yStride;
-    } else if (pixelMap->GetPixelFormat() == PixelFormat::YCRCB_P010 ||
-        pixelMap->GetPixelFormat() == PixelFormat::YCBCR_P010) {
-        YUVDataInfo info;
-        pixelMap->GetImageYUVInfo(info);
-        bufferInfo->rowStride_ = info.yStride * P010_BYTES_PIXEL;
-    } else {
-        bufferInfo->rowStride_ = static_cast<uint32_t>(pixelMap->GetRowStride());
-    }
+    ErrorCode rowStrideRes = GetPixelMapRowStride(pixelMap, bufferInfo->rowStride_);
+    CHECK_AND_RETURN_RET_LOG(rowStrideRes == ErrorCode::SUCCESS, rowStrideRes,
+        "ParsePixelMapData: GetPixelMapRowStride fail! %{public}d", rowStrideRes);
     ErrorCode calRes = CalcBufferLen(bufferInfo, formatType);
     if (calRes != ErrorCode::SUCCESS) {
         return calRes;
@@ -983,7 +996,11 @@ ErrorCode ModifyYUVInfo(PixelMap *pixelMap, void *context, const MemoryInfo &mem
         info.yStride = info.yWidth;
         info.uvStride = info.uvWidth;
         info.yOffset = 0;
-        info.uvOffset = info.yStride * info.yHeight;
+        uint64_t uvOffset = 0;
+        CHECK_AND_RETURN_RET_LOG(SafeMul(info.yStride, info.yHeight, uvOffset) && uvOffset <= UINT32_MAX,
+            ErrorCode::ERR_INVALID_PARAMETER_VALUE,
+            "ModifyYUVInfo: uvOffset overflow! width=%{public}d, height=%{public}d", width, height);
+        info.uvOffset = static_cast<uint32_t>(uvOffset);
         pixelMap->SetImageYUVInfo(info);
     } else {
         CHECK_AND_RETURN_RET(sBuffer != nullptr, ErrorCode::SUCCESS);
