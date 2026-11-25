@@ -681,7 +681,7 @@ HWTEST_F(ImageEffectInnerUnittest, Quality_Multiple_Filters_001, TestSize.Level1
     
     imageEffect_->SetDefaultQuality(65);
     imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
-    imageEffect_->SetOutputPath("output.jpg");
+    imageEffect_->SetOutputPath("/data/test/resource/output_multiple_filters.jpg");
     
     ErrorCode res = imageEffect_->Start();
     EXPECT_TRUE(res == ErrorCode::SUCCESS || res == ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL);
@@ -715,7 +715,7 @@ HWTEST_F(ImageEffectInnerUnittest, Quality_HEIC_Fallback_001, TestSize.Level1)
     
     imageEffect_->SetDefaultQuality(88);
     imageEffect_->SetInputPath("/data/test/resource/image_effect_1k_test1.jpg");
-    imageEffect_->SetOutputPath("output.heic");
+    imageEffect_->SetOutputPath("/data/test/resource/output_heic_fallback.heic");
     
     ErrorCode res = imageEffect_->Start();
     EXPECT_TRUE(res == ErrorCode::SUCCESS || res == ErrorCode::ERR_IMAGE_PACKER_EXEC_FAIL);
